@@ -1,0 +1,73 @@
+package org.dhallj.core;
+
+import java.math.BigInteger;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.Map.Entry;
+
+/**
+ * Represents a function from a Dhall expression to a value.
+ *
+ * @param I The internal result type used while recursing
+ * @param A The final result type
+ */
+public interface Visitor<I, A> extends Import.Visitor<A> {
+  A onDoubleLiteral(double value);
+
+  A onNaturalLiteral(BigInteger value);
+
+  A onIntegerLiteral(BigInteger value);
+
+  A onTextLiteral(String[] parts, Iterable<I> interpolated);
+
+  A onApplication(I base, I arg);
+
+  A onOperatorApplication(Operator operator, I lhs, I rhs);
+
+  A onIf(I cond, I thenValue, I elseValue);
+
+  A onLambda(String param, I input, I result);
+
+  A onPi(String param, I input, I result);
+
+  A onAssert(I base);
+
+  A onFieldAccess(I base, String fieldName);
+
+  A onProjection(I base, String[] fieldNames);
+
+  A onProjectionByType(I base, I tpe);
+
+  A onIdentifier(String value, long index);
+
+  A onRecordLiteral(Iterable<Entry<String, I>> fields, int size);
+
+  A onRecordType(Iterable<Entry<String, I>> fields, int size);
+
+  A onUnionType(Iterable<Entry<String, I>> fields, int size);
+
+  A onNonEmptyListLiteral(Iterable<I> values, int size);
+
+  A onEmptyListLiteral(I tpe);
+
+  A onNote(I base, Source source);
+
+  A onLet(String name, I type, I value, I body);
+
+  A onAnnotated(I base, I tpe);
+
+  A onToMap(I base, I tpe);
+
+  A onMerge(I left, I right, I tpe);
+
+  /**
+   * Represents a function from a Dhall expression to a value that recurses through the structure of
+   * the expression.
+   *
+   * <p>Note that the internal result type used during recursion is a thunk, which allows
+   * implementers to determine the order of the recursion (but not its structure).
+   *
+   * @param A The final result type
+   */
+  static interface Internal<A> extends Visitor<Thunk<A>, A> {}
+}

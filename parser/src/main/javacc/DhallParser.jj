@@ -1,0 +1,1120 @@
+options {
+  JDK_VERSION="1.8";
+  JAVA_TEMPLATE_TYPE = "modern";
+  SUPPORT_CLASS_VISIBILITY_PUBLIC = false;
+  UNICODE_INPUT = true;
+  JAVA_UNICODE_ESCAPE = false;
+}
+
+PARSER_BEGIN(DhallParser)
+
+package org.dhallj.parser;
+
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+import org.dhallj.core.Operator;
+import org.dhallj.core.Expr;
+import org.dhallj.parser.Positioned.Wrapped;
+
+class DhallParser {
+  static Expr.Parsed parse(String input) throws ParseException {
+    return new DhallParser(new StringProvider(input)).TOP_LEVEL();
+  }
+
+  static Expr.Parsed parse(java.io.InputStream input) throws java.io.IOException, ParseException {
+    return new DhallParser(new StreamProvider(input)).TOP_LEVEL();
+  }
+
+  private static String trimLabel(String input) {
+    return (input.charAt(0) != '`') ? input : input.substring(1, input.length() - 1);
+  }
+}
+
+PARSER_END(DhallParser)
+
+TOKEN_MGR_DECLS : {
+  Stack<Boolean> interpolationStack = new Stack<Boolean>();
+  List<Comment> comments = new ArrayList();
+  WhitespaceManager whitespace = new WhitespaceManager();
+}
+
+TOKEN: {
+    <WHSP: ([" ", "\t", "\n"] | "\r\n")+ | "{-" | "--"> {
+      List<Comment> cs = whitespace.consume(input_stream, matchedToken.image.charAt(0));
+      if (cs != null) {
+        comments.addAll(cs);
+      }
+    }
+  | <DOUBLE_LITERAL: ((<SIGN>)? <DIGITS> (("." <DIGITS> (<EXPONENT>)?) | <EXPONENT>)) | (("-")? "Infinity") | "NaN">
+  | <INTEGER_LITERAL: <SIGN> <NATURAL_LITERAL>>
+  | <NATURAL_LITERAL: "0" | (["1"-"9"] (<DIGIT>)*) | ("0x" <HEX_DIGITS>)>
+
+  | <IF: "if">
+  | <THEN: "then">
+  | <ELSE: "else">
+  | <LET: "let">
+  | <IN: "in">
+  | <AS: "as">
+  | <USING: "using">
+  | <MERGE: "merge">
+  | <MISSING: "missing">
+  | <SOME: "Some">
+  | <TOMAP: "toMap">
+  | <ASSERT: "assert">
+  | <FORALL: "forall" | "∀">
+  | <WITH: "with">
+  | <TEXT: "Text">
+  | <LOCATION: "Location">
+  | <BUILT_IN:
+      "Natural/fold"
+    | "Natural/build"
+    | "Natural/isZero"
+    | "Natural/even"
+    | "Natural/odd"
+    | "Natural/toInteger"
+    | "Natural/show"
+    | "Integer/toDouble"
+    | "Integer/show"
+    | "Integer/negate"
+    | "Integer/clamp"
+    | "Natural/subtract"
+    | "Double/show"
+    | "List/build"
+    | "List/fold"
+    | "List/length"
+    | "List/head"
+    | "List/last"
+    | "List/indexed"
+    | "List/reverse"
+    | "Optional/fold"
+    | "Optional/build"
+    | "Text/show"
+    | "Bool"
+    | "True"
+    | "False"
+    | "Optional"
+    | "None"
+    | "Natural"
+    | "Integer"
+    | "Double"
+    | "Text"
+    | "List"
+    | "Type"
+    | "Kind"
+    | "Sort"
+    | "Optional"
+    | "List"
+  >
+  | <NONRESERVED_LABEL: <QUOTED_LABEL> | <SIMPLE_LABEL>>
+  | <#QUOTED_LABEL: "`" (["\u0020"-"\u005f"] | ["\u0061"-"\u007e"])+ "`">
+  | <#SIMPLE_LABEL: (<ALPHA> | "_") (<ALPHA> | <DIGIT> | "_" | "-" | "/" )*>
+  | <COMBINE: "/\\" | "\u2227">
+  | <COMBINE_TYPES: "//\\\\" | "\u2a53">
+  | <EQUIVALENT: "===" | "\u2261">
+  | <PREFER: "//" | "\u2afd">
+  | <LAMBDA: "\\" | "\u03bb">
+  | <ARROW: "->" | "\u2192">
+  | <COMPLETE: "::">
+  | <DOUBLE_QUOTE_START: "\""> { interpolationStack.push(true); }: WITHIN_DOUBLE_QUOTE
+  | <SINGLE_QUOTE_START: "''\n"> { interpolationStack.push(false); }: WITHIN_SINGLE_QUOTE
+  | <PARENS_OPEN: "(">
+  | <PARENS_CLOSE: ")">
+  | <BRACKET_OPEN: "[">
+  | <BRACKET_CLOSE: "]">
+  | <BRACE_OPEN: "{">
+  | <BRACE_CLOSE: "}">
+  | <ANGLE_OPEN: "<">
+  | <ANGLE_CLOSE: ">">
+  | <DOT: ".">
+  | <COLON: ":">
+  | <COMMA: ",">
+  | <BAR: "|">
+  | <EQUAL_SIGN: "=">
+  | <AT_SIGN: "@">
+  | <QUESTION_MARK: "?">
+  | <LIST_APPEND: "#">
+  | <TIMES: "*">
+  | <PLUS: "+">
+  | <EQUALS: "==">
+  | <NOT_EQUALS: "!=">
+  | <AND: "&&">
+  | <OR: "||">
+  | <CONCAT: "++">
+  | <SHA256_HASH: "sha256:" (<HEX_DIGIT>){64}>
+  | <ENV: "env:" (<BASH_ENV_VAR> | ("\"" <POSIX_ENV_VAR> "\""))>
+
+  | <#DIGIT: ["0"-"9"]>
+  | <#DIGITS: (<DIGIT>)+>
+  | <#HEX_DIGIT: <DIGIT> | ["A"-"F"] | ["a"-"f"]>
+  | <#HEX_DIGITS: (<HEX_DIGIT>)+>
+  | <#SIGN: "+" | "-">
+  | <#EXPONENT: ("E" | "e") (<SIGN>)? <DIGITS>>
+  | <#ALPHA: ["A"-"Z"] | ["a"-"z"]>
+  | <#ASCII: ["\u0020"-"\u007f"]>
+  | <#VALID_NON_ASCII: ["\u0080"-"\uD7FF"] | (["\ud800"-"\udbff"] ["\udc00"-"\udfff"]) | ["\ue000"-"\ufffd"]>
+  | <#BASH_ENV_VAR: (<ALPHA> | "_") (<ALPHA> | <DIGIT> | "_")*>
+  | <#POSIX_ENV_VAR: ("\u0020" | "\u0021" | ["\u0023"-"\u003c"] | ["\u003e"-"\u005b"] | ["\u005d"-"\u007e"] | ("\\" (["\"", "\\", "a", "b", "f", "n", "r", "t", "v"])))+>
+}
+
+<WITHIN_DOUBLE_QUOTE> TOKEN: {
+  <DOUBLE_QUOTE_CHARS: (
+      "\u0020" | "\u0021" | ["\u0023"-"\u005b"] | ["\u005d"-"\u007f"]
+    | ("\\" (["\"", "$", "\\", "/", "b", "f", "n", "r", "t"]))
+    | <VALID_NON_ASCII>
+  )+>
+}
+<WITHIN_DOUBLE_QUOTE> TOKEN: { <DOUBLE_QUOTE_END: "\""> {
+  boolean isDouble = interpolationStack.pop();
+  assert(isDouble);
+
+  SwitchTo(
+    interpolationStack.empty() ? DEFAULT : (interpolationStack.peek() ? WITHIN_DOUBLE_QUOTE : WITHIN_SINGLE_QUOTE)
+  );
+} }
+
+<WITHIN_SINGLE_QUOTE> TOKEN: {
+  <SINGLE_QUOTE_CHARS: (<ASCII> | <VALID_NON_ASCII> | "\t" | "\n" | "\r\n")>
+}
+<WITHIN_SINGLE_QUOTE> TOKEN: { <SINGLE_QUOTE_END: "''"> {
+  boolean isSingle = interpolationStack.pop();
+  assert(isSingle);
+
+  SwitchTo(
+    interpolationStack.empty() ? DEFAULT : (interpolationStack.peek() ? WITHIN_DOUBLE_QUOTE : WITHIN_SINGLE_QUOTE)
+  );
+} }
+
+Wrapped<String> ANY_LABEL(): {
+  Token token;
+} {
+  (token=<NONRESERVED_LABEL> | token=<BUILT_IN> | token=<TEXT> | token=<LOCATION>) {
+    return new Label(token);
+  }
+}
+
+Wrapped<String> ANY_LABEL_OR_SOME():  {
+  Token token = null;
+  Wrapped<String> value = null;
+} {
+  (value=ANY_LABEL() | token=<SOME>) {
+    return (value != null) ? value : new Wrapped<String>(token.image, token);
+  }
+}
+
+Wrapped<String> DOUBLE_QUOTE_LITERAL(): {
+  Token token = null;
+  Token first;
+  Token last;
+} {
+  first=<DOUBLE_QUOTE_START> (token=<DOUBLE_QUOTE_CHARS>)? last=<DOUBLE_QUOTE_END> {
+    return new Wrapped((token == null) ? "" : token.image, first, last);
+  }
+}
+
+Wrapped<String> SINGLE_QUOTE_LITERAL(): {
+  Token token;
+  StringBuilder builder = new StringBuilder();
+  Token first;
+  Token last;
+} {
+  (
+    first=<SINGLE_QUOTE_START>
+    (token=<SINGLE_QUOTE_CHARS> { builder.append(token.image); })*
+    last=<SINGLE_QUOTE_END>
+  ) {
+    return new Wrapped(builder.toString(), first, last);
+  }
+}
+
+Expr.Parsed TEXT_LITERAL(): { Wrapped<String> value; } {
+  (value=DOUBLE_QUOTE_LITERAL() | value=SINGLE_QUOTE_LITERAL()) {
+    return ParsingHelpers.makeTextLiteral(value.value, value.beginLine, value.beginColumn, value.endLine, value.endColumn);
+  }
+}
+
+Expr.Parsed IDENTIFIER(): {
+  Token valueToken;
+  Token whspToken = null;
+  Token indexToken = null;
+} {
+  (
+      (
+        valueToken=<NONRESERVED_LABEL> 
+        (
+          LOOKAHEAD((<WHSP>)? <AT_SIGN>) (<WHSP>)? <AT_SIGN>
+          (whspToken=<WHSP>)?
+          indexToken=<NATURAL_LITERAL>
+        )?
+      )
+    | valueToken=<BUILT_IN>
+    | valueToken=<TEXT>
+    | valueToken=<LOCATION>
+  ) {
+    return (indexToken == null)
+      ? ParsingHelpers.makeIdentifier(valueToken)
+      : ParsingHelpers.makeIdentifier(valueToken, whspToken, indexToken);
+  }
+}
+
+Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
+  Token first;
+  Token last;
+  Token t0 = null;
+  Token t1 = null;
+  Token t2 = null;
+  List<String> other = new ArrayList();
+  StringBuilder currentOther = new StringBuilder("[");
+  List<Expr.Parsed> values = new ArrayList();
+  Expr.Parsed current;
+} {
+  (
+    first=<BRACKET_OPEN>
+    (t0=<WHSP> { currentOther.append(t0.image); })?
+    (t0=<COMMA> { currentOther.append(t0.image); } (t0=<WHSP> { currentOther.append(t0.image); })?)?
+    current=EXPRESSION() {
+      values.add(current);
+      other.add(currentOther.toString());
+      currentOther.setLength(0);
+    }
+    (t0=<WHSP> { currentOther.append(t0.image); })?
+    (
+      t0=<COMMA> { currentOther.append(t0.image); }
+      (t0=<WHSP> { currentOther.append(t0.image); })?
+      current=EXPRESSION() {
+        values.add(current);
+        other.add(currentOther.toString());
+        currentOther.setLength(0);
+      }
+      (t0=<WHSP> { currentOther.append(t0.image); })?
+    )*
+    last=<BRACKET_CLOSE>
+  ) {
+    currentOther.append(']');
+    other.add(currentOther.toString());
+    return ParsingHelpers.makeNonEmptyListLiteral(values, other, first, last);
+  }
+}
+
+Map.Entry<List<String>, Expr.Parsed> RECORD_LITERAL_ENTRY(): {
+  List<String> labels = new ArrayList<String>();
+  Wrapped<String> current;
+  Expr.Parsed expr;
+} {
+  (
+    current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
+    (
+      LOOKAHEAD((<WHSP>)? <DOT>)
+      (<WHSP>)? <DOT> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
+    )*
+    (<WHSP>)?
+    <EQUAL_SIGN>
+    (<WHSP>)?
+    expr=EXPRESSION()
+  ) {
+    return new SimpleImmutableEntry(labels, expr);
+  }  
+}
+
+Map.Entry<String, Expr.Parsed> RECORD_TYPE_ENTRY(): {
+  Wrapped<String> label;
+  Expr.Parsed expr;
+} {
+  (label=ANY_LABEL_OR_SOME() (<WHSP>)? <COLON> <WHSP> expr=EXPRESSION()) {
+    return new SimpleImmutableEntry(label.value, expr);
+  }  
+}
+
+Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
+  Token first;
+  Token last;
+  List<Map.Entry<List<String>, Expr.Parsed>> literalValues = null;
+  List<Map.Entry<String, Expr.Parsed>> typeValues = null;
+  Map.Entry<List<String>, Expr.Parsed> currentLiteralValue = null;
+  Map.Entry<String, Expr.Parsed> currentTypeValue = null;
+} {
+  (
+    first=<BRACE_OPEN>
+    (<WHSP>)?
+    (<COMMA> (<WHSP>)?)?
+    (
+        <EQUAL_SIGN> { literalValues = new ArrayList(); }
+      | LOOKAHEAD(ANY_LABEL_OR_SOME() (<WHSP>)? (<DOT> | <EQUAL_SIGN>)) (
+          currentLiteralValue=RECORD_LITERAL_ENTRY() {
+            literalValues = new ArrayList();
+            literalValues.add(currentLiteralValue);
+          }
+          (
+            LOOKAHEAD((<WHSP>)? <COMMA>)
+            (<WHSP>)?
+            <COMMA>
+            (<WHSP>)?
+            currentLiteralValue=RECORD_LITERAL_ENTRY() {
+              literalValues.add(currentLiteralValue);
+            }
+          )*
+        )
+      | (
+          currentTypeValue=RECORD_TYPE_ENTRY() {
+            typeValues = new ArrayList();
+            typeValues.add(currentTypeValue);
+          }
+          (
+            LOOKAHEAD((<WHSP>)? <COMMA>)
+            (<WHSP>)?
+            <COMMA>
+            (<WHSP>)?
+            currentTypeValue=RECORD_TYPE_ENTRY() {
+              typeValues.add(currentTypeValue);
+            }
+          )*
+        )
+    )?
+    (<WHSP>)?
+    last=<BRACE_CLOSE>
+  ) {
+    if (literalValues != null) {
+      return ParsingHelpers.makeRecordLiteral(literalValues, first, last);
+    } else if (typeValues != null) {
+      return ParsingHelpers.makeRecordType(typeValues, first, last);
+    } else {
+      return ParsingHelpers.makeRecordType(new ArrayList(), first, last);
+    }
+  }
+}
+
+Map.Entry<String, Expr.Parsed> UNION_TYPE_ENTRY(): {
+  Wrapped<String> label;
+  Expr.Parsed expr = null;
+} {
+  (label=ANY_LABEL_OR_SOME() (LOOKAHEAD((<WHSP>)? <COLON>) (<WHSP>)? <COLON> <WHSP> expr=EXPRESSION())?) {
+    return new SimpleImmutableEntry(label.value, expr);
+  }  
+}
+
+Expr.Parsed UNION_TYPE(): {
+  Token first;
+  Token last;
+  List<Map.Entry<String, Expr.Parsed>> typeValues = new ArrayList();
+  Map.Entry<String, Expr.Parsed> currentTypeValue = null;
+} {
+  (
+    first=<ANGLE_OPEN>
+    (<WHSP>)?
+    (<BAR> (<WHSP>)?)?
+    (
+      currentTypeValue=UNION_TYPE_ENTRY() {
+        typeValues.add(currentTypeValue);
+      }
+      (LOOKAHEAD((<WHSP>)? <BAR> (<WHSP>)?)
+        (<WHSP>)?
+        <BAR>
+        (<WHSP>)?
+        currentTypeValue=UNION_TYPE_ENTRY() {
+          typeValues.add(currentTypeValue);
+        }
+      )*
+    )?
+    (<WHSP>)?
+    last=<ANGLE_CLOSE>
+  ) {
+    return ParsingHelpers.makeUnionType(typeValues, first, last);
+  }
+}
+
+Expr.Parsed PARENTHESIZED_EXPRESSION(): {
+  Expr.Parsed value;
+  Token first;
+  Token last;
+} {
+  (first=<PARENS_OPEN> value=COMPLETE_EXPRESSION() last=<PARENS_CLOSE>) {
+    return ParsingHelpers.makeParenthesized(value, first, last);
+  }
+}
+
+Expr.Parsed DOUBLE_LITERAL():  { Token token; } { token=<DOUBLE_LITERAL>  { return ParsingHelpers.makeDoubleLiteral(token);  }}
+Expr.Parsed INTEGER_LITERAL(): { Token token; } { token=<INTEGER_LITERAL> { return ParsingHelpers.makeIntegerLiteral(token); }}
+Expr.Parsed NATURAL_LITERAL(): { Token token; } { token=<NATURAL_LITERAL> { return ParsingHelpers.makeNaturalLiteral(token); }}
+
+Expr.Parsed PRIMITIVE_EXPRESSION(): { Expr.Parsed expr; } {
+  (
+      expr=DOUBLE_LITERAL()
+    | expr=NATURAL_LITERAL()
+    | expr=INTEGER_LITERAL()
+    | expr=TEXT_LITERAL()
+    | expr=RECORD_LITERAL_OR_TYPE()
+    | expr=UNION_TYPE()
+    | expr=NON_EMPTY_LIST_LITERAL()
+    | expr=IDENTIFIER()
+    | expr=PARENTHESIZED_EXPRESSION()
+  ) { return expr; }
+}
+
+Wrapped<List<String>> LABEL_SELECTOR(): {
+  List<String> labels = new ArrayList<String>();
+  Wrapped<String> current;
+  Token first = null;
+  Token last = null;
+} {
+  (
+    first=<BRACE_OPEN> (<WHSP>)?
+    (
+      current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
+      (<WHSP>)?
+      (<COMMA> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); } (<WHSP>)?)*
+    )?
+    last=<BRACE_CLOSE>
+  ) {
+    return new Wrapped(labels, first, last);
+  }
+}
+
+Wrapped<Expr.Parsed> TYPE_SELECTOR(): {
+  Token first;
+  Token last;
+  Expr.Parsed expr;
+} {
+  (first=<PARENS_OPEN> (<WHSP>)? expr=EXPRESSION() (<WHSP>)? last=<PARENS_CLOSE>) {
+    return new Positioned.Wrapped(expr, first, last);
+  }
+}
+
+Expr.Parsed SELECTOR_EXPRESSION(): {
+  Expr.Parsed base;
+  Wrapped<String> label = null;
+  Wrapped<List<String>> labels = null;
+  Wrapped<Expr.Parsed> type = null;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=PRIMITIVE_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <DOT>)
+      (whsp0=<WHSP>)? <DOT> (whsp1=<WHSP>)?
+      (label=ANY_LABEL() | labels=LABEL_SELECTOR() | type=TYPE_SELECTOR()) {
+        if (label != null) {
+          base = ParsingHelpers.makeFieldAccess(base, label, whsp0, whsp1);
+        } else if (labels != null) {
+          base = ParsingHelpers.makeProjection(base, labels.value, labels.endLine, labels.endColumn);
+        } else {
+          base = ParsingHelpers.makeProjectionByType(base, type.value, type.endLine, type.endColumn);
+        }
+        label = null;
+        labels = null;
+        type = null;
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed COMPLETION_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed completion = null;
+  Token operatorToken;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=SELECTOR_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <COMPLETE>)
+      (whsp0=<WHSP>)? operatorToken=<COMPLETE> (whsp1=<WHSP>)?
+      completion=SELECTOR_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.COMPLETE, base, completion, operatorToken, whsp0, whsp1);
+      }
+    )?
+  ) {
+    return base;
+  }
+}
+
+void IMPORT_TYPE(): {
+  Token token;
+} {
+  (token=<MISSING> | token=<ENV>) {
+  }
+}
+
+void IMPORT_WITH_SHA(): {} {
+  IMPORT_TYPE()
+  (LOOKAHEAD(<WHSP> <SHA256_HASH>) <WHSP> <SHA256_HASH>)?
+}
+
+void IMPORT(): {
+  Token asValue = null;
+} {
+  IMPORT_WITH_SHA()
+  ((<WHSP>)? <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))?
+}
+
+Expr.Parsed IMPORT_EXPRESSION(): { Expr.Parsed expr; } { expr=COMPLETION_EXPRESSION() { return expr; } }
+
+Expr.Parsed APPLICATION_EXPRESSION(): {
+  Token first = null;
+  Token whsp0;
+  Token whsp1;
+  Expr.Parsed base = null;
+  Expr.Parsed current0;
+  Expr.Parsed current1;
+} {
+  (
+    (
+        (
+          first=<MERGE>
+          whsp0=<WHSP> current0=IMPORT_EXPRESSION()
+          whsp1=<WHSP> current1=IMPORT_EXPRESSION() { base = ParsingHelpers.makeMerge(current0, current1, first, whsp0, whsp1); }
+        )
+      | (first=<SOME> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeApplication(ParsingHelpers.makeIdentifier(first), current0, whsp0); })
+      | (first=<TOMAP> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeToMap(current0, first, whsp0); })
+      | base=IMPORT_EXPRESSION()
+    ) (
+      LOOKAHEAD(<WHSP> IMPORT_EXPRESSION())
+      whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeApplication(base, current0, whsp0); }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Map.Entry<List<String>, Expr.Parsed> WITH_ENTRY(): {
+  List<String> labels = new ArrayList<String>();
+  Wrapped<String> current;
+  Expr.Parsed expr;
+} {
+  (
+    current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
+    (LOOKAHEAD((<WHSP>)? <DOT>) (<WHSP>)? <DOT> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); })*
+    (<WHSP>)?
+    <EQUAL_SIGN>
+    (<WHSP>)?
+    expr=APPLICATION_EXPRESSION()
+  ) {
+    return new SimpleImmutableEntry(labels, expr);
+  }  
+}
+
+Expr.Parsed WITH_EXPRESSION(): {
+  Expr.Parsed base;
+  List<Map.Entry<List<String>, Expr.Parsed>> args = new ArrayList();
+  Map.Entry<List<String>, Expr.Parsed> current; 
+} {
+  (
+    base=APPLICATION_EXPRESSION()
+    (
+      LOOKAHEAD(<WHSP> <WITH>)
+      <WHSP> <WITH> <WHSP>
+      current=WITH_ENTRY() { args.add(current); }
+    )*
+  ) {
+    return (args.isEmpty()) ? base : null; // TODO: new PExpr.Parsed.With(base, args);
+  }
+}
+
+Expr.Parsed EQUIVALENT_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=WITH_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <EQUIVALENT>)
+      (whsp0=<WHSP>)?
+      operator=<EQUIVALENT> (whsp1=<WHSP>)? arg=WITH_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed NOT_EQUALS_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=EQUIVALENT_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <NOT_EQUALS>)
+      (whsp0=<WHSP>)?
+      operator=<NOT_EQUALS> (whsp1=<WHSP>)? arg=EQUIVALENT_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed EQUALS_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=NOT_EQUALS_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <EQUALS>)
+      (whsp0=<WHSP>)?
+      operator=<EQUALS> (whsp1=<WHSP>)? arg=NOT_EQUALS_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed TIMES_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=EQUALS_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <TIMES>)
+      (whsp0=<WHSP>)?
+      operator=<TIMES> (whsp1=<WHSP>)? arg=EQUALS_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed COMBINE_TYPES_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=TIMES_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <COMBINE_TYPES>)
+      (whsp0=<WHSP>)?
+      operator=<COMBINE_TYPES> (whsp1=<WHSP>)? arg=TIMES_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed PREFER_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=COMBINE_TYPES_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <PREFER>)
+      (whsp0=<WHSP>)?
+      operator=<PREFER> (whsp1=<WHSP>)? arg=COMBINE_TYPES_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed COMBINE_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=PREFER_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <COMBINE>)
+      (whsp0=<WHSP>)?
+      operator=<COMBINE> (whsp1=<WHSP>)? arg=PREFER_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed AND_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=COMBINE_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <AND>)
+      (whsp0=<WHSP>)?
+      operator=<AND> (whsp1=<WHSP>)? arg=COMBINE_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed LIST_APPEND_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=AND_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <LIST_APPEND>)
+      (whsp0=<WHSP>)?
+      operator=<LIST_APPEND> (whsp1=<WHSP>)? arg=AND_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed TEXT_APPEND_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=LIST_APPEND_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <CONCAT>)
+      (whsp0=<WHSP>)?
+      operator=<CONCAT> (whsp1=<WHSP>)? arg=LIST_APPEND_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed PLUS_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=TEXT_APPEND_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <PLUS>)
+      (whsp0=<WHSP>)?
+      operator=<PLUS> whsp1=<WHSP> arg=TEXT_APPEND_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed OR_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=PLUS_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <OR>)
+      (whsp0=<WHSP>)?
+      operator=<OR> (whsp1=<WHSP>)? arg=PLUS_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+        whsp1 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed IMPORT_ALT_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed arg;
+  Token operator;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=OR_EXPRESSION()
+    (
+      LOOKAHEAD((<WHSP>)? <QUESTION_MARK>)
+      (whsp0=<WHSP>)?
+      operator=<QUESTION_MARK> whsp1=<WHSP> arg=OR_EXPRESSION() {
+        base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
+        whsp0 = null;
+      }
+    )*
+  ) {
+    return base;
+  }
+}
+
+Expr.Parsed OPERATOR_EXPRESSION(): { Expr.Parsed expr; } { expr = IMPORT_ALT_EXPRESSION() { return expr; } }
+
+Expr.Parsed ANNOTATED_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed type = null;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=OPERATOR_EXPRESSION() (LOOKAHEAD((<WHSP>)? <COLON>) (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> type=EXPRESSION())?
+  ) {
+    return (type == null) ? base : ParsingHelpers.makeAnnotated(base, type, whsp0, whsp1);
+  }
+}
+
+Expr.Parsed EMPTY_LIST_LITERAL(): {
+  Expr.Parsed type;
+  Token first;
+  Token t0;
+  StringBuilder builder = new StringBuilder('[');
+} {
+  (
+    first=<BRACKET_OPEN>
+    (t0=<WHSP> { builder.append(t0.image); })?
+    (<COMMA> { builder.append(','); } (t0=<WHSP> { builder.append(t0.image); })?)?
+    <BRACKET_CLOSE> { builder.append(']'); }
+    (t0=<WHSP> { builder.append(t0.image); })?
+    <COLON>
+    t0=<WHSP> {
+      builder.append(':');
+      builder.append(t0.image);
+    }
+    type=APPLICATION_EXPRESSION()) {
+    return ParsingHelpers.makeEmptyListLiteral(type, builder.toString(), first);
+  }
+}
+
+Expr.Parsed LAMBDA_EXPRESSION(): {
+  Expr.Parsed type;
+  Expr.Parsed body;
+  Token first;
+  Token param;
+} {
+  (
+    first=<LAMBDA> (<WHSP>)? <PARENS_OPEN> (<WHSP>)?
+    param=<NONRESERVED_LABEL> (<WHSP>)? <COLON> <WHSP>
+    type=EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
+    body=EXPRESSION()
+  ) {
+    return ParsingHelpers.makeLambda(trimLabel(param.image), type, body, first);
+  }
+}
+
+LetBinding LET_BINDING(): {
+  Token first;
+  Token whsp;
+  Token name;
+  Expr.Parsed type = null;
+  Expr.Parsed value;
+  StringBuilder builder = new StringBuilder();
+  String text0 = null;
+  String text2 = null;
+} {
+  (
+    first=<LET>
+    whsp=<WHSP>
+    name=<NONRESERVED_LABEL> {
+      builder.append(first.image);
+      builder.append(whsp.image);
+      builder.append(name.image);
+    }
+    (whsp=<WHSP> { builder.append(whsp.image); })?
+    (
+      <COLON> whsp=<WHSP> {
+        builder.append(':');
+        builder.append(whsp.image);
+        text0 = builder.toString();
+        builder.setLength(0);
+      }
+      type=EXPRESSION()
+      (whsp=<WHSP> { builder.append(whsp.image); })?
+    )?
+    <EQUAL_SIGN> { builder.append('='); }
+    (whsp=<WHSP> { builder.append(whsp.image); })?
+    value=EXPRESSION()
+    (whsp=<WHSP> { text2 = whsp.image; })?
+  ) {
+    return new LetBinding(trimLabel(name.image), type, value, text0, builder.toString(), text2, first.beginLine, first.beginColumn);
+  }
+}
+
+Expr.Parsed LET_EXPRESSION(): {
+  LetBinding current = null;
+  List<LetBinding> bindings = new ArrayList();
+  Expr.Parsed body;
+  Token whsp;
+} {
+  (
+    (current=LET_BINDING() { bindings.add(current); })+ <IN> whsp=<WHSP> body=EXPRESSION()
+  ) {
+    return ParsingHelpers.makeLet(bindings, body, whsp.image);
+  }
+}
+
+Expr.Parsed IF_EXPRESSION(): {
+  Token first;
+  Expr.Parsed condition;
+  Expr.Parsed thenValue;
+  Expr.Parsed elseValue;
+} {
+  (
+    first=<IF> <WHSP> condition=EXPRESSION() (<WHSP>)? <THEN> <WHSP> thenValue=EXPRESSION() (<WHSP>)? <ELSE> <WHSP> elseValue=EXPRESSION()
+  ) {
+    return ParsingHelpers.makeIf(condition, thenValue, elseValue, first);
+  }
+}
+
+Expr.Parsed FUNCTION_TYPE(): {
+  Expr.Parsed input;
+  Expr.Parsed result;
+} {
+  (input=OPERATOR_EXPRESSION() (<WHSP>)? <ARROW> (<WHSP>)? result=EXPRESSION()) {
+    return ParsingHelpers.makePi(input, result);
+  }
+}
+
+Expr.Parsed FORALL_EXPRESSION(): {
+  Token first;
+  Token param;
+  Expr.Parsed input;
+  Expr.Parsed result;
+} {
+  (
+    first=<FORALL> (<WHSP>)? <PARENS_OPEN> (<WHSP>)?
+    param=<NONRESERVED_LABEL> (<WHSP>)? <COLON> <WHSP>
+    input=EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
+    result=EXPRESSION()
+  ) {
+    return ParsingHelpers.makePi(trimLabel(param.image), input, result, first);
+  }
+}
+
+Expr.Parsed ASSERT_EXPRESSION(): {
+  Token first;
+  Token whsp0 = null;
+  Token whsp1 = null;
+  Expr.Parsed value;
+} {
+  (first=<ASSERT> (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> value=EXPRESSION()) {
+    return ParsingHelpers.makeAssert(value, first, whsp0, whsp1);
+  }
+}
+
+Expr.Parsed EXPRESSION(): {
+  Expr.Parsed expr = null;
+  Expr.Parsed other = null;
+  Expr.Parsed type = null;
+  Token operator = null;
+  Token whsp0 = null;
+  Token whsp1 = null;
+  Token whsp2 = null;
+  Token whsp3 = null;
+} {
+  (
+      expr=LAMBDA_EXPRESSION()
+    | expr=IF_EXPRESSION()
+    | expr=LET_EXPRESSION()
+    | expr=FORALL_EXPRESSION()
+    | LOOKAHEAD(OPERATOR_EXPRESSION() (<WHSP>)? <ARROW>) expr=FUNCTION_TYPE()
+    | LOOKAHEAD(<MERGE> <WHSP> IMPORT_EXPRESSION() <WHSP> IMPORT_EXPRESSION() (<WHSP>)? <COLON>)
+      operator=<MERGE>
+      whsp0=<WHSP>
+      expr=IMPORT_EXPRESSION()
+      whsp1=<WHSP>
+      other=IMPORT_EXPRESSION()
+      (whsp2=<WHSP>)?
+      <COLON>
+      whsp3=<WHSP>
+      type=APPLICATION_EXPRESSION() {
+        expr = ParsingHelpers.makeMerge(expr, other, type, operator, whsp0, whsp1, whsp2, whsp3);
+      }
+    | LOOKAHEAD(EMPTY_LIST_LITERAL()) expr=EMPTY_LIST_LITERAL()
+    | LOOKAHEAD(<TOMAP> <WHSP> IMPORT_EXPRESSION() (<WHSP>)? <COLON>)
+      operator=<TOMAP>
+      whsp0=<WHSP>
+      expr=IMPORT_EXPRESSION()
+      (whsp1=<WHSP>)?
+      <COLON>
+      whsp2=<WHSP>
+      type=APPLICATION_EXPRESSION() {
+        expr = ParsingHelpers.makeToMap(expr, type, operator, whsp0, whsp1, whsp2);
+      }
+    | expr=ASSERT_EXPRESSION()
+    | expr=ANNOTATED_EXPRESSION()
+  ) {
+    return expr;
+  }
+}
+
+void TEST(): {} { IMPORT() <EOF> }
+
+Expr.Parsed COMPLETE_EXPRESSION(): { Expr.Parsed expr; } { ((<WHSP>)? expr=EXPRESSION() (<WHSP>)?) { return expr; }}
+
+Expr.Parsed TOP_LEVEL(): { Expr.Parsed expr; } { (expr=COMPLETE_EXPRESSION() <EOF>) { return expr; }}
