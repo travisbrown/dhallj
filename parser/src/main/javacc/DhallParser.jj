@@ -12,9 +12,10 @@ package org.dhallj.parser;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Expr;
 import org.dhallj.parser.Positioned.Wrapped;
@@ -36,7 +37,8 @@ class DhallParser {
 PARSER_END(DhallParser)
 
 TOKEN_MGR_DECLS : {
-  Stack<Boolean> interpolationStack = new Stack<Boolean>();
+  Deque<Boolean> interpolationState = new LinkedList();
+  Deque<Integer> braceDepth = new LinkedList();
   List<Comment> comments = new ArrayList();
   WhitespaceManager whitespace = new WhitespaceManager();
 }
@@ -118,14 +120,25 @@ TOKEN: {
   | <LAMBDA: "\\" | "\u03bb">
   | <ARROW: "->" | "\u2192">
   | <COMPLETE: "::">
-  | <DOUBLE_QUOTE_START: "\""> { interpolationStack.push(true); }: WITHIN_DOUBLE_QUOTE
-  | <SINGLE_QUOTE_START: "''\n"> { interpolationStack.push(false); }: WITHIN_SINGLE_QUOTE
+  | <DOUBLE_QUOTE_START: "\"">: WITHIN_DOUBLE_QUOTE
+  | <SINGLE_QUOTE_START: "''\n">: WITHIN_SINGLE_QUOTE
   | <PARENS_OPEN: "(">
   | <PARENS_CLOSE: ")">
   | <BRACKET_OPEN: "[">
   | <BRACKET_CLOSE: "]">
-  | <BRACE_OPEN: "{">
-  | <BRACE_CLOSE: "}">
+  | <BRACE_OPEN: "{"> { if (braceDepth.isEmpty()) { braceDepth.push(0); }; braceDepth.push(braceDepth.pop() + 1); ; }
+  | <BRACE_CLOSE: "}"> {
+    int currentBraceDepth = braceDepth.pop() - 1;
+    boolean currentInterpolationState = false;
+    if (currentBraceDepth >= 0) {
+      braceDepth.push(currentBraceDepth);
+    } else {
+      currentInterpolationState = interpolationState.pop();
+    }
+    SwitchTo((currentBraceDepth >= 0)
+      ? DEFAULT
+      : (currentInterpolationState) ? WITHIN_DOUBLE_QUOTE : WITHIN_SINGLE_QUOTE);
+  }
   | <ANGLE_OPEN: "<">
   | <ANGLE_CLOSE: ">">
   | <DOT: ".">
@@ -160,32 +173,28 @@ TOKEN: {
 }
 
 <WITHIN_DOUBLE_QUOTE> TOKEN: {
+  <DOUBLE_QUOTE_INTERPOLATION: "${"> {
+    interpolationState.push(true);
+    braceDepth.push(0);
+    SwitchTo(DEFAULT);
+  } |
   <DOUBLE_QUOTE_CHARS: (
-      "\u0020" | "\u0021" | ["\u0023"-"\u005b"] | ["\u005d"-"\u007f"]
+      "\u0020" | "\u0021" | ["\u0025"-"\u005b"] | ["\u005d"-"\u007f"]
     | ("\\" (["\"", "$", "\\", "/", "b", "f", "n", "r", "t"]))
     | <VALID_NON_ASCII>
   )+>
 }
-<WITHIN_DOUBLE_QUOTE> TOKEN: { <DOUBLE_QUOTE_END: "\""> {
-  boolean isDouble = interpolationStack.pop();
-  assert(isDouble);
-
-  SwitchTo(
-    interpolationStack.empty() ? DEFAULT : (interpolationStack.peek() ? WITHIN_DOUBLE_QUOTE : WITHIN_SINGLE_QUOTE)
-  );
-} }
+<WITHIN_DOUBLE_QUOTE> TOKEN: { <DOUBLE_QUOTE_END: "\"">: DEFAULT }
 
 <WITHIN_SINGLE_QUOTE> TOKEN: {
+  <SINGLE_QUOTE_INTERPOLATION: "${"> {
+    interpolationState.push(false);
+    braceDepth.push(0);
+    SwitchTo(DEFAULT);
+  } |
   <SINGLE_QUOTE_CHARS: (<ASCII> | <VALID_NON_ASCII> | "\t" | "\n" | "\r\n")>
 }
-<WITHIN_SINGLE_QUOTE> TOKEN: { <SINGLE_QUOTE_END: "''"> {
-  boolean isSingle = interpolationStack.pop();
-  assert(isSingle);
-
-  SwitchTo(
-    interpolationStack.empty() ? DEFAULT : (interpolationStack.peek() ? WITHIN_DOUBLE_QUOTE : WITHIN_SINGLE_QUOTE)
-  );
-} }
+<WITHIN_SINGLE_QUOTE> TOKEN: { <SINGLE_QUOTE_END: "''">: DEFAULT }
 
 Wrapped<String> ANY_LABEL(): {
   Token token;
@@ -204,34 +213,69 @@ Wrapped<String> ANY_LABEL_OR_SOME():  {
   }
 }
 
-Wrapped<String> DOUBLE_QUOTE_LITERAL(): {
+Map.Entry<String, Expr.Parsed> DOUBLE_QUOTE_CHUNK(): {
   Token token = null;
-  Token first;
-  Token last;
+  Expr.Parsed expr = null;
 } {
-  first=<DOUBLE_QUOTE_START> (token=<DOUBLE_QUOTE_CHARS>)? last=<DOUBLE_QUOTE_END> {
-    return new Wrapped((token == null) ? "" : token.image, first, last);
+  ((<DOUBLE_QUOTE_INTERPOLATION> expr=COMPLETE_EXPRESSION() <BRACE_CLOSE>) | token=<DOUBLE_QUOTE_CHARS>) {
+    return new SimpleImmutableEntry(token == null ? null : token.image, expr);
   }
 }
 
-Wrapped<String> SINGLE_QUOTE_LITERAL(): {
-  Token token;
-  StringBuilder builder = new StringBuilder();
+Expr.Parsed DOUBLE_QUOTE_LITERAL(): {
+  List<Map.Entry<String, Expr.Parsed>> chunks = new ArrayList(1);
+  Map.Entry<String, Expr.Parsed> current;
   Token first;
   Token last;
+} {
+  first=<DOUBLE_QUOTE_START>
+  (
+    current=DOUBLE_QUOTE_CHUNK() {
+      chunks.add(current);
+    }
+  )*
+  last=<DOUBLE_QUOTE_END> {
+    return ParsingHelpers.makeTextLiteral(chunks, first, last);
+  }
+}
+
+List<Map.Entry<String, Expr.Parsed>> SINGLE_QUOTE_CONTINUE(): {
+  List<Map.Entry<String, Expr.Parsed>> continuation = null;
+  Token token = null;
+  Expr.Parsed expr = null;
+} {
+
+    (
+      <SINGLE_QUOTE_INTERPOLATION> expr=COMPLETE_EXPRESSION() <BRACE_CLOSE> continuation=SINGLE_QUOTE_CONTINUE()
+    | token=<SINGLE_QUOTE_CHARS> continuation=SINGLE_QUOTE_CONTINUE()
+    | <SINGLE_QUOTE_END>
+    ) {
+      if (continuation == null) {
+        return new ArrayList<Map.Entry<String, Expr.Parsed>>();
+      } else {
+        continuation.add(
+          new SimpleImmutableEntry(token == null ? null : token.image, expr)
+        );
+        return continuation;
+      }
+    }
+    
+}
+
+Expr.Parsed SINGLE_QUOTE_LITERAL(): {
+  List<Map.Entry<String, Expr.Parsed>> chunks = new ArrayList(1);
+  Token first;
 } {
   (
-    first=<SINGLE_QUOTE_START>
-    (token=<SINGLE_QUOTE_CHARS> { builder.append(token.image); })*
-    last=<SINGLE_QUOTE_END>
+    first=<SINGLE_QUOTE_START> chunks=SINGLE_QUOTE_CONTINUE()
   ) {
-    return new Wrapped(builder.toString(), first, last);
+    return ParsingHelpers.makeSingleQuotedTextLiteral(chunks, first);
   }
 }
 
-Expr.Parsed TEXT_LITERAL(): { Wrapped<String> value; } {
+Expr.Parsed TEXT_LITERAL(): { Expr.Parsed value; } {
   (value=DOUBLE_QUOTE_LITERAL() | value=SINGLE_QUOTE_LITERAL()) {
-    return ParsingHelpers.makeTextLiteral(value.value, value.beginLine, value.beginColumn, value.endLine, value.endColumn);
+    return value;
   }
 }
 

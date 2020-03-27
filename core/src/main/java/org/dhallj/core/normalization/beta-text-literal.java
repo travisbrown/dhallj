@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Thunk;
+import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeTextLiteral {
   static final Expr apply(String[] parts, Iterable<Thunk<Expr>> interpolated) {
@@ -39,22 +40,40 @@ final class BetaNormalizeTextLiteral {
         }
       }
 
-      List<String> newParts = new ArrayList(parts.length);
-      List<Expr> newInterpolated = new ArrayList(parts.length - 1);
+      final List<String> newParts = new ArrayList(parts.length);
+      final List<Expr> newInterpolated = new ArrayList(parts.length - 1);
+      boolean lastAdded = false;
 
       int partIndex = 0;
       newParts.add(parts[partIndex++]);
 
       for (Thunk<Expr> thunk : interpolated) {
         Expr expr = thunk.apply();
-        String nextAsSimpleTextLiteral = expr.asSimpleTextLiteral();
 
-        if (nextAsSimpleTextLiteral != null) {
-          String current = newParts.get(newParts.size() - 1);
-          newParts.set(newParts.size() - 1, current + nextAsSimpleTextLiteral + parts[partIndex++]);
-        } else {
+        lastAdded =
+            expr.acceptExternal(
+                new ConstantVisitor.External<Boolean>(false) {
+                  @Override
+                  public Boolean onTextLiteral(String[] parts, Iterable<Expr> interpolated) {
+                    newParts.set(newParts.size() - 1, newParts.get(newParts.size() - 1) + parts[0]);
+
+                    Iterator<Expr> it = interpolated.iterator();
+
+                    for (int i = 1; i < parts.length; i++) {
+                      newInterpolated.add(it.next());
+                      newParts.add(parts[i]);
+                    }
+                    return true;
+                  }
+                });
+
+        if (!lastAdded) {
+
           newParts.add(parts[partIndex++]);
           newInterpolated.add(expr);
+
+        } else {
+          newParts.set(newParts.size() - 1, newParts.get(newParts.size() - 1) + parts[partIndex++]);
         }
       }
 

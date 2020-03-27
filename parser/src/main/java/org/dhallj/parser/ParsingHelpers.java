@@ -39,11 +39,64 @@ final class ParsingHelpers {
   }
 
   static final Expr.Parsed makeTextLiteral(
-      String value, int beginLine, int beginColumn, int endLine, int endColumn) {
-    Source source = Source.fromString(value, beginLine, beginColumn, endLine, endColumn);
+      List<Entry<String, Expr.Parsed>> chunks, Token first, Token last) {
+    // TODO: fix source.
+    Source source =
+        Source.fromString("", first.beginLine, first.beginColumn, last.endLine, last.endColumn);
 
-    String[] parts = {value};
-    return new Expr.Parsed(Expr.makeTextLiteral(parts, new Expr.Parsed[0]), source);
+    List<String> parts = new ArrayList(1);
+    List<Expr> interpolated = new ArrayList();
+
+    for (Entry<String, Expr.Parsed> chunk : chunks) {
+      if (chunk.getKey() == null) {
+        if (parts.isEmpty()) {
+          parts.add("");
+        }
+        interpolated.add(chunk.getValue());
+      } else {
+        parts.add(chunk.getKey());
+      }
+    }
+
+    if (interpolated.size() == parts.size()) {
+      parts.add("");
+    }
+
+    return new Expr.Parsed(
+        Expr.makeTextLiteral(parts.toArray(new String[parts.size()]), (List) interpolated), source);
+  }
+
+  static final Expr.Parsed makeSingleQuotedTextLiteral(
+      List<Entry<String, Expr.Parsed>> chunks, Token first) {
+    // TODO: fix source.
+    Source source = sourceFromToken(first);
+
+    Collections.reverse(chunks);
+
+    List<String> parts = new ArrayList(1);
+    List<Expr> interpolated = new ArrayList();
+
+    for (Entry<String, Expr.Parsed> chunk : chunks) {
+      if (chunk.getKey() == null) {
+        if (parts.isEmpty()) {
+          parts.add("");
+        }
+        interpolated.add(chunk.getValue());
+      } else {
+        if (parts.size() > interpolated.size()) {
+          parts.set(parts.size() - 1, parts.get(parts.size() - 1) + chunk.getKey());
+        } else {
+          parts.add(chunk.getKey());
+        }
+      }
+    }
+
+    if (interpolated.size() == parts.size()) {
+      parts.add("");
+    }
+
+    return new Expr.Parsed(
+        Expr.makeTextLiteral(parts.toArray(new String[parts.size()]), (List) interpolated), source);
   }
 
   static final Expr.Parsed makeApplication(Expr.Parsed base, Expr.Parsed arg, Token whsp) {

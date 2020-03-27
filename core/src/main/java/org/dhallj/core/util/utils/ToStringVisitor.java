@@ -38,7 +38,19 @@ public class ToStringVisitor implements Visitor.Internal<String> {
   }
 
   public String onTextLiteral(String[] parts, Iterable<Thunk<String>> interpolated) {
-    return parts[0];
+    StringBuilder builder = new StringBuilder();
+    builder.append(parts[0]);
+    int i = 0;
+    Iterator<Thunk<String>> it = interpolated.iterator();
+
+    while (it.hasNext()) {
+      builder.append("${");
+      builder.append(it.next().apply());
+      builder.append("}");
+      builder.append(parts[i + 1]);
+      i += 1;
+    }
+    return builder.toString();
   }
 
   public String onApplication(Thunk<String> base, Thunk<String> arg) {
