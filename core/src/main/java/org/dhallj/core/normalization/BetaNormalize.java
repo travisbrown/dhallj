@@ -81,7 +81,7 @@ public final class BetaNormalize implements Visitor<Thunk<Expr>, Expr> {
   }
 
   public Expr onToMap(Thunk<Expr> base, Thunk<Expr> type) {
-    return base.apply();
+    return BetaNormalizeToMap.apply(base.apply(), type.apply());
   }
 
   public Expr onMerge(Thunk<Expr> left, Thunk<Expr> right, Thunk<Expr> type) {

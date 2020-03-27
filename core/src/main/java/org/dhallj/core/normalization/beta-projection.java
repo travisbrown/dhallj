@@ -16,6 +16,10 @@ import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeProjection {
   static final Expr apply(Expr base, final String[] fieldNames) {
+    if (fieldNames.length == 0) {
+      return Expr.Constants.EMPTY_RECORD_LITERAL;
+    }
+
     Expr result =
         base.acceptExternal(
             new ConstantVisitor.External<Expr>(null) {

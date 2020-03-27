@@ -191,6 +191,8 @@ public abstract class Expr {
   }
 
   public static final class Constants {
+    private static List<Entry<String, Expr>> emptyFields = new ArrayList(0);
+
     public static Expr UNDERSCORE = makeIdentifier("_");
     public static Expr SORT = makeIdentifier("Sort");
     public static Expr KIND = makeIdentifier("Kind");
@@ -209,6 +211,9 @@ public abstract class Expr {
     public static Expr NATURAL_FOLD = makeIdentifier("Natural/fold");
     public static Expr LIST_FOLD = makeIdentifier("List/fold");
     public static Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
+    public static Expr EMPTY_RECORD_LITERAL = makeRecordLiteral(emptyFields);
+    public static Expr EMPTY_RECORD_TYPE = makeRecordType(emptyFields);
+
     private static Set<String> builtInNames = new HashSet();
 
     static {

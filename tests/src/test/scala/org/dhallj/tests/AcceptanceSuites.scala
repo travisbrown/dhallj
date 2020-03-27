@@ -21,8 +21,9 @@ class NormalizationHaskellTutorialProjectionSuite
     )
 
 class NormalizationRegressionSuite extends ExprNormalizationSuite("normalization/success/regression")
-//class NormalizationUnitSuite extends ExprNormalizationSuite("normalization/success/unit")
-//class NormalizationSimplificationsSuite extends ExprNormalizationSuite("normalization/success/simplifications")
+
+class NormalizationUnitSuite extends ExprNormalizationSuite("normalization/success/unit")
+class NormalizationSimplificationsSuite extends ExprNormalizationSuite("normalization/success/simplifications")
 
 class HashSimpleSuite extends HashAcceptanceSuite("semantic-hash/success/simple")
 

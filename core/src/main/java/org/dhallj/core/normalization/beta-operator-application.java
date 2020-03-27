@@ -107,19 +107,25 @@ final class BetaNormalizeOperatorApplication {
       Iterable<Entry<String, Expr>> lhsAsRecordLiteral = lhs.asRecordLiteral();
       Iterable<Entry<String, Expr>> rhsAsRecordLiteral = rhs.asRecordLiteral();
 
-      if (lhsAsRecordLiteral != null && rhsAsRecordLiteral != null) {
-        Map<String, Expr> asMap = new TreeMap();
+      if (lhsAsRecordLiteral != null) {
+        if (rhsAsRecordLiteral != null) {
+          Map<String, Expr> asMap = new TreeMap();
 
-        for (Entry<String, Expr> entry : lhsAsRecordLiteral) {
-          asMap.put(entry.getKey(), entry.getValue());
+          for (Entry<String, Expr> entry : lhsAsRecordLiteral) {
+            asMap.put(entry.getKey(), entry.getValue());
+          }
+
+          for (Entry<String, Expr> entry : rhsAsRecordLiteral) {
+            asMap.put(entry.getKey(), entry.getValue());
+          }
+
+          return Expr.makeRecordLiteral(asMap.entrySet());
+        } else if (!lhsAsRecordLiteral.iterator().hasNext()) {
+          return rhs;
         }
 
-        for (Entry<String, Expr> entry : rhsAsRecordLiteral) {
-          asMap.put(entry.getKey(), entry.getValue());
-        }
-
-        return Expr.makeRecordLiteral(asMap.entrySet());
-
+      } else if (rhsAsRecordLiteral != null && !rhsAsRecordLiteral.iterator().hasNext()) {
+        return lhs;
       } else if (lhs.equivalent(rhs)) {
         return rhs;
       }
@@ -130,18 +136,52 @@ final class BetaNormalizeOperatorApplication {
               Expr.makeFieldAccess(lhs, "T"))
           .accept(BetaNormalize.instance);
     } else if (operator.equals(Operator.COMBINE)) {
-      return mergeRecursive(lhs, rhs).accept(BetaNormalize.instance);
+      Iterable<Entry<String, Expr>> firstAsRecordLiteral = lhs.asRecordLiteral();
+      Iterable<Entry<String, Expr>> secondAsRecordLiteral = rhs.asRecordLiteral();
+
+      if (firstAsRecordLiteral != null) {
+        if (secondAsRecordLiteral != null) {
+          return mergeRecursive(lhs, rhs, firstAsRecordLiteral, secondAsRecordLiteral)
+              .accept(BetaNormalize.instance);
+        } else {
+          if (!firstAsRecordLiteral.iterator().hasNext()) {
+            return rhs;
+          }
+        }
+      } else if (secondAsRecordLiteral != null && !secondAsRecordLiteral.iterator().hasNext()) {
+        return lhs;
+      } else {
+        return Expr.makeOperatorApplication(Operator.COMBINE, lhs, rhs);
+      }
+
     } else if (operator.equals(Operator.COMBINE_TYPES)) {
-      return mergeTypesRecursive(lhs, rhs).accept(BetaNormalize.instance);
+      Iterable<Entry<String, Expr>> firstAsRecordType = lhs.asRecordType();
+      Iterable<Entry<String, Expr>> secondAsRecordType = rhs.asRecordType();
+
+      if (firstAsRecordType != null) {
+        if (secondAsRecordType != null) {
+          return mergeTypesRecursive(lhs, rhs, firstAsRecordType, secondAsRecordType)
+              .accept(BetaNormalize.instance);
+        } else {
+          if (!firstAsRecordType.iterator().hasNext()) {
+            return rhs;
+          }
+        }
+      } else if (secondAsRecordType != null && !secondAsRecordType.iterator().hasNext()) {
+        return lhs;
+      } else {
+        return Expr.makeOperatorApplication(Operator.COMBINE_TYPES, lhs, rhs);
+      }
     }
 
     return Expr.makeOperatorApplication(operator, lhs, rhs);
   }
 
-  private static Expr mergeRecursive(Expr first, Expr second) {
-    Iterable<Entry<String, Expr>> firstAsRecordLiteral = first.asRecordLiteral();
-    Iterable<Entry<String, Expr>> secondAsRecordLiteral = second.asRecordLiteral();
-
+  private static Expr mergeRecursive(
+      Expr first,
+      Expr second,
+      Iterable<Entry<String, Expr>> firstAsRecordLiteral,
+      Iterable<Entry<String, Expr>> secondAsRecordLiteral) {
     if (firstAsRecordLiteral != null && secondAsRecordLiteral != null) {
 
       Map<String, Expr> asMap = new TreeMap();
@@ -158,7 +198,10 @@ final class BetaNormalizeOperatorApplication {
         if (currentValue == null) {
           asMap.put(key, entry.getValue());
         } else {
-          asMap.put(key, mergeRecursive(currentValue, value));
+          asMap.put(
+              key,
+              mergeRecursive(
+                  currentValue, value, currentValue.asRecordLiteral(), value.asRecordLiteral()));
         }
       }
       return Expr.makeRecordLiteral(asMap.entrySet());
@@ -167,10 +210,11 @@ final class BetaNormalizeOperatorApplication {
     }
   }
 
-  private static Expr mergeTypesRecursive(Expr first, Expr second) {
-    Iterable<Entry<String, Expr>> firstAsRecordType = first.asRecordType();
-    Iterable<Entry<String, Expr>> secondAsRecordType = second.asRecordType();
-
+  private static Expr mergeTypesRecursive(
+      Expr first,
+      Expr second,
+      Iterable<Entry<String, Expr>> firstAsRecordType,
+      Iterable<Entry<String, Expr>> secondAsRecordType) {
     if (firstAsRecordType != null && secondAsRecordType != null) {
 
       Map<String, Expr> asMap = new TreeMap();
@@ -187,7 +231,10 @@ final class BetaNormalizeOperatorApplication {
         if (currentValue == null) {
           asMap.put(key, entry.getValue());
         } else {
-          asMap.put(key, mergeTypesRecursive(currentValue, value));
+          asMap.put(
+              key,
+              mergeTypesRecursive(
+                  currentValue, value, currentValue.asRecordType(), value.asRecordType()));
         }
       }
       return Expr.makeRecordType(asMap.entrySet());

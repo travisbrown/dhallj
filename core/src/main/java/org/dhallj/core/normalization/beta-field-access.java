@@ -35,12 +35,11 @@ final class BetaNormalizeFieldAccess {
                       singleton.add(lhsFound);
 
                       return Expr.makeFieldAccess(
-                              Expr.makeOperatorApplication(
-                                  Operator.PREFER, Expr.makeRecordLiteral(singleton), rhs),
-                              fieldName)
-                          .accept(BetaNormalize.instance);
+                          Expr.makeOperatorApplication(
+                              Operator.PREFER, Expr.makeRecordLiteral(singleton), rhs),
+                          fieldName);
                     } else {
-                      return Expr.makeFieldAccess(rhs, fieldName).accept(BetaNormalize.instance);
+                      return Expr.makeFieldAccess(rhs, fieldName);
                     }
                   } else {
                     Iterable<Entry<String, Expr>> rhsFields = rhs.asRecordLiteral();
@@ -64,20 +63,26 @@ final class BetaNormalizeFieldAccess {
                       singleton.add(lhsFound);
 
                       return Expr.makeFieldAccess(
-                              Expr.makeOperatorApplication(
-                                  Operator.COMBINE, Expr.makeRecordLiteral(singleton), rhs),
-                              fieldName)
-                          .accept(BetaNormalize.instance);
+                          Expr.makeOperatorApplication(
+                              Operator.COMBINE, Expr.makeRecordLiteral(singleton), rhs),
+                          fieldName);
                     } else {
-                      return Expr.makeFieldAccess(rhs, fieldName).accept(BetaNormalize.instance);
+                      return Expr.makeFieldAccess(rhs, fieldName);
                     }
                   } else {
                     Iterable<Entry<String, Expr>> rhsFields = rhs.asRecordLiteral();
                     if (rhsFields != null) {
-                      Expr rhsFound = FieldUtilities.lookup(rhsFields, fieldName);
+                      Entry<String, Expr> rhsFound =
+                          FieldUtilities.lookupEntry(rhsFields, fieldName);
 
                       if (rhsFound != null) {
-                        return rhsFound;
+                        List<Entry<String, Expr>> singleton = new ArrayList();
+                        singleton.add(rhsFound);
+
+                        return Expr.makeFieldAccess(
+                            Expr.makeOperatorApplication(
+                                Operator.COMBINE, lhs, Expr.makeRecordLiteral(singleton)),
+                            fieldName);
                       } else {
                         return Expr.makeFieldAccess(lhs, fieldName).accept(BetaNormalize.instance);
                       }
