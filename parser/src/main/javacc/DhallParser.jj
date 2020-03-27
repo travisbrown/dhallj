@@ -301,18 +301,20 @@ Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
 Map.Entry<List<String>, Expr.Parsed> RECORD_LITERAL_ENTRY(): {
   List<String> labels = new ArrayList<String>();
   Wrapped<String> current;
-  Expr.Parsed expr;
+  Expr.Parsed expr = null;
 } {
   (
     current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
-    (
-      LOOKAHEAD((<WHSP>)? <DOT>)
-      (<WHSP>)? <DOT> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
-    )*
-    (<WHSP>)?
-    <EQUAL_SIGN>
-    (<WHSP>)?
-    expr=EXPRESSION()
+    (LOOKAHEAD((<WHSP>)? (<DOT> | <EQUAL_SIGN>))
+      (
+        LOOKAHEAD((<WHSP>)? <DOT>)
+        (<WHSP>)? <DOT> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
+      )*
+      (<WHSP>)?
+      <EQUAL_SIGN>
+      (<WHSP>)?
+      expr=EXPRESSION()
+    )?
   ) {
     return new SimpleImmutableEntry(labels, expr);
   }  
@@ -341,7 +343,7 @@ Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
     (<COMMA> (<WHSP>)?)?
     (
         <EQUAL_SIGN> { literalValues = new ArrayList(); }
-      | LOOKAHEAD(ANY_LABEL_OR_SOME() (<WHSP>)? (<DOT> | <EQUAL_SIGN>)) (
+      | LOOKAHEAD(ANY_LABEL_OR_SOME() (<WHSP>)? (<DOT> | <EQUAL_SIGN> | <COMMA> | <BRACE_CLOSE>)) (
           currentLiteralValue=RECORD_LITERAL_ENTRY() {
             literalValues = new ArrayList();
             literalValues.add(currentLiteralValue);
@@ -575,7 +577,7 @@ Expr.Parsed APPLICATION_EXPRESSION(): {
       | (first=<TOMAP> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeToMap(current0, first, whsp0); })
       | base=IMPORT_EXPRESSION()
     ) (
-      LOOKAHEAD(<WHSP> IMPORT_EXPRESSION())
+      LOOKAHEAD(<WHSP> (IMPORT_EXPRESSION() | <BRACE_OPEN> /* TODO: Investigate why this brace check is needed. */))
       whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeApplication(base, current0, whsp0); }
     )*
   ) {
@@ -602,18 +604,18 @@ Map.Entry<List<String>, Expr.Parsed> WITH_ENTRY(): {
 
 Expr.Parsed WITH_EXPRESSION(): {
   Expr.Parsed base;
-  List<Map.Entry<List<String>, Expr.Parsed>> args = new ArrayList();
   Map.Entry<List<String>, Expr.Parsed> current; 
+  Token first;
 } {
   (
     base=APPLICATION_EXPRESSION()
     (
       LOOKAHEAD(<WHSP> <WITH>)
-      <WHSP> <WITH> <WHSP>
-      current=WITH_ENTRY() { args.add(current); }
+      first=<WHSP> <WITH> <WHSP>
+      current=WITH_ENTRY() { base = ParsingHelpers.makeWith(base, current.getKey(), current.getValue(), first); }
     )*
   ) {
-    return (args.isEmpty()) ? base : null; // TODO: new PExpr.Parsed.With(base, args);
+    return base;
   }
 }
 

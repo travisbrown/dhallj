@@ -337,11 +337,22 @@ final class ParsingHelpers {
     for (Entry<List<String>, Expr.Parsed> entry : fields) {
       List<String> parts = entry.getKey();
       String firstPart = parts.remove(0);
+
+      Expr maybePunnedValue = entry.getValue();
+      Expr value;
+      if (maybePunnedValue == null) {
+        // Record puns can't be dotted.
+        value = Expr.makeIdentifier(firstPart);
+      } else {
+        value = maybePunnedValue;
+      }
+
       if (parts.isEmpty()) {
-        dedotted.add(new SimpleImmutableEntry(firstPart, entry.getValue()));
+        dedotted.add(new SimpleImmutableEntry(firstPart, value));
       } else {
         Collections.reverse(parts);
-        Expr current = entry.getValue();
+        Expr current = value;
+
         for (String part : parts) {
           current = Expr.makeRecordLiteral(part, current);
         }
@@ -392,6 +403,29 @@ final class ParsingHelpers {
         Source.fromString("", first.beginLine, first.beginColumn, last.endLine, last.endColumn);
 
     return new Expr.Parsed(Expr.makeUnionType((List) fields), source);
+  }
+
+  static final Expr.Parsed makeWith(Expr base, List<String> path, Expr.Parsed arg, Token first) {
+    // TODO: source isn't correct.
+    Source source = sourceFromToken(first);
+
+    Expr current = arg;
+
+    for (int i = path.size() - 1; i >= 0; i--) {
+      String pathPart = path.get(i);
+
+      Expr selector = base;
+
+      for (int j = 0; j < i; j++) {
+        selector = Expr.makeFieldAccess(selector, path.get(j));
+      }
+
+      current =
+          Expr.makeOperatorApplication(
+              Operator.PREFER, selector, Expr.makeRecordLiteral(pathPart, current));
+    }
+
+    return new Expr.Parsed(current, source);
   }
 
   static final Expr.Parsed makeNonEmptyListLiteral(
