@@ -46,15 +46,18 @@ final class ParsingHelpers {
 
     List<String> parts = new ArrayList(1);
     List<Expr> interpolated = new ArrayList();
+    boolean lastWasInterpolated = true;
 
     for (Entry<String, Expr.Parsed> chunk : chunks) {
       if (chunk.getKey() == null) {
-        if (parts.isEmpty()) {
+        if (lastWasInterpolated) {
           parts.add("");
         }
         interpolated.add(chunk.getValue());
+        lastWasInterpolated = true;
       } else {
         parts.add(chunk.getKey());
+        lastWasInterpolated = false;
       }
     }
 

@@ -10,7 +10,7 @@ import org.dhallj.core.visitor.ConstantVisitor;
 final class BetaNormalizeTextLiteral {
   static final Expr apply(String[] parts, Iterable<Thunk<Expr>> interpolated) {
     if (parts.length == 1) {
-      return Expr.makeTextLiteralThunked(parts, interpolated);
+      return Expr.makeTextLiteral(parts, emptyInterpolated);
     } else {
       int partsSize = 0;
       for (String part : parts) {
@@ -42,42 +42,57 @@ final class BetaNormalizeTextLiteral {
 
       final List<String> newParts = new ArrayList(parts.length);
       final List<Expr> newInterpolated = new ArrayList(parts.length - 1);
-      boolean lastAdded = false;
+      newParts.add(parts[0]);
 
-      int partIndex = 0;
-      newParts.add(parts[partIndex++]);
+      boolean wasInlined = false;
+      int partIndex = 1;
 
       for (Thunk<Expr> thunk : interpolated) {
         Expr expr = thunk.apply();
 
-        lastAdded =
-            expr.acceptExternal(
-                new ConstantVisitor.External<Boolean>(false) {
-                  @Override
-                  public Boolean onTextLiteral(String[] parts, Iterable<Expr> interpolated) {
-                    newParts.set(newParts.size() - 1, newParts.get(newParts.size() - 1) + parts[0]);
+        wasInlined =
+            expr.acceptExternal(new InlineInterpolatedTextLiteral(newParts, newInterpolated));
 
-                    Iterator<Expr> it = interpolated.iterator();
-
-                    for (int i = 1; i < parts.length; i++) {
-                      newInterpolated.add(it.next());
-                      newParts.add(parts[i]);
-                    }
-                    return true;
-                  }
-                });
-
-        if (!lastAdded) {
-
-          newParts.add(parts[partIndex++]);
+        if (!wasInlined) {
           newInterpolated.add(expr);
-
+          newParts.add(parts[partIndex++]);
         } else {
-          newParts.set(newParts.size() - 1, newParts.get(newParts.size() - 1) + parts[partIndex++]);
+          int lastIndex = newParts.size() - 1;
+          String lastPart = newParts.get(lastIndex);
+          newParts.set(lastIndex, lastPart + parts[partIndex++]);
         }
       }
 
       return Expr.makeTextLiteral(newParts.toArray(new String[newParts.size()]), newInterpolated);
+    }
+  }
+
+  private static Iterable<Expr> emptyInterpolated = new ArrayList();
+
+  private static final class InlineInterpolatedTextLiteral
+      extends ConstantVisitor.External<Boolean> {
+    private final List<String> newParts;
+    private final List<Expr> newInterpolated;
+
+    InlineInterpolatedTextLiteral(List<String> newParts, List<Expr> newInterpolated) {
+      super(false);
+      this.newParts = newParts;
+      this.newInterpolated = newInterpolated;
+    }
+
+    @Override
+    public Boolean onTextLiteral(String[] parts, Iterable<Expr> interpolated) {
+      int lastIndex = newParts.size() - 1;
+      String lastPart = newParts.get(lastIndex);
+      newParts.set(lastIndex, lastPart + parts[0]);
+
+      Iterator<Expr> it = interpolated.iterator();
+
+      for (int i = 1; i < parts.length; i++) {
+        newInterpolated.add(it.next());
+        newParts.add(parts[i]);
+      }
+      return true;
     }
   }
 }
