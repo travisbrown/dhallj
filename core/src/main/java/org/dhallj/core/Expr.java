@@ -71,7 +71,7 @@ public abstract class Expr {
   }
 
   public final Expr typeCheck() {
-    return this.accept(new TypeCheck());
+    return this.acceptExternal(new TypeCheck());
   }
 
   public final void encode(Writer writer) {
@@ -188,6 +188,15 @@ public abstract class Expr {
 
   public final String toString() {
     return this.show();
+  }
+
+  public static final class Sugar {
+    public static final Expr desugarComplete(Expr lhs, Expr rhs) {
+
+      return Expr.makeAnnotated(
+          Expr.makeOperatorApplication(Operator.PREFER, Expr.makeFieldAccess(lhs, "default"), rhs),
+          Expr.makeFieldAccess(lhs, "Type"));
+    }
   }
 
   public static final class Constants {

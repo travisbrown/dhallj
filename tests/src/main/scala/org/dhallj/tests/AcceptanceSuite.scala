@@ -49,6 +49,7 @@ class ExprAcceptanceSuite(val base: String, transformation: Expr => Expr) extend
 }
 
 class ExprNormalizationSuite(base: String) extends ExprAcceptanceSuite(base, _.normalize)
+class ExprTypeCheckingSuite(base: String) extends ExprAcceptanceSuite(base, _.typeCheck)
 
 class HashAcceptanceSuite(val base: String,
                           transformation: Expr => String = expr => s"sha256:${expr.normalize.alphaNormalize.hash}")

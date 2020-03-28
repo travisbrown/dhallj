@@ -130,11 +130,7 @@ final class BetaNormalizeOperatorApplication {
         return rhs;
       }
     } else if (operator.equals(Operator.COMPLETE)) {
-      return Expr.makeAnnotated(
-              Expr.makeOperatorApplication(
-                  Operator.PREFER, Expr.makeFieldAccess(lhs, "default"), rhs),
-              Expr.makeFieldAccess(lhs, "T"))
-          .accept(BetaNormalize.instance);
+      return Expr.Sugar.desugarComplete(lhs, rhs).accept(BetaNormalize.instance);
     } else if (operator.equals(Operator.COMBINE)) {
       Iterable<Entry<String, Expr>> firstAsRecordLiteral = lhs.asRecordLiteral();
       Iterable<Entry<String, Expr>> secondAsRecordLiteral = rhs.asRecordLiteral();

@@ -40,3 +40,5 @@ class HashHaskellTutorialProjectionSuite
 class AlphaNormalizationUnitSuite extends ExprAcceptanceSuite("alpha-normalization/success/unit", _.alphaNormalize)
 class AlphaNormalizationRegressionSuite
     extends ExprAcceptanceSuite("alpha-normalization/success/regression", _.alphaNormalize)
+
+class TypeCheckingSimpleSuite extends ExprTypeCheckingSuite("type-inference/success/simple")
