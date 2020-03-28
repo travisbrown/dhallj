@@ -35,7 +35,7 @@ final class BetaNormalizeTextLiteral {
           }
         }
 
-        if (!tooMany) {
+        if (!tooMany && notEmptyString != null) {
           return notEmptyString;
         }
       }
