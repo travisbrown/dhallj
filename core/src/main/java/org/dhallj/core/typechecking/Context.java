@@ -13,7 +13,7 @@ public final class Context {
     this.tail = tail;
   }
 
-  public Expr lookup(String targetKey, int index) {
+  public Expr lookup(String targetKey, long index) {
     if (this.key != null && this.key.equals(targetKey)) {
       if (index == 0) {
         return this.value;

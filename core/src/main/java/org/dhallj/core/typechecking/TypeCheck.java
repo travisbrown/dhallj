@@ -56,13 +56,17 @@ public final class TypeCheck implements Visitor.Internal<Expr> {
   public final Expr onIdentifier(String name, long index) {
     if (index == 0) {
       Expr builtIn = this.builtInTypes.get(name);
-      if (builtIn == null) {
-        throw fail(String.format("Unknown identifier: %s", name));
-      } else {
+      if (builtIn != null) {
         return builtIn;
       }
+    }
+
+    Expr fromContext = this.context.lookup(name, index);
+
+    if (fromContext != null) {
+      return fromContext;
     } else {
-      return null;
+      throw fail(String.format("Unknown identifier: %s", name));
     }
   }
 
