@@ -171,7 +171,12 @@ public final class TypeCheck implements Visitor.Internal<Expr> {
   }
 
   public final Expr onLambda(String param, Thunk<Expr> input, Thunk<Expr> result) {
-    return null;
+    Expr inputEval = input.apply();
+    Context unshiftedContext = this.context;
+    this.context = this.context.insert(param, inputEval).increment(param);
+    Expr resultEval = result.apply();
+    this.context = unshiftedContext;
+    return Expr.makePi(param, inputEval, resultEval);
   }
 
   public final Expr onPi(String param, Thunk<Expr> input, Thunk<Expr> result) {

@@ -20,7 +20,7 @@ import org.dhallj.core.util.ThunkUtilities;
  *
  * <p>This is a stateless visitor intended for use as a singleton.
  */
-public final class BetaNormalize implements Visitor<Thunk<Expr>, Expr> {
+public final class BetaNormalize implements Visitor.Internal<Expr> {
   public static Visitor<Thunk<Expr>, Expr> instance = new BetaNormalize();
 
   public Expr onTextLiteral(String[] parts, Iterable<Thunk<Expr>> interpolated) {
