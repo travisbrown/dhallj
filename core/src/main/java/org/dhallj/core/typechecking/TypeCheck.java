@@ -7,6 +7,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -130,7 +131,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             rhs.accept(BetaNormalize.instance).asRecordType();
 
         if (lhsRecordType != null && rhsRecordType != null) {
-          if (isType(rhsType)) {
+          if (isType(rhsType) && !rhsRecordType.iterator().hasNext()) {
             return lhsType;
           } else {
             Universe lhsTypeUniverse = Universe.fromExpr(lhsType);
@@ -156,7 +157,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         if (lhsTypeType != null
             && rhsTypeType != null
             && isType(lhsTypeType)
-            && isType(rhsTypeType)) {
+            && isType(rhsTypeType)
+            && lhsType.equivalent(rhsType)) {
           return Constants.TYPE;
         } else {
           throw fail("=== requires terms");
@@ -182,6 +184,12 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onTextLiteral(String[] parts, Iterable<Expr> interpolated) {
+    for (Expr i : interpolated) {
+      if (!isText(i.acceptExternal(this))) {
+        throw fail("interpolation not of type Text");
+      }
+    }
+
     return Constants.TEXT;
   }
 
@@ -206,7 +214,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
               @Override
               public Expr onPi(String param, Expr input, Expr result) {
                 // TODO: Shouldn't have to normalize here when we have real equivalence.
-                if (input.normalize().same(argType.normalize())) {
+                if (input.equivalent(argType)) {
                   return result
                       .substitute(param, arg.increment(param))
                       .decrement(param)
@@ -240,16 +248,24 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onLambda(String param, Expr input, Expr result) {
-    Context unshiftedContext = this.context;
-    this.context = this.context.insert(param, input).increment(param);
-    Expr resultType = result.acceptExternal(this);
-    this.context = unshiftedContext;
-    return Expr.makePi(param, input, resultType);
+    if (Universe.fromExpr(input.acceptExternal(this)) != null) {
+      Context unshiftedContext = this.context;
+      Expr inputNormalized = input.accept(BetaNormalize.instance);
+      this.context = this.context.insert(param, inputNormalized).increment(param);
+      Expr resultType = result.acceptExternal(this);
+      this.context = unshiftedContext;
+      return Expr.makePi(param, inputNormalized, resultType);
+    } else {
+      throw fail("input type cannot be a term");
+    }
   }
 
   public final Expr onPi(String param, Expr input, Expr result) {
     Expr inputType = input.acceptExternal(this);
+    Context unshiftedContext = this.context;
+    this.context = this.context.insert(param, input).increment(param);
     Expr resultType = result.acceptExternal(this);
+    this.context = unshiftedContext;
 
     Universe inputTypeUniverse = Universe.fromExpr(inputType);
     Universe resultTypeUniverse = Universe.fromExpr(resultType);
@@ -318,7 +334,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       List<String> missing = null;
 
       for (String fieldName : fieldNames) {
-        Expr value = fieldMap.get(fieldName);
+        Expr value = fieldMap.remove(fieldName);
 
         if (value == null) {
           if (missing == null) {
@@ -427,22 +443,32 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     if (size == 0) {
       return Constants.TYPE;
     } else {
-      List<Entry<String, Expr>> fieldTypes = new ArrayList();
+      Set<String> seen = new HashSet();
       Universe firstUniverse = null;
       Entry<String, Expr> first = null;
 
       for (Entry<String, Expr> field : fields) {
-        if (field.getValue() != null) {
-          Universe universe = Universe.fromExpr(field.getValue().acceptExternal(this));
+        if (!seen.contains(field.getKey())) {
+          seen.add(field.getKey());
+          if (field.getValue() != null) {
+            Universe universe = Universe.fromExpr(field.getValue().acceptExternal(this));
 
-          if (firstUniverse == null) {
-            firstUniverse = universe;
-            first = field;
-          } else {
-            if (universe != firstUniverse) {
-              throw fail("Alternative annotation mismatch");
+            if (universe != null) {
+
+              if (firstUniverse == null) {
+                firstUniverse = universe;
+                first = field;
+              } else {
+                if (universe != firstUniverse) {
+                  throw fail("Alternative annotation mismatch");
+                }
+              }
+            } else {
+              throw fail("Alternative must be a type");
             }
           }
+        } else {
+          throw fail(String.format("Duplicate alternative: %s", field.getKey()));
         }
       }
 
@@ -457,35 +483,43 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   public final Expr onNonEmptyListLiteral(Iterable<Expr> values, int size) {
     Iterator<Expr> it = values.iterator();
     Expr first = it.next().acceptExternal(this);
+    Expr firstType = first.acceptExternal(this);
 
-    while (it.hasNext()) {
-      if (!it.next().acceptExternal(this).equivalent(first)) {
-        throw fail("heterogenous list");
+    if (isType(firstType)) {
+
+      while (it.hasNext()) {
+        if (!it.next().acceptExternal(this).equivalent(first)) {
+          throw fail("heterogenous list");
+        }
       }
-    }
 
-    return Expr.makeApplication(Expr.Constants.LIST, first);
+      return Expr.makeApplication(Expr.Constants.LIST, first);
+    } else {
+      throw fail("list element is not a term");
+    }
   }
 
-  public final Expr onEmptyListLiteral(Expr tpe) {
-    Expr tpeType = tpe.acceptExternal(this);
-    boolean result =
-        tpeType.acceptExternal(
-            new ConstantVisitor.External<Boolean>(false) {
+  public final Expr onEmptyListLiteral(Expr type) {
+    Expr typeType = type.acceptExternal(this);
+
+    Expr typeNormalized = type.accept(BetaNormalize.instance);
+    Expr result =
+        typeNormalized.acceptExternal(
+            new ConstantVisitor.External<Expr>(null) {
               @Override
-              public Boolean onApplication(Expr base, Expr arg) {
+              public Expr onApplication(Expr base, Expr arg) {
                 String baseAsIdentifier = base.asSimpleIdentifier();
 
                 if (baseAsIdentifier == null || !baseAsIdentifier.equals("List")) {
                   throw fail("non-empty list type problem");
                 } else {
-                  return true;
+                  return arg;
                 }
               }
             });
 
-    if (result) {
-      return tpeType;
+    if (result != null && isType(result.acceptExternal(this))) {
+      return Expr.makeApplication(Constants.LIST, result);
     } else {
       throw fail("non-empty list type problem");
     }
@@ -642,7 +676,26 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       } else {
         Expr rightType = right.acceptExternal(this);
         Entry<Expr, Expr> rightTypeApplied = rightType.acceptExternal(AsApplication.instance);
-        return type;
+        if (isOptional(rightTypeApplied.getKey())) {
+          Expr mergeType =
+              checkMerge(leftRecord, makeOptionalConstructors(rightTypeApplied.getValue()));
+
+          if (mergeType != null) {
+            if (type == null || mergeType.equivalent(type)) {
+              return mergeType;
+
+            } else {
+              throw fail("inferred type for merge doesn't match type annotations");
+            }
+          } else if (type != null) {
+            return type;
+          } else {
+
+            throw fail("merge with empty arguments must have a return type");
+          }
+        } else {
+          throw fail("merge's second argument must be a union or an optional");
+        }
       }
     } else {
       throw fail("merge's first argument must be a record");
@@ -673,6 +726,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   private static final Visitor<Expr, Boolean> isText = new IsIdentifier("Text");
   private static final Visitor<Expr, Boolean> isList = new IsIdentifier("List");
   private static final Visitor<Expr, Boolean> isNatural = new IsIdentifier("Natural");
+  private static final Visitor<Expr, Boolean> isOptional = new IsIdentifier("Optional");
   private static final Visitor<Expr, Boolean> isType = new IsIdentifier("Type");
 
   static boolean isBool(Expr expr) {
@@ -689,6 +743,10 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   static boolean isNatural(Expr expr) {
     return expr.acceptExternal(isNatural);
+  }
+
+  static boolean isOptional(Expr expr) {
+    return expr.acceptExternal(isOptional);
   }
 
   static boolean isType(Expr expr) {

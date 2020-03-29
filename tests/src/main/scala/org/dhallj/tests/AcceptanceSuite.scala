@@ -24,14 +24,36 @@ trait AcceptanceSuite[A, B] extends FunSuite {
       val name = toName(inputFileName)
       val expectedFileName = toExpectedFileName(inputFileName)
       (name,
-       Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"),
-       Source.fromResource(s"$base/$expectedFileName").getLines.mkString("\n"))
+        Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"),
+        Source.fromResource(s"$base/$expectedFileName").getLines.mkString("\n"))
   }
 
   acceptanceTestPairs.map {
     case (name, input, expected) =>
       test(name) {
         assert(compare(transform(parseInput(clue(input))), parseExpected(clue(expected))))
+      }
+  }
+
+}
+
+class ExprTypeCheckingFailureSuite(val base: String) extends FunSuite {
+  def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhall")
+  def toName(inputFileName: String): String = inputFileName.dropRight(7)
+
+  val acceptanceTestFiles = Source.fromResource(base).getLines.toSet
+
+  val acceptanceTests = acceptanceTestFiles.filter(isInputFileName).toList.sorted.map {
+    case inputFileName =>
+      val name = toName(inputFileName)
+      (name,
+        Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"))
+  }
+
+  acceptanceTests.map {
+    case (name, input) =>
+      test(name) {
+        intercept[RuntimeException](Dhall.parse(input).typeCheck())
       }
   }
 

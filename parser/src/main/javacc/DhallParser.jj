@@ -1130,11 +1130,11 @@ Expr.Parsed FUNCTION_TYPE_OR_ANNOTATED_EXPRESSION(): {
 } {
   (
     base=OPERATOR_EXPRESSION()
-    [LOOKAHEAD(<WHSP> (<ARROW> | <COLON>)) <WHSP>]
-    (
-      (<ARROW> [<WHSP>] result=BASE_EXPRESSION()) |
-      (<COLON> type=BASE_EXPRESSION())?
-    )
+    (LOOKAHEAD(2)
+      [whsp0=<WHSP>]
+      ((<ARROW> [<WHSP>] result=BASE_EXPRESSION()) |
+      (<COLON> whsp1=<WHSP> type=BASE_EXPRESSION()))
+    )?
   ) {
     if (type == null) {
       if (result == null) {
@@ -1187,9 +1187,9 @@ Expr.Parsed BASE_EXPRESSION(): {
         expr = ParsingHelpers.makeToMap(expr, type, operator, whsp0, whsp1, whsp2);
       })
     | expr=ASSERT_EXPRESSION()
-    //| expr=FUNCTION_TYPE_OR_ANNOTATED_EXPRESSION()
-    | LOOKAHEAD(OPERATOR_EXPRESSION() (<WHSP>)? <ARROW>) expr=FUNCTION_TYPE()
-    | expr=ANNOTATED_EXPRESSION()
+    | expr=FUNCTION_TYPE_OR_ANNOTATED_EXPRESSION()
+    //| LOOKAHEAD(OPERATOR_EXPRESSION() (<WHSP>)? <ARROW>) expr=FUNCTION_TYPE()
+    //| expr=ANNOTATED_EXPRESSION()
   ) {
     return expr;
   }

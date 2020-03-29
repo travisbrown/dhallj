@@ -43,3 +43,5 @@ class AlphaNormalizationRegressionSuite
 
 class TypeCheckingSimpleSuite extends ExprTypeCheckingSuite("type-inference/success/simple")
 class TypeCheckingUnitSuite extends ExprTypeCheckingSuite("type-inference/success/unit")
+class TypeCheckingRegressionSuite extends ExprTypeCheckingSuite("type-inference/success/regression")
+class TypeCheckingFailureUnitSuite extends ExprTypeCheckingFailureSuite("type-inference/failure/unit")
