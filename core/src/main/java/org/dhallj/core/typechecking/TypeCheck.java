@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
@@ -337,14 +338,14 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
-  public final Expr onProjectionByType(Expr base, Expr tpe) {
+  public final Expr onProjectionByType(Expr base, Expr type) {
     Iterable<Entry<String, Expr>> fields = base.acceptExternal(this).asRecordType();
 
     if (fields == null) {
       throw fail("can't project on a non-record");
     } else {
 
-      Iterable<Entry<String, Expr>> projected = tpe.accept(BetaNormalize.instance).asRecordType();
+      Iterable<Entry<String, Expr>> projected = type.accept(BetaNormalize.instance).asRecordType();
 
       if (projected == null) {
         throw fail("can't project by type with a non-record type");
@@ -383,7 +384,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         }
 
         if (missing == null) {
-          return Expr.makeRecordType(newFields);
+          return Expr.makeRecordType(projected);
         } else {
           throw fail("missing fields");
         }
@@ -395,15 +396,14 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     if (size == 0) {
       return Constants.EMPTY_RECORD_TYPE;
     } else {
-      List<Entry<String, Expr>> fieldTypes = new ArrayList();
+      Map<String, Expr> fieldTypes = new TreeMap();
 
       for (Entry<String, Expr> field : fields) {
-        Expr fieldType = field.getValue().acceptExternal(this);
-
-        fieldTypes.add(new SimpleImmutableEntry(field.getKey(), fieldType));
+        fieldTypes.put(
+            field.getKey(), field.getValue().acceptExternal(this).accept(BetaNormalize.instance));
       }
 
-      return Expr.makeRecordType(fieldTypes);
+      return Expr.makeRecordType(fieldTypes.entrySet());
     }
   }
 
@@ -508,7 +508,10 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   public final Expr onAnnotated(Expr base, Expr type) {
     Expr inferred = base.acceptExternal(this);
     // TODO: fix with equivalence.
-    if (inferred.accept(BetaNormalize.instance).equivalent(type.accept(BetaNormalize.instance))) {
+    if (inferred
+        .accept(BetaNormalize.instance)
+        .alphaNormalize()
+        .equivalent(type.accept(BetaNormalize.instance).alphaNormalize())) {
       return inferred;
     } else {
       throw fail(
@@ -545,9 +548,12 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         resultTypeFields.add(new SimpleImmutableEntry(Constants.MAP_VALUE_FIELD_NAME, firstType));
 
         Expr resultType =
-            Expr.makeApplication(Constants.LIST, Expr.makeRecordLiteral(resultTypeFields));
+            Expr.makeApplication(Constants.LIST, Expr.makeRecordType(resultTypeFields));
 
-        if (type == null || type.accept(BetaNormalize.instance).equivalent(resultType)) {
+        if (type == null
+            || type.accept(BetaNormalize.instance)
+                .alphaNormalize()
+                .equivalent(resultType.alphaNormalize())) {
           return resultType;
         } else {
           throw fail("toMap type doesn't match inferred");
@@ -746,7 +752,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     builtInTypes.put("Text/show", Expr.makePi(Constants.TEXT, Constants.TEXT));
 
     builtInTypes.put("Natural/build", Expr.makePi(naturalType, Constants.NATURAL));
-    builtInTypes.put("Natural/build", Expr.makePi(Constants.NATURAL, naturalType));
+    builtInTypes.put("Natural/fold", Expr.makePi(Constants.NATURAL, naturalType));
     builtInTypes.put("Natural/isZero", naturalToBool);
     builtInTypes.put("Natural/even", naturalToBool);
     builtInTypes.put("Natural/odd", naturalToBool);
@@ -780,7 +786,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             Constants.TYPE,
             Expr.makePi(
                 listA, Expr.makeApplication(Constants.LIST, Expr.makeRecordType(indexedRecord)))));
-    builtInTypes.put("List/reverse", Expr.makePi("a", listA, listA));
+    builtInTypes.put("List/reverse", Expr.makePi("a", Constants.TYPE, Expr.makePi(listA, listA)));
 
     builtInTypes.put(
         "Optional/build", Expr.makePi("a", Constants.TYPE, Expr.makePi(optionalType, optionalA)));

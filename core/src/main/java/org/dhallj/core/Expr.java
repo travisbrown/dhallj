@@ -179,7 +179,7 @@ public abstract class Expr {
 
   public final boolean equivalent(Expr other) {
     // TODO fix
-    return same(other);
+    return this.normalize().alphaNormalize().same(other.normalize().alphaNormalize());
   }
 
   public final String show() {
