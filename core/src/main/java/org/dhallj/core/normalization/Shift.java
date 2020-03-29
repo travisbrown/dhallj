@@ -79,6 +79,6 @@ public final class Shift extends IdentityVisitor.Internal {
       bodyEval = body.apply();
     }
 
-    return Expr.makeLet(name, typeEval, valueEval, bodyEval);
+    return Expr.makeLet(param, typeEval, valueEval, bodyEval);
   }
 }

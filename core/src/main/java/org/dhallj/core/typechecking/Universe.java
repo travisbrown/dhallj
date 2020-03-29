@@ -9,6 +9,16 @@ public enum Universe {
   KIND,
   SORT;
 
+  public final Universe max(Universe other) {
+    if (this.equals(SORT) || other.equals(SORT)) {
+      return SORT;
+    } else if (this.equals(KIND) || other.equals(KIND)) {
+      return KIND;
+    } else {
+      return TYPE;
+    }
+  }
+
   public final Expr toExpr() {
     switch (this) {
       case TYPE:

@@ -14,6 +14,6 @@ public class Dhall {
   }
 
   public static void test(String input) throws ParseException {
-    new DhallParser(new StringProvider(input)).TEST();
+    new DhallParser(new StringProvider(input)).OPERATOR_EXPRESSION();
   }
 }

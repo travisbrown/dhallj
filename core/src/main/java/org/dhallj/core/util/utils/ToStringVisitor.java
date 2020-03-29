@@ -206,7 +206,7 @@ public class ToStringVisitor implements Visitor.Internal<String> {
 
   public final String onLet(
       String name, Thunk<String> type, Thunk<String> value, Thunk<String> body) {
-    StringBuilder builder = new StringBuilder("let ");
+    StringBuilder builder = new StringBuilder("(let ");
     builder.append(name);
     String typeEval = type.apply();
     if (typeEval != null) {
@@ -218,6 +218,7 @@ public class ToStringVisitor implements Visitor.Internal<String> {
     builder.append(" ");
     builder.append(" in ");
     builder.append(body.apply());
+    builder.append(")");
 
     return builder.toString();
   }

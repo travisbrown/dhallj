@@ -22,6 +22,7 @@ import org.dhallj.core.Expr.Constants;
 import org.dhallj.core.ast.AsApplication;
 import org.dhallj.core.ast.IsIdentifier;
 import org.dhallj.core.normalization.BetaNormalize;
+import org.dhallj.core.util.FieldUtilities;
 import org.dhallj.core.visitor.ConstantVisitor;
 import org.dhallj.core.visitor.ExternalVisitor;
 
@@ -113,9 +114,38 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
         return combineTypes.accept(BetaNormalize.instance);
       case PREFER:
-        return null;
+        Iterable<Entry<String, Expr>> lhsTypeRecordType = lhsType.asRecordType();
+        Iterable<Entry<String, Expr>> rhsTypeRecordType = rhsType.asRecordType();
+
+        if (lhsTypeRecordType != null && rhsTypeRecordType != null) {
+          return Expr.makeRecordType(FieldUtilities.prefer(lhsTypeRecordType, rhsTypeRecordType));
+        } else {
+          throw fail("prefer requires record literals");
+        }
       case COMBINE_TYPES:
-        return null;
+        Iterable<Entry<String, Expr>> lhsRecordType =
+            lhs.accept(BetaNormalize.instance).asRecordType();
+        Iterable<Entry<String, Expr>> rhsRecordType =
+            rhs.accept(BetaNormalize.instance).asRecordType();
+
+        if (lhsRecordType != null && rhsRecordType != null) {
+          if (isType(rhsType)) {
+            return lhsType;
+          } else {
+            Universe lhsTypeUniverse = Universe.fromExpr(lhsType);
+            Universe rhsTypeUniverse = Universe.fromExpr(rhsType);
+
+            if (lhsTypeUniverse != null && rhsTypeUniverse != null) {
+              checkRecursiveTypeMerge(lhsRecordType, rhsRecordType);
+
+              return lhsTypeUniverse.max(rhsTypeUniverse).toExpr();
+            } else {
+              throw fail("invalid combine types");
+            }
+          }
+        } else {
+          throw fail("combine types requires record types");
+        }
       case IMPORT_ALT:
         throw fail("cannot type-check import");
       case EQUIVALENT:
@@ -169,18 +199,19 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
                     && isType(argType.acceptExternal(TypeCheck.this))) {
                   return Expr.makeApplication(Expr.Constants.OPTIONAL, argType);
                 }
-                return null;
+                throw fail(String.format("can't apply %s", name));
               }
 
               @Override
               public Expr onPi(String param, Expr input, Expr result) {
-                if (input.equivalent(argType)) {
+                // TODO: Shouldn't have to normalize here when we have real equivalence.
+                if (input.normalize().same(argType.normalize())) {
                   return result
                       .substitute(param, argType.increment(param))
                       .decrement(param)
                       .normalize();
                 } else {
-                  return null;
+                  throw fail("types don't match in function application");
                 }
               }
             });
@@ -249,16 +280,19 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       }
       throw fail(String.format("%s doesn't contain a field %s", base, fieldName));
     } else {
-      Iterable<Entry<String, Expr>> alternatives = base.asUnionType();
+      Expr baseNormalized = base.accept(BetaNormalize.instance);
+      Iterable<Entry<String, Expr>> alternatives = baseNormalized.asUnionType();
       if (alternatives == null) {
-        throw fail("can't access field on something that isn't a record or field");
+        throw fail(
+            String.format(
+                "can't access field (%s) on something that isn't a record or field", fieldName));
       } else {
         for (Entry<String, Expr> alternative : alternatives) {
           if (alternative.getKey().equals(fieldName)) {
             if (alternative.getValue() == null) {
-              return base;
+              return baseNormalized;
             } else {
-              return Expr.makePi(fieldName, alternative.getValue(), base);
+              return Expr.makePi(fieldName, alternative.getValue(), baseNormalized);
             }
           }
         }
@@ -359,7 +393,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   public final Expr onRecordLiteral(Iterable<Entry<String, Expr>> fields, int size) {
     if (size == 0) {
-      return Constants.TYPE;
+      return Constants.EMPTY_RECORD_TYPE;
     } else {
       List<Entry<String, Expr>> fieldTypes = new ArrayList();
 
@@ -374,23 +408,19 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onRecordType(Iterable<Entry<String, Expr>> fields, int size) {
-    if (size == 0) {
-      return Constants.EMPTY_RECORD_TYPE;
-    } else {
-      List<Entry<String, Expr>> fieldTypes = new ArrayList();
+    Universe max = Universe.TYPE;
 
-      for (Entry<String, Expr> field : fields) {
-        Expr fieldType = field.getValue().acceptExternal(this);
+    for (Entry<String, Expr> field : fields) {
+      Universe universe = Universe.fromExpr(field.getValue().acceptExternal(this));
 
-        if (!Universe.isUniverse(fieldType)) {
-          throw fail("The type of a field in a record type is not Type, Kind, or Sort");
-        } else {
-          fieldTypes.add(new SimpleImmutableEntry(field.getKey(), fieldType));
-        }
+      if (universe != null) {
+        max = max.max(universe);
+      } else {
+        throw fail("The type of a field in a record type is not Type, Kind, or Sort");
       }
-
-      return Expr.makeRecordType(fieldTypes);
     }
+
+    return max.toExpr();
   }
 
   public final Expr onUnionType(Iterable<Entry<String, Expr>> fields, int size) {
@@ -462,7 +492,17 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onLet(String name, Expr type, Expr value, Expr body) {
-    return null;
+    Expr valueType = value.acceptExternal(this);
+
+    if (type != null) {
+      if (!type.equivalent(valueType)) {
+        throw fail("let type doesn't match inferred type of value");
+      }
+    }
+
+    return body.substitute(name, value.accept(BetaNormalize.instance).increment(name))
+        .decrement(name)
+        .acceptExternal(this);
   }
 
   public final Expr onAnnotated(Expr base, Expr type) {
@@ -513,7 +553,21 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onMerge(Expr left, Expr right, Expr type) {
-    return null;
+    Iterable<Entry<String, Expr>> leftRecord = left.asRecordLiteral();
+
+    if (leftRecord != null) {
+      Iterable<Entry<String, Expr>> rightUnion = right.asUnionType();
+
+      if (rightUnion != null) {
+        return type;
+      } else {
+        Expr rightType = right.acceptExternal(this);
+        Entry<Expr, Expr> rightTypeApplied = rightType.acceptExternal(AsApplication.instance);
+        return type;
+      }
+    } else {
+      throw fail("merge's first argument must be a record");
+    }
   }
 
   public final Expr onNote(Expr base, Source source) {
@@ -660,5 +714,38 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     builtInTypes.put(
         "Optional/fold", Expr.makePi("a", Constants.TYPE, Expr.makePi(optionalA, optionalType)));
     builtInTypes.put("Some", Constants.SOME);
+  }
+
+  private final void checkRecursiveTypeMerge(
+      Iterable<Entry<String, Expr>> lhs, Iterable<Entry<String, Expr>> rhs) {
+
+    Map<String, Expr> lhsMap = new HashMap();
+
+    for (Entry<String, Expr> entry : lhs) {
+      lhsMap.put(entry.getKey(), entry.getValue());
+    }
+
+    for (Entry<String, Expr> entry : rhs) {
+      Expr rhsValue = entry.getValue();
+      Expr lhsValue = lhsMap.get(entry.getKey());
+
+      if (lhsValue != null) {
+        Expr.makeOperatorApplication(Operator.COMBINE_TYPES, lhsValue, rhsValue)
+            .acceptExternal(this);
+      }
+    }
+  }
+
+  private Iterable<Entry<String, Expr>> makeOptionalConstructors(Expr type) {
+    List<Entry<String, Expr>> constructors = new ArrayList();
+    constructors.add(new SimpleImmutableEntry("None", null));
+    constructors.add(new SimpleImmutableEntry("Some", type));
+    return constructors;
+  }
+
+  private void checkMerge(
+      Iterable<Entry<String, Expr>> handlers, Iterable<Entry<String, Expr>> constructors) {
+    // Map<String,
+
   }
 }
