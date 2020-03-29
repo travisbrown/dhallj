@@ -222,6 +222,8 @@ public abstract class Expr {
     public static Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
     public static Expr EMPTY_RECORD_LITERAL = makeRecordLiteral(emptyFields);
     public static Expr EMPTY_RECORD_TYPE = makeRecordType(emptyFields);
+    public static String MAP_KEY_FIELD_NAME = "mapKey";
+    public static String MAP_VALUE_FIELD_NAME = "mapValue";
 
     private static Set<String> builtInNames = new HashSet();
 

@@ -184,7 +184,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return Constants.TEXT;
   }
 
-  public final Expr onApplication(Expr base, Expr arg) {
+  public final Expr onApplication(Expr base, final Expr arg) {
     Expr baseType = base.acceptExternal(this);
     final Expr argType = arg.acceptExternal(this);
 
@@ -207,7 +207,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
                 // TODO: Shouldn't have to normalize here when we have real equivalence.
                 if (input.normalize().same(argType.normalize())) {
                   return result
-                      .substitute(param, argType.increment(param))
+                      .substitute(param, arg.increment(param))
                       .decrement(param)
                       .normalize();
                 } else {
@@ -507,10 +507,13 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   public final Expr onAnnotated(Expr base, Expr type) {
     Expr inferred = base.acceptExternal(this);
-    if (inferred.equivalent(type)) {
+    // TODO: fix with equivalence.
+    if (inferred.accept(BetaNormalize.instance).equivalent(type.accept(BetaNormalize.instance))) {
       return inferred;
     } else {
-      throw fail("invalid type annotation");
+      throw fail(
+          String.format(
+              "invalid type annotation: %s for %s", type.accept(BetaNormalize.instance), inferred));
     }
   }
 
@@ -535,17 +538,73 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         }
       }
 
-      List<Entry<String, Expr>> resultTypeFields = new ArrayList(2);
-      resultTypeFields.add(new SimpleImmutableEntry("mapKey", Constants.TEXT));
-      resultTypeFields.add(new SimpleImmutableEntry("mapValue", firstType));
+      if (firstType != null) {
+        List<Entry<String, Expr>> resultTypeFields = new ArrayList(2);
+        resultTypeFields.add(
+            new SimpleImmutableEntry(Constants.MAP_KEY_FIELD_NAME, Constants.TEXT));
+        resultTypeFields.add(new SimpleImmutableEntry(Constants.MAP_VALUE_FIELD_NAME, firstType));
 
-      Expr resultType =
-          Expr.makeApplication(Constants.LIST, Expr.makeRecordLiteral(resultTypeFields));
+        Expr resultType =
+            Expr.makeApplication(Constants.LIST, Expr.makeRecordLiteral(resultTypeFields));
 
-      if (type != null && !type.equivalent(resultType)) {
-        throw fail("toMap type doesn't match inferred");
+        if (type == null || type.accept(BetaNormalize.instance).equivalent(resultType)) {
+          return resultType;
+        } else {
+          throw fail("toMap type doesn't match inferred");
+        }
       } else {
-        return resultType;
+        if (type != null) {
+          Expr typeType = type.acceptExternal(this);
+          if (isType(typeType)) {
+
+            Expr typeNormalized = type.accept(BetaNormalize.instance);
+            Entry<Expr, Expr> typeApplication =
+                typeNormalized.acceptExternal(AsApplication.instance);
+
+            if (typeApplication != null && isList(typeApplication.getKey())) {
+              Iterable<Entry<String, Expr>> typeFields = typeApplication.getValue().asRecordType();
+
+              if (typeFields != null) {
+                boolean sawKey = false;
+                boolean sawValue = false;
+
+                for (Entry<String, Expr> typeField : typeFields) {
+                  if (sawKey && sawValue) {
+                    throw fail("extraneous field in toMap type annotation");
+                  } else {
+                    if (typeField.getKey().equals(Constants.MAP_KEY_FIELD_NAME)) {
+                      if (isText(typeField.getValue())) {
+                        sawKey = true;
+                      } else {
+                        throw fail("toMap with an empty argument has an invalid type annotation");
+                      }
+
+                    } else if (typeField.getKey().equals(Constants.MAP_VALUE_FIELD_NAME)) {
+                      sawValue = true;
+                    } else {
+                      throw fail("toMap with an empty argument has an invalid type annotation");
+                    }
+                  }
+                }
+
+                if (sawKey && sawValue) {
+                  return typeNormalized;
+                } else {
+                  throw fail("toMap with an empty argument has an invalid type annotation");
+                }
+              } else {
+                throw fail("toMap with an empty argument has an invalid type annotation");
+              }
+
+            } else {
+              throw fail("toMap with an empty argument has an invalid type annotation");
+            }
+          } else {
+            throw fail("toMap type annotation isn't a type");
+          }
+        } else {
+          throw fail("toMap with an empty argument requires a type annotation");
+        }
       }
     } else {
       throw fail("toMap requires a record");
@@ -553,13 +612,27 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onMerge(Expr left, Expr right, Expr type) {
-    Iterable<Entry<String, Expr>> leftRecord = left.asRecordLiteral();
+    Iterable<Entry<String, Expr>> leftRecord = left.acceptExternal(this).asRecordType();
 
     if (leftRecord != null) {
-      Iterable<Entry<String, Expr>> rightUnion = right.asUnionType();
+      Iterable<Entry<String, Expr>> rightUnion = right.acceptExternal(this).asUnionType();
 
       if (rightUnion != null) {
-        return type;
+        Expr mergeType = checkMerge(leftRecord, rightUnion);
+
+        if (mergeType != null) {
+          if (type == null || mergeType.equivalent(type)) {
+            return mergeType;
+
+          } else {
+            throw fail("inferred type for merge doesn't match type annotations");
+          }
+        } else if (type != null) {
+          return type;
+        } else {
+
+          throw fail("merge with empty arguments must have a return type");
+        }
       } else {
         Expr rightType = right.acceptExternal(this);
         Entry<Expr, Expr> rightTypeApplied = rightType.acceptExternal(AsApplication.instance);
@@ -592,7 +665,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   private static final Visitor<Expr, Boolean> isBool = new IsIdentifier("Bool");
   private static final Visitor<Expr, Boolean> isText = new IsIdentifier("Text");
-  private static final Visitor<Expr, Boolean> isList = new IsIdentifier("Text");
+  private static final Visitor<Expr, Boolean> isList = new IsIdentifier("List");
   private static final Visitor<Expr, Boolean> isNatural = new IsIdentifier("Natural");
   private static final Visitor<Expr, Boolean> isType = new IsIdentifier("Type");
 
@@ -743,9 +816,69 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return constructors;
   }
 
-  private void checkMerge(
-      Iterable<Entry<String, Expr>> handlers, Iterable<Entry<String, Expr>> constructors) {
-    // Map<String,
+  private Expr checkMerge(
+      Iterable<Entry<String, Expr>> handlerTypes, Iterable<Entry<String, Expr>> constructors) {
+    Map<String, Expr> handlerTypeMap = new HashMap();
 
+    for (Entry<String, Expr> handlerTypeField : handlerTypes) {
+      handlerTypeMap.put(handlerTypeField.getKey(), handlerTypeField.getValue());
+    }
+
+    Expr resultType = null;
+
+    for (Entry<String, Expr> constructor : constructors) {
+      Expr handlerType = handlerTypeMap.remove(constructor.getKey());
+      if (handlerType != null) {
+        final Expr constructorType = constructor.getValue();
+
+        if (constructorType == null) {
+          // We have an empty constructor.
+          if (resultType == null) {
+            // This is the first constructor.
+            resultType = handlerType;
+          } else {
+            // We check that the handler type is the same as previous result types.
+            if (!handlerType.equivalent(resultType)) {
+              throw fail("handler types aren't consistent");
+            }
+          }
+        } else {
+          // We have a constructor with a type, so we have to make sure the handler is a function.
+          Expr handlerResultType =
+              handlerType.acceptExternal(
+                  new ConstantVisitor.External<Expr>(null) {
+                    public Expr onPi(String param, Expr input, Expr result) {
+                      if (input.equivalent(constructorType)) {
+                        return result.decrement(param);
+                      } else {
+                        throw fail(
+                            String.format(
+                                "handler result type %s doesn't match %s", input, constructorType));
+                      }
+                    }
+                  });
+
+          if (handlerResultType == null) {
+            throw fail("handler isn't a function");
+          } else if (resultType == null) {
+            resultType = handlerResultType;
+          } else {
+            // We check that the handler result type is the same as previous result types.
+            // TODO: fix when we have real equivalence.
+            if (!handlerResultType.normalize().same(resultType.normalize())) {
+              throw fail("handler types aren't consistent");
+            }
+          }
+        }
+      } else {
+        throw fail(String.format("missing handler for merge: %s", constructor.getKey()));
+      }
+    }
+
+    if (handlerTypeMap.isEmpty()) {
+      return resultType;
+    } else {
+      throw fail("extra handler for merge");
+    }
   }
 }

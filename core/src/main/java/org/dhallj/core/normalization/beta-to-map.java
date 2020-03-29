@@ -31,8 +31,9 @@ final class BetaNormalizeToMap {
 
   private static final Expr makeRecord(String key, Expr value) {
     List<Entry<String, Expr>> fields = new ArrayList(2);
-    fields.add(new SimpleImmutableEntry("mapKey", Expr.makeTextLiteral(key)));
-    fields.add(new SimpleImmutableEntry("mapValue", value));
+    fields.add(
+        new SimpleImmutableEntry(Expr.Constants.MAP_KEY_FIELD_NAME, Expr.makeTextLiteral(key)));
+    fields.add(new SimpleImmutableEntry(Expr.Constants.MAP_VALUE_FIELD_NAME, value));
     return Expr.makeRecordLiteral(fields);
   }
 }
