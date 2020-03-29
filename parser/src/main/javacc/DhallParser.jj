@@ -4,6 +4,8 @@ options {
   SUPPORT_CLASS_VISIBILITY_PUBLIC = false;
   UNICODE_INPUT = true;
   JAVA_UNICODE_ESCAPE = false;
+  //DEBUG_PARSER=true;
+  //DEBUG_LOOKAHEAD=true;
 }
 
 PARSER_BEGIN(DhallParser)
@@ -287,7 +289,8 @@ Expr.Parsed IDENTIFIER(): {
       (
         valueToken=<NONRESERVED_LABEL>
         (
-          LOOKAHEAD((<WHSP>)? <AT_SIGN>) (<WHSP>)? <AT_SIGN>
+          LOOKAHEAD((<WHSP>)? <AT_SIGN>)
+          (<WHSP>)? <AT_SIGN>
           (whspToken=<WHSP>)?
           indexToken=<NATURAL_LITERAL>
         )?
@@ -317,7 +320,7 @@ Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
     first=<BRACKET_OPEN>
     (t0=<WHSP> { currentOther.append(t0.image); })?
     (t0=<COMMA> { currentOther.append(t0.image); } (t0=<WHSP> { currentOther.append(t0.image); })?)?
-    current=EXPRESSION() {
+    current=BASE_EXPRESSION() {
       values.add(current);
       other.add(currentOther.toString());
       currentOther.setLength(0);
@@ -326,7 +329,7 @@ Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
     (
       t0=<COMMA> { currentOther.append(t0.image); }
       (t0=<WHSP> { currentOther.append(t0.image); })?
-      current=EXPRESSION() {
+      current=BASE_EXPRESSION() {
         values.add(current);
         other.add(currentOther.toString());
         currentOther.setLength(0);
@@ -341,44 +344,76 @@ Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
   }
 }
 
-Map.Entry<List<String>, Expr.Parsed> RECORD_LITERAL_ENTRY(): {
-  List<String> labels = new ArrayList<String>();
-  Wrapped<String> current;
-  Expr.Parsed expr = null;
+
+List<Map.Entry<List<String>, Expr.Parsed>> RECORD_LITERAL_ENTRY(Wrapped<String> firstLabel): {
+  List<Map.Entry<List<String>, Expr.Parsed>> values = new ArrayList();
+  List<Map.Entry<List<String>, Expr.Parsed>> next = null;
+  List<String> current = new ArrayList();
+  current.add(firstLabel.value);
+  Expr.Parsed expr;
 } {
   (
-    current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
-    (LOOKAHEAD((<WHSP>)? (<DOT> | <EQUAL_SIGN>))
+    (
       (
-        LOOKAHEAD((<WHSP>)? <DOT>)
-        (<WHSP>)? <DOT> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
-      )*
-      (<WHSP>)?
-      <EQUAL_SIGN>
-      (<WHSP>)?
-      expr=EXPRESSION()
-    )?
+        (
+          <EQUAL_SIGN> |
+          ((<DOT> [<WHSP>] firstLabel=ANY_LABEL_OR_SOME() { current.add(firstLabel.value); })+ [<WHSP>] <EQUAL_SIGN>)
+        )
+        [<WHSP>]
+        expr=BASE_EXPRESSION() {
+          values.add(new SimpleImmutableEntry(current, expr));
+        }
+        [<WHSP>]
+      ) |
+      ({} { values.add(new SimpleImmutableEntry(current, null)); })
+    ) (
+      <BRACE_CLOSE> |
+      (
+        <COMMA>
+        [<WHSP>]
+        firstLabel=ANY_LABEL_OR_SOME()
+        [<WHSP>]
+        next=RECORD_LITERAL_ENTRY(firstLabel) {
+          values.addAll(next);
+        }
+      )
+    )
   ) {
-    return new SimpleImmutableEntry(labels, expr);
+    return values;
   }
 }
 
-Map.Entry<String, Expr.Parsed> RECORD_TYPE_ENTRY(): {
-  Wrapped<String> label;
+List<Map.Entry<String, Expr.Parsed>> RECORD_TYPE_ENTRY(Wrapped<String> firstLabel): {
+  List<Map.Entry<String, Expr.Parsed>> values = new ArrayList();
+  List<Map.Entry<String, Expr.Parsed>> next = null;
   Expr.Parsed expr;
 } {
-  (label=ANY_LABEL_OR_SOME() (<WHSP>)? <COLON> <WHSP> expr=EXPRESSION()) {
-    return new SimpleImmutableEntry(label.value, expr);
+  (
+    <COLON> <WHSP> 
+    expr=BASE_EXPRESSION() { values.add(new SimpleImmutableEntry(firstLabel.value, expr)); }
+  [<WHSP>]
+  (
+    <BRACE_CLOSE> |
+    (
+      <COMMA>
+      [<WHSP>]
+      firstLabel=ANY_LABEL_OR_SOME()
+      [<WHSP>]
+      next=RECORD_TYPE_ENTRY(firstLabel) {
+        values.addAll(next);
+      }
+    )
+  )) {
+    return values;
   }
 }
 
 Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
   Token first;
   Token last;
+  Wrapped<String> firstLabel = null;
   List<Map.Entry<List<String>, Expr.Parsed>> literalValues = null;
   List<Map.Entry<String, Expr.Parsed>> typeValues = null;
-  Map.Entry<List<String>, Expr.Parsed> currentLiteralValue = null;
-  Map.Entry<String, Expr.Parsed> currentTypeValue = null;
 } {
   (
     first=<BRACE_OPEN>
@@ -386,46 +421,20 @@ Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
     (<COMMA> (<WHSP>)?)?
     (
         last=<BRACE_CLOSE>
-      | <EQUAL_SIGN> (<WHSP>)? last=<BRACE_CLOSE> { literalValues = new ArrayList(); }
-      |
-        LOOKAHEAD(ANY_LABEL_OR_SOME() (<WHSP>)? <COLON>)
-        currentTypeValue=RECORD_TYPE_ENTRY() {
-          typeValues = new ArrayList();
-          typeValues.add(currentTypeValue);
-          }
-        (
-          LOOKAHEAD((<WHSP>)? <COMMA>)
-          (<WHSP>)?
-          <COMMA>
-          (<WHSP>)?
-          currentTypeValue=RECORD_TYPE_ENTRY() {
-            typeValues.add(currentTypeValue);
-          }
-        )*
-        (<WHSP>)? last=<BRACE_CLOSE>
-      |
-        currentLiteralValue=RECORD_LITERAL_ENTRY() {
-          literalValues = new ArrayList();
-          literalValues.add(currentLiteralValue);
-        }
-        (
-          LOOKAHEAD((<WHSP>)? <COMMA>)
-          (<WHSP>)?
-          <COMMA>
-          (<WHSP>)?
-          currentLiteralValue=RECORD_LITERAL_ENTRY() {
-            literalValues.add(currentLiteralValue);
-          }
-        )*
-        (<WHSP>)? last=<BRACE_CLOSE>
+      | (<EQUAL_SIGN> (<WHSP>)? last=<BRACE_CLOSE> { literalValues = new ArrayList(); })
+      | (
+        firstLabel=ANY_LABEL_OR_SOME()
+        (<WHSP>)?
+        (typeValues=RECORD_TYPE_ENTRY(firstLabel) | literalValues=RECORD_LITERAL_ENTRY(firstLabel))
+      )
     )
   ) {
     if (literalValues != null) {
-      return ParsingHelpers.makeRecordLiteral(literalValues, first, last);
+      return ParsingHelpers.makeRecordLiteral(literalValues, first, first);
     } else if (typeValues != null) {
-      return ParsingHelpers.makeRecordType(typeValues, first, last);
+      return ParsingHelpers.makeRecordType(typeValues, first, first);
     } else {
-      return ParsingHelpers.makeRecordType(new ArrayList(), first, last);
+      return ParsingHelpers.makeRecordType(new ArrayList(), first, first);
     }
   }
 }
@@ -434,7 +443,7 @@ Map.Entry<String, Expr.Parsed> UNION_TYPE_ENTRY(): {
   Wrapped<String> label;
   Expr.Parsed expr = null;
 } {
-  (label=ANY_LABEL_OR_SOME() (LOOKAHEAD((<WHSP>)? <COLON>) (<WHSP>)? <COLON> <WHSP> expr=EXPRESSION())?) {
+  (label=ANY_LABEL_OR_SOME() (LOOKAHEAD((<WHSP>)? <COLON>) (<WHSP>)? <COLON> <WHSP> expr=BASE_EXPRESSION())?) {
     return new SimpleImmutableEntry(label.value, expr);
   }
 }
@@ -521,7 +530,7 @@ Wrapped<Expr.Parsed> TYPE_SELECTOR(): {
   Token last;
   Expr.Parsed expr;
 } {
-  (first=<PARENS_OPEN> (<WHSP>)? expr=EXPRESSION() (<WHSP>)? last=<PARENS_CLOSE>) {
+  (first=<PARENS_OPEN> (<WHSP>)? expr=BASE_EXPRESSION() (<WHSP>)? last=<PARENS_CLOSE>) {
     return new Positioned.Wrapped(expr, first, last);
   }
 }
@@ -961,19 +970,6 @@ Expr.Parsed IMPORT_ALT_EXPRESSION(): {
 
 Expr.Parsed OPERATOR_EXPRESSION(): { Expr.Parsed expr; } { expr = IMPORT_ALT_EXPRESSION() { return expr; } }
 
-Expr.Parsed ANNOTATED_EXPRESSION(): {
-  Expr.Parsed base;
-  Expr.Parsed type = null;
-  Token whsp0 = null;
-  Token whsp1 = null;
-} {
-  (
-    base=OPERATOR_EXPRESSION() (LOOKAHEAD((<WHSP>)? <COLON>) (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> type=EXPRESSION())?
-  ) {
-    return (type == null) ? base : ParsingHelpers.makeAnnotated(base, type, whsp0, whsp1);
-  }
-}
-
 Expr.Parsed EMPTY_LIST_LITERAL(): {
   Expr.Parsed type;
   Token first;
@@ -1005,8 +1001,8 @@ Expr.Parsed LAMBDA_EXPRESSION(): {
   (
     first=<LAMBDA> (<WHSP>)? <PARENS_OPEN> (<WHSP>)?
     param=<NONRESERVED_LABEL> (<WHSP>)? <COLON> <WHSP>
-    type=EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
-    body=EXPRESSION()
+    type=BASE_EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
+    body=BASE_EXPRESSION()
   ) {
     return ParsingHelpers.makeLambda(trimLabel(param.image), type, body, first);
   }
@@ -1038,12 +1034,12 @@ LetBinding LET_BINDING(): {
         text0 = builder.toString();
         builder.setLength(0);
       }
-      type=EXPRESSION()
+      type=BASE_EXPRESSION()
       (whsp=<WHSP> { builder.append(whsp.image); })?
     )?
     <EQUAL_SIGN> { builder.append('='); }
     (whsp=<WHSP> { builder.append(whsp.image); })?
-    value=EXPRESSION()
+    value=BASE_EXPRESSION()
     (whsp=<WHSP> { text2 = whsp.image; })?
   ) {
     return new LetBinding(trimLabel(name.image), type, value, text0, builder.toString(), text2, first.beginLine, first.beginColumn);
@@ -1057,7 +1053,7 @@ Expr.Parsed LET_EXPRESSION(): {
   Token whsp;
 } {
   (
-    (current=LET_BINDING() { bindings.add(current); })+ <IN> whsp=<WHSP> body=EXPRESSION()
+    (current=LET_BINDING() { bindings.add(current); })+ <IN> whsp=<WHSP> body=BASE_EXPRESSION()
   ) {
     return ParsingHelpers.makeLet(bindings, body, whsp.image);
   }
@@ -1070,18 +1066,9 @@ Expr.Parsed IF_EXPRESSION(): {
   Expr.Parsed elseValue;
 } {
   (
-    first=<IF> <WHSP> condition=EXPRESSION() (<WHSP>)? <THEN> <WHSP> thenValue=EXPRESSION() (<WHSP>)? <ELSE> <WHSP> elseValue=EXPRESSION()
+    first=<IF> <WHSP> condition=BASE_EXPRESSION() (<WHSP>)? <THEN> <WHSP> thenValue=BASE_EXPRESSION() (<WHSP>)? <ELSE> <WHSP> elseValue=BASE_EXPRESSION()
   ) {
     return ParsingHelpers.makeIf(condition, thenValue, elseValue, first);
-  }
-}
-
-Expr.Parsed FUNCTION_TYPE(): {
-  Expr.Parsed input;
-  Expr.Parsed result;
-} {
-  (input=OPERATOR_EXPRESSION() (<WHSP>)? <ARROW> (<WHSP>)? result=EXPRESSION()) {
-    return ParsingHelpers.makePi(input, result);
   }
 }
 
@@ -1094,8 +1081,8 @@ Expr.Parsed FORALL_EXPRESSION(): {
   (
     first=<FORALL> (<WHSP>)? <PARENS_OPEN> (<WHSP>)?
     param=<NONRESERVED_LABEL> (<WHSP>)? <COLON> <WHSP>
-    input=EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
-    result=EXPRESSION()
+    input=BASE_EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
+    result=BASE_EXPRESSION()
   ) {
     return ParsingHelpers.makePi(trimLabel(param.image), input, result, first);
   }
@@ -1107,12 +1094,61 @@ Expr.Parsed ASSERT_EXPRESSION(): {
   Token whsp1 = null;
   Expr.Parsed value;
 } {
-  (first=<ASSERT> (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> value=EXPRESSION()) {
+  (first=<ASSERT> (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> value=BASE_EXPRESSION()) {
     return ParsingHelpers.makeAssert(value, first, whsp0, whsp1);
   }
 }
 
-Expr.Parsed EXPRESSION(): {
+Expr.Parsed FUNCTION_TYPE(): {
+  Expr.Parsed input;
+  Expr.Parsed result;
+} {
+  (input=OPERATOR_EXPRESSION() (<WHSP>)? <ARROW> (<WHSP>)? result=BASE_EXPRESSION()) {
+    return ParsingHelpers.makePi(input, result);
+  }
+}
+
+Expr.Parsed ANNOTATED_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed type = null;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=OPERATOR_EXPRESSION() (LOOKAHEAD((<WHSP>)? <COLON>) (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> type=BASE_EXPRESSION())?
+  ) {
+    return (type == null) ? base : ParsingHelpers.makeAnnotated(base, type, whsp0, whsp1);
+  }
+}
+
+Expr.Parsed FUNCTION_TYPE_OR_ANNOTATED_EXPRESSION(): {
+  Expr.Parsed base;
+  Expr.Parsed type = null;
+  Expr.Parsed result = null;
+  Token whsp0 = null;
+  Token whsp1 = null;
+} {
+  (
+    base=OPERATOR_EXPRESSION()
+    [LOOKAHEAD(<WHSP> (<ARROW> | <COLON>)) <WHSP>]
+    (
+      (<ARROW> [<WHSP>] result=BASE_EXPRESSION()) |
+      (<COLON> type=BASE_EXPRESSION())?
+    )
+  ) {
+    if (type == null) {
+      if (result == null) {
+        return base;
+      } else {
+        return ParsingHelpers.makePi(base, result);
+      }
+    } else {
+      return ParsingHelpers.makeAnnotated(base, type, whsp0, whsp1);
+    }
+  }
+}
+
+Expr.Parsed BASE_EXPRESSION(): {
   Expr.Parsed expr = null;
   Expr.Parsed other = null;
   Expr.Parsed type = null;
@@ -1127,9 +1163,8 @@ Expr.Parsed EXPRESSION(): {
     | expr=IF_EXPRESSION()
     | expr=LET_EXPRESSION()
     | expr=FORALL_EXPRESSION()
-    | LOOKAHEAD(OPERATOR_EXPRESSION() (<WHSP>)? <ARROW>) expr=FUNCTION_TYPE()
     | LOOKAHEAD(<MERGE> <WHSP> IMPORT_EXPRESSION() <WHSP> IMPORT_EXPRESSION() (<WHSP>)? <COLON>)
-      operator=<MERGE>
+      (operator=<MERGE>
       whsp0=<WHSP>
       expr=IMPORT_EXPRESSION()
       whsp1=<WHSP>
@@ -1139,10 +1174,10 @@ Expr.Parsed EXPRESSION(): {
       whsp3=<WHSP>
       type=APPLICATION_EXPRESSION() {
         expr = ParsingHelpers.makeMerge(expr, other, type, operator, whsp0, whsp1, whsp2, whsp3);
-      }
+      })
     | LOOKAHEAD(EMPTY_LIST_LITERAL()) expr=EMPTY_LIST_LITERAL()
     | LOOKAHEAD(<TOMAP> <WHSP> IMPORT_EXPRESSION() (<WHSP>)? <COLON>)
-      operator=<TOMAP>
+      (operator=<TOMAP>
       whsp0=<WHSP>
       expr=IMPORT_EXPRESSION()
       (whsp1=<WHSP>)?
@@ -1150,8 +1185,10 @@ Expr.Parsed EXPRESSION(): {
       whsp2=<WHSP>
       type=APPLICATION_EXPRESSION() {
         expr = ParsingHelpers.makeToMap(expr, type, operator, whsp0, whsp1, whsp2);
-      }
+      })
     | expr=ASSERT_EXPRESSION()
+    //| expr=FUNCTION_TYPE_OR_ANNOTATED_EXPRESSION()
+    | LOOKAHEAD(OPERATOR_EXPRESSION() (<WHSP>)? <ARROW>) expr=FUNCTION_TYPE()
     | expr=ANNOTATED_EXPRESSION()
   ) {
     return expr;
@@ -1160,6 +1197,6 @@ Expr.Parsed EXPRESSION(): {
 
 void TEST(): {} { IMPORT() <EOF> }
 
-Expr.Parsed COMPLETE_EXPRESSION(): { Expr.Parsed expr; } { ((<WHSP>)? expr=EXPRESSION() (<WHSP>)?) { return expr; }}
+Expr.Parsed COMPLETE_EXPRESSION(): { Expr.Parsed expr; } { ((<WHSP>)? expr=BASE_EXPRESSION() (<WHSP>)?) { return expr; }}
 
 Expr.Parsed TOP_LEVEL(): { Expr.Parsed expr; } { (expr=COMPLETE_EXPRESSION() <EOF>) { return expr; }}
