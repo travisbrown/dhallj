@@ -128,19 +128,19 @@ public final class BetaNormalize implements Visitor.Internal<Expr> {
     return base.apply();
   }
 
-  public Expr onLocalImport(Path path, Import.Mode mode) {
-    return Expr.makeLocalImport(path, mode);
+  public Expr onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    return Expr.makeLocalImport(path, mode, hash);
   }
 
-  public Expr onRemoteImport(URI url, Import.Mode mode) {
-    return Expr.makeRemoteImport(url, mode);
+  public Expr onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
+    return Expr.makeRemoteImport(url, mode, hash);
   }
 
-  public Expr onEnvImport(String value, Import.Mode mode) {
-    return Expr.makeEnvImport(value, mode);
+  public Expr onEnvImport(String value, Import.Mode mode, byte[] hash) {
+    return Expr.makeEnvImport(value, mode, hash);
   }
 
-  public Expr onMissingImport(Import.Mode mode) {
-    return Expr.makeMissingImport(mode);
+  public Expr onMissingImport(Import.Mode mode, byte[] hash) {
+    return Expr.makeMissingImport(mode, hash);
   }
 }

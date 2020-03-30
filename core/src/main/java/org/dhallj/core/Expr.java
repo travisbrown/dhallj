@@ -459,19 +459,19 @@ public abstract class Expr {
     return makeMerge(left, right, null);
   }
 
-  public static final Expr makeLocalImport(Path path, Import.Mode mode) {
-    return new Constructors.LocalImport(path, mode);
+  public static final Expr makeLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    return new Constructors.LocalImport(path, mode, hash);
   }
 
-  public static final Expr makeRemoteImport(URI url, Import.Mode mode) {
-    return new Constructors.RemoteImport(url, mode);
+  public static final Expr makeRemoteImport(URI url, Import.Mode mode, byte[] hash) {
+    return new Constructors.RemoteImport(url, mode, hash);
   }
 
-  public static final Expr makeEnvImport(String value, Import.Mode mode) {
-    return new Constructors.EnvImport(value, mode);
+  public static final Expr makeEnvImport(String value, Import.Mode mode, byte[] hash) {
+    return new Constructors.EnvImport(value, mode, hash);
   }
 
-  public static final Expr makeMissingImport(Import.Mode mode) {
-    return new Constructors.MissingImport(mode);
+  public static final Expr makeMissingImport(Import.Mode mode, byte[] hash) {
+    return new Constructors.MissingImport(mode, hash);
   }
 }

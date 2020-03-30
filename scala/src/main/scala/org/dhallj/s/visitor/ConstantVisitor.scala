@@ -30,10 +30,10 @@ trait ConstantVisitor[I, A] extends Visitor[I, A] {
   def onAnnotated(base: I, tpe: I): A = constantValue
   def onToMap(base: I, tpe: Option[I]): A = constantValue
   def onMerge(left: I, right: I, tpe: Option[I]): A = constantValue
-  def onLocalImport(path: Path, mode: Import.Mode): A = constantValue
-  def onEnvImport(value: String, mode: Import.Mode): A = constantValue
-  def onRemoteImport(url: URI, mode: Import.Mode): A = constantValue
-  def onMissingImport(mode: Import.Mode): A = constantValue
+  def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]): A = constantValue
+  def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): A = constantValue
+  def onRemoteImport(url: URI, mode: Import.Mode, hash: Array[Byte]): A = constantValue
+  def onMissingImport(mode: Import.Mode, hash: Array[Byte]): A = constantValue
 }
 
 object ConstantVisitor {

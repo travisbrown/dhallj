@@ -588,8 +588,8 @@ Expr.Parsed COMPLETION_EXPRESSION(): {
   (
     base=SELECTOR_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <COMPLETE>)
-      (whsp0=<WHSP>)? operatorToken=<COMPLETE> (whsp1=<WHSP>)?
+      LOOKAHEAD([<WHSP>] <COMPLETE>)
+      [whsp0=<WHSP>] operatorToken=<COMPLETE> [whsp1=<WHSP>]
       completion=SELECTOR_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.COMPLETE, base, completion, operatorToken, whsp0, whsp1);
       }
@@ -599,26 +599,35 @@ Expr.Parsed COMPLETION_EXPRESSION(): {
   }
 }
 
-void IMPORT_TYPE(): {
+Import IMPORT_TYPE(): {
   Token token;
 } {
-  (token=<MISSING> | token=<ENV>) {
+  (token=<MISSING> | token=<ENV>) { return token; }
+}
+
+Map.Entry<Token, Token> IMPORT_WITH_SHA(): {
+  Token type;
+  Token hash;
+} {
+  type=IMPORT_TYPE()
+  (LOOKAHEAD(2) <WHSP> hash=<SHA256_HASH>)? {
+    return new SimpleImmutableEntry(type, hash);
   }
 }
 
-void IMPORT_WITH_SHA(): {} {
-  IMPORT_TYPE()
-  (LOOKAHEAD(<WHSP> <SHA256_HASH>) <WHSP> <SHA256_HASH>)?
-}
-
-void IMPORT(): {
+Expr.Parsed IMPORT(): {
+  Map.Entry<Token, Token> withHash;
   Token asValue = null;
 } {
-  IMPORT_WITH_SHA()
-  ((<WHSP>)? <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))?
+  withHash=IMPORT_WITH_SHA()
+  ([<WHSP>] <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))? {
+    return ParsingHelpers.makeImport(withHash.getKey(), withHash.getValue(), asValue);
+  }
 }
 
-Expr.Parsed IMPORT_EXPRESSION(): { Expr.Parsed expr; } { expr=COMPLETION_EXPRESSION() { return expr; } }
+Expr.Parsed IMPORT_EXPRESSION(): { Expr.Parsed expr; } {
+  (expr=IMPORT() | expr=COMPLETION_EXPRESSION()) { return expr; }
+}
 
 Expr.Parsed APPLICATION_EXPRESSION(): {
   Token first = null;

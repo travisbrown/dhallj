@@ -706,19 +706,19 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return base.acceptExternal(this);
   }
 
-  public final Expr onLocalImport(Path path, Import.Mode mode) {
+  public final Expr onLocalImport(Path path, Import.Mode mode, byte[] hash) {
     throw fail("cannot type-check import");
   }
 
-  public final Expr onRemoteImport(URI url, Import.Mode mode) {
+  public final Expr onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
     throw fail("cannot type-check import");
   }
 
-  public final Expr onEnvImport(String value, Import.Mode mode) {
+  public final Expr onEnvImport(String value, Import.Mode mode, byte[] hash) {
     throw fail("cannot type-check import");
   }
 
-  public final Expr onMissingImport(Import.Mode mode) {
+  public final Expr onMissingImport(Import.Mode mode, byte[] hash) {
     throw fail("cannot type-check import");
   }
 

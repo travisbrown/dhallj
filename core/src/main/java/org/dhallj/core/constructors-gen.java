@@ -464,70 +464,78 @@ class Constructors {
   static final class LocalImport extends Expr {
     private final Path path;
     private final Import.Mode mode;
+    private final byte[] hash;
 
-    LocalImport(Path path, Import.Mode mode) {
+    LocalImport(Path path, Import.Mode mode, byte[] hash) {
       this.path = path;
       this.mode = mode;
+      this.hash = hash;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onLocalImport(this.path, this.mode);
+      return visitor.onLocalImport(this.path, this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onLocalImport(this.path, this.mode);
+      return visitor.onLocalImport(this.path, this.mode, this.hash);
     }
   }
 
   static final class RemoteImport extends Expr {
     private final URI url;
     private final Import.Mode mode;
+    private final byte[] hash;
 
-    RemoteImport(URI url, Import.Mode mode) {
+    RemoteImport(URI url, Import.Mode mode, byte[] hash) {
       this.url = url;
       this.mode = mode;
+      this.hash = hash;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onRemoteImport(this.url, this.mode);
+      return visitor.onRemoteImport(this.url, this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onRemoteImport(this.url, this.mode);
+      return visitor.onRemoteImport(this.url, this.mode, this.hash);
     }
   }
 
   static final class EnvImport extends Expr {
     private final String value;
     private final Import.Mode mode;
+    private final byte[] hash;
 
-    EnvImport(String value, Import.Mode mode) {
+    EnvImport(String value, Import.Mode mode, byte[] hash) {
       this.value = value;
       this.mode = mode;
+      this.hash = hash;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onEnvImport(this.value, this.mode);
+      return visitor.onEnvImport(this.value, this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onEnvImport(this.value, this.mode);
+      return visitor.onEnvImport(this.value, this.mode, this.hash);
     }
   }
 
   static final class MissingImport extends Expr {
     private final Import.Mode mode;
+    private final byte[] hash;
 
-    MissingImport(Import.Mode mode) {
+    MissingImport(Import.Mode mode, byte[] hash) {
       this.mode = mode;
+      this.hash = hash;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onMissingImport(this.mode);
+      return visitor.onMissingImport(this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onMissingImport(this.mode);
+      return visitor.onMissingImport(this.mode, this.hash);
     }
   }
 }

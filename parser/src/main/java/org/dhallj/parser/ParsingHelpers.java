@@ -505,86 +505,21 @@ final class ParsingHelpers {
     return new Expr.Parsed(value, source);
   }
 
-  /*
-  final class LocalImport extends Expr.Parsed {
-    private final Path path;
-    private final Import.Mode mode;
+  static final Expr.Parsed makeImport(Token type, Token hashToken, Token modeToken) {
+    // TODO: fix.
+    Source source = sourceFromToken(type);
+    Expr value = null;
+    Import.Mode mode =
+        (modeToken == null)
+            ? Import.Mode.CODE
+            : (modeToken.image.equals("Text") ? Import.Mode.RAW_TEXT : Import.Mode.LOCATION);
 
-    LocalImport(
-        Path path,
-        Import.Mode mode,
-        String text,
-        int beginLine,
-        int beginColumn,
-        int endLine,
-        int endColumn) {
-      super(text, beginLine, beginColumn, endLine, endColumn);
-      this.path = path;
-      this.mode = mode;
+    if (type.image.equals("missing")) {
+      value = Expr.makeMissingImport(mode, null);
     }
 
-    protected final <A> A acceptWithoutNotes(Expr.Visitor.All<A> visitor) {
-      return visitor.onLocalImport(this.path, this.mode);
-    }
+    return new Expr.Parsed(value, source);
   }
-
-  final class RemoteImport extends Expr.Parsed {
-    private final URI url;
-    private final Import.Mode mode;
-
-    RemoteImport(
-        URI url,
-        Import.Mode mode,
-        String text,
-        int beginLine,
-        int beginColumn,
-        int endLine,
-        int endColumn) {
-      super(text, beginLine, beginColumn, endLine, endColumn);
-      this.url = url;
-      this.mode = mode;
-    }
-
-    protected final <A> A acceptWithoutNotes(Expr.Visitor.All<A> visitor) {
-      return visitor.onRemoteImport(this.url, this.mode);
-    }
-  }
-
-  final class EnvImport extends Expr.Parsed {
-    private final String value;
-    private final Import.Mode mode;
-
-    EnvImport(
-        String value,
-        Import.Mode mode,
-        String text,
-        int beginLine,
-        int beginColumn,
-        int endLine,
-        int endColumn) {
-      super(text, beginLine, beginColumn, endLine, endColumn);
-      this.value = value;
-      this.mode = mode;
-    }
-
-    protected final <A> A acceptWithoutNotes(Expr.Visitor.All<A> visitor) {
-      return visitor.onEnvImport(this.value, this.mode);
-    }
-  }
-
-  final class MissingImport extends Expr.Parsed {
-    private final Import.Mode mode;
-
-    MissingImport(
-        Import.Mode mode, String text, int beginLine, int beginColumn, int endLine, int endColumn) {
-      super(text, beginLine, beginColumn, endLine, endColumn);
-      this.mode = mode;
-    }
-
-    protected final <A> A acceptWithoutNotes(Expr.Visitor.All<A> visitor) {
-      return visitor.onMissingImport(this.mode);
-    }
-  }*/
 
   private static final class ESESource extends Source {
     private final Expr.Parsed i0;

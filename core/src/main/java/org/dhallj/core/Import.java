@@ -13,12 +13,12 @@ public interface Import {
   }
 
   public interface Visitor<A> {
-    public abstract A onLocalImport(Path path, Mode mode);
+    public abstract A onLocalImport(Path path, Mode mode, byte[] hash);
 
-    public abstract A onRemoteImport(URI url, Mode mode);
+    public abstract A onRemoteImport(URI url, Mode mode, byte[] hash);
 
-    public abstract A onEnvImport(String value, Mode mode);
+    public abstract A onEnvImport(String value, Mode mode, byte[] hash);
 
-    public abstract A onMissingImport(Mode mode);
+    public abstract A onMissingImport(Mode mode, byte[] hash);
   }
 }

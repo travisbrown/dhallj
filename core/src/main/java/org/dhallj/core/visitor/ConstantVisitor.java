@@ -151,19 +151,19 @@ public class ConstantVisitor<I, A> implements Visitor<I, A> {
     return this.getReturnValue();
   }
 
-  public A onLocalImport(Path path, Import.Mode mode) {
+  public A onLocalImport(Path path, Import.Mode mode, byte[] hash) {
     return this.getReturnValue();
   }
 
-  public A onRemoteImport(URI url, Import.Mode mode) {
+  public A onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
     return this.getReturnValue();
   }
 
-  public A onEnvImport(String value, Import.Mode mode) {
+  public A onEnvImport(String value, Import.Mode mode, byte[] hash) {
     return this.getReturnValue();
   }
 
-  public A onMissingImport(Import.Mode mode) {
+  public A onMissingImport(Import.Mode mode, byte[] hash) {
     return this.getReturnValue();
   }
 

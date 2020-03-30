@@ -15,22 +15,22 @@ public final class IsResolved extends ConstantVisitor.Internal<Boolean> {
   }
 
   @Override
-  public Boolean onLocalImport(Path path, Import.Mode mode) {
+  public Boolean onLocalImport(Path path, Import.Mode mode, byte[] hash) {
     return false;
   }
 
   @Override
-  public Boolean onRemoteImport(URI url, Import.Mode mode) {
+  public Boolean onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
     return false;
   }
 
   @Override
-  public Boolean onEnvImport(String value, Import.Mode mode) {
+  public Boolean onEnvImport(String value, Import.Mode mode, byte[] hash) {
     return false;
   }
 
   @Override
-  public Boolean onMissingImport(Import.Mode mode) {
+  public Boolean onMissingImport(Import.Mode mode, byte[] hash) {
     return false;
   }
 }

@@ -188,20 +188,20 @@ public class ToStringVisitor implements Visitor.Internal<String> {
     return String.format("[]: %s", type.apply());
   }
 
-  public String onLocalImport(Path path, Import.Mode mode) {
-    return null;
+  public String onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    return String.format("(import %s %s %s)", path, mode, hash);
   }
 
-  public String onRemoteImport(URI url, Import.Mode mode) {
-    return null;
+  public String onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
+    return String.format("(import %s %s %s)", url, mode, hash);
   }
 
-  public String onEnvImport(String value, Import.Mode mode) {
-    return null;
+  public String onEnvImport(String value, Import.Mode mode, byte[] hash) {
+    return String.format("(import %s %s %s)", value, mode, hash);
   }
 
-  public String onMissingImport(Import.Mode mode) {
-    return null;
+  public String onMissingImport(Import.Mode mode, byte[] hash) {
+    return String.format("(import missing %s %s)", mode, hash);
   }
 
   public final String onLet(

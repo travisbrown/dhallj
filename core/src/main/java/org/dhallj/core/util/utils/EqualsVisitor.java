@@ -273,34 +273,37 @@ public final class EqualsVisitor implements ExternalVisitor<Visitor<Expr, Boolea
     };
   }
 
-  public Visitor<Expr, Boolean> onLocalImport(final Path path, final Import.Mode mode) {
+  public Visitor<Expr, Boolean> onLocalImport(
+      final Path path, final Import.Mode mode, final byte[] hash) {
     return new FalseVisitor() {
-      public Boolean onLocalImport(Path path1, Import.Mode mode1) {
-        return path.equals(path1) && mode.equals(mode1);
+      public Boolean onLocalImport(Path path1, Import.Mode mode1, byte[] hash1) {
+        return path.equals(path1) && mode.equals(mode1) && Arrays.equals(hash, hash1);
       }
     };
   }
 
-  public Visitor<Expr, Boolean> onRemoteImport(final URI url, final Import.Mode mode) {
+  public Visitor<Expr, Boolean> onRemoteImport(
+      final URI url, final Import.Mode mode, final byte[] hash) {
     return new FalseVisitor() {
-      public Boolean onRemoteImport(URI url1, Import.Mode mode1) {
-        return url.equals(url1) && mode.equals(mode1);
+      public Boolean onRemoteImport(URI url1, Import.Mode mode1, byte[] hash1) {
+        return url.equals(url1) && mode.equals(mode1) && Arrays.equals(hash, hash1);
       }
     };
   }
 
-  public Visitor<Expr, Boolean> onEnvImport(final String value, final Import.Mode mode) {
+  public Visitor<Expr, Boolean> onEnvImport(
+      final String value, final Import.Mode mode, final byte[] hash) {
     return new FalseVisitor() {
-      public Boolean onEnvImport(String value1, Import.Mode mode1) {
-        return value.equals(value1) && mode.equals(mode1);
+      public Boolean onEnvImport(String value1, Import.Mode mode1, byte[] hash1) {
+        return value.equals(value1) && mode.equals(mode1) && Arrays.equals(hash, hash1);
       }
     };
   }
 
-  public Visitor<Expr, Boolean> onMissingImport(final Import.Mode mode) {
+  public Visitor<Expr, Boolean> onMissingImport(final Import.Mode mode, final byte[] hash) {
     return new FalseVisitor() {
-      public Boolean onMissingImport(Import.Mode mode1) {
-        return mode.equals(mode1);
+      public Boolean onMissingImport(Import.Mode mode1, byte[] hash1) {
+        return mode.equals(mode1) && Arrays.equals(hash, hash1);
       }
     };
   }
