@@ -10,16 +10,20 @@ import cats.effect.Sync
 import org.dhallj.core.{Expr, Import, Operator, Source, Thunk, Visitor}
 import org.http4s.client._
 import cats.implicits._
+
 import scala.jdk.CollectionConverters._
+import java.nio.file.{Files, Paths}
 
 //TODO import from urls, files, env vars
 //TODO path normalization
 //TODO sha256 checking if required
 //TODO support caching
+//TODO cors check
+//TODO referential sanity check
 package object imports {
 
   implicit class ResolveImports(e: Expr) {
-    def resolveImports[F[_]](implicit F: Sync[F]): F[Expr] = e.accept(resolveImportsVisitor)
+    def resolveImports[F[_]](implicit Client: Client[F], F: Sync[F]): F[Expr] = e.accept(resolveImportsVisitor)
   }
 
   private def resolveImportsVisitor[F[_]](implicit F: Sync[F]): Visitor.Internal[F[Expr]] = new Visitor.Internal[F[Expr]] {
@@ -130,10 +134,23 @@ package object imports {
 
       override def onRemoteImport(url: URI, mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
 
-      override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
+    //Probably can extract all commonality and just pass in a resolve function () => IO[String]
+      override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] = for {
+        v <- F.delay(sys.env.get(value))
+      } yield null
 
       override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
     }
+
+  private def checkSha256[F[_]](e: Expr, expected: Array[Byte]): F[Unit] = ???
+
+  private def toHex(bs: Array[Byte]): String = {
+      val sb = new StringBuilder
+      for (b <- bs) {
+        sb.append(String.format("%02x", Byte.box(b)))
+      }
+      sb.toString
+  }
 
 //  def resolveEnv[F[_]](imp: org.dhallj.core.Constructors.EnvImport)(implicit F: Sync[F]): F[String] = for {
 //    v <- F.delay(sys.env.get(imp.value))
