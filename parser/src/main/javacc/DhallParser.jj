@@ -4,6 +4,7 @@ options {
   SUPPORT_CLASS_VISIBILITY_PUBLIC = false;
   UNICODE_INPUT = true;
   JAVA_UNICODE_ESCAPE = false;
+  //DEBUG_TOKEN_MANAGER=true;
   //DEBUG_PARSER=true;
   //DEBUG_LOOKAHEAD=true;
 }
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Expr;
+import org.dhallj.core.Import;
 import org.dhallj.parser.Positioned.Wrapped;
 
 class DhallParser {
@@ -160,6 +162,7 @@ TOKEN: {
   | <CONCAT: "++">
   | <SHA256_HASH: "sha256:" (<HEX_DIGIT>){64}>
   | <ENV: "env:" (<BASH_ENV_VAR> | ("\"" <POSIX_ENV_VAR> "\""))>
+  | <HTTP: "http" ("s")? "://" ((<UNRESERVED> | <PCT_ENCODED> | <SUB_DELIM> | ":")* "@")? <DOMAIN>>
 
   | <#DIGIT: ["0"-"9"]>
   | <#DIGITS: (<DIGIT>)+>
@@ -172,6 +175,16 @@ TOKEN: {
   | <#VALID_NON_ASCII: ["\u0080"-"\uD7FF"] | (["\ud800"-"\udbff"] ["\udc00"-"\udfff"]) | ["\ue000"-"\ufffd"]>
   | <#BASH_ENV_VAR: (<ALPHA> | "_") (<ALPHA> | <DIGIT> | "_")*>
   | <#POSIX_ENV_VAR: ("\u0020" | "\u0021" | ["\u0023"-"\u003c"] | ["\u003e"-"\u005b"] | ["\u005d"-"\u007e"] | ("\\" (["\"", "\\", "a", "b", "f", "n", "r", "t", "v"])))+>
+
+  | <#PCT_ENCODED: "%" <HEX_DIGIT> <HEX_DIGIT>>
+  | <#SUB_DELIM: ["!", "$", "&", "'", "*", "+", ";", "="]>
+  | <#UNRESERVED: <ALPHA> | <DIGIT> | ["-", ".", "_", "~"]>
+  | <#PCHAR: <UNRESERVED> | <PCT_ENCODED> | <SUB_DELIM> | ":" | "@">
+  | <#SEGMENT: (<PCHAR>)*>
+  | <#DOMAIN_LABEL: (<ALPHA> | <DIGIT>)+ (("-")+ (<ALPHA> | <DIGIT>)+)*>
+  | <#DOMAIN: <DOMAIN_LABEL> ("." <DOMAIN_LABEL>)* (".")?>
+  | <#IPV4: >
+  | <#HOST: (<DOMAIN> | <IPV4> | ("[" (<IPV6> | <IPVFUTURE>) "]"))>
 }
 
 <WITHIN_DOUBLE_QUOTE> TOKEN: {
@@ -599,29 +612,22 @@ Expr.Parsed COMPLETION_EXPRESSION(): {
   }
 }
 
-Import IMPORT_TYPE(): {
-  Token token;
-} {
-  (token=<MISSING> | token=<ENV>) { return token; }
-}
-
-Map.Entry<Token, Token> IMPORT_WITH_SHA(): {
-  Token type;
-  Token hash;
-} {
-  type=IMPORT_TYPE()
-  (LOOKAHEAD(2) <WHSP> hash=<SHA256_HASH>)? {
-    return new SimpleImmutableEntry(type, hash);
-  }
-}
-
 Expr.Parsed IMPORT(): {
-  Map.Entry<Token, Token> withHash;
+  Token token = null;
+  Token hash = null;
   Token asValue = null;
 } {
-  withHash=IMPORT_WITH_SHA()
-  ([<WHSP>] <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))? {
-    return ParsingHelpers.makeImport(withHash.getKey(), withHash.getValue(), asValue);
+  (
+    (token=<MISSING> | token=<ENV> | token=<HTTP>)
+    (LOOKAHEAD(2)
+      <WHSP>
+      (
+        [hash=<SHA256_HASH>]
+        (LOOKAHEAD(2) [<WHSP>] <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))?
+      )
+    )?
+  ) {
+    return ParsingHelpers.makeImport(token, hash, asValue);
   }
 }
 
