@@ -183,8 +183,8 @@ TOKEN: {
   | <#SEGMENT: (<PCHAR>)*>
   | <#DOMAIN_LABEL: (<ALPHA> | <DIGIT>)+ (("-")+ (<ALPHA> | <DIGIT>)+)*>
   | <#DOMAIN: <DOMAIN_LABEL> ("." <DOMAIN_LABEL>)* (".")?>
-  | <#IPV4: >
-  | <#HOST: (<DOMAIN> | <IPV4> | ("[" (<IPV6> | <IPVFUTURE>) "]"))>
+  //| <#IPV4: >
+  //| <#HOST: (<DOMAIN> | <IPV4> | ("[" (<IPV6> | <IPVFUTURE>) "]"))>
 }
 
 <WITHIN_DOUBLE_QUOTE> TOKEN: {
