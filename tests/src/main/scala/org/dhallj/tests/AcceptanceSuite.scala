@@ -63,7 +63,7 @@ class ExprAcceptanceSuite(val base: String, transformation: Expr => Expr) extend
   def parseInput(input: String): Expr = Dhall.parse(input)
   def parseExpected(input: String): Expr = Dhall.parse(input)
   def transform(input: Expr): Expr = transformation(input)
-  def compare(result: Expr, expected: Expr): Boolean = result.same(expected)
+  def compare(result: Expr, expected: Expr): Boolean = result.equivalent(expected)
 
   def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhall")
   def toName(inputFileName: String): String = inputFileName.dropRight(7)

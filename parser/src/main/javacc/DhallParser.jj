@@ -362,22 +362,34 @@ List<Map.Entry<List<String>, Expr.Parsed>> RECORD_LITERAL_ENTRY(Wrapped<String> 
         [<WHSP>]
         expr=BASE_EXPRESSION() {
           values.add(new SimpleImmutableEntry(current, expr));
+          current = new ArrayList();
         }
         [<WHSP>]
       ) |
-      ({} { values.add(new SimpleImmutableEntry(current, null)); })
-    ) (
-      <BRACE_CLOSE> |
+      ({} { values.add(new SimpleImmutableEntry(current, null)); current = new ArrayList(); })
+    )
       (
         <COMMA>
         [<WHSP>]
-        firstLabel=ANY_LABEL_OR_SOME()
+        firstLabel=ANY_LABEL_OR_SOME() { current.add(firstLabel.value); }
         [<WHSP>]
-        next=RECORD_LITERAL_ENTRY(firstLabel) {
-          values.addAll(next);
-        }
-      )
-    )
+        (
+          (
+            (
+              <EQUAL_SIGN> |
+              ((<DOT> [<WHSP>] firstLabel=ANY_LABEL_OR_SOME() { current.add(firstLabel.value); })+ [<WHSP>] <EQUAL_SIGN>)
+            )
+            [<WHSP>]
+            expr=BASE_EXPRESSION() {
+              values.add(new SimpleImmutableEntry(current, expr));
+              current = new ArrayList();
+            }
+            [<WHSP>]
+          ) |
+          ({} { values.add(new SimpleImmutableEntry(current, null)); current = new ArrayList(); })
+        )
+      )*
+      <BRACE_CLOSE>
   ) {
     return values;
   }
@@ -389,21 +401,19 @@ List<Map.Entry<String, Expr.Parsed>> RECORD_TYPE_ENTRY(Wrapped<String> firstLabe
   Expr.Parsed expr;
 } {
   (
-    <COLON> <WHSP> 
+    <COLON> <WHSP>
     expr=BASE_EXPRESSION() { values.add(new SimpleImmutableEntry(firstLabel.value, expr)); }
-  [<WHSP>]
-  (
-    <BRACE_CLOSE> |
+    [<WHSP>]
     (
       <COMMA>
       [<WHSP>]
       firstLabel=ANY_LABEL_OR_SOME()
+      [<WHSP>] <COLON> <WHSP>
+      expr=BASE_EXPRESSION() { values.add(new SimpleImmutableEntry(firstLabel.value, expr)); }
       [<WHSP>]
-      next=RECORD_TYPE_ENTRY(firstLabel) {
-        values.addAll(next);
-      }
-    )
-  )) {
+    )*
+    <BRACE_CLOSE>
+  ) {
     return values;
   }
 }

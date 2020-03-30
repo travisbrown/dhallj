@@ -248,8 +248,9 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
 
               public Entry<String, Expr> next() {
                 Entry<String, Expr> entry = it.next();
+                Expr value = entry.getValue();
                 return new SimpleImmutableEntry(
-                    entry.getKey(), entry.getValue().acceptExternal(Recursing.this));
+                    entry.getKey(), (value == null) ? null : value.acceptExternal(Recursing.this));
               }
             };
           }
