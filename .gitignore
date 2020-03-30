@@ -8,3 +8,7 @@ target/
 .project
 .classpath
 tmp/
+
+.bloop/
+.metals/
+project/metals.sbt

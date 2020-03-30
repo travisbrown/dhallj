@@ -5,6 +5,13 @@ val testDependencies = Seq(
   "org.scalameta" %% "munit" % "0.7.1"
 )
 
+val catsDependencies = Seq(
+  "org.typelevel" %% "cats-core" % "2.0.0",
+  "org.typelevel" %% "cats-effect" % "2.1.2",
+  "org.http4s" %% "http4s-dsl" % "0.21.1",
+  "org.http4s" %% "http4s-blaze-client" % "0.21.1"
+)
+
 val baseSettings = Seq(
   scalaVersion := "2.13.1",
   libraryDependencies ++= testDependencies.map(_ % Test),
@@ -59,6 +66,13 @@ lazy val scala = project
   .settings(baseSettings ++ scalaSettings)
   .settings(moduleName := "dhall-scala")
   .dependsOn(parser)
+
+lazy val imports = project
+  .in(file("imports"))
+  .settings(baseSettings ++ scalaSettings)
+  .settings(moduleName := "dhall-imports")
+  .settings(libraryDependencies ++= catsDependencies)
+  .dependsOn(core)
 
 lazy val tests = project
   .in(file("tests"))
