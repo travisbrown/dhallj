@@ -21,7 +21,7 @@ val scalaSettings = Seq()
 val root = project
   .in(file("."))
   .settings(
-  scalaVersion := "2.13.1",
+    scalaVersion := "2.13.1",
     initialCommands in console := "import org.dhallj.parser.Dhall.parse"
   )
   .aggregate(core, parser, demo, scala, tests)
@@ -30,7 +30,9 @@ val root = project
 lazy val core = project
   .in(file("core"))
   .settings(baseSettings ++ javaSettings)
-  .settings(moduleName := "dhall-core", javacOptions ++= Seq("-source", "1.7", "-target", "1.7"))
+  .settings(moduleName := "dhall-core",
+            javacOptions in Compile ++= Seq("-source", "1.7"),
+            javacOptions in (Compile, compile) ++= Seq("-target", "1.7", "-Xlint:all"))
 
 lazy val parser = project
   .in(file("parser"))
