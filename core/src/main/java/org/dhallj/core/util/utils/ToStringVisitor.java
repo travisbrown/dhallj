@@ -11,8 +11,9 @@ import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Vis;
+import org.dhallj.core.visitor.PureVis;
 
-public class ToStringVisitor implements Vis<String> {
+public class ToStringVisitor extends PureVis<String> {
   public static Vis<String> instance = new ToStringVisitor();
 
   public String onNote(String base, Source source) {
@@ -35,8 +36,6 @@ public class ToStringVisitor implements Vis<String> {
     return (index == 0) ? value : String.format("%s@%d", value, index);
   }
 
-  public void bind(String param, Expr type) {}
-
   public String onLambda(String name, String type, String result) {
     return String.format("λ(%s : %s) → %s", name, type, result);
   }
@@ -49,8 +48,6 @@ public class ToStringVisitor implements Vis<String> {
     String typeString = (type == null) ? "" : String.format(": %s", type);
     return String.format("let %s%s = %s in %s", name, typeString, value, body);
   }
-
-  public void preText(int size) {}
 
   public String onText(String[] parts, List<String> interpolated) {
 
@@ -72,8 +69,6 @@ public class ToStringVisitor implements Vis<String> {
     return builder.toString();
   }
 
-  public void preNonEmptyList(int size) {}
-
   public String onNonEmptyList(List<String> values) {
     StringBuilder builder = new StringBuilder("[");
     Iterator<String> it = values.iterator();
@@ -91,8 +86,6 @@ public class ToStringVisitor implements Vis<String> {
   public String onEmptyList(String type) {
     return String.format("[]: %s", type);
   }
-
-  public void preRecord(int size) {}
 
   public String onRecord(List<Entry<String, String>> fields) {
     if (fields.isEmpty()) {
@@ -115,8 +108,6 @@ public class ToStringVisitor implements Vis<String> {
     }
   }
 
-  public void preRecordType(int size) {}
-
   public String onRecordType(List<Entry<String, String>> fields) {
     StringBuilder builder = new StringBuilder("{");
     Iterator<Entry<String, String>> it = fields.iterator();
@@ -133,8 +124,6 @@ public class ToStringVisitor implements Vis<String> {
 
     return builder.toString();
   }
-
-  public void preUnionType(int size) {}
 
   public String onUnionType(List<Entry<String, String>> fields) {
     StringBuilder builder = new StringBuilder("<");
@@ -177,8 +166,6 @@ public class ToStringVisitor implements Vis<String> {
   public String onProjectionByType(String base, String type) {
     return String.format("%s.(%s)", base, type);
   }
-
-  public void preApplication(int size) {}
 
   public String onApplication(String base, List<String> args) {
     StringBuilder builder = new StringBuilder("(");
