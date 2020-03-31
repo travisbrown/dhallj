@@ -72,7 +72,7 @@ lazy val imports = project
   .settings(baseSettings ++ scalaSettings)
   .settings(moduleName := "dhall-imports")
   .settings(libraryDependencies ++= catsDependencies)
-  .dependsOn(core)
+  .dependsOn(parser, core)
 
 lazy val tests = project
   .in(file("tests"))
