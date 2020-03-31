@@ -155,25 +155,25 @@ final class Constructors {
   }
 
   static final class Lambda extends Expr {
-    final String param;
-    final Expr input;
+    final String name;
+    final Expr type;
     final Expr result;
 
-    Lambda(String param, Expr input, Expr result) {
+    Lambda(String name, Expr type, Expr result) {
       super(Tags.LAMBDA);
-      this.param = param;
-      this.input = input;
+      this.name = name;
+      this.type = type;
       this.result = result;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> inputVisited = new ExprUtilities.ExprThunk(visitor, this.input);
+      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
       Thunk<A> resultVisited = new ExprUtilities.ExprThunk(visitor, this.result);
-      return visitor.onLambda(this.param, inputVisited, resultVisited);
+      return visitor.onLambda(this.name, typeVisited, resultVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onLambda(this.param, input, result);
+      return visitor.onLambda(this.name, type, result);
     }
   }
 
