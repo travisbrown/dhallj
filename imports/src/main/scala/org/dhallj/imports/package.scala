@@ -29,7 +29,7 @@ package object imports {
   }
 
 //  private def resolveImportsVisitor[F[_]](implicit F: Sync[F]): Visitor.Internal[F[Expr]] = new Visitor.Internal[F[Expr]] {
-  private case class ResolveImportsVisitor[F[_]](parents: List[Path])(implicit F: Sync[F]) extends Visitor.Internal[F[Expr]] {
+  private case class ResolveImportsVisitor[F[_]](parents: List[ImportContext])(implicit F: Sync[F]) extends Visitor.Internal[F[Expr]] {
       override def onDoubleLiteral(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
 
       override def onNaturalLiteral(value: BigInteger): F[Expr] = F.pure(Expr.makeNaturalLiteral(value))
@@ -167,5 +167,11 @@ package object imports {
 //  def resolveRemote[F[_]](imp: org.dhallj.core.Constructors.RemoteImport)(implicit Client: Client[F], F: Sync[F]): F[String] = for {
 //    v <- Client.expect[String](imp.url)
 //  } yield ""
+
+  sealed trait ImportContext
+  case class Env(value: String) extends ImportContext
+  case class Local(absolutePath: Path) extends ImportContext
+  case class Remote(uri: URI) extends ImportContext
+  case object Missing extends ImportContext
 
 }
