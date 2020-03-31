@@ -1,13 +1,18 @@
 package org.dhallj.demo;
 
+import org.dhallj.core.Expr;
 import org.dhallj.parser.Dhall;
 
 public class Main {
   public static void main(String[] args) throws Exception {
     if (args.length == 0) {
-      System.out.println(Dhall.parse(System.in).normalize().hash());
+      Expr parsed = Dhall.parse(System.in);
+      parsed.typeCheck();
+      System.out.println(parsed.normalize().alphaNormalize().hash());
     } else {
-      System.out.println(Dhall.parse(args[0]).normalize().hash());
+      Expr parsed = Dhall.parse(args[0]);
+      parsed.typeCheck();
+      System.out.println(parsed.normalize().alphaNormalize().hash());
     }
   }
 }
