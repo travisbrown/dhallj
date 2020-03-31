@@ -337,8 +337,8 @@ public abstract class Expr {
   }
 
   public static final Expr makeApplication(Expr base, List<Expr> args) {
-    Expr acc = args.get(0);
-    for (int i = 1; i < args.size(); i++) {
+    Expr acc = base;
+    for (int i = 0; i < args.size(); i++) {
       acc = Expr.makeApplication(acc, args.get(i));
     }
     return acc;
@@ -518,9 +518,6 @@ public abstract class Expr {
     LinkedList<LinkedList<Expr>> applicationStack = new LinkedList<LinkedList<Expr>>();
 
     while (current != null) {
-      // System.out.println(stack);
-      // System.out.println(current.expr);
-      // System.out.println(current.expr.tag);
       switch (current.expr.tag) {
         case Tags.NOTE:
           Parsed tmpNote = (Parsed) current.expr;

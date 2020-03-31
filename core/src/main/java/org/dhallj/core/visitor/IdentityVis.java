@@ -87,7 +87,8 @@ public abstract class IdentityVis extends PureVis<Expr> {
   }
 
   public Expr onApplication(Expr base, List<Expr> args) {
-    return Expr.makeApplication(base, args);
+    Expr tmp = Expr.makeApplication(base, args);
+    return tmp;
   }
 
   public Expr onOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
