@@ -13,6 +13,7 @@ import cats.implicits._
 
 import scala.jdk.CollectionConverters._
 import java.nio.file.{Files, Paths}
+import java.security.MessageDigest
 
 //TODO import from urls, files, env vars
 //TODO path normalization
@@ -20,13 +21,15 @@ import java.nio.file.{Files, Paths}
 //TODO support caching
 //TODO cors check
 //TODO referential sanity check
+//TODO quoted path components?
 package object imports {
 
   implicit class ResolveImports(e: Expr) {
-    def resolveImports[F[_]](implicit Client: Client[F], F: Sync[F]): F[Expr] = e.accept(resolveImportsVisitor)
+    def resolveImports[F[_]](implicit Client: Client[F], F: Sync[F]): F[Expr] = e.accept(ResolveImportsVisitor[F](Nil))
   }
 
-  private def resolveImportsVisitor[F[_]](implicit F: Sync[F]): Visitor.Internal[F[Expr]] = new Visitor.Internal[F[Expr]] {
+//  private def resolveImportsVisitor[F[_]](implicit F: Sync[F]): Visitor.Internal[F[Expr]] = new Visitor.Internal[F[Expr]] {
+  private case class ResolveImportsVisitor[F[_]](parents: List[Path])(implicit F: Sync[F]) extends Visitor.Internal[F[Expr]] {
       override def onDoubleLiteral(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
 
       override def onNaturalLiteral(value: BigInteger): F[Expr] = F.pure(Expr.makeNaturalLiteral(value))
@@ -136,7 +139,12 @@ package object imports {
 
     //Probably can extract all commonality and just pass in a resolve function () => IO[String]
       override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] = for {
-        v <- F.delay(sys.env.get(value))
+        cacheO <- Caching.mkImportsCache[F]
+//        v <- cacheO.fold(F.delay(sys.env.get(value)))(cache => for {
+//          cachedO <- cache.get(toHex(hash))
+//          _      <- cachedO.fold(F.unit)(cached => )
+//          sha256 = MessageDigest.getInstance("SHA-256").digest()
+//        } yield cached)
       } yield null
 
       override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
