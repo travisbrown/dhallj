@@ -114,7 +114,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         // Type-check the type-level version, although we don't use the result;
         combineTypes.acceptExternal(this);
 
-        return combineTypes.accept(BetaNormalize.instance);
+        return combineTypes.acceptVis(BetaNormalize.instance);
       case PREFER:
         Iterable<Entry<String, Expr>> lhsTypeRecordType = lhsType.asRecordType();
         Iterable<Entry<String, Expr>> rhsTypeRecordType = rhsType.asRecordType();
@@ -126,9 +126,9 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         }
       case COMBINE_TYPES:
         Iterable<Entry<String, Expr>> lhsRecordType =
-            lhs.accept(BetaNormalize.instance).asRecordType();
+            lhs.acceptVis(BetaNormalize.instance).asRecordType();
         Iterable<Entry<String, Expr>> rhsRecordType =
-            rhs.accept(BetaNormalize.instance).asRecordType();
+            rhs.acceptVis(BetaNormalize.instance).asRecordType();
 
         if (lhsRecordType != null && rhsRecordType != null) {
           if (isType(rhsType) && !rhsRecordType.iterator().hasNext()) {
@@ -250,7 +250,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   public final Expr onLambda(String param, Expr input, Expr result) {
     if (Universe.fromExpr(input.acceptExternal(this)) != null) {
       Context unshiftedContext = this.context;
-      Expr inputNormalized = input.accept(BetaNormalize.instance);
+      Expr inputNormalized = input.acceptVis(BetaNormalize.instance);
       this.context = this.context.insert(param, inputNormalized).increment(param);
       Expr resultType = result.acceptExternal(this);
       this.context = unshiftedContext;
@@ -277,7 +277,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     Expr baseType = base.acceptExternal(this);
 
     if (isType(baseType)) {
-      Expr normalized = base.accept(BetaNormalize.instance);
+      Expr normalized = base.acceptVis(BetaNormalize.instance);
       if (normalized != null && normalized.acceptExternal(CheckEquivalence.instance)) {
         return normalized;
       }
@@ -297,7 +297,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       }
       throw fail(String.format("%s doesn't contain a field %s", base, fieldName));
     } else {
-      Expr baseNormalized = base.accept(BetaNormalize.instance);
+      Expr baseNormalized = base.acceptVis(BetaNormalize.instance);
       Iterable<Entry<String, Expr>> alternatives = baseNormalized.asUnionType();
       if (alternatives == null) {
         throw fail(
@@ -361,7 +361,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       throw fail("can't project on a non-record");
     } else {
 
-      Iterable<Entry<String, Expr>> projected = type.accept(BetaNormalize.instance).asRecordType();
+      Iterable<Entry<String, Expr>> projected =
+          type.acceptVis(BetaNormalize.instance).asRecordType();
 
       if (projected == null) {
         throw fail("can't project by type with a non-record type");
@@ -416,7 +417,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
       for (Entry<String, Expr> field : fields) {
         fieldTypes.put(
-            field.getKey(), field.getValue().acceptExternal(this).accept(BetaNormalize.instance));
+            field.getKey(),
+            field.getValue().acceptExternal(this).acceptVis(BetaNormalize.instance));
       }
 
       return Expr.makeRecordType(fieldTypes.entrySet());
@@ -502,7 +504,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   public final Expr onEmptyListLiteral(Expr type) {
     Expr typeType = type.acceptExternal(this);
 
-    Expr typeNormalized = type.accept(BetaNormalize.instance);
+    Expr typeNormalized = type.acceptVis(BetaNormalize.instance);
     Expr result =
         typeNormalized.acceptExternal(
             new ConstantVisitor.External<Expr>(null) {
@@ -534,7 +536,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       }
     }
 
-    return body.substitute(name, value.accept(BetaNormalize.instance).increment(name))
+    return body.substitute(name, value.acceptVis(BetaNormalize.instance).increment(name))
         .decrement(name)
         .acceptExternal(this);
   }
@@ -543,14 +545,15 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     Expr inferred = base.acceptExternal(this);
     // TODO: fix with equivalence.
     if (inferred
-        .accept(BetaNormalize.instance)
+        .acceptVis(BetaNormalize.instance)
         .alphaNormalize()
-        .equivalent(type.accept(BetaNormalize.instance).alphaNormalize())) {
+        .equivalent(type.acceptVis(BetaNormalize.instance).alphaNormalize())) {
       return inferred;
     } else {
       throw fail(
           String.format(
-              "invalid type annotation: %s for %s", type.accept(BetaNormalize.instance), inferred));
+              "invalid type annotation: %s for %s",
+              type.acceptVis(BetaNormalize.instance), inferred));
     }
   }
 
@@ -585,7 +588,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             Expr.makeApplication(Constants.LIST, Expr.makeRecordType(resultTypeFields));
 
         if (type == null
-            || type.accept(BetaNormalize.instance)
+            || type.acceptVis(BetaNormalize.instance)
                 .alphaNormalize()
                 .equivalent(resultType.alphaNormalize())) {
           return resultType;
@@ -597,7 +600,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
           Expr typeType = type.acceptExternal(this);
           if (isType(typeType)) {
 
-            Expr typeNormalized = type.accept(BetaNormalize.instance);
+            Expr typeNormalized = type.acceptVis(BetaNormalize.instance);
             Entry<Expr, Expr> typeApplication =
                 typeNormalized.acceptExternal(AsApplication.instance);
 

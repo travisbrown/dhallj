@@ -93,7 +93,7 @@ public final class FieldUtilities {
     return result;
   }
 
-  private static final Comparator<Entry<String, Expr>> entryComparator =
+  public static final Comparator<Entry<String, Expr>> entryComparator =
       new Comparator<Entry<String, Expr>>() {
         public int compare(Entry<String, Expr> a, Entry<String, Expr> b) {
           return a.getKey().compareTo(b.getKey());

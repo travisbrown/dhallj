@@ -75,7 +75,7 @@ public abstract class Expr {
   }
 
   public final Expr normalize() {
-    return this.accept(BetaNormalize.instance);
+    return this.acceptVis(BetaNormalize.instance);
   }
 
   public final Expr typeCheck() {
@@ -963,9 +963,9 @@ public abstract class Expr {
               break;
             case 1:
               current.state = 2;
-              stack.push(current);
 
               if (tmpToMap.type != null) {
+                stack.push(current);
                 stack.push(new State(tmpToMap.type, 0));
                 break;
               } else {

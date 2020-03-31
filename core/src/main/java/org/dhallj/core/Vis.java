@@ -71,7 +71,7 @@ public interface Vis<A> {
 
   A onAssert(A base);
 
-  A onMerge(A left, A right, A type);
+  A onMerge(A handlers, A union, A type);
 
   A onToMap(A base, A type);
 

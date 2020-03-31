@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Thunk;
 import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeTextLiteral {
-  static final Expr apply(String[] parts, Iterable<Thunk<Expr>> interpolated) {
+  static final Expr apply(String[] parts, List<Expr> interpolated) {
     if (parts.length == 1) {
       return Expr.makeTextLiteral(parts, emptyInterpolated);
     } else {
@@ -20,10 +19,10 @@ final class BetaNormalizeTextLiteral {
       if (partsSize == 0) {
         Expr notEmptyString = null;
         boolean tooMany = false;
-        Iterator<Thunk<Expr>> it = interpolated.iterator();
+        Iterator<Expr> it = interpolated.iterator();
 
         while (it.hasNext() && !tooMany) {
-          Expr next = it.next().apply();
+          Expr next = it.next();
           String nextAsSimpleTextLiteral = next.asSimpleTextLiteral();
 
           if (nextAsSimpleTextLiteral == null || nextAsSimpleTextLiteral.length() != 0) {
@@ -47,9 +46,7 @@ final class BetaNormalizeTextLiteral {
       boolean wasInlined = false;
       int partIndex = 1;
 
-      for (Thunk<Expr> thunk : interpolated) {
-        Expr expr = thunk.apply();
-
+      for (Expr expr : interpolated) {
         wasInlined =
             expr.acceptExternal(new InlineInterpolatedTextLiteral(newParts, newInterpolated));
 

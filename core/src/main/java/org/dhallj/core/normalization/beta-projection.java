@@ -43,7 +43,7 @@ final class BetaNormalizeProjection {
 
               @Override
               public Expr onProjection(Expr base0, String[] fieldNames0) {
-                return Expr.makeProjection(base0, fieldNames).accept(BetaNormalize.instance);
+                return Expr.makeProjection(base0, fieldNames).acceptVis(BetaNormalize.instance);
               }
 
               @Override
@@ -74,7 +74,7 @@ final class BetaNormalizeProjection {
                                 lhs, leftFields.toArray(new String[leftFields.size()])),
                             Expr.makeProjection(
                                 rhs, rightFields.toArray(new String[leftFields.size()])))
-                        .accept(BetaNormalize.instance);
+                        .acceptVis(BetaNormalize.instance);
                   }
                 }
                 return null;
