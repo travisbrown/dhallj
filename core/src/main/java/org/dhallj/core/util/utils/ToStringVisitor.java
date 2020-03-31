@@ -200,7 +200,7 @@ public class ToStringVisitor extends PureVis<String> {
   }
 
   public String onMerge(String handlers, String union, String type) {
-    StringBuilder builder = new StringBuilder("merge");
+    StringBuilder builder = new StringBuilder("merge ");
 
     builder.append(handlers);
     builder.append(" ");
@@ -214,7 +214,7 @@ public class ToStringVisitor extends PureVis<String> {
   }
 
   public String onToMap(String base, String type) {
-    StringBuilder builder = new StringBuilder("toMap");
+    StringBuilder builder = new StringBuilder("toMap ");
 
     builder.append(base);
     if (type != null) {
