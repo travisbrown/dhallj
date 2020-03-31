@@ -1,7 +1,6 @@
 package org.dhallj.imports
 
-import java.net.URI
-import java.nio.file.{Path, Paths}
+import cats.effect.Sync
 
 /**
  * Abstract over java.nio.Path so we can assert that their
@@ -13,20 +12,30 @@ import java.nio.file.{Path, Paths}
  */
 object Canonicalization {
 
-  /**
-   * Piggyback on Java's path normalization
-   */
-  def canonicalize(path: Path) = path.toAbsolutePath.normalize
+  def canonicalize[F[_]](imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
+    case Remote(uri) => F.delay(Remote(uri.normalize))
+    case Local(path) => F.delay(Local(path.toAbsolutePath.normalize))
+    case i           => F.pure(i)
+  }
 
-  /**
-   * Drop filename of parent and resolve child path (may be relative or absolute)
-   */
-  def canonicalize(parent: Path, child: Path) = parent.getParent.resolve(child).toAbsolutePath.normalize
-
-  def canonicalize(uri: URI) = Paths.get(uri).toAbsolutePath.normalize
-
-  def canonicalize(parent: URI, child: URI) = parent.resolve(child).normalize
-
-  def canonicalize(parent: URI, child: Path) = parent.resolve(child.toString).normalize
+  def canonicalize[F[_]](parent: ImportContext, child: ImportContext)(implicit F: Sync[F]): F[ImportContext] =
+    parent match {
+      case Remote(uri) =>
+        child match {
+          //A transitive relative import is parsed as local but is resolved as a remote import
+          // eg https://github.com/dhall-lang/dhall-lang/blob/master/Prelude/Integer/add has a local import but we still
+          //need to resolve this as a remote import
+          //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
+          case Local(path) =>
+            if (path.isAbsolute) canonicalize(child) else canonicalize(Remote(uri.resolve(path.toString)))
+          case _ => canonicalize(child)
+        }
+      case Local(path) =>
+        child match {
+          case Local(path2) => canonicalize(Local(path.getParent.resolve(path2)))
+          case _            => canonicalize(child)
+        }
+      case _ => canonicalize(child)
+    }
 
 }

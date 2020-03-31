@@ -22,6 +22,9 @@ import java.security.MessageDigest
 //TODO cors check
 //TODO referential sanity check
 //TODO quoted path components?
+//TODO cycle detection - should be easy once we have stack of parent imports
+//TODO handle duplicate imports - should be easy with caching logic
+//TODO handle importing as text, location
 package object imports {
 
   implicit class ResolveImports(e: Expr) {
