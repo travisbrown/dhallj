@@ -12,19 +12,17 @@ import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
-import org.dhallj.core.Thunk;
-import org.dhallj.core.Visitor;
-import org.dhallj.core.visitor.IdentityVisitor;
+import org.dhallj.core.visitor.IdentityVis;
 
 /**
  * Shifts all instances of a variable.
  *
  * <p>Note that this visitor maintains internal state and instances should not be reused.
  */
-public final class Shift extends IdentityVisitor.Internal {
+public final class Shift extends IdentityVis {
   private final int d;
   private final String name;
-  private int m = 0;
+  private int cutoff = 0;
 
   public Shift(boolean isIncrement, String name) {
     this.d = isIncrement ? 1 : -1;
@@ -32,53 +30,41 @@ public final class Shift extends IdentityVisitor.Internal {
   }
 
   public Expr onIdentifier(String value, long index) {
-    if (value.equals(this.name) && index >= this.m) {
+    if (value.equals(this.name) && index >= this.cutoff) {
       return Expr.makeIdentifier(value, index + this.d);
     } else {
       return Expr.makeIdentifier(value, index);
     }
   }
 
-  public Expr onLambda(String param, Thunk<Expr> input, Thunk<Expr> result) {
-    Expr inputEval = input.apply();
-    Expr resultEval;
-    if (param.equals(this.name)) {
-      this.m += 1;
-      resultEval = result.apply();
-      this.m -= 1;
-    } else {
-      resultEval = result.apply();
-    }
-
-    return Expr.makeLambda(param, inputEval, resultEval);
-  }
-
-  public Expr onPi(String param, Thunk<Expr> input, Thunk<Expr> result) {
-    Expr inputEval = input.apply();
-    Expr resultEval;
-    if (param.equals(this.name)) {
-      this.m += 1;
-      resultEval = result.apply();
-      this.m -= 1;
-    } else {
-      resultEval = result.apply();
-    }
-
-    return Expr.makePi(param, inputEval, resultEval);
-  }
-
-  public Expr onLet(String param, Thunk<Expr> type, Thunk<Expr> value, Thunk<Expr> body) {
-    Expr typeEval = type.apply();
-    Expr valueEval = value.apply();
-    Expr bodyEval;
+  @Override
+  public void bind(String name, Expr type) {
     if (name.equals(this.name)) {
-      this.m += 1;
-      bodyEval = body.apply();
-      this.m -= 1;
-    } else {
-      bodyEval = body.apply();
+      this.cutoff += 1;
+    }
+  }
+
+  @Override
+  public Expr onLambda(String name, Expr type, Expr result) {
+    if (name.equals(this.name)) {
+      this.cutoff -= 1;
     }
 
-    return Expr.makeLet(param, typeEval, valueEval, bodyEval);
+    return Expr.makeLambda(name, type, result);
+  }
+
+  public Expr onPi(String name, Expr type, Expr result) {
+    if (name.equals(this.name)) {
+      this.cutoff -= 1;
+    }
+
+    return Expr.makePi(name, type, result);
+  }
+
+  public Expr onLet(String name, Expr type, Expr value, Expr body) {
+    if (name.equals(this.name)) {
+      this.cutoff -= 1;
+    }
+    return Expr.makeLet(name, type, value, body);
   }
 }

@@ -55,11 +55,11 @@ public abstract class Expr {
   public abstract <A> A acceptExternal(Visitor<Expr, A> visitor);
 
   public final Expr increment(String name) {
-    return this.accept(new Shift(true, name));
+    return this.acceptVis(new Shift(true, name));
   }
 
   public final Expr decrement(String name) {
-    return this.accept(new Shift(false, name));
+    return this.acceptVis(new Shift(false, name));
   }
 
   public final Expr substitute(String name, int index, Expr replacement) {
@@ -553,12 +553,12 @@ public abstract class Expr {
           Constructors.Lambda tmpLambda = (Constructors.Lambda) current.expr;
           switch (current.state) {
             case 0:
-              vis.bind(tmpLambda.param, tmpLambda.input);
               current.state = 1;
               stack.push(current);
-              stack.push(new State(tmpLambda.input, 0));
+              stack.push(new State(tmpLambda.type, 0));
               break;
             case 1:
+              vis.bind(tmpLambda.name, tmpLambda.type);
               current.state = 2;
               stack.push(current);
               stack.push(new State(tmpLambda.result, 0));
@@ -566,19 +566,19 @@ public abstract class Expr {
             case 2:
               v1 = values.poll();
               v0 = values.poll();
-              values.push(vis.onLambda(tmpLambda.param, v0, v1));
+              values.push(vis.onLambda(tmpLambda.name, v0, v1));
           }
           break;
         case Tags.PI:
           Constructors.Pi tmpPi = (Constructors.Pi) current.expr;
           switch (current.state) {
             case 0:
-              vis.bind(tmpPi.param, tmpPi.input);
               current.state = 1;
               stack.push(current);
               stack.push(new State(tmpPi.input, 0));
               break;
             case 1:
+              vis.bind(tmpPi.param, tmpPi.input);
               current.state = 2;
               stack.push(current);
               stack.push(new State(tmpPi.result, 0));
@@ -593,13 +593,13 @@ public abstract class Expr {
           Constructors.Let tmpLet = (Constructors.Let) current.expr;
           switch (current.state) {
             case 0:
-              vis.bind(tmpLet.name, tmpLet.type);
               current.state = 1;
               if (tmpLet.type != null) {
                 stack.push(current);
                 stack.push(new State(tmpLet.type, 0));
                 break;
               } else {
+                values.push(null);
                 continue;
               }
             case 1:
@@ -608,6 +608,7 @@ public abstract class Expr {
               stack.push(new State(tmpLet.value, 0));
               break;
             case 2:
+              vis.bind(tmpLet.name, tmpLet.type);
               current.state = 3;
               stack.push(current);
               stack.push(new State(tmpLet.body, 0));
@@ -623,9 +624,15 @@ public abstract class Expr {
           Constructors.TextLiteral tmpText = (Constructors.TextLiteral) current.expr;
           if (current.state == 0) {
             vis.preText(tmpText.interpolated.length);
-            current.state = 1;
-            stack.push(current);
-            stack.push(new State(tmpText.interpolated[current.state - 1], 0));
+
+            if (tmpText.interpolated.length == 0) {
+              values.push(vis.onText(tmpText.parts, new ArrayList<A>()));
+
+            } else {
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpText.interpolated[current.state - 1], 0));
+            }
           } else if (current.state == tmpText.interpolated.length) {
             List<A> results = new ArrayList<A>();
             for (int i = 0; i < tmpText.interpolated.length; i += 1) {
@@ -931,9 +938,9 @@ public abstract class Expr {
               break;
             case 2:
               current.state = 3;
-              stack.push(current);
 
               if (tmpMerge.type != null) {
+                stack.push(current);
                 stack.push(new State(tmpMerge.type, 0));
                 break;
               } else {
