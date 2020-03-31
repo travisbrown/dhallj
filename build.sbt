@@ -32,7 +32,7 @@ lazy val core = project
   .settings(baseSettings ++ javaSettings)
   .settings(moduleName := "dhall-core",
             javacOptions in Compile ++= Seq("-source", "1.7"),
-            javacOptions in (Compile, compile) ++= Seq("-target", "1.7", "-Xlint:all"))
+            javacOptions in (Compile, compile) ++= Seq("-target", "1.7"))
 
 lazy val parser = project
   .in(file("parser"))

@@ -13,27 +13,12 @@ import java.util.Map.Entry;
  * <p>Note that nothing in this file is public, and that custom code shouldn't be added here, since
  * this is generated from the visitor definition.
  */
-class Constructors {
-  static final class DoubleLiteral extends Expr {
-    private final double value;
-
-    DoubleLiteral(double value) {
-      this.value = value;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onDoubleLiteral(this.value);
-    }
-
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onDoubleLiteral(this.value);
-    }
-  }
-
+final class Constructors {
   static final class NaturalLiteral extends Expr {
-    private final BigInteger value;
+    final BigInteger value;
 
     NaturalLiteral(BigInteger value) {
+      super(Tags.NATURAL);
       this.value = value;
     }
 
@@ -47,9 +32,10 @@ class Constructors {
   }
 
   static final class IntegerLiteral extends Expr {
-    private final BigInteger value;
+    final BigInteger value;
 
     IntegerLiteral(BigInteger value) {
+      super(Tags.INTEGER);
       this.value = value;
     }
 
@@ -62,11 +48,29 @@ class Constructors {
     }
   }
 
+  static final class DoubleLiteral extends Expr {
+    final double value;
+
+    DoubleLiteral(double value) {
+      super(Tags.DOUBLE);
+      this.value = value;
+    }
+
+    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
+      return visitor.onDoubleLiteral(this.value);
+    }
+
+    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+      return visitor.onDoubleLiteral(this.value);
+    }
+  }
+
   static final class TextLiteral extends Expr {
-    private final String[] parts;
-    private final Expr[] interpolated;
+    final String[] parts;
+    final Expr[] interpolated;
 
     TextLiteral(String[] parts, Expr[] interpolated) {
+      super(Tags.TEXT);
       this.parts = parts;
       this.interpolated = interpolated;
     }
@@ -83,10 +87,11 @@ class Constructors {
   }
 
   static final class Application extends Expr {
-    private final Expr base;
-    private final Expr arg;
+    final Expr base;
+    final Expr arg;
 
     Application(Expr base, Expr arg) {
+      super(Tags.APPLICATION);
       this.base = base;
       this.arg = arg;
     }
@@ -103,11 +108,12 @@ class Constructors {
   }
 
   static final class OperatorApplication extends Expr {
-    private final Operator operator;
-    private final Expr lhs;
-    private final Expr rhs;
+    final Operator operator;
+    final Expr lhs;
+    final Expr rhs;
 
     OperatorApplication(Operator operator, Expr lhs, Expr rhs) {
+      super(Tags.OPERATOR_APPLICATION);
       this.operator = operator;
       this.lhs = lhs;
       this.rhs = rhs;
@@ -125,34 +131,36 @@ class Constructors {
   }
 
   static final class If extends Expr {
-    private final Expr cond;
-    private final Expr thenValue;
-    private final Expr elseValue;
+    final Expr predicate;
+    final Expr thenValue;
+    final Expr elseValue;
 
-    If(Expr cond, Expr thenValue, Expr elseValue) {
-      this.cond = cond;
+    If(Expr predicate, Expr thenValue, Expr elseValue) {
+      super(Tags.IF);
+      this.predicate = predicate;
       this.thenValue = thenValue;
       this.elseValue = elseValue;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> condVisited = new ExprUtilities.ExprThunk(visitor, this.cond);
+      Thunk<A> predicateVisited = new ExprUtilities.ExprThunk(visitor, this.predicate);
       Thunk<A> thenValueVisited = new ExprUtilities.ExprThunk(visitor, this.thenValue);
       Thunk<A> elseValueVisited = new ExprUtilities.ExprThunk(visitor, this.elseValue);
-      return visitor.onIf(condVisited, thenValueVisited, elseValueVisited);
+      return visitor.onIf(predicateVisited, thenValueVisited, elseValueVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onIf(cond, thenValue, elseValue);
+      return visitor.onIf(predicate, thenValue, elseValue);
     }
   }
 
   static final class Lambda extends Expr {
-    private final String param;
-    private final Expr input;
-    private final Expr result;
+    final String param;
+    final Expr input;
+    final Expr result;
 
     Lambda(String param, Expr input, Expr result) {
+      super(Tags.LAMBDA);
       this.param = param;
       this.input = input;
       this.result = result;
@@ -170,11 +178,12 @@ class Constructors {
   }
 
   static final class Pi extends Expr {
-    private final String param;
-    private final Expr input;
-    private final Expr result;
+    final String param;
+    final Expr input;
+    final Expr result;
 
     Pi(String param, Expr input, Expr result) {
+      super(Tags.PI);
       this.param = param;
       this.input = input;
       this.result = result;
@@ -192,9 +201,10 @@ class Constructors {
   }
 
   static final class Assert extends Expr {
-    private final Expr base;
+    final Expr base;
 
     Assert(Expr base) {
+      super(Tags.ASSERT);
       this.base = base;
     }
 
@@ -209,10 +219,11 @@ class Constructors {
   }
 
   static final class FieldAccess extends Expr {
-    private final Expr base;
-    private final String fieldName;
+    final Expr base;
+    final String fieldName;
 
     FieldAccess(Expr base, String fieldName) {
+      super(Tags.FIELD_ACCESS);
       this.base = base;
       this.fieldName = fieldName;
     }
@@ -228,10 +239,11 @@ class Constructors {
   }
 
   static final class Projection extends Expr {
-    private final Expr base;
-    private final String[] fieldNames;
+    final Expr base;
+    final String[] fieldNames;
 
     Projection(Expr base, String[] fieldNames) {
+      super(Tags.PROJECTION);
       this.base = base;
       this.fieldNames = fieldNames;
     }
@@ -247,30 +259,32 @@ class Constructors {
   }
 
   static final class ProjectionByType extends Expr {
-    private final Expr base;
-    private final Expr tpe;
+    final Expr base;
+    final Expr type;
 
-    ProjectionByType(Expr base, Expr tpe) {
+    ProjectionByType(Expr base, Expr type) {
+      super(Tags.PROJECTION_BY_TYPE);
       this.base = base;
-      this.tpe = tpe;
+      this.type = type;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
       Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      Thunk<A> tpeVisited = new ExprUtilities.ExprThunk(visitor, this.tpe);
+      Thunk<A> tpeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
       return visitor.onProjectionByType(baseVisited, tpeVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onProjectionByType(base, tpe);
+      return visitor.onProjectionByType(base, type);
     }
   }
 
   static final class Identifier extends Expr {
-    private final String value;
-    private final long index;
+    final String value;
+    final long index;
 
     Identifier(String value, long index) {
+      super(Tags.IDENTIFIER);
       this.value = value;
       this.index = index;
     }
@@ -285,9 +299,10 @@ class Constructors {
   }
 
   static final class RecordLiteral extends Expr {
-    private final Entry<String, Expr>[] fields;
+    final Entry<String, Expr>[] fields;
 
     RecordLiteral(Entry<String, Expr>[] fields) {
+      super(Tags.RECORD);
       this.fields = fields;
     }
 
@@ -303,9 +318,10 @@ class Constructors {
   }
 
   static final class RecordType extends Expr {
-    private final Entry<String, Expr>[] fields;
+    final Entry<String, Expr>[] fields;
 
     RecordType(Entry<String, Expr>[] fields) {
+      super(Tags.RECORD_TYPE);
       this.fields = fields;
     }
 
@@ -321,9 +337,10 @@ class Constructors {
   }
 
   static final class UnionType extends Expr {
-    private final Entry<String, Expr>[] fields;
+    final Entry<String, Expr>[] fields;
 
     UnionType(Entry<String, Expr>[] fields) {
+      super(Tags.UNION_TYPE);
       this.fields = fields;
     }
 
@@ -339,9 +356,10 @@ class Constructors {
   }
 
   static final class NonEmptyListLiteral extends Expr {
-    private final Expr[] values;
+    final Expr[] values;
 
     NonEmptyListLiteral(Expr[] values) {
+      super(Tags.NON_EMPTY_LIST);
       this.values = values;
     }
 
@@ -357,29 +375,31 @@ class Constructors {
   }
 
   static final class EmptyListLiteral extends Expr {
-    private final Expr tpe;
+    final Expr type;
 
-    EmptyListLiteral(Expr tpe) {
-      this.tpe = tpe;
+    EmptyListLiteral(Expr type) {
+      super(Tags.EMPTY_LIST);
+      this.type = type;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> tpeVisited = new ExprUtilities.ExprThunk(visitor, this.tpe);
+      Thunk<A> tpeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
       return visitor.onEmptyListLiteral(tpeVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onEmptyListLiteral(tpe);
+      return visitor.onEmptyListLiteral(type);
     }
   }
 
   static final class Let extends Expr {
-    private final String name;
-    private final Expr type;
-    private final Expr value;
-    private final Expr body;
+    final String name;
+    final Expr type;
+    final Expr value;
+    final Expr body;
 
     Let(String name, Expr type, Expr value, Expr body) {
+      super(Tags.LET);
       this.name = name;
       this.type = type;
       this.value = value;
@@ -399,10 +419,11 @@ class Constructors {
   }
 
   static final class Annotated extends Expr {
-    private final Expr base;
-    private final Expr type;
+    final Expr base;
+    final Expr type;
 
     Annotated(Expr base, Expr type) {
+      super(Tags.ANNOTATED);
       this.base = base;
       this.type = type;
     }
@@ -418,11 +439,36 @@ class Constructors {
     }
   }
 
+  static final class Merge extends Expr {
+    final Expr handlers;
+    final Expr union;
+    final Expr type;
+
+    Merge(Expr handlers, Expr union, Expr type) {
+      super(Tags.MERGE);
+      this.handlers = handlers;
+      this.union = union;
+      this.type = type;
+    }
+
+    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
+      Thunk<A> handlersVisited = new ExprUtilities.ExprThunk(visitor, this.handlers);
+      Thunk<A> unionVisited = new ExprUtilities.ExprThunk(visitor, this.union);
+      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
+      return visitor.onMerge(handlersVisited, unionVisited, typeVisited);
+    }
+
+    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+      return visitor.onMerge(handlers, union, type);
+    }
+  }
+
   static final class ToMap extends Expr {
-    private final Expr base;
-    private final Expr type;
+    final Expr base;
+    final Expr type;
 
     ToMap(Expr base, Expr type) {
+      super(Tags.TO_MAP);
       this.base = base;
       this.type = type;
     }
@@ -438,35 +484,53 @@ class Constructors {
     }
   }
 
-  static final class Merge extends Expr {
-    private final Expr left;
-    private final Expr right;
-    private final Expr type;
+  static final class MissingImport extends Expr {
+    final Import.Mode mode;
+    final byte[] hash;
 
-    Merge(Expr left, Expr right, Expr type) {
-      this.left = left;
-      this.right = right;
-      this.type = type;
+    MissingImport(Import.Mode mode, byte[] hash) {
+      super(Tags.MISSING_IMPORT);
+      this.mode = mode;
+      this.hash = hash;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> leftVisited = new ExprUtilities.ExprThunk(visitor, this.left);
-      Thunk<A> rightVisited = new ExprUtilities.ExprThunk(visitor, this.right);
-      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      return visitor.onMerge(leftVisited, rightVisited, typeVisited);
+      return visitor.onMissingImport(this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onMerge(left, right, type);
+      return visitor.onMissingImport(this.mode, this.hash);
+    }
+  }
+
+  static final class EnvImport extends Expr {
+    final String value;
+    final Import.Mode mode;
+    final byte[] hash;
+
+    EnvImport(String value, Import.Mode mode, byte[] hash) {
+      super(Tags.ENV_IMPORT);
+      this.value = value;
+      this.mode = mode;
+      this.hash = hash;
+    }
+
+    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
+      return visitor.onEnvImport(this.value, this.mode, this.hash);
+    }
+
+    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+      return visitor.onEnvImport(this.value, this.mode, this.hash);
     }
   }
 
   static final class LocalImport extends Expr {
-    private final Path path;
-    private final Import.Mode mode;
-    private final byte[] hash;
+    final Path path;
+    final Import.Mode mode;
+    final byte[] hash;
 
     LocalImport(Path path, Import.Mode mode, byte[] hash) {
+      super(Tags.LOCAL_IMPORT);
       this.path = path;
       this.mode = mode;
       this.hash = hash;
@@ -482,14 +546,17 @@ class Constructors {
   }
 
   static final class RemoteImport extends Expr {
-    private final URI url;
-    private final Import.Mode mode;
-    private final byte[] hash;
+    final URI url;
+    final Import.Mode mode;
+    final byte[] hash;
+    final Expr using;
 
     RemoteImport(URI url, Import.Mode mode, byte[] hash) {
+      super(Tags.REMOTE_IMPORT);
       this.url = url;
       this.mode = mode;
       this.hash = hash;
+      this.using = null;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
@@ -498,44 +565,6 @@ class Constructors {
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onRemoteImport(this.url, this.mode, this.hash);
-    }
-  }
-
-  static final class EnvImport extends Expr {
-    private final String value;
-    private final Import.Mode mode;
-    private final byte[] hash;
-
-    EnvImport(String value, Import.Mode mode, byte[] hash) {
-      this.value = value;
-      this.mode = mode;
-      this.hash = hash;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onEnvImport(this.value, this.mode, this.hash);
-    }
-
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onEnvImport(this.value, this.mode, this.hash);
-    }
-  }
-
-  static final class MissingImport extends Expr {
-    private final Import.Mode mode;
-    private final byte[] hash;
-
-    MissingImport(Import.Mode mode, byte[] hash) {
-      this.mode = mode;
-      this.hash = hash;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onMissingImport(this.mode, this.hash);
-    }
-
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onMissingImport(this.mode, this.hash);
     }
   }
 }

@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -42,6 +43,12 @@ import org.dhallj.core.util.ThunkUtilities;
  * fold over the structure, and external visitors, which correspond to pattern matching.
  */
 public abstract class Expr {
+  final int tag;
+
+  Expr(int tag) {
+    this.tag = tag;
+  }
+
   public abstract <A> A accept(Visitor<Thunk<A>, A> visitor);
 
   public abstract <A> A acceptExternal(Visitor<Expr, A> visitor);
@@ -271,10 +278,11 @@ public abstract class Expr {
   }
 
   public static final class Parsed extends Expr {
-    private final Expr base;
-    private final Source source;
+    final Expr base;
+    final Source source;
 
     public Parsed(Expr base, Source source) {
+      super(Tags.NOTE);
       this.base = base;
       this.source = source;
     }
@@ -473,5 +481,540 @@ public abstract class Expr {
 
   public static final Expr makeMissingImport(Import.Mode mode, byte[] hash) {
     return new Constructors.MissingImport(mode, hash);
+  }
+
+  private final class State {
+    final Expr expr;
+    int state;
+
+    State(Expr expr, int state) {
+      this.expr = expr;
+      this.state = state;
+    }
+
+    public String toString() {
+      return String.format("%s %d %d", this.expr, this.expr.tag, this.state);
+    }
+  }
+
+  public final <A> A acceptVis(Vis<A> vis) {
+    State current = new State(this, 0);
+    LinkedList<State> stack = new LinkedList<State>();
+    LinkedList<A> values = new LinkedList<A>();
+
+    A v0;
+    A v1;
+    A v2;
+
+    LinkedList<LinkedList<Expr>> applicationStack = new LinkedList<LinkedList<Expr>>();
+
+    while (current != null) {
+      // System.out.println(stack);
+      // System.out.println(current.expr);
+      // System.out.println(current.expr.tag);
+      switch (current.expr.tag) {
+        case Tags.NOTE:
+          Parsed tmpNote = (Parsed) current.expr;
+          switch (current.state) {
+            case 0:
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpNote.base, 0));
+              break;
+            case 1:
+              v0 = values.poll();
+              values.push(vis.onNote(v0, tmpNote.source));
+              break;
+          }
+          break;
+        case Tags.NATURAL:
+          values.push(vis.onNatural(((Constructors.NaturalLiteral) current.expr).value));
+          break;
+        case Tags.INTEGER:
+          values.push(vis.onInteger(((Constructors.IntegerLiteral) current.expr).value));
+          break;
+        case Tags.DOUBLE:
+          values.push(vis.onDouble(((Constructors.DoubleLiteral) current.expr).value));
+          break;
+        case Tags.IDENTIFIER:
+          Constructors.Identifier tmpIdentifier = (Constructors.Identifier) current.expr;
+          values.push(vis.onIdentifier(tmpIdentifier.value, tmpIdentifier.index));
+          break;
+        case Tags.LAMBDA:
+          Constructors.Lambda tmpLambda = (Constructors.Lambda) current.expr;
+          switch (current.state) {
+            case 0:
+              vis.bind(tmpLambda.param, tmpLambda.input);
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpLambda.input, 0));
+              break;
+            case 1:
+              current.state = 2;
+              stack.push(current);
+              stack.push(new State(tmpLambda.result, 0));
+              break;
+            case 2:
+              v1 = values.poll();
+              v0 = values.poll();
+              values.push(vis.onLambda(tmpLambda.param, v0, v1));
+          }
+          break;
+        case Tags.PI:
+          Constructors.Pi tmpPi = (Constructors.Pi) current.expr;
+          switch (current.state) {
+            case 0:
+              vis.bind(tmpPi.param, tmpPi.input);
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpPi.input, 0));
+              break;
+            case 1:
+              current.state = 2;
+              stack.push(current);
+              stack.push(new State(tmpPi.result, 0));
+              break;
+            case 2:
+              v1 = values.poll();
+              v0 = values.poll();
+              values.push(vis.onPi(tmpPi.param, v0, v1));
+          }
+          break;
+        case Tags.LET:
+          Constructors.Let tmpLet = (Constructors.Let) current.expr;
+          switch (current.state) {
+            case 0:
+              vis.bind(tmpLet.name, tmpLet.type);
+              current.state = 1;
+              if (tmpLet.type != null) {
+                stack.push(current);
+                stack.push(new State(tmpLet.type, 0));
+                break;
+              } else {
+                continue;
+              }
+            case 1:
+              current.state = 2;
+              stack.push(current);
+              stack.push(new State(tmpLet.value, 0));
+              break;
+            case 2:
+              current.state = 3;
+              stack.push(current);
+              stack.push(new State(tmpLet.body, 0));
+              break;
+            case 3:
+              v2 = values.poll();
+              v1 = values.poll();
+              v0 = values.poll();
+              values.push(vis.onLet(tmpLet.name, v0, v1, v2));
+          }
+          break;
+        case Tags.TEXT:
+          Constructors.TextLiteral tmpText = (Constructors.TextLiteral) current.expr;
+          if (current.state == 0) {
+            vis.preText(tmpText.interpolated.length);
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpText.interpolated[current.state - 1], 0));
+          } else if (current.state == tmpText.interpolated.length) {
+            List<A> results = new ArrayList<A>();
+            for (int i = 0; i < tmpText.interpolated.length; i += 1) {
+              results.add(values.poll());
+            }
+            Collections.reverse(results);
+            values.push(vis.onText(tmpText.parts, results));
+          } else {
+            current.state += 1;
+            stack.push(current);
+            stack.push(new State(tmpText.interpolated[current.state - 1], 0));
+          }
+          break;
+        case Tags.NON_EMPTY_LIST:
+          Constructors.NonEmptyListLiteral tmpNonEmptyList =
+              (Constructors.NonEmptyListLiteral) current.expr;
+          if (current.state == 0) {
+            vis.preNonEmptyList(tmpNonEmptyList.values.length);
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
+          } else if (current.state == tmpNonEmptyList.values.length) {
+            List<A> results = new ArrayList<A>();
+            for (int i = 0; i < tmpNonEmptyList.values.length; i += 1) {
+              results.add(values.poll());
+            }
+            Collections.reverse(results);
+            values.push(vis.onNonEmptyList(results));
+          } else {
+            current.state += 1;
+            stack.push(current);
+            stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
+          }
+          break;
+        case Tags.EMPTY_LIST:
+          Constructors.EmptyListLiteral tmpEmptyList = (Constructors.EmptyListLiteral) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpEmptyList.type, 0));
+          } else {
+            values.push(vis.onEmptyList(values.poll()));
+          }
+          break;
+
+        case Tags.RECORD:
+          Constructors.RecordLiteral tmpRecord = (Constructors.RecordLiteral) current.expr;
+          if (current.state == 0) {
+            vis.preRecord(tmpRecord.fields.length);
+
+            if (tmpRecord.fields.length == 0) {
+              values.push(vis.onRecord(new ArrayList<Entry<String, A>>()));
+            } else {
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpRecord.fields[current.state - 1].getValue(), 0));
+            }
+          } else if (current.state == tmpRecord.fields.length) {
+            List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
+            for (int i = tmpRecord.fields.length - 1; i >= 0; i -= 1) {
+              results.add(new SimpleImmutableEntry(tmpRecord.fields[i].getKey(), values.poll()));
+            }
+            Collections.reverse(results);
+            values.push(vis.onRecord(results));
+          } else {
+            current.state += 1;
+            stack.push(current);
+            stack.push(new State(tmpRecord.fields[current.state - 1].getValue(), 0));
+          }
+          break;
+
+        case Tags.RECORD_TYPE:
+          Constructors.RecordType tmpRecordType = (Constructors.RecordType) current.expr;
+          if (current.state == 0) {
+            vis.preRecord(tmpRecordType.fields.length);
+
+            if (tmpRecordType.fields.length == 0) {
+              values.push(vis.onRecordType(new ArrayList<Entry<String, A>>()));
+            } else {
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpRecordType.fields[current.state - 1].getValue(), 0));
+            }
+          } else if (current.state == tmpRecordType.fields.length) {
+            List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
+            for (int i = tmpRecordType.fields.length - 1; i >= 0; i -= 1) {
+              results.add(
+                  new SimpleImmutableEntry(tmpRecordType.fields[i].getKey(), values.poll()));
+            }
+            Collections.reverse(results);
+            values.push(vis.onRecordType(results));
+          } else {
+            current.state += 1;
+            stack.push(current);
+            stack.push(new State(tmpRecordType.fields[current.state - 1].getValue(), 0));
+          }
+          break;
+
+        case Tags.UNION_TYPE:
+          Constructors.UnionType tmpUnionType = (Constructors.UnionType) current.expr;
+          if (current.state == 0) {
+            vis.preRecord(tmpUnionType.fields.length);
+
+            if (tmpUnionType.fields.length == 0) {
+              values.push(vis.onUnionType(new ArrayList<Entry<String, A>>()));
+            } else {
+              current.state = 1;
+              stack.push(current);
+              Expr type = tmpUnionType.fields[current.state - 1].getValue();
+              if (type == null) {
+                values.push(null);
+              } else {
+                stack.push(new State(type, 0));
+              }
+            }
+          } else if (current.state == tmpUnionType.fields.length) {
+            List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
+            for (int i = tmpUnionType.fields.length - 1; i >= 0; i -= 1) {
+              results.add(new SimpleImmutableEntry(tmpUnionType.fields[i].getKey(), values.poll()));
+            }
+            Collections.reverse(results);
+            values.push(vis.onUnionType(results));
+          } else {
+            current.state += 1;
+            stack.push(current);
+            Expr type = tmpUnionType.fields[current.state - 1].getValue();
+            if (type == null) {
+              values.push(null);
+            } else {
+              stack.push(new State(type, 0));
+            }
+          }
+          break;
+
+        case Tags.FIELD_ACCESS:
+          Constructors.FieldAccess tmpFieldAccess = (Constructors.FieldAccess) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpFieldAccess.base, 0));
+          } else {
+            values.push(vis.onFieldAccess(values.poll(), tmpFieldAccess.fieldName));
+          }
+          break;
+
+        case Tags.PROJECTION:
+          Constructors.Projection tmpProjection = (Constructors.Projection) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpProjection.base, 0));
+          } else {
+            values.push(vis.onProjection(values.poll(), tmpProjection.fieldNames));
+          }
+          break;
+
+        case Tags.PROJECTION_BY_TYPE:
+          Constructors.ProjectionByType tmpProjectionByType =
+              (Constructors.ProjectionByType) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpProjectionByType.base, 0));
+          } else if (current.state == 1) {
+            current.state = 2;
+            stack.push(current);
+            stack.push(new State(tmpProjectionByType.type, 0));
+          } else {
+            v1 = values.poll();
+            v0 = values.poll();
+            values.push(vis.onProjectionByType(v0, v1));
+          }
+          break;
+
+        case Tags.APPLICATION:
+          Constructors.Application tmpApplication = (Constructors.Application) current.expr;
+
+          LinkedList<Expr> application;
+          if (current.state == 0) {
+            application = new LinkedList<Expr>();
+            application.push(tmpApplication.arg);
+
+            Expr candidate = tmpApplication.base;
+
+            while (candidate.tag == Tags.APPLICATION
+                || (candidate.tag == Tags.NOTE
+                    && ((Parsed) candidate).base.tag == Tags.APPLICATION)) {
+              if (candidate.tag == Tags.APPLICATION) {
+                Constructors.Application candidateApplication =
+                    (Constructors.Application) candidate;
+                application.push(candidateApplication.arg);
+                candidate = candidateApplication.base;
+              } else {
+                Constructors.Application candidateApplication =
+                    (Constructors.Application) ((Parsed) candidate).base;
+                application.push(candidateApplication.arg);
+                candidate = candidateApplication.base;
+              }
+            }
+
+            application.push(candidate);
+
+            vis.preApplication(application.size());
+            current.state = application.size();
+          } else {
+            application = applicationStack.poll();
+          }
+
+          if (application.isEmpty()) {
+            List<A> args = new ArrayList<A>(current.state);
+
+            for (int i = 0; i < current.state - 1; i++) {
+              args.add(values.poll());
+            }
+            Collections.reverse(args);
+
+            A base = values.poll();
+
+            values.push(vis.onApplication(base, args));
+          } else {
+            stack.push(current);
+            stack.push(new State(application.poll(), 0));
+            applicationStack.push(application);
+          }
+          break;
+
+        case Tags.OPERATOR_APPLICATION:
+          Constructors.OperatorApplication tmpOperatorApplication =
+              (Constructors.OperatorApplication) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpOperatorApplication.lhs, 0));
+          } else if (current.state == 1) {
+            current.state = 2;
+            stack.push(current);
+            stack.push(new State(tmpOperatorApplication.rhs, 0));
+          } else {
+            v1 = values.poll();
+            v0 = values.poll();
+            values.push(vis.onOperatorApplication(tmpOperatorApplication.operator, v0, v1));
+          }
+          break;
+        case Tags.IF:
+          Constructors.If tmpIf = (Constructors.If) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpIf.predicate, 0));
+          } else if (current.state == 1) {
+            current.state = 2;
+            stack.push(current);
+            stack.push(new State(tmpIf.thenValue, 0));
+          } else if (current.state == 2) {
+            current.state = 3;
+            stack.push(current);
+            stack.push(new State(tmpIf.elseValue, 0));
+          } else {
+            v2 = values.poll();
+            v1 = values.poll();
+            v0 = values.poll();
+            values.push(vis.onIf(v0, v1, v2));
+          }
+          break;
+        case Tags.ANNOTATED:
+          Constructors.Annotated tmpAnnotated = (Constructors.Annotated) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpAnnotated.base, 0));
+          } else if (current.state == 1) {
+            current.state = 2;
+            stack.push(current);
+            stack.push(new State(tmpAnnotated.type, 0));
+          } else {
+            v1 = values.poll();
+            v0 = values.poll();
+            values.push(vis.onAnnotated(v0, v1));
+          }
+          break;
+        case Tags.ASSERT:
+          Constructors.Assert tmpAssert = (Constructors.Assert) current.expr;
+          if (current.state == 0) {
+            current.state = 1;
+            stack.push(current);
+            stack.push(new State(tmpAssert.base, 0));
+          } else {
+            values.push(vis.onAssert(values.poll()));
+          }
+          break;
+        case Tags.MERGE:
+          Constructors.Merge tmpMerge = (Constructors.Merge) current.expr;
+          switch (current.state) {
+            case 0:
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpMerge.handlers, 0));
+              break;
+            case 1:
+              current.state = 2;
+              stack.push(current);
+              stack.push(new State(tmpMerge.union, 0));
+              break;
+            case 2:
+              current.state = 3;
+              stack.push(current);
+
+              if (tmpMerge.type != null) {
+                stack.push(new State(tmpMerge.type, 0));
+                break;
+              } else {
+                values.push(null);
+                continue;
+              }
+            case 3:
+              v2 = values.poll();
+              v1 = values.poll();
+              v0 = values.poll();
+              values.push(vis.onMerge(v0, v1, v2));
+
+              break;
+          }
+          break;
+        case Tags.TO_MAP:
+          Constructors.ToMap tmpToMap = (Constructors.ToMap) current.expr;
+          switch (current.state) {
+            case 0:
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpToMap.base, 0));
+              break;
+            case 1:
+              current.state = 2;
+              stack.push(current);
+
+              if (tmpToMap.type != null) {
+                stack.push(new State(tmpToMap.type, 0));
+                break;
+              } else {
+                values.push(null);
+                continue;
+              }
+            case 2:
+              v1 = values.poll();
+              v0 = values.poll();
+              values.push(vis.onToMap(v0, v1));
+
+              break;
+          }
+          break;
+
+        case Tags.MISSING_IMPORT:
+          Constructors.MissingImport tmpMissingImport = (Constructors.MissingImport) current.expr;
+
+          values.push(vis.onMissingImport(tmpMissingImport.mode, tmpMissingImport.hash));
+          break;
+
+        case Tags.ENV_IMPORT:
+          Constructors.EnvImport tmpEnvImport = (Constructors.EnvImport) current.expr;
+
+          values.push(vis.onEnvImport(tmpEnvImport.value, tmpEnvImport.mode, tmpEnvImport.hash));
+          break;
+        case Tags.LOCAL_IMPORT:
+          Constructors.LocalImport tmpLocalImport = (Constructors.LocalImport) current.expr;
+
+          values.push(
+              vis.onLocalImport(tmpLocalImport.path, tmpLocalImport.mode, tmpLocalImport.hash));
+          break;
+        case Tags.REMOTE_IMPORT:
+          Constructors.RemoteImport tmpRemoteImport = (Constructors.RemoteImport) current.expr;
+
+          switch (current.state) {
+            case 0:
+              current.state = 1;
+              stack.push(current);
+
+              if (tmpRemoteImport.using != null) {
+                stack.push(new State(tmpRemoteImport.using, 0));
+                break;
+              } else {
+                values.push(null);
+                continue;
+              }
+            case 1:
+              values.push(
+                  vis.onRemoteImport(
+                      tmpRemoteImport.url,
+                      values.poll(),
+                      tmpRemoteImport.mode,
+                      tmpRemoteImport.hash));
+
+              break;
+          }
+          break;
+      }
+      current = stack.poll();
+    }
+
+    return values.poll();
   }
 }
