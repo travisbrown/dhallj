@@ -7,46 +7,61 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Operator;
 import org.dhallj.core.Import;
+import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
-import org.dhallj.core.Thunk;
-import org.dhallj.core.Visitor;
+import org.dhallj.core.Vis;
 
-/**
- * A simple printing visitor intended for debugging only.
- *
- * <p>Note that this visitor does not necessarily return valid Dhall code.
- */
-public class ToStringVisitor implements Visitor.Internal<String> {
-  private static ToStringVisitor instance = new ToStringVisitor();
+public class ToStringVisitor implements Vis<String> {
+  public static Vis<String> instance = new ToStringVisitor();
 
-  public static String show(Expr expr) {
-    return expr.accept(instance);
+  public String onNote(String base, Source source) {
+    return base;
   }
 
-  public String onDoubleLiteral(double value) {
+  public String onNatural(BigInteger value) {
+    return value.toString();
+  }
+
+  public String onInteger(BigInteger value) {
+    return value.toString();
+  }
+
+  public String onDouble(double value) {
     return Double.toString(value);
   }
 
-  public String onNaturalLiteral(BigInteger value) {
-    return value.toString();
+  public String onIdentifier(String value, long index) {
+    return (index == 0) ? value : String.format("%s@%d", value, index);
   }
 
-  public String onIntegerLiteral(BigInteger value) {
-    return value.toString();
+  public void bind(String param, Expr type) {}
+
+  public String onLambda(String name, String type, String result) {
+    return String.format("λ(%s : %s) → %s", name, type, result);
   }
 
-  public String onTextLiteral(String[] parts, Iterable<Thunk<String>> interpolated) {
+  public String onPi(String name, String type, String result) {
+    return String.format("∀(%s : %s) → %s", name, type, result);
+  }
+
+  public String onLet(String name, String type, String value, String body) {
+    String typeString = (type == null) ? "" : String.format(": %s", type);
+    return String.format("let %s%s = %s in %s", name, typeString, value, body);
+  }
+
+  public void preText(int size) {}
+
+  public String onText(String[] parts, List<String> interpolated) {
 
     StringBuilder builder = new StringBuilder("\"");
     builder.append(parts[0]);
     int i = 1;
-    Iterator<Thunk<String>> it = interpolated.iterator();
+    Iterator<String> it = interpolated.iterator();
 
     while (it.hasNext()) {
       builder.append("${");
-      builder.append(it.next().apply());
+      builder.append(it.next());
       builder.append("}");
       builder.append(parts[i++]);
     }
@@ -57,41 +72,96 @@ public class ToStringVisitor implements Visitor.Internal<String> {
     return builder.toString();
   }
 
-  public String onApplication(Thunk<String> base, Thunk<String> arg) {
-    return String.format("(%s %s)", base.apply(), arg.apply());
+  public void preNonEmptyList(int size) {}
+
+  public String onNonEmptyList(List<String> values) {
+    StringBuilder builder = new StringBuilder("[");
+    Iterator<String> it = values.iterator();
+    while (it.hasNext()) {
+      builder.append(it.next());
+      if (it.hasNext()) {
+        builder.append(", ");
+      }
+    }
+    builder.append("]");
+
+    return builder.toString();
   }
 
-  public String onOperatorApplication(Operator operator, Thunk<String> lhs, Thunk<String> rhs) {
-    return String.format("(%s %s %s)", lhs.apply(), operator, rhs.apply());
+  public String onEmptyList(String type) {
+    return String.format("[]: %s", type);
   }
 
-  public String onIf(Thunk<String> cond, Thunk<String> thenValue, Thunk<String> elseValue) {
-    return String.format(
-        "if %s then %s else %s", cond.apply(), thenValue.apply(), elseValue.apply());
-  }
+  public void preRecord(int size) {}
 
-  public String onLambda(String param, Thunk<String> input, Thunk<String> result) {
-    return String.format("λ(%s: %s) -> %s", param, input.apply(), result.apply());
-  }
-
-  public String onPi(String param, Thunk<String> input, Thunk<String> result) {
-    if (param.equals("_")) {
-      return String.format("(%s -> %s)", input.apply(), result.apply());
+  public String onRecord(List<Entry<String, String>> fields) {
+    if (fields.isEmpty()) {
+      return "{=}";
     } else {
-      return String.format("(forall (%s: %s) -> %s)", param, input.apply(), result.apply());
+      StringBuilder builder = new StringBuilder("{");
+      Iterator<Entry<String, String>> it = fields.iterator();
+      while (it.hasNext()) {
+        Entry<String, String> entry = it.next();
+        builder.append(entry.getKey());
+        builder.append(" = ");
+        builder.append(entry.getValue());
+        if (it.hasNext()) {
+          builder.append(", ");
+        }
+      }
+      builder.append("}");
+
+      return builder.toString();
     }
   }
 
-  public String onAssert(Thunk<String> base) {
-    return String.format("(assert: %s)", base.apply());
+  public void preRecordType(int size) {}
+
+  public String onRecordType(List<Entry<String, String>> fields) {
+    StringBuilder builder = new StringBuilder("{");
+    Iterator<Entry<String, String>> it = fields.iterator();
+    while (it.hasNext()) {
+      Entry<String, String> entry = it.next();
+      builder.append(entry.getKey());
+      builder.append(": ");
+      builder.append(entry.getValue());
+      if (it.hasNext()) {
+        builder.append(", ");
+      }
+    }
+    builder.append("}");
+
+    return builder.toString();
   }
 
-  public String onFieldAccess(Thunk<String> base, String fieldName) {
-    return String.format("(%s.%s)", base.apply(), fieldName);
+  public void preUnionType(int size) {}
+
+  public String onUnionType(List<Entry<String, String>> fields) {
+    StringBuilder builder = new StringBuilder("<");
+    Iterator<Entry<String, String>> it = fields.iterator();
+    while (it.hasNext()) {
+      Entry<String, String> entry = it.next();
+      builder.append(entry.getKey());
+      String type = entry.getValue();
+      if (type != null) {
+        builder.append(": ");
+        builder.append(type);
+      }
+      if (it.hasNext()) {
+        builder.append(" | ");
+      }
+    }
+    builder.append(">");
+
+    return builder.toString();
   }
 
-  public String onProjection(Thunk<String> base, String[] fieldNames) {
-    StringBuilder builder = new StringBuilder(base.apply());
+  public String onFieldAccess(String base, String fieldName) {
+    return String.format("%s.%s", base, fieldName);
+  }
+
+  public String onProjection(String base, String[] fieldNames) {
+    StringBuilder builder = new StringBuilder(base);
     builder.append(".{");
     for (int i = 0; i < fieldNames.length; i += 1) {
       builder.append(fieldNames[i]);
@@ -104,148 +174,112 @@ public class ToStringVisitor implements Visitor.Internal<String> {
     return builder.toString();
   }
 
-  public String onProjectionByType(Thunk<String> base, Thunk<String> type) {
-    return "";
+  public String onProjectionByType(String base, String type) {
+    return String.format("%s.(%s)", base, type);
   }
 
-  public String onIdentifier(String value, long index) {
-    if (index <= 0) {
-      return value;
-    } else {
-      return String.format("%s@%d", value, index);
-    }
-  }
+  public void preApplication(int size) {}
 
-  public String onRecordLiteral(Iterable<Entry<String, Thunk<String>>> fields, int size) {
-    StringBuilder builder = new StringBuilder("{");
-    Iterator<Entry<String, Thunk<String>>> it = fields.iterator();
-    while (it.hasNext()) {
-      Entry<String, Thunk<String>> entry = it.next();
-      builder.append(entry.getKey());
-      builder.append(" = ");
-      builder.append(entry.getValue().apply());
-      if (it.hasNext()) {
-        builder.append(", ");
-      }
-    }
-    builder.append("}");
-
-    return builder.toString();
-  }
-
-  public String onRecordType(Iterable<Entry<String, Thunk<String>>> fields, int size) {
-    StringBuilder builder = new StringBuilder("{");
-    Iterator<Entry<String, Thunk<String>>> it = fields.iterator();
-    while (it.hasNext()) {
-      Entry<String, Thunk<String>> entry = it.next();
-      builder.append(entry.getKey());
-      builder.append(": ");
-      builder.append(entry.getValue().apply());
-      if (it.hasNext()) {
-        builder.append(", ");
-      }
-    }
-    builder.append("}");
-
-    return builder.toString();
-  }
-
-  public String onUnionType(Iterable<Entry<String, Thunk<String>>> fields, int size) {
-    StringBuilder builder = new StringBuilder("<");
-    Iterator<Entry<String, Thunk<String>>> it = fields.iterator();
-    while (it.hasNext()) {
-      Entry<String, Thunk<String>> entry = it.next();
-      builder.append(entry.getKey());
-      builder.append(": ");
-      String type = entry.getValue().apply();
-      if (type != null) {
-        builder.append(type);
-      }
-      if (it.hasNext()) {
-        builder.append("| ");
-      }
-    }
-    builder.append(">");
-
-    return builder.toString();
-  }
-
-  public String onNonEmptyListLiteral(Iterable<Thunk<String>> values, int size) {
-    StringBuilder builder = new StringBuilder("[");
-    Iterator<Thunk<String>> it = values.iterator();
-    while (it.hasNext()) {
-      builder.append(it.next().apply());
-      if (it.hasNext()) {
-        builder.append(", ");
-      }
-    }
-    builder.append("]");
-
-    return builder.toString();
-  }
-
-  public String onEmptyListLiteral(Thunk<String> type) {
-    return String.format("[]: %s", type.apply());
-  }
-
-  public String onLocalImport(Path path, Import.Mode mode, byte[] hash) {
-    return String.format("(import %s %s %s)", path, mode, hash);
-  }
-
-  public String onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
-    return String.format("(import %s %s %s)", url, mode, hash);
-  }
-
-  public String onEnvImport(String value, Import.Mode mode, byte[] hash) {
-    return String.format("(import %s %s %s)", value, mode, hash);
-  }
-
-  public String onMissingImport(Import.Mode mode, byte[] hash) {
-    return String.format("(import missing %s %s)", mode, hash);
-  }
-
-  public final String onLet(
-      String name, Thunk<String> type, Thunk<String> value, Thunk<String> body) {
-    StringBuilder builder = new StringBuilder("(let ");
-    builder.append(name);
-    String typeEval = type.apply();
-    if (typeEval != null) {
-      builder.append(": ");
-      builder.append(typeEval);
-    }
-    builder.append(" = ");
-    builder.append(value.apply());
+  public String onApplication(String base, List<String> args) {
+    StringBuilder builder = new StringBuilder("(");
+    builder.append(base);
     builder.append(" ");
-    builder.append(" in ");
-    builder.append(body.apply());
+
+    for (int i = 0; i < args.size(); i += 1) {
+      builder.append(args.get(i));
+      if (i < args.size() - 1) {
+        builder.append(" ");
+      }
+    }
     builder.append(")");
 
     return builder.toString();
   }
 
-  public final String onAnnotated(Thunk<String> base, Thunk<String> type) {
-    return String.format("%s: %s", base.apply(), type.apply());
+  public String onOperatorApplication(Operator operator, String lhs, String rhs) {
+    return String.format("(%s %s %s)", lhs, operator, rhs);
   }
 
-  public final String onToMap(Thunk<String> base, Thunk<String> type) {
-    if (type == null) {
-      return String.format("toMap %s", base.apply());
-    } else {
+  public String onIf(String predicate, String thenValue, String elseValue) {
+    return String.format("if %s then %s else %s", predicate, thenValue, elseValue);
+  }
 
-      return String.format("toMap %s: %s", base.apply(), type.apply());
+  public String onAnnotated(String base, String type) {
+    return String.format("%s: %s", base, type);
+  }
+
+  public String onAssert(String base) {
+    return String.format("assert: %s", base);
+  }
+
+  public String onMerge(String handlers, String union, String type) {
+    StringBuilder builder = new StringBuilder("merge");
+
+    builder.append(handlers);
+    builder.append(" ");
+    builder.append(union);
+    if (type != null) {
+      builder.append(": ");
+      builder.append(type);
     }
+
+    return builder.toString();
   }
 
-  public final String onMerge(Thunk<String> left, Thunk<String> right, Thunk<String> type) {
-    if (type == null) {
-      return String.format("merge %s %s", left.apply(), right.apply());
-    } else {
+  public String onToMap(String base, String type) {
+    StringBuilder builder = new StringBuilder("toMap");
 
-      return String.format("merge %s %s: %s", left.apply(), right.apply(), type.apply());
+    builder.append(base);
+    if (type != null) {
+      builder.append(": ");
+      builder.append(type);
     }
+
+    return builder.toString();
   }
 
-  public final String onNote(Thunk<String> base, Source source) {
-    return base.apply();
+  public String onMissingImport(Import.Mode mode, byte[] hash) {
+    StringBuilder builder = new StringBuilder("missing");
+
+    if (mode != Import.Mode.CODE) {
+      builder.append(" ");
+      builder.append(mode);
+    }
+
+    return builder.toString();
+  }
+
+  public String onEnvImport(String value, Import.Mode mode, byte[] hash) {
+    StringBuilder builder = new StringBuilder("env:");
+    builder.append(value);
+
+    if (mode != Import.Mode.CODE) {
+      builder.append(" ");
+      builder.append(mode);
+    }
+
+    return builder.toString();
+  }
+
+  public String onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    StringBuilder builder = new StringBuilder(path.toString());
+
+    if (mode != Import.Mode.CODE) {
+      builder.append(" ");
+      builder.append(mode);
+    }
+
+    return builder.toString();
+  }
+
+  public String onRemoteImport(URI url, String using, Import.Mode mode, byte[] hash) {
+    StringBuilder builder = new StringBuilder(url.toString());
+
+    if (mode != Import.Mode.CODE) {
+      builder.append(" ");
+      builder.append(mode);
+    }
+
+    return builder.toString();
   }
 }

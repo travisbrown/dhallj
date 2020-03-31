@@ -35,6 +35,7 @@ import org.dhallj.core.normalization.Substitute;
 import org.dhallj.core.properties.IsResolved;
 import org.dhallj.core.typechecking.TypeCheck;
 import org.dhallj.core.util.ThunkUtilities;
+import org.dhallj.core.util.ToStringVisitor;
 
 /**
  * Represents a Dhall expression.
@@ -190,7 +191,7 @@ public abstract class Expr {
   }
 
   public final String show() {
-    return org.dhallj.core.util.ToStringVisitor.show(this);
+    return this.acceptVis(ToStringVisitor.instance);
   }
 
   public final String toString() {
