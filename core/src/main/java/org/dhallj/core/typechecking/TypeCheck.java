@@ -675,7 +675,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         }
       } else {
         Expr rightType = right.acceptExternal(this);
-        Entry<Expr, Expr> rightTypeApplied = rightType.acceptExternal(AsApplication.instance);
+        Entry<Expr, Expr> rightTypeApplied = right.acceptExternal(AsApplication.instance);
         if (isOptional(rightTypeApplied.getKey())) {
           Expr mergeType =
               checkMerge(leftRecord, makeOptionalConstructors(rightTypeApplied.getValue()));
