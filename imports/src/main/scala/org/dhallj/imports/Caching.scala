@@ -5,29 +5,26 @@ import java.nio.file.{Files, Path, Paths}
 import cats.effect.Sync
 import cats.implicits._
 
-import scala.io.Source
-
 private[imports] object Caching {
 
   trait ImportsCache[F[_]] {
-    def get(key: String): F[Option[String]]
+    def get(key: String): F[Option[Array[Byte]]]
 
-    def put(key: String, value: String): F[Unit]
+    def put(key: String, value: Array[Byte]): F[Unit]
   }
 
   class ImportsCacheImpl[F[_]](val basePath: String)(implicit F: Sync[F]) extends ImportsCache[F] {
-    override def get(key: String): F[Option[String]] = {
+    override def get(key: String): F[Option[Array[Byte]]] = {
       val p = path(key)
       if (Files.exists(p)) {
-        //TODO should this be opened as a binary file? Probably!
-        F.delay(Some(Source.fromFile(p.toString).mkString))
+        F.delay(Some(Files.readAllBytes(p)))
       } else {
         F.pure(None)
       }
     }
 
-    override def put(key: String, value: String): F[Unit] =
-      F.delay(Files.write(path(key), value.getBytes()))
+    override def put(key: String, value: Array[Byte]): F[Unit] =
+      F.delay(Files.write(path(key), value))
 
     private def path(key: String): Path = Paths.get(basePath, "dhall", s"1220${key}")
   }
