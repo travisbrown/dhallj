@@ -20,18 +20,19 @@ import org.dhallj.core.visitor.IdentityVis;
  * <p>Note that this visitor maintains internal state and instances should not be reused.
  */
 public final class Shift extends IdentityVis {
-  private final int d;
+  private final int change;
   private final String name;
   private int cutoff = 0;
 
   public Shift(boolean isIncrement, String name) {
-    this.d = isIncrement ? 1 : -1;
+    this.change = isIncrement ? 1 : -1;
     this.name = name;
   }
 
+  @Override
   public Expr onIdentifier(String value, long index) {
     if (value.equals(this.name) && index >= this.cutoff) {
-      return Expr.makeIdentifier(value, index + this.d);
+      return Expr.makeIdentifier(value, index + this.change);
     } else {
       return Expr.makeIdentifier(value, index);
     }
@@ -53,6 +54,7 @@ public final class Shift extends IdentityVis {
     return Expr.makeLambda(name, type, result);
   }
 
+  @Override
   public Expr onPi(String name, Expr type, Expr result) {
     if (name.equals(this.name)) {
       this.cutoff -= 1;
@@ -61,6 +63,7 @@ public final class Shift extends IdentityVis {
     return Expr.makePi(name, type, result);
   }
 
+  @Override
   public Expr onLet(String name, Expr type, Expr value, Expr body) {
     if (name.equals(this.name)) {
       this.cutoff -= 1;

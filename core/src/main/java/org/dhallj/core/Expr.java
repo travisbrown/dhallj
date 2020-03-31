@@ -63,7 +63,7 @@ public abstract class Expr {
   }
 
   public final Expr substitute(String name, int index, Expr replacement) {
-    return this.accept(new Substitute(name, index, replacement));
+    return this.acceptVis(new Substitute(name, index, replacement));
   }
 
   public final Expr substitute(String name, Expr replacement) {
