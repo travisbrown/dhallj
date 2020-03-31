@@ -547,16 +547,16 @@ final class Constructors {
 
   static final class RemoteImport extends Expr {
     final URI url;
+    final Expr using;
     final Import.Mode mode;
     final byte[] hash;
-    final Expr using;
 
-    RemoteImport(URI url, Import.Mode mode, byte[] hash) {
+    RemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
       super(Tags.REMOTE_IMPORT);
       this.url = url;
+      this.using = using;
       this.mode = mode;
       this.hash = hash;
-      this.using = null;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {

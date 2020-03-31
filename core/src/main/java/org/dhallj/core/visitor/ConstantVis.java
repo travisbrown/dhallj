@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
-import org.dhallj.core.Thunk;
 import org.dhallj.core.Source;
 
 /**
@@ -72,11 +71,11 @@ public abstract class ConstantVis<A> extends PureVis<A> {
     return this.getReturnValue();
   }
 
-  public A onEmptyList(A tpe) {
+  public A onEmptyList(A type) {
     return this.getReturnValue();
   }
 
-  public A onRecordLiteral(List<Entry<String, A>> fields) {
+  public A onRecord(List<Entry<String, A>> fields) {
     return this.getReturnValue();
   }
 
@@ -112,7 +111,7 @@ public abstract class ConstantVis<A> extends PureVis<A> {
     return this.getReturnValue();
   }
 
-  public A onAnnotated(A base, A tpe) {
+  public A onAnnotated(A base, A type) {
     return this.getReturnValue();
   }
 

@@ -41,7 +41,7 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
   }
 
   public Expr onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
-    return Expr.makeRemoteImport(url, mode, hash);
+    return Expr.makeRemoteImport(url, null, mode, hash);
   }
 
   public Expr onEnvImport(String value, Import.Mode mode, byte[] hash) {

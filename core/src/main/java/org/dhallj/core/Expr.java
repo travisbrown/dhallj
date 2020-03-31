@@ -336,6 +336,14 @@ public abstract class Expr {
     return new Constructors.Application(base, arg);
   }
 
+  public static final Expr makeApplication(Expr base, List<Expr> args) {
+    Expr acc = args.get(0);
+    for (int i = 1; i < args.size(); i++) {
+      acc = Expr.makeApplication(acc, args.get(i));
+    }
+    return acc;
+  }
+
   public static final Expr makeOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
     return new Constructors.OperatorApplication(operator, lhs, rhs);
   }
@@ -472,8 +480,8 @@ public abstract class Expr {
     return new Constructors.LocalImport(path, mode, hash);
   }
 
-  public static final Expr makeRemoteImport(URI url, Import.Mode mode, byte[] hash) {
-    return new Constructors.RemoteImport(url, mode, hash);
+  public static final Expr makeRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+    return new Constructors.RemoteImport(url, using, mode, hash);
   }
 
   public static final Expr makeEnvImport(String value, Import.Mode mode, byte[] hash) {

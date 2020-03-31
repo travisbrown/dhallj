@@ -57,7 +57,7 @@ public interface Vis<A> {
 
   A onProjection(A base, String[] fieldNames);
 
-  A onProjectionByType(A base, A tpe);
+  A onProjectionByType(A base, A type);
 
   void preApplication(int size);
 
@@ -71,9 +71,9 @@ public interface Vis<A> {
 
   A onAssert(A base);
 
-  A onMerge(A left, A right, A tpe);
+  A onMerge(A left, A right, A type);
 
-  A onToMap(A base, A tpe);
+  A onToMap(A base, A type);
 
   A onMissingImport(Import.Mode mode, byte[] hash);
 

@@ -518,7 +518,7 @@ final class ParsingHelpers {
       value = Expr.makeMissingImport(mode, null);
     } else if (type.image.startsWith("http")) {
       try {
-        value = Expr.makeRemoteImport(new URI(type.image), mode, null);
+        value = Expr.makeRemoteImport(new URI(type.image), null, mode, null);
       } catch (java.net.URISyntaxException e) {
 
       }
