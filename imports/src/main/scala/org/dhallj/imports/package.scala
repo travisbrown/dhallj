@@ -134,7 +134,7 @@ package object imports {
 
     override def onLet(name: String, `type`: Thunk[F[Expr]], value: Thunk[F[Expr]], body: Thunk[F[Expr]]): F[Expr] =
       for {
-        t <- `type`.apply
+        t <- liftNull(`type`)
         v <- value.apply
         b <- body.apply
       } yield Expr.makeLet(name, t, v, b)
@@ -148,14 +148,14 @@ package object imports {
     override def onToMap(base: Thunk[F[Expr]], tpe: Thunk[F[Expr]]): F[Expr] =
       for {
         b <- base.apply
-        t <- tpe.apply
+        t <- liftNull(tpe)
       } yield Expr.makeToMap(b, t)
 
     override def onMerge(left: Thunk[F[Expr]], right: Thunk[F[Expr]], tpe: Thunk[F[Expr]]): F[Expr] =
       for {
         l <- left.apply
         r <- right.apply
-        t <- tpe.apply
+        t <- liftNull(tpe)
       } yield Expr.makeMerge(l, r, t)
 
     override def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]): F[Expr] = onImport(Local(path), mode, hash)
@@ -164,6 +164,8 @@ package object imports {
 
     override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
       onImport(Env(value), mode, hash)
+
+    override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
 
     private def onImport(i: ImportContext, mode: Import.Mode, hash: Array[Byte]): F[Expr] = for {
       imp          <- if (parents.isEmpty) canonicalize(i) else canonicalize(i, parents.head)
@@ -191,22 +193,28 @@ package object imports {
       case _ => F.raiseError(new RuntimeException("TODO"))
     }
 
-    override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
-  }
-
-  //TODO check that equality is sensibly defined for URI and Path
-  private def isCyclic(imp: ImportContext, parents: List[ImportContext]): Boolean = parents.contains(imp)
-
-  private def checkSha256[F[_]](e: Expr, expected: Array[Byte]): F[Unit] = ???
-
-  private def toHex(bs: Array[Byte]): String = {
-    val sb = new StringBuilder
-    for (b <- bs) {
-      sb.append(String.format("%02x", Byte.box(b)))
+    private def toExpr(text: String, mode: Import.Mode): F[Expr] = mode match {
+      case Import.Mode.CODE => F.delay(Dhall.parse(text))
+      case Import.Mode.RAW_TEXT => F.pure(Expr.makeTextLiteral(text)) //TODO might this be interpolated?
+      case Import.Mode.LOCATION => F.raiseError(new RuntimeException("TODO"))
     }
-    sb.toString
-  }
 
+    //TODO check that equality is sensibly defined for URI and Path
+    private def isCyclic(imp: ImportContext, parents: List[ImportContext]): Boolean = parents.contains(imp)
+
+    private def liftNull(t: Thunk[F[Expr]]): F[Expr] = Option(t.apply).getOrElse(F.pure(null))
+
+    private def checkSha256[F[_]](e: Expr, expected: Array[Byte]): F[Unit] = ???
+
+    private def toHex(bs: Array[Byte]): String = {
+      val sb = new StringBuilder
+      for (b <- bs) {
+        sb.append(String.format("%02x", Byte.box(b)))
+      }
+      sb.toString
+    }
+
+  }
 //  def resolveRemote[F[_]](imp: org.dhallj.core.Constructors.RemoteImport)(implicit Client: Client[F], F: Sync[F]): F[String] = for {
 //    v <- Client.expect[String](imp.url)
 //  } yield ""
