@@ -252,7 +252,7 @@ public class ToStringVisitor extends PureVis<String> {
     StringBuilder builder = new StringBuilder(path.toString());
 
     if (mode != Import.Mode.CODE) {
-      builder.append(" ");
+      builder.append(" as ");
       builder.append(mode);
     }
 

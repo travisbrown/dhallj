@@ -3,6 +3,7 @@ package org.dhallj.parser;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -520,7 +521,15 @@ final class ParsingHelpers {
       try {
         value = Expr.makeRemoteImport(new URI(type.image), null, mode, null);
       } catch (java.net.URISyntaxException e) {
-
+        System.out.println(e);
+      }
+    } else if (type.image.startsWith("env")) {
+      return null;
+    } else {
+      try {
+        value = Expr.makeLocalImport(Paths.get(type.image), mode, null);
+      } catch (java.nio.file.InvalidPathException e) {
+        System.out.println(e);
       }
     }
 

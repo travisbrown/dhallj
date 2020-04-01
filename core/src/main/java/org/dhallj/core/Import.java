@@ -8,5 +8,17 @@ public interface Import {
     CODE,
     RAW_TEXT,
     LOCATION;
+
+    public String toString() {
+      switch (this) {
+        case CODE:
+          return "Code";
+        case RAW_TEXT:
+          return "Text";
+        case LOCATION:
+          return "Location";
+      }
+      return null;
+    }
   }
 }

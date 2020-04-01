@@ -163,7 +163,7 @@ TOKEN: {
   | <SHA256_HASH: "sha256:" (<HEX_DIGIT>){64}>
   | <ENV: "env:" (<BASH_ENV_VAR> | ("\"" <POSIX_ENV_VAR> "\""))>
   | <HTTP: "http" ("s")? "://" ((<UNRESERVED> | <PCT_ENCODED> | <SUB_DELIM> | ":")* "@")? <DOMAIN>>
-
+  | <LOCAL: <PARENT_PATH> | <HERE_PATH> | <HOME_PATH> | <PATH>>
   | <#DIGIT: ["0"-"9"]>
   | <#DIGITS: (<DIGIT>)+>
   | <#HEX_DIGIT: <DIGIT> | ["A"-"F"] | ["a"-"f"]>
@@ -185,6 +185,16 @@ TOKEN: {
   | <#DOMAIN: <DOMAIN_LABEL> ("." <DOMAIN_LABEL>)* (".")?>
   //| <#IPV4: >
   //| <#HOST: (<DOMAIN> | <IPV4> | ("[" (<IPV6> | <IPVFUTURE>) "]"))>
+  | <#PATH_CHARACTER:
+      ["\u0021", "\u003d", "\u007c", "\u007e"]
+    | ["\u0024"-"\u0027"] | ["\u002a"-"\u002b"] | ["\u002d"-"\u002e"]
+    | ["\u0030"-"\u003b"] | ["\u0040"-"\u005a"] | ["\u0040"-"\u005a"] | ["\u005e"-"\u007a"]>
+  | <#QUOTED_PATH_CHARACTER: ["\u0020"-"\u0021"] | ["\u0023"-"\u002e"] | ["\u0030"-"\u007f"] | <VALID_NON_ASCII>>
+  | <#PATH_COMPONENT: "/" ((<PATH_CHARACTER>)+ | ("\"" (<QUOTED_PATH_CHARACTER>)+ "\""))>
+  | <#PATH: (<PATH_COMPONENT>)+>
+  | <#PARENT_PATH: ".." <PATH>>
+  | <#HERE_PATH: "." <PATH>>
+  | <#HOME_PATH: "~" <PATH>>
 }
 
 <WITHIN_DOUBLE_QUOTE> TOKEN: {
@@ -618,7 +628,7 @@ Expr.Parsed IMPORT(): {
   Token asValue = null;
 } {
   (
-    (token=<MISSING> | token=<ENV> | token=<HTTP>)
+    (token=<MISSING> | token=<ENV> | token=<HTTP> | token=<LOCAL>)
     (LOOKAHEAD(2)
       <WHSP>
       (
