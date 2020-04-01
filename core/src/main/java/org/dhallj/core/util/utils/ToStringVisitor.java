@@ -274,6 +274,11 @@ public class ToStringVisitor extends PureVis<String> {
   public String onRemoteImport(URI url, String using, Import.Mode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder(url.toString());
 
+    if (using != null) {
+      builder.append(" using ");
+      builder.append(using);
+    }
+
     if (hash != null) {
       builder.append(" ");
       builder.append(new String(hash, UTF_8));

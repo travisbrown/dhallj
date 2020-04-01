@@ -630,9 +630,15 @@ Expr.Parsed IMPORT(): {
   Token token = null;
   Token hash = null;
   Token asValue = null;
+  Expr.Parsed using = null;
 } {
   (
-    (token=<MISSING> | token=<ENV> | token=<HTTP> | token=<LOCAL>)
+    (
+        token=<MISSING>
+      | token=<LOCAL>
+      | (token=<HTTP> (LOOKAHEAD(2) [<WHSP>] <USING> <WHSP> using=IMPORT_EXPRESSION())?)
+      | token=<ENV>
+    )
     (LOOKAHEAD(2)
       <WHSP>
       (
@@ -641,7 +647,7 @@ Expr.Parsed IMPORT(): {
       )
     )?
   ) {
-    return ParsingHelpers.makeImport(token, hash, asValue);
+    return ParsingHelpers.makeImport(token, hash, asValue, using);
   }
 }
 

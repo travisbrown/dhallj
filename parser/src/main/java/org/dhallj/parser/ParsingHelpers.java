@@ -510,7 +510,8 @@ final class ParsingHelpers {
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
 
-  static final Expr.Parsed makeImport(Token type, Token hashToken, Token modeToken) {
+  static final Expr.Parsed makeImport(
+      Token type, Token hashToken, Token modeToken, Expr.Parsed using) {
     // TODO: fix.
     Source source = sourceFromToken(type);
     byte[] hash = (hashToken == null) ? null : hashToken.image.substring(7).getBytes(UTF_8);
@@ -524,7 +525,7 @@ final class ParsingHelpers {
       value = Expr.makeMissingImport(mode, hash);
     } else if (type.image.startsWith("http")) {
       try {
-        value = Expr.makeRemoteImport(new URI(type.image), null, mode, hash);
+        value = Expr.makeRemoteImport(new URI(type.image), using, mode, hash);
       } catch (java.net.URISyntaxException e) {
         System.out.println(e);
       }
