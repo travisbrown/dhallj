@@ -523,8 +523,8 @@ final class ParsingHelpers {
       } catch (java.net.URISyntaxException e) {
         System.out.println(e);
       }
-    } else if (type.image.startsWith("env")) {
-      return null;
+    } else if (type.image.startsWith("env:")) {
+      value = Expr.makeEnvImport(type.image.substring(4), mode, null);
     } else {
       try {
         value = Expr.makeLocalImport(Paths.get(type.image), mode, null);

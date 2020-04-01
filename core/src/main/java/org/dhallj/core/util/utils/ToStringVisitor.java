@@ -229,7 +229,7 @@ public class ToStringVisitor extends PureVis<String> {
     StringBuilder builder = new StringBuilder("missing");
 
     if (mode != Import.Mode.CODE) {
-      builder.append(" ");
+      builder.append(" as ");
       builder.append(mode);
     }
 
@@ -241,7 +241,7 @@ public class ToStringVisitor extends PureVis<String> {
     builder.append(value);
 
     if (mode != Import.Mode.CODE) {
-      builder.append(" ");
+      builder.append(" as ");
       builder.append(mode);
     }
 
@@ -263,7 +263,7 @@ public class ToStringVisitor extends PureVis<String> {
     StringBuilder builder = new StringBuilder(url.toString());
 
     if (mode != Import.Mode.CODE) {
-      builder.append(" ");
+      builder.append(" as ");
       builder.append(mode);
     }
 
