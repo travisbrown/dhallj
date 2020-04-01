@@ -18,24 +18,23 @@ import java.security.MessageDigest
 import org.dhallj.parser.Dhall
 import org.dhallj.imports.Canonicalization._
 import org.dhallj.imports.{CORSComplianceCheck, ReferentialSanityCheck}
-import org.http4s.Headers
+import org.http4s.{EntityDecoder, Headers, Uri}
+import org.http4s.Status.Successful
 
-//TODO import from urls, files, env vars
 //TODO sha256 checking if required
 //TODO support caching
 //TODO quoted path components?
 //TODO cycle detection - should be easy once we have stack of parent imports
 //TODO handle duplicate imports - should be easy with caching logic
-//TODO handle importing as text, location
-//TODO handle optional imports and the ? operator
+//TODO handle optional imports and the ? operator? (I don't think we need to do this here)
+//TODO proper error handling
 package object imports {
 
   implicit class ResolveImports(e: Expr) {
-    //TODO need implicit Client[F] for remote imports
-    def resolveImports[F[_]](implicit F: Sync[F]): F[Expr] = e.accept(ResolveImportsVisitor[F](Nil))
+    def resolveImports[F[_]](implicit Client: Client[F], F: Sync[F]): F[Expr] = e.accept(ResolveImportsVisitor[F](Nil))
   }
 
-  private case class ResolveImportsVisitor[F[_]](parents: List[ImportContext])(implicit F: Sync[F])
+  private case class ResolveImportsVisitor[F[_]](parents: List[ImportContext])(implicit Client: Client[F], F: Sync[F])
       extends Visitor.Internal[F[Expr]] {
     override def onDoubleLiteral(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
 
@@ -158,49 +157,90 @@ package object imports {
         t <- liftNull(tpe)
       } yield Expr.makeMerge(l, r, t)
 
-    override def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]): F[Expr] = onImport(Local(path), mode, hash)
+    override def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+      onImport(Local(path), mode, hash)
 
-    override def onRemoteImport(url: URI, mode: Import.Mode, hash: Array[Byte]): F[Expr] = onImport(Remote(url), mode, hash)
+    override def onRemoteImport(url: URI, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+      onImport(Remote(url), mode, hash)
 
     override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
       onImport(Env(value), mode, hash)
 
     override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
 
-    private def onImport(i: ImportContext, mode: Import.Mode, hash: Array[Byte]): F[Expr] = for {
-      imp          <- if (parents.isEmpty) canonicalize(i) else canonicalize(i, parents.head)
-      _            <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
-      r            <- resolve(imp)
-      (v, headers) = r
-      e            <- F.delay(Dhall.parse(v))
-      _            <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
-      //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
-      _            <- if (isCyclic(imp, parents))
-                        F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
-                      else F.unit
-      result       <- e.accept(ResolveImportsVisitor[F](imp :: parents))
-    } yield result
+    private def onImport(i: ImportContext, mode: Import.Mode, hash: Array[Byte]): F[Expr] = {
+      //TODO handle missing and unresolved imports properly
+      def resolve(i: ImportContext, mode: Import.Mode): F[(Expr, Headers)] = {
+        def makeLocation(field: String, value: String): F[Expr] =
+          F.pure(
+            Expr.makeApplication(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, field), Expr.makeTextLiteral(value))
+          )
 
-    //TODO handle missing and unresolved imports properly
-    private def resolve(i: ImportContext): F[(String, Headers)] = i match {
-      case Env(value) => for {
-        vO <- F.delay(sys.env.get(value))
-        v <- vO.fold(F.raiseError[String](new RuntimeException(s"Unresolved import - env import $value undefined")))(F.pure)
-      } yield v -> Headers.empty
-      case Local(path) => for {
-        v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
-      } yield v -> Headers.empty
-      case _ => F.raiseError(new RuntimeException("TODO"))
+        def resolve(i: ImportContext): F[(String, Headers)] = i match {
+          case Env(value) =>
+            for {
+              vO <- F.delay(sys.env.get(value))
+              v <- vO.fold(
+                F.raiseError[String](new RuntimeException(s"Missing import - env import $value undefined"))
+              )(F.pure)
+            } yield v -> Headers.empty
+          case Local(path) =>
+            for {
+              v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
+            } yield v -> Headers.empty
+          case Remote(uri) =>
+            Client.get(uri.toString) {
+              case Successful(resp) =>
+                for {
+                  s <- EntityDecoder.decodeString(resp)
+                } yield s -> resp.headers
+              case _ => F.raiseError[(String, Headers)](new RuntimeException(s"Missing import - cannot resolve $uri"))
+            }
+          case Missing => F.raiseError(new RuntimeException(s"Missing import - cannot resolve missing"))
+        }
+
+        mode match {
+          case Import.Mode.CODE =>
+            for {
+              v <- resolve(i)
+              (s, headers) = v
+              e <- F.delay(Dhall.parse(s))
+            } yield e -> headers
+          //TODO check if this can be interpolated? The spec isn't very clear
+          case Import.Mode.RAW_TEXT =>
+            for {
+              v <- resolve(i)
+              (s, headers) = v
+              e <- F.pure(Expr.makeTextLiteral(s))
+            } yield e -> headers
+          case Import.Mode.LOCATION =>
+            for {
+              expr <- i match {
+                case Local(path) => makeLocation("Local", path.toString)
+                case Remote(uri) => makeLocation("Remote", uri.toString)
+                case Env(value)  => makeLocation("Remote", value)
+                case Missing     => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+              }
+            } yield expr -> Headers.empty
+        }
+      }
+
+      //TODO check that equality is sensibly defined for URI and Path
+      def isCyclic(imp: ImportContext, parents: List[ImportContext]): Boolean = parents.contains(imp)
+
+      for {
+        imp <- if (parents.isEmpty) canonicalize(i) else canonicalize(i, parents.head)
+        _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
+        r <- resolve(imp, mode)
+        (e, headers) = r
+        _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
+        //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
+        _ <- if (isCyclic(imp, parents))
+          F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
+        else F.unit
+        result <- e.accept(ResolveImportsVisitor[F](imp :: parents))
+      } yield result
     }
-
-    private def toExpr(text: String, mode: Import.Mode): F[Expr] = mode match {
-      case Import.Mode.CODE => F.delay(Dhall.parse(text))
-      case Import.Mode.RAW_TEXT => F.pure(Expr.makeTextLiteral(text)) //TODO might this be interpolated?
-      case Import.Mode.LOCATION => F.raiseError(new RuntimeException("TODO"))
-    }
-
-    //TODO check that equality is sensibly defined for URI and Path
-    private def isCyclic(imp: ImportContext, parents: List[ImportContext]): Boolean = parents.contains(imp)
 
     private def liftNull(t: Thunk[F[Expr]]): F[Expr] = Option(t.apply).getOrElse(F.pure(null))
 
@@ -215,9 +255,6 @@ package object imports {
     }
 
   }
-//  def resolveRemote[F[_]](imp: org.dhallj.core.Constructors.RemoteImport)(implicit Client: Client[F], F: Sync[F]): F[String] = for {
-//    v <- Client.expect[String](imp.url)
-//  } yield ""
 
   sealed trait ImportContext
   case class Env(value: String) extends ImportContext

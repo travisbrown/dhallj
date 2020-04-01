@@ -17,17 +17,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.dhallj.cbor.Writer;
-import org.dhallj.core.ast.AsBoolLiteral;
-import org.dhallj.core.ast.AsDoubleLiteral;
-import org.dhallj.core.ast.AsIntegerLiteral;
-import org.dhallj.core.ast.AsListLiteral;
-import org.dhallj.core.ast.AsNaturalLiteral;
-import org.dhallj.core.ast.AsRecordLiteral;
-import org.dhallj.core.ast.AsRecordType;
-import org.dhallj.core.ast.AsSimpleIdentifier;
-import org.dhallj.core.ast.AsSimpleTextLiteral;
-import org.dhallj.core.ast.AsUnionType;
-import org.dhallj.core.ast.IsIdentifier;
+import org.dhallj.core.ast.*;
 import org.dhallj.core.binary.Encode;
 import org.dhallj.core.normalization.AlphaNormalize;
 import org.dhallj.core.normalization.BetaNormalize;
@@ -37,6 +27,13 @@ import org.dhallj.core.properties.IsResolved;
 import org.dhallj.core.typechecking.TypeCheck;
 import org.dhallj.core.util.ThunkUtilities;
 import org.dhallj.core.util.ToStringVisitor;
+
+import java.math.BigInteger;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Represents a Dhall expression.
@@ -249,6 +246,16 @@ public abstract class Expr {
     public static Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
     public static Expr EMPTY_RECORD_LITERAL = makeRecordLiteral(emptyFields);
     public static Expr EMPTY_RECORD_TYPE = makeRecordType(emptyFields);
+    public static Expr LOCATION_TYPE =
+        makeUnionType(
+            new HashMap<String, Expr>() {
+              {
+                put("Local", TEXT);
+                put("Remote", TEXT);
+                put("Environment", TEXT);
+                put("Missing", null);
+              }
+            }.entrySet());
     public static String MAP_KEY_FIELD_NAME = "mapKey";
     public static String MAP_VALUE_FIELD_NAME = "mapValue";
 
