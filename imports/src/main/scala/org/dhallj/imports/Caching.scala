@@ -13,7 +13,7 @@ private[imports] object Caching {
     def put(key: String, value: Array[Byte]): F[Unit]
   }
 
-  class ImportsCacheImpl[F[_]](val basePath: String)(implicit F: Sync[F]) extends ImportsCache[F] {
+  case class ImportsCacheImpl[F[_]] private[Caching] (val rootDir: Path)(implicit F: Sync[F]) extends ImportsCache[F] {
     override def get(key: String): F[Option[Array[Byte]]] = {
       val p = path(key)
       if (Files.exists(p)) {
@@ -26,8 +26,14 @@ private[imports] object Caching {
     override def put(key: String, value: Array[Byte]): F[Unit] =
       F.delay(Files.write(path(key), value))
 
-    private def path(key: String): Path = Paths.get(basePath, "dhall", s"1220${key}")
+    private def path(key: String): Path = rootDir.resolve("1220${key}")
   }
+
+  def mkImportsCache[F[_]](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportsCache[F]]] =
+    for {
+      _     <- if (!Files.exists(rootDir)) F.delay(Files.createDirectory(rootDir)) else F.unit
+      perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
+    } yield (if (perms) Some(new ImportsCacheImpl[F](rootDir)) else None)
 
   def mkImportsCache[F[_]](implicit F: Sync[F]): F[Option[ImportsCache[F]]] = {
     def makeCache(env: String, relativePath: String): F[Option[ImportsCache[F]]] =
@@ -36,9 +42,8 @@ private[imports] object Caching {
         cache <- envValO.fold(F.pure(Option.empty[ImportsCache[F]]))(envVal =>
           for {
             rootDir <- F.pure(Paths.get(envVal, relativePath, "dhall"))
-            perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
-          } yield (if (perms) Some(new ImportsCacheImpl[F](rootDir.toString)) else None)
-        )
+            c <- mkImportsCache(rootDir)
+          } yield c)
       } yield cache
 
     def backupCache =

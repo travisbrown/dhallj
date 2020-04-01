@@ -160,7 +160,8 @@ package object imports {
     override def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
       onImport(Local(path), mode, hash)
 
-    override def onRemoteImport(url: URI, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+    //TODO handle using
+    override def onRemoteImport(url: URI, using: Thunk[F[Expr]], mode: Import.Mode, hash: Array[Byte]): F[Expr] =
       onImport(Remote(url), mode, hash)
 
     override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =

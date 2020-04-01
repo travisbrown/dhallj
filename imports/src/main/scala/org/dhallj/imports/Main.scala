@@ -25,6 +25,6 @@ object Main extends IOApp {
 
   def withLocalImport(path: Path, code: String): Expr = Expr.makeLet("x", null, Expr.makeLocalImport(path, Import.Mode.CODE, null), parse(code))
 
-  def withRemoteImport(uri: URI, code: String): Expr = Expr.makeLet("x", null, Expr.makeRemoteImport(uri, Import.Mode.CODE, null), parse(code))
+  def withRemoteImport(uri: URI, code: String): Expr = Expr.makeLet("x", null, Expr.makeRemoteImport(uri, null, Import.Mode.CODE, null), parse(code))
 
 }
