@@ -17,14 +17,14 @@ object Main extends IOApp {
     implicit val c: Client[IO] = client
 
     for {
-      e1 <- IO.pure(withRemoteImport(new URI("https://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/List/any"), "x Natural Natural/even [ 2, 3, 5 ]"))
+      e1 <- IO.pure(parse("let x = /tmp/foo.dhall in x"))
       e2 <- e1.resolveImports[IO]
       _ <- IO(println(e2.normalize))
     } yield ExitCode.Success
   }
 
-  def withLocalImport(path: Path, code: String): Expr = Expr.makeLet("x", null, Expr.makeLocalImport(path, Import.Mode.CODE, null), parse(code))
+//  def withLocalImport(path: Path, code: String): Expr = Expr.makeLet("x", null, Expr.makeLocalImport(path, Import.Mode.CODE, null), parse(code))
 
-  def withRemoteImport(uri: URI, code: String): Expr = Expr.makeLet("x", null, Expr.makeRemoteImport(uri, null, Import.Mode.CODE, null), parse(code))
+//  def withRemoteImport(uri: URI, code: String): Expr = Expr.makeLet("x", null, Expr.makeRemoteImport(uri, null, Import.Mode.CODE, null), parse(code))
 
 }
