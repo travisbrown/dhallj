@@ -12,6 +12,10 @@ public final class CBORConstructors {
     CBORUnsignedInteger(BigInteger value) {
       this.value = value;
     }
+
+    public BigInteger getValue() {
+      return value;
+    }
   }
 
   public static final class CBORNegativeInteger extends CBORExpression {
@@ -20,6 +24,10 @@ public final class CBORConstructors {
 
     CBORNegativeInteger(BigInteger value) {
       this.value = value;
+    }
+
+    public BigInteger getValue() {
+      return value;
     }
   }
 
@@ -30,6 +38,10 @@ public final class CBORConstructors {
     CBORByteString(byte[] value) {
       this.value = value;
     }
+
+    public byte[] getValue() {
+      return value;
+    }
   }
 
   public static final class CBORTextString extends CBORExpression {
@@ -38,6 +50,10 @@ public final class CBORConstructors {
 
     CBORTextString(byte[] value) {
       this.value = value;
+    }
+
+    public byte[] getValue() {
+      return value;
     }
   }
 
@@ -48,6 +64,10 @@ public final class CBORConstructors {
     CBORHeterogeneousArray(List<CBORExpression> value) {
       this.value = value;
     }
+
+    public List<CBORExpression> getValue() {
+      return value;
+    }
   }
 
   public static final class CBORHeterogeneousMap extends CBORExpression {
@@ -56,6 +76,10 @@ public final class CBORConstructors {
 
     CBORHeterogeneousMap(Map<CBORExpression, CBORExpression> value) {
       this.value = value;
+    }
+
+    public Map<CBORExpression, CBORExpression> getValue() {
+      return value;
     }
   }
 
@@ -71,6 +95,10 @@ public final class CBORConstructors {
     CBORHalfFloat(float value) {
       this.value = value;
     }
+
+    public float getValue() {
+      return value;
+    }
   }
 
   public static final class CBORSingleFloat extends CBORExpression {
@@ -80,6 +108,10 @@ public final class CBORConstructors {
     CBORSingleFloat(float value) {
       this.value = value;
     }
+
+    public float getValue() {
+      return value;
+    }
   }
 
   public static final class CBORDoubleFloat extends CBORExpression {
@@ -88,6 +120,10 @@ public final class CBORConstructors {
 
     CBORDoubleFloat(double value) {
       this.value = value;
+    }
+
+    public double getValue() {
+      return value;
     }
   }
 
