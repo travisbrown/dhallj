@@ -162,7 +162,7 @@ TOKEN: {
   | <CONCAT: "++">
   | <SHA256_HASH: "sha256:" (<HEX_DIGIT>){64}>
   | <ENV: "env:" (<BASH_ENV_VAR> | ("\"" <POSIX_ENV_VAR> "\""))>
-  | <HTTP: "http" ("s")? "://" ((<UNRESERVED> | <PCT_ENCODED> | <SUB_DELIM> | ":")* "@")? <DOMAIN>>
+  | <HTTP: "http" ("s")? "://" (<USER_INFO> "@")? <HOST> (":" (<DIGIT>)*)? <URL_PATH> ("?" <QUERY>)?>
   | <LOCAL: <PARENT_PATH> | <HERE_PATH> | <HOME_PATH> | <PATH>>
   | <#DIGIT: ["0"-"9"]>
   | <#DIGITS: (<DIGIT>)+>
@@ -181,10 +181,13 @@ TOKEN: {
   | <#UNRESERVED: <ALPHA> | <DIGIT> | ["-", ".", "_", "~"]>
   | <#PCHAR: <UNRESERVED> | <PCT_ENCODED> | <SUB_DELIM> | ":" | "@">
   | <#SEGMENT: (<PCHAR>)*>
+  | <#USER_INFO: (<UNRESERVED> | <PCT_ENCODED> | <SUB_DELIM> | ":")*>
+  | <#QUERY: (<PCHAR> | "/" | "?")*>
   | <#DOMAIN_LABEL: (<ALPHA> | <DIGIT>)+ (("-")+ (<ALPHA> | <DIGIT>)+)*>
   | <#DOMAIN: <DOMAIN_LABEL> ("." <DOMAIN_LABEL>)* (".")?>
-  //| <#IPV4: >
-  //| <#HOST: (<DOMAIN> | <IPV4> | ("[" (<IPV6> | <IPVFUTURE>) "]"))>
+  | <#IPV4: <DEC_OCTET> "." <DEC_OCTET> "." <DEC_OCTET> "." <DEC_OCTET>>
+  | <#DEC_OCTET: ("25" ["0"-"5"]) | ("2" ["0"-"4"] <DIGIT>) | ("1" <DIGIT> <DIGIT>) | (["1"-"9"] <DIGIT>) | <DIGIT>>
+  | <#HOST: <DOMAIN> | <IPV4>> // | ("[" (<IPV6> | <IPVFUTURE>) "]"))>
   | <#PATH_CHARACTER:
       ["\u0021", "\u003d", "\u007c", "\u007e"]
     | ["\u0024"-"\u0027"] | ["\u002a"-"\u002b"] | ["\u002d"-"\u002e"]
@@ -195,6 +198,7 @@ TOKEN: {
   | <#PARENT_PATH: ".." <PATH>>
   | <#HERE_PATH: "." <PATH>>
   | <#HOME_PATH: "~" <PATH>>
+  | <#URL_PATH: (<PATH_COMPONENT> | ("/") <SEGMENT>)*>
 }
 
 <WITHIN_DOUBLE_QUOTE> TOKEN: {
