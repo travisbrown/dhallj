@@ -20,7 +20,7 @@ public final class IsResolved extends ConstantVisitor.Internal<Boolean> {
   }
 
   @Override
-  public Boolean onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
+  public Boolean onRemoteImport(URI url, Thunk<Boolean> using, Import.Mode mode, byte[] hash) {
     return false;
   }
 

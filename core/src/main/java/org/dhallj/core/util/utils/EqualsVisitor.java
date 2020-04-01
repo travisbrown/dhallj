@@ -283,10 +283,13 @@ public final class EqualsVisitor implements ExternalVisitor<Visitor<Expr, Boolea
   }
 
   public Visitor<Expr, Boolean> onRemoteImport(
-      final URI url, final Import.Mode mode, final byte[] hash) {
+      final URI url, final Expr using, final Import.Mode mode, final byte[] hash) {
     return new FalseVisitor() {
-      public Boolean onRemoteImport(URI url1, Import.Mode mode1, byte[] hash1) {
-        return url.equals(url1) && mode.equals(mode1) && Arrays.equals(hash, hash1);
+      public Boolean onRemoteImport(URI url1, Expr using1, Import.Mode mode1, byte[] hash1) {
+        return url.equals(url1)
+            && areEqual(using, using1, true)
+            && mode.equals(mode1)
+            && Arrays.equals(hash, hash1);
       }
     };
   }

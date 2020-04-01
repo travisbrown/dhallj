@@ -40,10 +40,6 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
     return Expr.makeLocalImport(path, mode, hash);
   }
 
-  public Expr onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
-    return Expr.makeRemoteImport(url, null, mode, hash);
-  }
-
   public Expr onEnvImport(String value, Import.Mode mode, byte[] hash) {
     return Expr.makeEnvImport(value, mode, hash);
   }
@@ -133,6 +129,10 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
     public Expr onNote(Thunk<Expr> base, Source source) {
       return Expr.makeNote(base.apply(), source);
     }
+
+    public Expr onRemoteImport(URI url, Thunk<Expr> using, Import.Mode mode, byte[] hash) {
+      return Expr.makeRemoteImport(url, using.apply(), mode, hash);
+    }
   }
 
   public static class External extends IdentityVisitor<Expr> implements ExternalVisitor<Expr> {
@@ -214,6 +214,10 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
 
     public Expr onNote(Expr base, Source source) {
       return Expr.makeNote(base, source);
+    }
+
+    public Expr onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+      return Expr.makeRemoteImport(url, using, mode, hash);
     }
 
     public static class Recursing extends IdentityVisitor<Expr> implements ExternalVisitor<Expr> {
@@ -344,6 +348,10 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
 
       public Expr onNote(Expr base, Source source) {
         return Expr.makeNote(base.acceptExternal(this), source);
+      }
+
+      public Expr onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+        return Expr.makeRemoteImport(url, using.acceptExternal(this), mode, hash);
       }
     }
   }

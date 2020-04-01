@@ -560,11 +560,12 @@ final class Constructors {
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onRemoteImport(this.url, this.mode, this.hash);
+      Thunk<A> usingVisited = new ExprUtilities.ExprThunk(visitor, this.using);
+      return visitor.onRemoteImport(this.url, usingVisited, this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onRemoteImport(this.url, this.mode, this.hash);
+      return visitor.onRemoteImport(this.url, this.using, this.mode, this.hash);
     }
   }
 }

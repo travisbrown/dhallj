@@ -713,7 +713,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     throw fail("cannot type-check import");
   }
 
-  public final Expr onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
+  public final Expr onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
     throw fail("cannot type-check import");
   }
 

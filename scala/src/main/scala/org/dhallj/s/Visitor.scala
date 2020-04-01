@@ -2,9 +2,11 @@ package org.dhallj.s
 
 import java.lang.{Iterable => JIterable}
 import java.math.BigInteger
+import java.net.URI
+import java.nio.file.Path
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.{Map => JMap}
-import org.dhallj.core.{Operator, Source, Thunk, Visitor => CoreVisitor}
+import org.dhallj.core.{Import, Operator, Source, Thunk, Visitor => CoreVisitor}
 import org.dhallj.core.visitor.{ConstantVisitor => CoreConstantVisitor}
 import scala.jdk.CollectionConverters._
 
@@ -33,6 +35,10 @@ trait Visitor[I, A] extends CoreVisitor[I, A] {
   //def onAnnotated(base: I, tpe: I): A
   def onToMap(base: I, tpe: Option[I]): A
   def onMerge(left: I, right: I, tpe: Option[I]): A
+  def onMissingImport(mode: Import.Mode, hash: Option[Array[Byte]]): A
+  def onEnvImport(value: String, mode: Import.Mode, hash: Option[Array[Byte]]): A
+  def onLocalImport(path: Path, mode: Import.Mode, hash: Option[Array[Byte]]): A
+  def onRemoteImport(url: URI, using: Option[I], mode: Import.Mode, hash: Option[Array[Byte]]): A
 
   final def onNaturalLiteral(value: BigInteger): A = onNaturalLiteral(new BigInt(value))
   final def onIntegerLiteral(value: BigInteger): A = onIntegerLiteral(new BigInt(value))
@@ -51,6 +57,11 @@ trait Visitor[I, A] extends CoreVisitor[I, A] {
   final def onLet(name: String, tpe: I, value: I, body: I): A = onLet(name, Option(tpe), value, body)
   final def onToMap(base: I, tpe: I): A = onToMap(base, Option(tpe))
   final def onMerge(left: I, right: I, tpe: I): A = onMerge(left, right, Option(tpe))
+
+  final def onMissingImport(mode: Import.Mode, hash: Array[Byte]) = onMissingImport(mode, Option(hash))
+  final def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]) = onEnvImport(value, mode, Option(hash))
+  final def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]) = onLocalImport(path, mode, Option(hash))
+  final def onRemoteImport(url: URI, using: I, mode: Import.Mode, hash: Array[Byte]) = onRemoteImport(url, Option(using), mode, Option(hash))
 }
 
 object Visitor {

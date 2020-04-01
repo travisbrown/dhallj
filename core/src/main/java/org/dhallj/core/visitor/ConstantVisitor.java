@@ -155,7 +155,7 @@ public class ConstantVisitor<I, A> implements Visitor<I, A> {
     return this.getReturnValue();
   }
 
-  public A onRemoteImport(URI url, Import.Mode mode, byte[] hash) {
+  public A onRemoteImport(URI url, I using, Import.Mode mode, byte[] hash) {
     return this.getReturnValue();
   }
 

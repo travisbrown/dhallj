@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map.Entry;
+import org.dhallj.core.Import.Mode;
 
 /**
  * Represents a function from a Dhall expression to a value.
@@ -11,7 +12,7 @@ import java.util.Map.Entry;
  * @param I The internal result type used while recursing
  * @param A The final result type
  */
-public interface Visitor<I, A> extends Import.Visitor<A> {
+public interface Visitor<I, A> {
   A onDoubleLiteral(double value);
 
   A onNaturalLiteral(BigInteger value);
@@ -59,6 +60,14 @@ public interface Visitor<I, A> extends Import.Visitor<A> {
   A onToMap(I base, I tpe);
 
   A onMerge(I left, I right, I tpe);
+
+  A onLocalImport(Path path, Mode mode, byte[] hash);
+
+  A onRemoteImport(URI url, I using, Mode mode, byte[] hash);
+
+  A onEnvImport(String value, Mode mode, byte[] hash);
+
+  A onMissingImport(Mode mode, byte[] hash);
 
   /**
    * Represents a function from a Dhall expression to a value that recurses through the structure of
