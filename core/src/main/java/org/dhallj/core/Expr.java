@@ -1,5 +1,7 @@
 package org.dhallj.core;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -14,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.dhallj.cbor.ByteArrayWriter;
 import org.dhallj.cbor.Writer;
 import org.dhallj.core.ast.AsBoolLiteral;
 import org.dhallj.core.ast.AsDoubleLiteral;
@@ -82,20 +83,20 @@ public abstract class Expr {
     return this.acceptExternal(new TypeCheck());
   }
 
-  public final void encode(Writer writer) {
-    this.acceptExternal(new Encode(writer));
+  public final void encode(OutputStream stream) throws IOException {
+    this.acceptVis(Encode.instance).writeToStream(stream);
   }
 
   public final byte[] encodeToByteArray() {
-    ByteArrayWriter writer = new ByteArrayWriter();
-    this.acceptExternal(new Encode(writer));
-    return writer.getBytes();
+    try {
+      return this.acceptVis(Encode.instance).getBytes();
+    } catch (IOException e) {
+      return null;
+    }
   }
 
   public final String hash() {
-    ByteArrayWriter writer = new ByteArrayWriter();
-    this.acceptExternal(new Encode(writer));
-    byte[] bs = writer.getBytes();
+    byte[] bs = this.encodeToByteArray();
 
     java.security.MessageDigest digest = null;
     try {
@@ -204,6 +205,24 @@ public abstract class Expr {
       return Expr.makeAnnotated(
           Expr.makeOperatorApplication(Operator.PREFER, Expr.makeFieldAccess(lhs, "default"), rhs),
           Expr.makeFieldAccess(lhs, "Type"));
+    }
+  }
+
+  public static final class Util {
+    public static Expr getListElementType(Expr expr) {
+      if (expr.tag == Tags.APPLICATION) {
+        Constructors.Application tmp0 = (Constructors.Application) expr;
+
+        if (tmp0.base.tag == Tags.IDENTIFIER) {
+          Constructors.Identifier tmp1 = (Constructors.Identifier) tmp0.base;
+
+          if (tmp1.value.equals("List") && tmp1.index == 0) {
+            return tmp0.arg;
+          }
+        }
+      }
+
+      return null;
     }
   }
 
@@ -671,7 +690,7 @@ public abstract class Expr {
             stack.push(current);
             stack.push(new State(tmpEmptyList.type, 0));
           } else {
-            values.push(vis.onEmptyList(values.poll()));
+            values.push(vis.onEmptyList(tmpEmptyList.type, values.poll()));
           }
           break;
 
@@ -812,25 +831,9 @@ public abstract class Expr {
             application = new LinkedList<Expr>();
             application.push(tmpApplication.arg);
 
-            Expr candidate = tmpApplication.base;
+            Expr base = gatherApplicationArgs(tmpApplication.base, application);
 
-            while (candidate.tag == Tags.APPLICATION
-                || (candidate.tag == Tags.NOTE
-                    && ((Parsed) candidate).base.tag == Tags.APPLICATION)) {
-              if (candidate.tag == Tags.APPLICATION) {
-                Constructors.Application candidateApplication =
-                    (Constructors.Application) candidate;
-                application.push(candidateApplication.arg);
-                candidate = candidateApplication.base;
-              } else {
-                Constructors.Application candidateApplication =
-                    (Constructors.Application) ((Parsed) candidate).base;
-                application.push(candidateApplication.arg);
-                candidate = candidateApplication.base;
-              }
-            }
-
-            application.push(candidate);
+            application.push(base);
 
             vis.preApplication(application.size());
             current.state = application.size();
@@ -848,7 +851,8 @@ public abstract class Expr {
 
             A base = values.poll();
 
-            values.push(vis.onApplication(base, args));
+            values.push(
+                vis.onApplication(gatherApplicationArgs(tmpApplication.base, null), base, args));
           } else {
             stack.push(current);
             stack.push(new State(application.poll(), 0));
@@ -1004,9 +1008,9 @@ public abstract class Expr {
           switch (current.state) {
             case 0:
               current.state = 1;
-              stack.push(current);
 
               if (tmpRemoteImport.using != null) {
+                stack.push(current);
                 stack.push(new State(tmpRemoteImport.using, 0));
                 break;
               } else {
@@ -1029,5 +1033,23 @@ public abstract class Expr {
     }
 
     return values.poll();
+  }
+
+  private static final Expr gatherApplicationArgs(Expr candidate, LinkedList<Expr> args) {
+    Expr current = candidate;
+
+    while (current.tag == Tags.APPLICATION
+        || (current.tag == Tags.NOTE && ((Parsed) current).base.tag == Tags.APPLICATION)) {
+      Constructors.Application currentApplication =
+          (Constructors.Application)
+              ((current.tag == Tags.APPLICATION) ? current : ((Parsed) current).base);
+
+      if (args != null) {
+        args.push(currentApplication.arg);
+      }
+      current = currentApplication.base;
+    }
+
+    return current;
   }
 }

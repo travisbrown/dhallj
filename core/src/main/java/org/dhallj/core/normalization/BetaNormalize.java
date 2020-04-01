@@ -65,7 +65,7 @@ public final class BetaNormalize extends PureVis<Expr> {
     return Expr.makeNonEmptyListLiteral(values);
   }
 
-  public Expr onEmptyList(Expr type) {
+  public Expr onEmptyList(Expr typeExpr, Expr type) {
     return Expr.makeEmptyListLiteral(type);
   }
 
@@ -102,7 +102,7 @@ public final class BetaNormalize extends PureVis<Expr> {
     return Expr.makeProjection(base, keys.toArray(new String[keys.size()])).acceptVis(this);
   }
 
-  public Expr onApplication(Expr base, List<Expr> args) {
+  public Expr onApplication(Expr baseExpr, Expr base, List<Expr> args) {
     return BetaNormalizeApplication.apply(base, args);
   }
 

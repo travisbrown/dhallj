@@ -39,7 +39,7 @@ public interface Vis<A> {
 
   A onNonEmptyList(List<A> values);
 
-  A onEmptyList(A type);
+  A onEmptyList(Expr typeExpr, A type);
 
   void preRecord(int size);
 
@@ -61,7 +61,7 @@ public interface Vis<A> {
 
   void preApplication(int size);
 
-  A onApplication(A base, List<A> args);
+  A onApplication(Expr baseExpr, A base, List<A> args);
 
   A onOperatorApplication(Operator operator, A lhs, A rhs);
 

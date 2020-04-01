@@ -58,7 +58,7 @@ public abstract class IdentityVis extends PureVis<Expr> {
     return Expr.makeNonEmptyListLiteral(values);
   }
 
-  public Expr onEmptyList(Expr type) {
+  public Expr onEmptyList(Expr typeExpr, Expr type) {
     return Expr.makeEmptyListLiteral(type);
   }
 
@@ -86,7 +86,7 @@ public abstract class IdentityVis extends PureVis<Expr> {
     return Expr.makeProjectionByType(base, type);
   }
 
-  public Expr onApplication(Expr base, List<Expr> args) {
+  public Expr onApplication(Expr baseExpr, Expr base, List<Expr> args) {
     Expr tmp = Expr.makeApplication(base, args);
     return tmp;
   }

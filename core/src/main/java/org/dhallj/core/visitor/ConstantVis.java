@@ -99,7 +99,7 @@ public abstract class ConstantVis<A> extends PureVis<A> {
     return this.getReturnValue();
   }
 
-  public A onApplication(A base, List<A> args) {
+  public A onApplication(Expr baseExpr, A base, List<A> args) {
     return this.getReturnValue();
   }
 

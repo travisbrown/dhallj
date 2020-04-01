@@ -84,7 +84,7 @@ public class ToStringVisitor extends PureVis<String> {
     return builder.toString();
   }
 
-  public String onEmptyList(String type) {
+  public String onEmptyList(Expr typeExpr, String type) {
     return String.format("[]: %s", type);
   }
 
@@ -168,7 +168,7 @@ public class ToStringVisitor extends PureVis<String> {
     return String.format("%s.(%s)", base, type);
   }
 
-  public String onApplication(String base, List<String> args) {
+  public String onApplication(Expr baseExpr, String base, List<String> args) {
     StringBuilder builder = new StringBuilder("(");
     builder.append(base);
     builder.append(" ");

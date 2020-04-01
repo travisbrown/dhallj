@@ -69,30 +69,6 @@ public final class FieldUtilities {
     return null;
   }
 
-  public static List<Entry<String, Expr>> sortFields(
-      Iterable<Entry<String, Expr>> fields, int size) {
-    List<Entry<String, Expr>> result = new ArrayList(size);
-
-    for (Entry<String, Expr> entry : fields) {
-      result.add(entry);
-    }
-
-    Collections.sort(result, entryComparator);
-    return result;
-  }
-
-  public static List<Entry<String, Expr>> sortAndFlattenFields(
-      Iterable<Entry<String, Thunk<Expr>>> fields, int size) {
-    List<Entry<String, Expr>> result = new ArrayList(size);
-
-    for (Entry<String, Thunk<Expr>> entry : fields) {
-      result.add(new SimpleImmutableEntry(entry.getKey(), entry.getValue().apply()));
-    }
-
-    Collections.sort(result, entryComparator);
-    return result;
-  }
-
   public static final Comparator<Entry<String, Expr>> entryComparator =
       new Comparator<Entry<String, Expr>>() {
         public int compare(Entry<String, Expr> a, Entry<String, Expr> b) {
