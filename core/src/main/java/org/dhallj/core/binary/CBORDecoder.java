@@ -45,17 +45,17 @@ public abstract class CBORDecoder {
 
   private CBORExpression readUnsignedInteger(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
-    return new CBORUnsignedInteger(readBigInteger(info));
+    return new CBORUnsignedInteger(readBigInteger(info, b));
   }
 
   private CBORExpression readNegativeInteger(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
-    return new CBORNegativeInteger(readBigInteger(info).multiply(BigInteger.valueOf(-1)));
+    return new CBORNegativeInteger(readBigInteger(info, b).multiply(BigInteger.valueOf(-1)));
   }
 
   private CBORExpression readByteString(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
-    BigInteger length = readBigInteger(info);
+    BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
       throw new RuntimeException("Indefinite byte string not needed for Dhall");
     } else {
@@ -66,7 +66,7 @@ public abstract class CBORDecoder {
 
   private CBORExpression readTextString(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
-    BigInteger length = readBigInteger(info);
+    BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
       // Indefinite length - do we need this for Dhall?
       throw new RuntimeException("Indefinite text string not needed for Dhall");
@@ -78,7 +78,7 @@ public abstract class CBORDecoder {
 
   private CBORExpression readArray(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
-    BigInteger length = readBigInteger(info);
+    BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
       throw new RuntimeException("Indefinite array not needed for Dhall");
     } else {
@@ -93,7 +93,7 @@ public abstract class CBORDecoder {
 
   private CBORExpression readMap(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
-    BigInteger length = readBigInteger(info);
+    BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
       throw new RuntimeException("Indefinite array not needed for Dhall");
     } else {
@@ -113,13 +113,50 @@ public abstract class CBORDecoder {
   }
 
   private CBORExpression readPrimitive(byte b) {
-    return null;
+    int value = b & 31;
+    if (0 <= value && value <= 19) {
+      throw new RuntimeException(String.format("Primitive %d is unassigned", value));
+    } else if (value == 20) {
+      return new CBORFalse();
+    } else if (value == 21) {
+      return new CBORTrue();
+    } else if (value == 22) {
+      return new CBORNull();
+    } else if (value == 23) {
+      throw new RuntimeException(String.format("Primitive %d is unassigned", value));
+    } else if (value == 24) {
+      throw new RuntimeException("TODO - simple value");
+    } else if (value == 25) {
+      throw new RuntimeException("TODO - half float");
+    } else if (value == 26) {
+      int result = 0;
+      for (int i = 0; i < 4; i++) {
+        int next = this.read() & 0xff;
+        result <<= 8;
+        result |= next;
+      }
+      return new CBORSingleFloat(Float.intBitsToFloat(result));
+    } else if (value == 27) {
+      long result = 0;
+      for (int i = 0; i < 4; i++) {
+        int next = this.read() & 0xff;
+        result <<= 8;
+        result |= next;
+      }
+      return new CBORDoubleFloat(Double.longBitsToDouble(result));
+    } else if (28 <= value && value <= 30) {
+      throw new RuntimeException(String.format("Primitive %d is unassigned", value));
+    } else if (value == 31) {
+      throw new RuntimeException("Break stop code not needed for Dhall");
+    } else {
+      throw new RuntimeException(String.format("Primitive %d is not valid", value));
+    }
   }
 
-  private BigInteger readBigInteger(AdditionalInfo info) {
+  private BigInteger readBigInteger(AdditionalInfo info, byte first) {
     switch (info) {
       case DIRECT:
-        return BigInteger.valueOf(this.read() & 31);
+        return BigInteger.valueOf(first & 31);
       case ONE_BYTE:
         return readBigInteger(1);
       case TWO_BYTES:

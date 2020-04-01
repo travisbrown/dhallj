@@ -67,9 +67,23 @@ final class CBORConstructors {
 
   static final class CBORHalfFloat extends CBORExpression {}
 
-  static final class CBORSingleFloat extends CBORExpression {}
+  static final class CBORSingleFloat extends CBORExpression {
 
-  static final class CBORDoubleFloat extends CBORExpression {}
+    private final float value;
+
+    CBORSingleFloat(float value) {
+      this.value = value;
+    }
+  }
+
+  static final class CBORDoubleFloat extends CBORExpression {
+
+    private final double value;
+
+    CBORDoubleFloat(double value) {
+      this.value = value;
+    }
+  }
 
   static final class CBORUnsignedBignum extends CBORExpression {}
 
