@@ -1,7 +1,9 @@
 package org.dhallj.parser;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleImmutableEntry;
@@ -506,9 +508,12 @@ final class ParsingHelpers {
     return new Expr.Parsed(value, source);
   }
 
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
+
   static final Expr.Parsed makeImport(Token type, Token hashToken, Token modeToken) {
     // TODO: fix.
     Source source = sourceFromToken(type);
+    byte[] hash = (hashToken == null) ? null : hashToken.image.substring(7).getBytes(UTF_8);
     Expr value = null;
     Import.Mode mode =
         (modeToken == null)
@@ -516,18 +521,18 @@ final class ParsingHelpers {
             : (modeToken.image.equals("Text") ? Import.Mode.RAW_TEXT : Import.Mode.LOCATION);
 
     if (type.image.equals("missing")) {
-      value = Expr.makeMissingImport(mode, null);
+      value = Expr.makeMissingImport(mode, hash);
     } else if (type.image.startsWith("http")) {
       try {
-        value = Expr.makeRemoteImport(new URI(type.image), null, mode, null);
+        value = Expr.makeRemoteImport(new URI(type.image), null, mode, hash);
       } catch (java.net.URISyntaxException e) {
         System.out.println(e);
       }
     } else if (type.image.startsWith("env:")) {
-      value = Expr.makeEnvImport(type.image.substring(4), mode, null);
+      value = Expr.makeEnvImport(type.image.substring(4), mode, hash);
     } else {
       try {
-        value = Expr.makeLocalImport(Paths.get(type.image), mode, null);
+        value = Expr.makeLocalImport(Paths.get(type.image), mode, hash);
       } catch (java.nio.file.InvalidPathException e) {
         System.out.println(e);
       }

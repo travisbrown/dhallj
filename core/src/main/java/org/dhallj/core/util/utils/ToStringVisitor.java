@@ -2,6 +2,7 @@ package org.dhallj.core.util;
 
 import java.math.BigInteger;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
@@ -236,20 +237,31 @@ public class ToStringVisitor extends PureVis<String> {
     return builder.toString();
   }
 
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
+
   public String onEnvImport(String value, Import.Mode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder("env:");
     builder.append(value);
+
+    if (hash != null) {
+      builder.append(" ");
+      builder.append(new String(hash, UTF_8));
+    }
 
     if (mode != Import.Mode.CODE) {
       builder.append(" as ");
       builder.append(mode);
     }
-
     return builder.toString();
   }
 
   public String onLocalImport(Path path, Import.Mode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder(path.toString());
+
+    if (hash != null) {
+      builder.append(" ");
+      builder.append(new String(hash, UTF_8));
+    }
 
     if (mode != Import.Mode.CODE) {
       builder.append(" as ");
@@ -261,6 +273,11 @@ public class ToStringVisitor extends PureVis<String> {
 
   public String onRemoteImport(URI url, String using, Import.Mode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder(url.toString());
+
+    if (hash != null) {
+      builder.append(" ");
+      builder.append(new String(hash, UTF_8));
+    }
 
     if (mode != Import.Mode.CODE) {
       builder.append(" as ");
