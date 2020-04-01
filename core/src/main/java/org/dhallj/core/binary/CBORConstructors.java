@@ -65,7 +65,13 @@ final class CBORConstructors {
 
   static final class CBORNull extends CBORExpression {}
 
-  static final class CBORHalfFloat extends CBORExpression {}
+  static final class CBORHalfFloat extends CBORExpression {
+    private final float value;
+
+    CBORHalfFloat(float value) {
+      this.value = value;
+    }
+  }
 
   static final class CBORSingleFloat extends CBORExpression {
 

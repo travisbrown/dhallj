@@ -1,18 +1,19 @@
 package org.dhallj.core.binary;
 
-import org.dhallj.core.Expr;
 import org.dhallj.core.binary.CBORConstructors.*;
 import org.dhallj.core.binary.CBORExpression.Constants.AdditionalInfo;
 import org.dhallj.core.binary.CBORExpression.Constants.MajorType;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO need the following CBOR types: array, string,
+/**
+ * An implementation of enough of the CBOR spec to cope with decoding the CBOR values we need for
+ * Dhall
+ */
 public abstract class CBORDecoder {
 
   public CBORExpression decode() {
@@ -127,7 +128,26 @@ public abstract class CBORDecoder {
     } else if (value == 24) {
       throw new RuntimeException("TODO - simple value");
     } else if (value == 25) {
-      throw new RuntimeException("TODO - half float");
+      // https://github.com/c-rack/cbor-java/blob/master/src/main/java/co/nstant/in/cbor/decoder/HalfPrecisionFloatDecoder.java
+      int bits = 0;
+      for (int i = 0; i < 2; i++) {
+        int next = this.read() & 0xff;
+        bits <<= 8;
+        bits |= next;
+      }
+      int s = (bits & 0x8000) >> 15;
+      int e = (bits & 0x7C00) >> 10;
+      int f = bits & 0x03FF;
+
+      float result = 0;
+      if (e == 0) {
+        result = (float) ((s != 0 ? -1 : 1) * Math.pow(2, -14) * (f / Math.pow(2, 10)));
+      } else if (e == 0x1F) {
+        result = f != 0 ? Float.NaN : (s != 0 ? -1 : 1) * Float.POSITIVE_INFINITY;
+      } else {
+        result = (float) ((s != 0 ? -1 : 1) * Math.pow(2, e - 15) * (1 + f / Math.pow(2, 10)));
+      }
+      return new CBORHalfFloat(result);
     } else if (value == 26) {
       int result = 0;
       for (int i = 0; i < 4; i++) {
