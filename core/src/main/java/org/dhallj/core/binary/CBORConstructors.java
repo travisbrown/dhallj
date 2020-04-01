@@ -4,8 +4,8 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
-final class CBORConstructors {
-  static final class CBORUnsignedInteger extends CBORExpression {
+public final class CBORConstructors {
+  public static final class CBORUnsignedInteger extends CBORExpression {
 
     private final BigInteger value;
 
@@ -14,7 +14,7 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORNegativeInteger extends CBORExpression {
+  public static final class CBORNegativeInteger extends CBORExpression {
 
     private final BigInteger value;
 
@@ -23,7 +23,7 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORByteString extends CBORExpression {
+  public static final class CBORByteString extends CBORExpression {
 
     private final byte[] value;
 
@@ -32,7 +32,7 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORTextString extends CBORExpression {
+  public static final class CBORTextString extends CBORExpression {
 
     private final byte[] value;
 
@@ -41,7 +41,7 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORHeterogeneousArray extends CBORExpression {
+  public static final class CBORHeterogeneousArray extends CBORExpression {
 
     private final List<CBORExpression> value;
 
@@ -50,7 +50,7 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORHeterogeneousMap extends CBORExpression {
+  public static final class CBORHeterogeneousMap extends CBORExpression {
 
     private final Map<CBORExpression, CBORExpression> value;
 
@@ -59,13 +59,13 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORFalse extends CBORExpression {}
+  public static final class CBORFalse extends CBORExpression {}
 
-  static final class CBORTrue extends CBORExpression {}
+  public static final class CBORTrue extends CBORExpression {}
 
-  static final class CBORNull extends CBORExpression {}
+  public static final class CBORNull extends CBORExpression {}
 
-  static final class CBORHalfFloat extends CBORExpression {
+  public static final class CBORHalfFloat extends CBORExpression {
     private final float value;
 
     CBORHalfFloat(float value) {
@@ -73,7 +73,7 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORSingleFloat extends CBORExpression {
+  public static final class CBORSingleFloat extends CBORExpression {
 
     private final float value;
 
@@ -82,7 +82,7 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORDoubleFloat extends CBORExpression {
+  public static final class CBORDoubleFloat extends CBORExpression {
 
     private final double value;
 
@@ -91,9 +91,9 @@ final class CBORConstructors {
     }
   }
 
-  static final class CBORUnsignedBignum extends CBORExpression {}
+  public static final class CBORUnsignedBignum extends CBORExpression {}
 
-  static final class CBORNegativeBignum extends CBORExpression {}
+  public static final class CBORNegativeBignum extends CBORExpression {}
 
-  static final class CBORTag extends CBORExpression {}
+  public static final class CBORTag extends CBORExpression {}
 }

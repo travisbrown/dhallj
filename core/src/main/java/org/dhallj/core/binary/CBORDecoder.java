@@ -126,7 +126,7 @@ public abstract class CBORDecoder {
     } else if (value == 23) {
       throw new RuntimeException(String.format("Primitive %d is unassigned", value));
     } else if (value == 24) {
-      throw new RuntimeException("TODO - simple value");
+      throw new RuntimeException("Simple value not needed for Dhall");
     } else if (value == 25) {
       // https://github.com/c-rack/cbor-java/blob/master/src/main/java/co/nstant/in/cbor/decoder/HalfPrecisionFloatDecoder.java
       int bits = 0;
@@ -206,11 +206,11 @@ public abstract class CBORDecoder {
     return 0L;
   }
 
-  public static final class ByteArrayDecoder extends CBORDecoder {
+  public static final class ByteArrayCBORDecoder extends CBORDecoder {
     private final byte[] bytes;
     private int cursor = 0;
 
-    public ByteArrayDecoder(byte[] bytes) {
+    public ByteArrayCBORDecoder(byte[] bytes) {
       this.bytes = bytes;
     }
 
@@ -231,6 +231,6 @@ public abstract class CBORDecoder {
   }
 
   public static CBORExpression decode(byte[] bytes) {
-    return new ByteArrayDecoder(bytes).decode();
+    return new ByteArrayCBORDecoder(bytes).decode();
   }
 }
