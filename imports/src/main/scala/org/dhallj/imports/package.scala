@@ -176,7 +176,8 @@ package object imports {
     override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
       onImport(Env(value), mode, hash)
 
-    override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] = ???
+    override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+      onImport(Missing, mode, hash)
 
     private def onImport(i: ImportContext, mode: Import.Mode, hash: Array[Byte]): F[Expr] = {
       //TODO handle missing and unresolved imports properly
