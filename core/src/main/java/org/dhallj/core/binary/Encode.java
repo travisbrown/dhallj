@@ -298,6 +298,13 @@ public final class Encode implements Vis<Writer> {
       Writer value = field.getValue();
       if (value != null) {
         writers.add(field.getValue());
+      } else {
+        writers.add(
+            new Writer() {
+              public void writeToStream(OutputStream stream) throws IOException {
+                this.writeNull(stream);
+              }
+            });
       }
     }
     return new Writer.Nested(writers);
