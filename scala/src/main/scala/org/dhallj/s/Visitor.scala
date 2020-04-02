@@ -61,7 +61,8 @@ trait Visitor[I, A] extends CoreVisitor[I, A] {
   final def onMissingImport(mode: Import.Mode, hash: Array[Byte]) = onMissingImport(mode, Option(hash))
   final def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]) = onEnvImport(value, mode, Option(hash))
   final def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]) = onLocalImport(path, mode, Option(hash))
-  final def onRemoteImport(url: URI, using: I, mode: Import.Mode, hash: Array[Byte]) = onRemoteImport(url, Option(using), mode, Option(hash))
+  final def onRemoteImport(url: URI, using: I, mode: Import.Mode, hash: Array[Byte]) =
+    onRemoteImport(url, Option(using), mode, Option(hash))
 }
 
 object Visitor {

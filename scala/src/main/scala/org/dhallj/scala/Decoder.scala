@@ -24,9 +24,9 @@ object Codec {
       expr.normalize match {
         case NaturalLiteral(v) => Right(v.toLong)
         case IntegerLiteral(v) => Right(v.toLong)
-        case _ => Left(new RuntimeException("Long decoding"))
+        case _                 => Left(new RuntimeException("Long decoding"))
       }
-     
+
     def encode(value: Long): Either[Codec.EncodingError, Expr] =
       if (value >= 0) {
         Right(NaturalLiteral(BigInt(value)))
@@ -41,13 +41,13 @@ object Codec {
     def decode(expr: Expr): Either[Codec.DecodingError, Option[A]] =
       expr.normalize match {
         case Application(Identifier("Some", None), value) => Codec[A].decode(value).map(Some(_))
-        case Application(Identifier("None", None), _) => Right(None)
-        case _ => Left(new RuntimeException("Optional decoing"))
+        case Application(Identifier("None", None), _)     => Right(None)
+        case _                                            => Left(new RuntimeException("Optional decoing"))
       }
-     
+
     def encode(value: Option[A]): Either[Codec.EncodingError, Expr] =
-      value.fold[Either[Codec.EncodingError, Expr]](Right(Application(Identifier("None", None), Codec[A].dhallType)))(a =>
-        Codec[A].encode(a).map(e => Application(Identifier("Some"), e))
+      value.fold[Either[Codec.EncodingError, Expr]](Right(Application(Identifier("None", None), Codec[A].dhallType)))(
+        a => Codec[A].encode(a).map(e => Application(Identifier("Some"), e))
       )
 
     val dhallType: Expr = Application(Identifier("Optional"), Codec[A].dhallType)
@@ -59,23 +59,22 @@ object Codec {
         case NonEmptyListLiteral(values) =>
           values.foldRight[Either[Codec.DecodingError, List[A]]](Right(Nil)) {
             case (v, acc) =>
-              acc.flatMap { current =>
-                Codec[A].decode(v).map(_ :: current)
-              }
+              acc.flatMap(current => Codec[A].decode(v).map(_ :: current))
           }
         case EmptyListLiteral(Application(Identifier("List", None), a)) if a.equivalent(Codec[A].dhallType) =>
           Right(Nil)
         case _ => Left(new RuntimeException("List decoding"))
       }
-     
+
     def encode(value: List[A]): Either[Codec.EncodingError, Expr] =
       value match {
         case Nil => Right(EmptyListLiteral(Codec[A].dhallType))
-        case values => values.foldRight[Either[Codec.EncodingError, List[Expr]]](Right(Nil)) {
-          case (v, acc) => acc.flatMap { current =>
-            Codec[A].encode(v).map(_ :: current)
-          }
-        }.map(NonEmptyListLiteral(_))
+        case values =>
+          values
+            .foldRight[Either[Codec.EncodingError, List[Expr]]](Right(Nil)) {
+              case (v, acc) => acc.flatMap(current => Codec[A].encode(v).map(_ :: current))
+            }
+            .map(NonEmptyListLiteral(_))
       }
 
     val dhallType: Expr = Application(Identifier("List"), Codec[A].dhallType)

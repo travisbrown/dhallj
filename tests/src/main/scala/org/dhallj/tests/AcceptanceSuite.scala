@@ -24,8 +24,8 @@ trait AcceptanceSuite[A, B] extends FunSuite {
       val name = toName(inputFileName)
       val expectedFileName = toExpectedFileName(inputFileName)
       (name,
-        Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"),
-        Source.fromResource(s"$base/$expectedFileName").getLines.mkString("\n"))
+       Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"),
+       Source.fromResource(s"$base/$expectedFileName").getLines.mkString("\n"))
   }
 
   acceptanceTestPairs.map {
@@ -46,8 +46,7 @@ class ExprTypeCheckingFailureSuite(val base: String) extends FunSuite {
   val acceptanceTests = acceptanceTestFiles.filter(isInputFileName).toList.sorted.map {
     case inputFileName =>
       val name = toName(inputFileName)
-      (name,
-        Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"))
+      (name, Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"))
   }
 
   acceptanceTests.map {
