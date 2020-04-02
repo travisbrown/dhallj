@@ -24,7 +24,6 @@ import org.http4s.Status.Successful
 //TODO sha256 checking if required
 //TODO support caching
 //TODO quoted path components?
-//TODO cycle detection - should be easy once we have stack of parent imports
 //TODO handle duplicate imports - should be easy with caching logic
 //TODO handle optional imports and the ? operator? (I don't think we need to do this here)
 //TODO proper error handling
@@ -113,17 +112,17 @@ package object imports {
 
     override def onRecordLiteral(fields: lang.Iterable[Map.Entry[String, Thunk[F[Expr]]]], size: Int): F[Expr] =
       for {
-        f <- fields.asScala.toList.traverse(e => e.getValue.apply.map(v => e.getKey -> v))
+        f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
       } yield Expr.makeRecordLiteral(f.toMap.asJava.entrySet)
 
     override def onRecordType(fields: lang.Iterable[Map.Entry[String, Thunk[F[Expr]]]], size: Int): F[Expr] =
       for {
-        f <- fields.asScala.toList.traverse(e => e.getValue.apply.map(v => e.getKey -> v))
+        f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
       } yield Expr.makeRecordType(f.toMap.asJava.entrySet)
 
     override def onUnionType(fields: lang.Iterable[Map.Entry[String, Thunk[F[Expr]]]], size: Int): F[Expr] =
       for {
-        f <- fields.asScala.toList.traverse(e => e.getValue.apply.map(v => e.getKey -> v))
+        f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
       } yield Expr.makeUnionType(f.toMap.asJava.entrySet)
 
     override def onNonEmptyListLiteral(values: lang.Iterable[Thunk[F[Expr]]], size: Int): F[Expr] =
@@ -233,7 +232,7 @@ package object imports {
               expr <- i match {
                 case Local(path) => makeLocation("Local", path.toString)
                 case Remote(uri) => makeLocation("Remote", uri.toString)
-                case Env(value)  => makeLocation("Remote", value)
+                case Env(value)  => makeLocation("Environment", value)
                 case Missing     => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
               }
             } yield expr -> Headers.empty

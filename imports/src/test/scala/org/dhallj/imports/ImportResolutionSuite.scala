@@ -55,6 +55,41 @@ class ImportResolutionSuite extends FunSuite {
     assert(equiv(resolve(expr), expected))
   }
 
+  test("Multiple imports") {
+    val expr = parse("let x = /multiple-imports/package.dhall in x")
+    val expected = parse("let x = [1,2] in x").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Import as text") {
+    val expr = parse("let x = /text-import/package.dhall as Text in x")
+    val expected = parse("\"let x = 1 in x\"").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Import as local location") {
+    val expr = parse("let x = /foo/bar.dhall as Location in x")
+    val expected = parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Local \"/foo/bar.dhall\"").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Import as remote location") {
+    val expr = parse("let x = http://example.com/foo.dhall as Location in x")
+    val expected = parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Remote \"http://example.com/foo.dhall\"").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Import as env location") {
+    val expr = parse("let x = env:foo as Location in x")
+    val expected = parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Environment \"foo\"").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
   test("Cyclic imports".fail) {
     val expr = parse("let x = /cyclic-relative-paths/package.dhall in x")
     val expected = parse("True").normalize
