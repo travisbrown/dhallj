@@ -31,10 +31,20 @@ import org.http4s.Status.Successful
 package object imports {
 
   implicit class ResolveImports(e: Expr) {
-    def resolveImports[F[_]](implicit Client: Client[F], F: Sync[F]): F[Expr] = e.accept(ResolveImportsVisitor[F](Nil))
+    def resolveImports[F[_]](
+      resolutionConfig: ResolutionConfig = ResolutionConfig(FromFileSystem)
+    )(implicit Client: Client[F], F: Sync[F]): F[Expr] = e.accept(ResolveImportsVisitor[F](resolutionConfig, Nil))
   }
 
-  private case class ResolveImportsVisitor[F[_]](parents: List[ImportContext])(implicit Client: Client[F], F: Sync[F])
+  case class ResolutionConfig(
+    localMode: LocalMode
+  )
+
+  sealed trait LocalMode
+  case object FromFileSystem extends LocalMode
+  case object FromResources extends LocalMode
+
+  private case class ResolveImportsVisitor[F[_]](resolutionConfig: ResolutionConfig, parents: List[ImportContext])(implicit Client: Client[F], F: Sync[F])
       extends Visitor.Internal[F[Expr]] {
     override def onDoubleLiteral(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
 
@@ -187,10 +197,16 @@ package object imports {
             } yield v -> Headers.empty
           case Local(path) =>
             for {
-              v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
+              v <- resolutionConfig.localMode match {
+                case FromFileSystem => F.delay(scala.io.Source.fromFile(path.toString).mkString)
+                case FromResources => {
+                  F.delay(println(path.toString)) >>
+                  F.delay(scala.io.Source.fromResource(path.toString).mkString)
+                }
+              }
             } yield v -> Headers.empty
           case Remote(uri) =>
-            Client.get(uri.toString) {
+            F.delay(println(s"Fetching $uri")) >> Client.get(uri.toString) {
               case Successful(resp) =>
                 for {
                   s <- EntityDecoder.decodeString(resp)
@@ -239,7 +255,7 @@ package object imports {
         _ <- if (isCyclic(imp, parents))
           F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
         else F.unit
-        result <- e.accept(ResolveImportsVisitor[F](imp :: parents))
+        result <- e.accept(ResolveImportsVisitor[F](resolutionConfig, imp :: parents))
       } yield result
     }
 
