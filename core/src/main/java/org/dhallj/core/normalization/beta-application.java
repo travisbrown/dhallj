@@ -14,6 +14,44 @@ import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeApplication {
 
+  private static class ApplyLambda extends ConstantVisitor.External<Expr> {
+    private final Expr arg;
+
+    ApplyLambda(Expr arg) {
+      super(null);
+      this.arg = arg;
+    }
+
+    @Override
+    public Expr onLambda(String name, Expr type, Expr result) {
+      return result.substitute(name, arg.increment(name)).decrement(name);
+    }
+  }
+
+  private static Expr applyLambdas(Expr base, final List<Expr> args) {
+    Expr currentLambda = null;
+    Expr current = base;
+    int i = 0;
+
+    while (current != null && i < args.size()) {
+      current = current.acceptExternal(new ApplyLambda(args.get(i)));
+      if (current == null) {
+        break;
+      } else {
+        currentLambda = current.acceptVis(BetaNormalize.instance);
+        i += 1;
+      }
+    }
+
+    if (currentLambda != null) {
+      for (int j = i; j < args.size(); j++) {
+        currentLambda = Expr.makeApplication(currentLambda, args.get(j));
+      }
+    }
+
+    return currentLambda;
+  }
+
   static final Expr apply(Expr base, final List<Expr> args) {
 
     String identifier = base.asSimpleIdentifier();
@@ -396,36 +434,6 @@ final class BetaNormalizeApplication {
     }
     // None matched, so we can't simplify.
     return null;
-  }
-
-  private static class ApplyLambda extends ConstantVisitor.External<Expr> {
-    private final Expr arg;
-
-    ApplyLambda(Expr arg) {
-      super(null);
-      this.arg = arg;
-    }
-
-    @Override
-    public Expr onLambda(String name, Expr type, Expr result) {
-      return result.substitute(name, arg.increment(name)).decrement(name);
-    }
-  }
-
-  private static Expr applyLambdas(Expr base, final List<Expr> args) {
-    Expr currentLambda = null;
-    Expr current = base;
-    int i = 0;
-
-    while (current != null && i < args.size()) {
-      current = current.acceptExternal(new ApplyLambda(args.get(i)));
-      if (current != null) {
-        currentLambda = current.acceptVis(BetaNormalize.instance);
-      }
-      i += 1;
-    }
-
-    return currentLambda;
   }
 
   private static List<Expr> drop(List<Expr> args, int count) {
