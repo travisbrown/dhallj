@@ -19,13 +19,29 @@ class ImportResolutionSuite extends FunSuite {
   implicit val client: Resource[IO, Client[IO]] = BlazeClientBuilder[IO](global).resource
 
   test("Local import") {
-    println(scala.io.Source.fromResource("./local/package.dhall").mkString)
-
-    val expr = parse("let x = ./local/package.dhall in x")
+    val expr = parse("let x = /local/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
-    println(expr)
-    println(expected)
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Local -> local relative import") {
+    val expr = parse("let x = /local-local-relative/package.dhall in x")
+    val expected = parse("let x = 1 in x").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Local -> local absolute import") {
+    val expr = parse("let x = /local-local-absolute/package.dhall in x")
+    val expected = parse("let x = 1 in x").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Local -> remote import") {
+    val expr = parse("let any = /local-remote/package.dhall in any Natural Natural/even [2,3,5]")
+    val expected = parse("True").normalize
 
     assert(equiv(resolve(expr), expected))
   }

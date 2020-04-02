@@ -199,14 +199,12 @@ package object imports {
             for {
               v <- resolutionConfig.localMode match {
                 case FromFileSystem => F.delay(scala.io.Source.fromFile(path.toString).mkString)
-                case FromResources => {
-                  F.delay(println(path.toString)) >>
-                  F.delay(scala.io.Source.fromResource(path.toString).mkString)
-                }
+                case FromResources =>
+                  F.delay(scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString)
               }
             } yield v -> Headers.empty
           case Remote(uri) =>
-            F.delay(println(s"Fetching $uri")) >> Client.get(uri.toString) {
+            Client.get(uri.toString) {
               case Successful(resp) =>
                 for {
                   s <- EntityDecoder.decodeString(resp)
