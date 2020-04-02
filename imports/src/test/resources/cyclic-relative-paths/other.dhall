@@ -1,0 +1,1 @@
+let x = ./package.dhall in x

@@ -55,6 +55,20 @@ class ImportResolutionSuite extends FunSuite {
     assert(equiv(resolve(expr), expected))
   }
 
+  test("Cyclic imports".fail) {
+    val expr = parse("let x = /cyclic-relative-paths/package.dhall in x")
+    val expected = parse("True").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
+  test("Cyclic imports - all relative".fail) {
+    val expr = parse("let x = /cyclic-relative-paths/package.dhall in x")
+    val expected = parse("True").normalize
+
+    assert(equiv(resolve(expr), expected))
+  }
+
   private def resolve(e: Expr): Expr =
     client.use { c =>
       implicit val http: Client[IO] = c
