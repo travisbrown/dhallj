@@ -1043,7 +1043,7 @@ Expr.Parsed LAMBDA_EXPRESSION(): {
 } {
   (
     first=<LAMBDA> (<WHSP>)? <PARENS_OPEN> (<WHSP>)?
-    param=<NONRESERVED_LABEL> (<WHSP>)? <COLON> <WHSP>
+    (param=<NONRESERVED_LABEL> | param=<TEXT> | param=<LOCATION>) (<WHSP>)? <COLON> <WHSP>
     type=BASE_EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
     body=BASE_EXPRESSION()
   ) {
@@ -1064,7 +1064,7 @@ LetBinding LET_BINDING(): {
   (
     first=<LET>
     whsp=<WHSP>
-    name=<NONRESERVED_LABEL> {
+    (name=<NONRESERVED_LABEL> | name=<TEXT> | name=<LOCATION>) {
       builder.append(first.image);
       builder.append(whsp.image);
       builder.append(name.image);
@@ -1123,7 +1123,7 @@ Expr.Parsed FORALL_EXPRESSION(): {
 } {
   (
     first=<FORALL> (<WHSP>)? <PARENS_OPEN> (<WHSP>)?
-    param=<NONRESERVED_LABEL> (<WHSP>)? <COLON> <WHSP>
+    (param=<NONRESERVED_LABEL> | param=<TEXT> | param=<LOCATION>) (<WHSP>)? <COLON> <WHSP>
     input=BASE_EXPRESSION() (<WHSP>)? <PARENS_CLOSE> (<WHSP>)? <ARROW> (<WHSP>)?
     result=BASE_EXPRESSION()
   ) {
