@@ -672,7 +672,7 @@ Expr.Parsed APPLICATION_EXPRESSION(): {
       | (first=<TOMAP> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeToMap(current0, first, whsp0); })
       | base=IMPORT_EXPRESSION()
     ) (
-      LOOKAHEAD(<WHSP> IMPORT_EXPRESSION())
+      LOOKAHEAD(2)
       whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeApplication(base, current0, whsp0); }
     )*
   ) {
