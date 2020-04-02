@@ -63,10 +63,12 @@ package object imports {
       } yield Expr.makeApplication(b, a)
 
     override def onOperatorApplication(operator: Operator, lhs: Thunk[F[Expr]], rhs: Thunk[F[Expr]]): F[Expr] =
-      for {
-        l <- lhs.apply
-        r <- rhs.apply
-      } yield Expr.makeOperatorApplication(operator, l, r)
+      if (operator == Operator.IMPORT_ALT) lhs.apply else {
+        for {
+          l <- lhs.apply
+          r <- rhs.apply
+        } yield Expr.makeOperatorApplication(operator, l, r)
+      }
 
     override def onIf(cond: Thunk[F[Expr]], thenValue: Thunk[F[Expr]], elseValue: Thunk[F[Expr]]): F[Expr] =
       for {
