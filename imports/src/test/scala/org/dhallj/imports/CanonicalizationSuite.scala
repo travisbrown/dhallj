@@ -12,34 +12,36 @@ import org.dhallj.imports.Canonicalization._
  */
 class CanonicalizationSuite extends FunSuite {
 
+  val fromFileSystemConfig = ResolutionConfig(FromFileSystem)
+
   test("Imports - Local, empty path") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/"))).unsafeRunSync,
+      canonicalize[IO](fromFileSystemConfig, Local(Paths.get("/"))).unsafeRunSync,
       Local(Paths.get("/")))
   }
 
   test("Paths - Trailing .") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/foo/."))).unsafeRunSync,
+      canonicalize[IO](fromFileSystemConfig, Local(Paths.get("/foo/."))).unsafeRunSync,
       Local(Paths.get("/foo")))
   }
 
   test("Paths - Trailing ..") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/foo/bar/.."))).unsafeRunSync,
+      canonicalize[IO](fromFileSystemConfig, Local(Paths.get("/foo/bar/.."))).unsafeRunSync,
       Local(Paths.get("/foo")))
   }
 
   //TODO determine whether spec is correct on this
   test("Paths - Root ..".fail) {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/.."))).unsafeRunSync,
+      canonicalize[IO](fromFileSystemConfig, Local(Paths.get("/.."))).unsafeRunSync,
       Local(Paths.get("/..")))
   }
 
   test("Chaining - local/local relative") {
     assertEquals(
-      canonicalize[IO](
+      canonicalize[IO](fromFileSystemConfig,
         Local(Paths.get("/foo/bar.dhall")),
         Local(Paths.get("./baz.dhall"))).unsafeRunSync,
       Local(Paths.get("/foo/baz.dhall")))
@@ -47,7 +49,7 @@ class CanonicalizationSuite extends FunSuite {
 
   test("Chaining - local/local absolute") {
     assertEquals(
-      canonicalize[IO](
+      canonicalize[IO](fromFileSystemConfig,
         Local(Paths.get("/foo/bar.dhall")),
         Local(Paths.get("/bar/baz.dhall"))).unsafeRunSync,
       Local(Paths.get("/bar/baz.dhall")))
@@ -55,7 +57,7 @@ class CanonicalizationSuite extends FunSuite {
 
   test("Chaining - local/remote") {
     assertEquals(
-      canonicalize[IO](
+      canonicalize[IO](fromFileSystemConfig,
         Local(Paths.get("/foo/bar.dhall")),
         Remote(new URI("http://foo.org/bar.dhall"))).unsafeRunSync,
       Remote(new URI("http://foo.org/bar.dhall")))
@@ -63,7 +65,7 @@ class CanonicalizationSuite extends FunSuite {
 
   test("Chaining - remote/remote absolute") {
     assertEquals(
-      canonicalize[IO](
+      canonicalize[IO](fromFileSystemConfig,
         Remote(new URI("http://foo.org/bar.dhall")),
         Remote(new URI("https://bar.com/bar/baz.dhall"))).unsafeRunSync,
       Remote((new URI("https://bar.com/bar/baz.dhall"))))
@@ -71,7 +73,7 @@ class CanonicalizationSuite extends FunSuite {
 
   test("Chaining - remote/local relative") {
     assertEquals(
-      canonicalize[IO](
+      canonicalize[IO](fromFileSystemConfig,
         Remote(new URI("http://foo.org/bar.dhall")),
         Local(Paths.get("./baz.dhall"))).unsafeRunSync,
       Remote(new URI("http://foo.org/baz.dhall")))
@@ -80,7 +82,7 @@ class CanonicalizationSuite extends FunSuite {
   //This is actually prohibited by the sanity check but we don't worry about it here
   test("Chaining - remote/local absolute") {
     assertEquals(
-      canonicalize[IO](
+      canonicalize[IO](fromFileSystemConfig,
         Remote(new URI("http://foo.org/bar.dhall")),
         Local(Paths.get("/baz.dhall"))).unsafeRunSync,
       Local(Paths.get("/baz.dhall")))

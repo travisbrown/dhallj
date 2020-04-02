@@ -246,7 +246,7 @@ package object imports {
       def isCyclic(imp: ImportContext, parents: List[ImportContext]): Boolean = parents.contains(imp)
 
       for {
-        imp <- if (parents.isEmpty) canonicalize(i) else canonicalize(parents.head, i)
+        imp <- if (parents.isEmpty) canonicalize(resolutionConfig, i) else canonicalize(resolutionConfig, parents.head, i)
         _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
         r <- resolve(imp, mode)
         (e, headers) = r

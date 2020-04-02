@@ -17,7 +17,7 @@ object Main extends IOApp {
     implicit val c: Client[IO] = client
 
     for {
-      e1 <- IO.pure(parse("let Prelude = https://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/package.dhall in Prelude.List.any Natural Natural/even [2,3,4]"))
+      e1 <- IO.pure(parse("let x = /tmp/foo.dhall in [x,x,x]"))
       e2 <- e1.resolveImports[IO]()
       _ <- IO(println(e2.normalize))
     } yield ExitCode.Success
