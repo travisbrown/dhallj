@@ -210,8 +210,19 @@ TOKEN: {
   <DOUBLE_QUOTE_CHARS: (
       "\u0020" | "\u0021" | ["\u0025"-"\u005b"] | ["\u005d"-"\u007f"]
     | ("\\" (["\"", "$", "\\", "/", "b", "f", "n", "r", "t"]))
+    | ("\\u" <UNICODE_ESCAPE>)
     | <VALID_NON_ASCII>
-  )+>
+  )+> |
+  <#UNICODE_ESCAPE: <UNBRACED_ESCAPE> | ("{" <BRACED_CODEPOINT> "}")> |
+  <#UNBRACED_ESCAPE:
+      ((<DIGIT> | "A" | "B" | "C" | "a" | "b" | "c") (<HEX_DIGIT>){3})
+    | ("D" ["0"-"7"] <HEX_DIGIT> <HEX_DIGIT>)
+    | (("E" | "e") (<HEX_DIGIT>){3})
+    | (("F" | "f") <HEX_DIGIT> <HEX_DIGIT> ("A" | "B" | "C" | "D" | "a" | "b" | "c" | "d"))
+  > |
+  <#BRACED_ESCAPE: ("0")* <BRACED_CODEPOINT>> |
+  <#BRACED_CODEPOINT: ((["0"-"9"] | ["A"-"F"] | ["a"-"f"] | "10") <UNICODE_SUFFIX>) | <UNBRACED_ESCAPE> | ((<HEX_DIGIT>){3})+> |
+  <#UNICODE_SUFFIX: ((<DIGIT> | ["A"-"E"] | ["a"-"e"]) (<HEX_DIGIT>){3}) | ("F" <HEX_DIGIT> <HEX_DIGIT> (<DIGIT> | ["A"-"D"] | ["a"-"d"]))>
 }
 <WITHIN_DOUBLE_QUOTE> TOKEN: { <DOUBLE_QUOTE_END: "\"">: DEFAULT }
 
