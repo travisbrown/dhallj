@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 /**
  * Represents a function from a Dhall expression to a value.
  *
- * @param I The internal result type used while recursing
  * @param A The final result type
  */
 public interface Vis<A> {
