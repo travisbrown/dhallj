@@ -476,40 +476,43 @@ Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
   }
 }
 
-Map.Entry<String, Expr.Parsed> UNION_TYPE_ENTRY(): {
-  Wrapped<String> label;
-  Expr.Parsed expr = null;
-} {
-  (label=ANY_LABEL_OR_SOME() (LOOKAHEAD((<WHSP>)? <COLON>) (<WHSP>)? <COLON> <WHSP> expr=BASE_EXPRESSION())?) {
-    return new SimpleImmutableEntry(label.value, expr);
-  }
-}
-
 Expr.Parsed UNION_TYPE(): {
   Token first;
   Token last;
+  Wrapped<String> label;
+  Expr.Parsed type = null;
   List<Map.Entry<String, Expr.Parsed>> typeValues = new ArrayList();
-  Map.Entry<String, Expr.Parsed> currentTypeValue = null;
 } {
   (
     first=<ANGLE_OPEN>
-    (<WHSP>)?
-    (<BAR> (<WHSP>)?)?
+    [<WHSP>]
+    [<BAR> [<WHSP>]]
     (
-      currentTypeValue=UNION_TYPE_ENTRY() {
-        typeValues.add(currentTypeValue);
-      }
-      (LOOKAHEAD((<WHSP>)? <BAR> (<WHSP>)?)
-        (<WHSP>)?
-        <BAR>
-        (<WHSP>)?
-        currentTypeValue=UNION_TYPE_ENTRY() {
-          typeValues.add(currentTypeValue);
-        }
-      )*
-    )?
-    (<WHSP>)?
-    last=<ANGLE_CLOSE>
+        last=<ANGLE_CLOSE>
+      | (
+        (
+          label=ANY_LABEL_OR_SOME()
+          [<WHSP>]
+          (
+            [<COLON> <WHSP> type=BASE_EXPRESSION() [<WHSP>]] {
+              typeValues.add(new SimpleImmutableEntry(label.value, type));
+              type = null;
+            }
+            (
+              <BAR>
+              [<WHSP>]
+              label=ANY_LABEL_OR_SOME()
+              [<WHSP>]
+              [<COLON> <WHSP> type=BASE_EXPRESSION() [<WHSP>]] {
+                typeValues.add(new SimpleImmutableEntry(label.value, type));
+                type = null;
+              }
+            )*
+          )
+        )
+        last=<ANGLE_CLOSE>
+      )
+    )
   ) {
     return ParsingHelpers.makeUnionType(typeValues, first, last);
   }
@@ -674,7 +677,7 @@ Expr.Parsed APPLICATION_EXPRESSION(): {
       | (first=<TOMAP> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeToMap(current0, first, whsp0); })
       | base=IMPORT_EXPRESSION()
     ) (
-      LOOKAHEAD(<WHSP> (IMPORT_EXPRESSION() | <BRACE_OPEN> /* TODO: Investigate why this brace check is needed. */))
+      LOOKAHEAD(<WHSP> IMPORT_EXPRESSION())
       whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeApplication(base, current0, whsp0); }
     )*
   ) {
