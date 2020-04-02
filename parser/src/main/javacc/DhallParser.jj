@@ -642,13 +642,8 @@ Expr.Parsed IMPORT(): {
       | (token=<HTTP> (LOOKAHEAD(2) [<WHSP>] <USING> <WHSP> using=IMPORT_EXPRESSION())?)
       | token=<ENV>
     )
-    (LOOKAHEAD(2)
-      <WHSP>
-      (
-        [hash=<SHA256_HASH>]
-        (LOOKAHEAD(2) [<WHSP>] <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))?
-      )
-    )?
+    (LOOKAHEAD(2) <WHSP> hash=<SHA256_HASH>)?
+    (LOOKAHEAD(2) [<WHSP>] <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))?
   ) {
     return ParsingHelpers.makeImport(token, hash, asValue, using);
   }
