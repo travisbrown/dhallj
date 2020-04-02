@@ -316,7 +316,7 @@ Expr.Parsed IDENTIFIER(): {
       (
         valueToken=<NONRESERVED_LABEL>
         (
-          LOOKAHEAD((<WHSP>)? <AT_SIGN>)
+          LOOKAHEAD(2)
           (<WHSP>)? <AT_SIGN>
           (whspToken=<WHSP>)?
           indexToken=<NATURAL_LITERAL>
@@ -586,7 +586,7 @@ Expr.Parsed SELECTOR_EXPRESSION(): {
   (
     base=PRIMITIVE_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <DOT>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)? <DOT> (whsp1=<WHSP>)?
       (label=ANY_LABEL() | labels=LABEL_SELECTOR() | type=TYPE_SELECTOR()) {
         if (label != null) {
@@ -618,7 +618,7 @@ Expr.Parsed COMPLETION_EXPRESSION(): {
   (
     base=SELECTOR_EXPRESSION()
     (
-      LOOKAHEAD([<WHSP>] <COMPLETE>)
+      LOOKAHEAD(2)
       [whsp0=<WHSP>] operatorToken=<COMPLETE> [whsp1=<WHSP>]
       completion=SELECTOR_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.COMPLETE, base, completion, operatorToken, whsp0, whsp1);
@@ -692,7 +692,7 @@ Map.Entry<List<String>, Expr.Parsed> WITH_ENTRY(): {
 } {
   (
     current=ANY_LABEL_OR_SOME() { labels.add(current.value); }
-    (LOOKAHEAD((<WHSP>)? <DOT>) (<WHSP>)? <DOT> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); })*
+    (LOOKAHEAD(2) (<WHSP>)? <DOT> (<WHSP>)? current=ANY_LABEL_OR_SOME() { labels.add(current.value); })*
     (<WHSP>)?
     <EQUAL_SIGN>
     (<WHSP>)?
@@ -710,7 +710,7 @@ Expr.Parsed WITH_EXPRESSION(): {
   (
     base=APPLICATION_EXPRESSION()
     (
-      LOOKAHEAD(<WHSP> <WITH>)
+      LOOKAHEAD(2)
       first=<WHSP> <WITH> <WHSP>
       current=WITH_ENTRY() { base = ParsingHelpers.makeWith(base, current.getKey(), current.getValue(), first); }
     )*
@@ -729,7 +729,7 @@ Expr.Parsed EQUIVALENT_EXPRESSION(): {
   (
     base=WITH_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <EQUIVALENT>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<EQUIVALENT> (whsp1=<WHSP>)? arg=WITH_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -752,7 +752,7 @@ Expr.Parsed NOT_EQUALS_EXPRESSION(): {
   (
     base=EQUIVALENT_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <NOT_EQUALS>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<NOT_EQUALS> (whsp1=<WHSP>)? arg=EQUIVALENT_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -775,7 +775,7 @@ Expr.Parsed EQUALS_EXPRESSION(): {
   (
     base=NOT_EQUALS_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <EQUALS>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<EQUALS> (whsp1=<WHSP>)? arg=NOT_EQUALS_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -798,7 +798,7 @@ Expr.Parsed TIMES_EXPRESSION(): {
   (
     base=EQUALS_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <TIMES>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<TIMES> (whsp1=<WHSP>)? arg=EQUALS_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -821,7 +821,7 @@ Expr.Parsed COMBINE_TYPES_EXPRESSION(): {
   (
     base=TIMES_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <COMBINE_TYPES>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<COMBINE_TYPES> (whsp1=<WHSP>)? arg=TIMES_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -844,7 +844,7 @@ Expr.Parsed PREFER_EXPRESSION(): {
   (
     base=COMBINE_TYPES_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <PREFER>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<PREFER> (whsp1=<WHSP>)? arg=COMBINE_TYPES_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -867,7 +867,7 @@ Expr.Parsed COMBINE_EXPRESSION(): {
   (
     base=PREFER_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <COMBINE>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<COMBINE> (whsp1=<WHSP>)? arg=PREFER_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -890,7 +890,7 @@ Expr.Parsed AND_EXPRESSION(): {
   (
     base=COMBINE_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <AND>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<AND> (whsp1=<WHSP>)? arg=COMBINE_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -913,7 +913,7 @@ Expr.Parsed LIST_APPEND_EXPRESSION(): {
   (
     base=AND_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <LIST_APPEND>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<LIST_APPEND> (whsp1=<WHSP>)? arg=AND_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -936,7 +936,7 @@ Expr.Parsed TEXT_APPEND_EXPRESSION(): {
   (
     base=LIST_APPEND_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <CONCAT>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<CONCAT> (whsp1=<WHSP>)? arg=LIST_APPEND_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -959,7 +959,7 @@ Expr.Parsed PLUS_EXPRESSION(): {
   (
     base=TEXT_APPEND_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <PLUS>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<PLUS> whsp1=<WHSP> arg=TEXT_APPEND_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -981,7 +981,7 @@ Expr.Parsed OR_EXPRESSION(): {
   (
     base=PLUS_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <OR>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<OR> (whsp1=<WHSP>)? arg=PLUS_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -1004,7 +1004,7 @@ Expr.Parsed IMPORT_ALT_EXPRESSION(): {
   (
     base=OR_EXPRESSION()
     (
-      LOOKAHEAD((<WHSP>)? <QUESTION_MARK>)
+      LOOKAHEAD(2)
       (whsp0=<WHSP>)?
       operator=<QUESTION_MARK> whsp1=<WHSP> arg=OR_EXPRESSION() {
         base = ParsingHelpers.makeOperatorApplication(Operator.parse(operator.image), base, arg, operator, whsp0, whsp1);
@@ -1163,7 +1163,7 @@ Expr.Parsed ANNOTATED_EXPRESSION(): {
   Token whsp1 = null;
 } {
   (
-    base=OPERATOR_EXPRESSION() (LOOKAHEAD((<WHSP>)? <COLON>) (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> type=BASE_EXPRESSION())?
+    base=OPERATOR_EXPRESSION() (LOOKAHEAD(2) (whsp0=<WHSP>)? <COLON> whsp1=<WHSP> type=BASE_EXPRESSION())?
   ) {
     return (type == null) ? base : ParsingHelpers.makeAnnotated(base, type, whsp0, whsp1);
   }
