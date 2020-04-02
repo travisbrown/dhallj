@@ -102,17 +102,7 @@ public abstract class Expr {
 
     }
     byte[] encoded = digest.digest(bs);
-    return bytesToHex(encoded);
-  }
-
-  private static String bytesToHex(byte[] hash) {
-    StringBuilder hexString = new StringBuilder();
-    for (int i = 0; i < hash.length; i++) {
-      String hex = Integer.toHexString(0xff & hash[i]);
-      if (hex.length() == 1) hexString.append('0');
-      hexString.append(hex);
-    }
-    return hexString.toString();
+    return Util.encodeBytes(encoded);
   }
 
   public final boolean isType() {
@@ -206,6 +196,16 @@ public abstract class Expr {
   }
 
   public static final class Util {
+    public static String encodeBytes(byte[] hash) {
+      StringBuilder hexString = new StringBuilder();
+      for (int i = 0; i < hash.length; i++) {
+        String hex = Integer.toHexString(0xff & hash[i]);
+        if (hex.length() == 1) hexString.append('0');
+        hexString.append(hex);
+      }
+      return hexString.toString();
+    }
+
     public static Expr getListElementType(Expr expr) {
       if (expr.tag == Tags.APPLICATION) {
         Constructors.Application tmp0 = (Constructors.Application) expr;
