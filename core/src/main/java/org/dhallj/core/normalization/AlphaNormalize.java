@@ -1,54 +1,107 @@
 package org.dhallj.core.normalization;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Visitor;
-import org.dhallj.core.visitor.IdentityVisitor;
+import org.dhallj.core.LetBinding;
+import org.dhallj.core.Vis;
+import org.dhallj.core.visitor.IdentityVis;
 
 /**
  * Performs alpha normalization.
  *
- * <p>This is a stateless visitor intended for use as a singleton.
+ * <p>Morally this is equivalent to the following (on non-underscore bindings):
+ *
+ * <pre>
+ * input.increment("_").substitute(name, 0, Expr.Constants.UNDERSCORE).decrement(name);
+ * </pre>
+ *
+ * The implementation here is necessary to fit the visitor API.
+ *
+ * <p>Note that this visitor maintains internal state and instances should not be reused.
  */
-public final class AlphaNormalize extends IdentityVisitor.External.Recursing {
-  public static Visitor<Expr, Expr> instance = new AlphaNormalize();
+public final class AlphaNormalize extends IdentityVis {
+  // We interpret any underscores as implicitly having this index added to their own.
+  private int newUnderscoreDepth = 0;
 
-  private static final Expr dename(String name, Expr input) {
-    return input.increment("_").substitute(name, 0, Expr.Constants.UNDERSCORE).decrement(name);
-  }
+  // The total number of underscores.
+  private int underscoreDepth = 0;
 
-  @Override
-  public Expr onLambda(String param, Expr input, Expr result) {
-    Expr newInput = input.acceptExternal(this);
-
-    if (param.equals("_")) {
-      return Expr.makeLambda(param, newInput, result.acceptExternal(this));
-    } else {
-
-      return Expr.makeLambda("_", newInput, dename(param, result).acceptExternal(this));
-    }
-  }
+  // We change any other name to an underscore whose index we compute from the depth we track here.
+  private final Map<String, LinkedList<Integer>> nameDepths =
+      new HashMap<String, LinkedList<Integer>>();
 
   @Override
-  public Expr onPi(String param, Expr input, Expr result) {
-    Expr newInput = input.acceptExternal(this);
-
-    if (param.equals("_")) {
-      return Expr.makePi(param, newInput, result.acceptExternal(this));
-    } else {
-
-      return Expr.makePi("_", newInput, dename(param, result).acceptExternal(this));
-    }
-  }
-
-  @Override
-  public Expr onLet(String name, Expr type, Expr value, Expr body) {
-    Expr newType = (type == null) ? null : type.acceptExternal(this);
+  public Expr onIdentifier(String name, long index) {
     if (name.equals("_")) {
-
-      return Expr.makeLet(name, newType, value.acceptExternal(this), body.acceptExternal(this));
+      return Expr.makeIdentifier(name, index + this.newUnderscoreDepth);
     } else {
-      return Expr.makeLet(
-          "_", newType, value.acceptExternal(this), dename(name, body).acceptExternal(this));
+      LinkedList<Integer> depths = this.nameDepths.get(name);
+
+      if (depths == null) {
+        return Expr.makeIdentifier(name, index);
+      } else if (index < depths.size()) {
+        return Expr.makeIdentifier("_", underscoreDepth - depths.get((int) index));
+      } else {
+        return Expr.makeIdentifier(name, index - depths.size());
+      }
     }
+  }
+
+  @Override
+  public void bind(String name, Expr type) {
+    this.underscoreDepth += 1;
+    if (!name.equals("_")) {
+      this.newUnderscoreDepth += 1;
+
+      LinkedList<Integer> nameDepth = this.nameDepths.get(name);
+      if (nameDepth == null) {
+        nameDepth = new LinkedList<Integer>();
+        nameDepths.put(name, nameDepth);
+      }
+      nameDepth.push(this.underscoreDepth);
+    }
+  }
+
+  @Override
+  public Expr onLambda(String name, Expr type, Expr result) {
+    this.underscoreDepth -= 1;
+    if (!name.equals("_")) {
+      this.newUnderscoreDepth -= 1;
+      this.nameDepths.get(name).pop();
+    }
+    return Expr.makeLambda("_", type, result);
+  }
+
+  @Override
+  public Expr onPi(String name, Expr type, Expr result) {
+    this.underscoreDepth -= 1;
+    if (!name.equals("_")) {
+      this.newUnderscoreDepth -= 1;
+      this.nameDepths.get(name).pop();
+    }
+    return Expr.makePi("_", type, result);
+  }
+
+  @Override
+  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
+    List<LetBinding<Expr>> newBindings = new ArrayList<>(bindings.size());
+
+    for (LetBinding<Expr> binding : bindings) {
+      String name = binding.getName();
+
+      this.underscoreDepth -= 1;
+      if (!name.equals("_")) {
+        this.newUnderscoreDepth -= 1;
+        this.nameDepths.get(name).pop();
+      }
+
+      newBindings.add(new LetBinding<>("_", binding.getType(), binding.getValue()));
+    }
+
+    return Expr.makeLet(newBindings, body);
   }
 }

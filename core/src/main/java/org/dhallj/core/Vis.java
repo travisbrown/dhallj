@@ -24,7 +24,7 @@ public interface Vis<A> {
 
   A onIdentifier(String value, long index);
 
-  void bind(String param, Expr type);
+  void bind(String name, Expr type);
 
   A onLambda(String name, A type, A result);
 

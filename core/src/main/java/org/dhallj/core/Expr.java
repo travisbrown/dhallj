@@ -64,7 +64,7 @@ public abstract class Expr {
   }
 
   public final Expr alphaNormalize() {
-    return this.acceptExternal(AlphaNormalize.instance);
+    return this.acceptVis(new AlphaNormalize());
   }
 
   public final Expr normalize() {
