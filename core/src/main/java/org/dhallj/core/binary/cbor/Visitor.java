@@ -14,9 +14,9 @@ public interface Visitor<R> {
 
   public R onTextString(String value);
 
-  public R onArray(List<CBORExpression> value);
+  public R onArray(BigInteger length);
 
-  public R onMap(Map<CBORExpression, CBORExpression> value);
+  public R onMap(BigInteger size);
 
   public R onFalse();
 

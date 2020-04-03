@@ -156,6 +156,10 @@ public abstract class Expr {
     }
   }
 
+  public final String asIdentifier() {
+    return this.acceptExternal(AsIdentifier.instance);
+  }
+
   public final Double asDoubleLiteral() {
     Expr value = this.getNonNote();
 

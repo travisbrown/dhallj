@@ -1,9 +1,5 @@
 package org.dhallj.core.binary.cbor;
 
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-
 public abstract class CBORExpression {
 
   public abstract <R> R accept(Visitor<R> visitor);
@@ -86,53 +82,5 @@ public abstract class CBORExpression {
         }
       }
     }
-  }
-
-  public static CBORExpression mkUnsignedInteger(BigInteger value) {
-    return new CBORConstructors.CBORUnsignedInteger(value);
-  }
-
-  public static CBORExpression mkNegativeInteger(BigInteger value) {
-    return new CBORConstructors.CBORNegativeInteger(value);
-  }
-
-  public static CBORExpression mkByteString(byte[] value) {
-    return new CBORConstructors.CBORByteString(value);
-  }
-
-  public static CBORExpression mkTextString(String value) {
-    return new CBORConstructors.CBORTextString(value);
-  }
-
-  public static CBORExpression mkArray(List<CBORExpression> value) {
-    return new CBORConstructors.CBORHeterogeneousArray(value);
-  }
-
-  public static CBORExpression mkMap(Map<CBORExpression, CBORExpression> value) {
-    return new CBORConstructors.CBORHeterogeneousMap(value);
-  }
-
-  public static CBORExpression mkFalse() {
-    return new CBORConstructors.CBORFalse();
-  }
-
-  public static CBORExpression mkTrue() {
-    return new CBORConstructors.CBORTrue();
-  }
-
-  public static CBORExpression mkNull() {
-    return new CBORConstructors.CBORNull();
-  }
-
-  public static CBORExpression mkHalfFLoat(float value) {
-    return new CBORConstructors.CBORHalfFloat(value);
-  }
-
-  public static CBORExpression mkSingleFloat(float value) {
-    return new CBORConstructors.CBORSingleFloat(value);
-  }
-
-  public static CBORExpression mkDoubleFloat(double value) {
-    return new CBORConstructors.CBORDoubleFloat(value);
   }
 }
