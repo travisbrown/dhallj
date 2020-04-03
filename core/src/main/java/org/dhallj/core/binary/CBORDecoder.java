@@ -86,6 +86,7 @@ public abstract class CBORDecoder {
     } else {
       // We don't handle the case where the length is > Integer.MaxValue
       List<CBORExpression> exprs = new ArrayList<>(length.intValue());
+      System.out.println("Decoding array of length" + length.intValue());
       for (int i = 0; i < length.intValue(); i++) {
         exprs.add(decode());
       }

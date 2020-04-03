@@ -2,17 +2,13 @@ package org.dhallj.tests
 
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
+import java.util
 
 import co.nstant.in.cbor.CborEncoder
 import munit.FunSuite
-import org.dhallj.core.binary.CBORConstructors.{
-  CBORByteString,
-  CBORNegativeInteger,
-  CBORTextString,
-  CBORUnsignedInteger
-}
-import org.dhallj.core.binary.{CBORDecoder}
-import co.nstant.in.cbor.model.{ByteString, DataItem, NegativeInteger, UnicodeString, UnsignedInteger}
+import org.dhallj.core.binary.CBORConstructors.{CBORByteString, CBORHeterogeneousArray, CBORNegativeInteger, CBORTextString, CBORUnsignedInteger}
+import org.dhallj.core.binary.{CBORDecoder, CBORExpression}
+import co.nstant.in.cbor.model.{ByteString, DataItem, NegativeInteger, UnicodeString, UnsignedInteger, Array => CBArray}
 
 import scala.util.Random
 
@@ -138,6 +134,24 @@ class CBORDecodingSuite extends FunSuite {
 
     assert(result.isInstanceOf[CBORTextString])
     assertEquals(result.asInstanceOf[CBORTextString].getValue, value)
+  }
+
+  test("Decode array - short") {
+    val value1 = new UnsignedInteger(1)
+    val value2 = new NegativeInteger(-2)
+    val value3 = new UnicodeString("foo")
+
+    val value = new CBArray().add(value1).add(value2).add(value3)
+    val bytes = encode(value)
+    val result = CBORDecoder.decode(bytes)
+
+    val expected = util.Arrays.asList(
+      CBORExpression.mkUnsignedInteger(BigInteger.valueOf(1)),
+      CBORExpression.mkNegativeInteger(BigInteger.valueOf(-2)),
+      CBORExpression.mkTextString("foo"))
+
+    assert(result.isInstanceOf[CBORHeterogeneousArray])
+    assertEquals(result.asInstanceOf[CBORHeterogeneousArray].getValue, expected)
   }
 
   final private val MINUS_ONE: BigInteger = BigInteger.valueOf(-1)
