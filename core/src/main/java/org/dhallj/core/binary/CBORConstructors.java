@@ -52,13 +52,13 @@ public final class CBORConstructors {
 
   public static final class CBORTextString extends CBORExpression {
 
-    private final byte[] value;
+    private final String value;
 
-    CBORTextString(byte[] value) {
+    CBORTextString(String value) {
       this.value = value;
     }
 
-    public byte[] getValue() {
+    public String getValue() {
       return value;
     }
   }

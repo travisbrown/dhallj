@@ -5,10 +5,14 @@ import java.math.BigInteger
 
 import co.nstant.in.cbor.CborEncoder
 import munit.FunSuite
-import org.dhallj.core.binary.CBORConstructors.{CBORByteString, CBORNegativeInteger, CBORUnsignedInteger}
-import org.dhallj.core.binary.CBORDecoder.ByteArrayCBORDecoder
-import org.dhallj.core.binary.{CBORDecoder, CBORExpression}
-import co.nstant.in.cbor.model.{ByteString, DataItem, NegativeInteger, UnsignedInteger}
+import org.dhallj.core.binary.CBORConstructors.{
+  CBORByteString,
+  CBORNegativeInteger,
+  CBORTextString,
+  CBORUnsignedInteger
+}
+import org.dhallj.core.binary.{CBORDecoder}
+import co.nstant.in.cbor.model.{ByteString, DataItem, NegativeInteger, UnicodeString, UnsignedInteger}
 
 import scala.util.Random
 
@@ -110,6 +114,32 @@ class CBORDecodingSuite extends FunSuite {
     assert(result.asInstanceOf[CBORByteString].getValue.sameElements(value))
   }
 
-  private final val MINUS_ONE: BigInteger = BigInteger.valueOf(-1)
+  test("Decode text string - short") {
+    val bytes = encode(new UnicodeString("short"))
+    val result = CBORDecoder.decode(bytes)
+
+    assert(result.isInstanceOf[CBORTextString])
+    assertEquals(result.asInstanceOf[CBORTextString].getValue, "short")
+  }
+
+  test("Decode text string - short") {
+    val value = Random.nextString(1024)
+    val bytes = encode(new UnicodeString(value))
+    val result = CBORDecoder.decode(bytes)
+
+    assert(result.isInstanceOf[CBORTextString])
+    assertEquals(result.asInstanceOf[CBORTextString].getValue, value)
+  }
+
+  test("Decode text string - short") {
+    val value = Random.nextString(16384)
+    val bytes = encode(new UnicodeString(value))
+    val result = CBORDecoder.decode(bytes)
+
+    assert(result.isInstanceOf[CBORTextString])
+    assertEquals(result.asInstanceOf[CBORTextString].getValue, value)
+  }
+
+  final private val MINUS_ONE: BigInteger = BigInteger.valueOf(-1)
 
 }

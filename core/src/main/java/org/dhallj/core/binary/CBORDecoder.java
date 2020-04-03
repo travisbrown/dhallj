@@ -5,6 +5,7 @@ import org.dhallj.core.binary.CBORExpression.Constants.AdditionalInfo;
 import org.dhallj.core.binary.CBORExpression.Constants.MajorType;
 
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +74,7 @@ public abstract class CBORDecoder {
       throw new RuntimeException("Indefinite text string not needed for Dhall");
     } else {
       // We don't handle the case where the length is > Integer.MaxValue
-      return new CBORTextString(this.read(length.intValue()));
+      return new CBORTextString(new String(this.read(length.intValue()), Charset.forName("UTF-8")));
     }
   }
 
