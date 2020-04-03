@@ -297,6 +297,7 @@ public abstract class Expr {
       builtInNames.add("Text/show");
       builtInNames.add("True");
       builtInNames.add("Type");
+      builtInNames.add("Sort");
     }
 
     public static boolean isBuiltInConstant(String name) {
