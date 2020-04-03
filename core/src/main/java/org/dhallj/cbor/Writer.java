@@ -64,12 +64,12 @@ public abstract class Writer {
   }
 
   protected final void writeBigInteger(OutputStream stream, BigInteger value) throws IOException {
-    this.writeTypeAndLength(
-        stream,
-        (value.compareTo(BigInteger.ZERO) >= 0)
-            ? MAJOR_TYPE_UNSIGNED_INTEGER
-            : MAJOR_TYPE_NEGATIVE_INTEGER,
-        value);
+    if (value.compareTo(BigInteger.ZERO) >= 0) {
+      this.writeTypeAndLength(stream, MAJOR_TYPE_UNSIGNED_INTEGER, value);
+    } else {
+      this.writeTypeAndLength(
+          stream, MAJOR_TYPE_NEGATIVE_INTEGER, value.add(BigInteger.ONE).negate());
+    }
   }
 
   protected final void writeString(OutputStream stream, String value) throws IOException {
