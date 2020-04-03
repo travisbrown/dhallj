@@ -98,7 +98,7 @@ public abstract class Writer {
       this.write(stream, (byte) (base | BYTES_2), (byte) 0, (byte) 0);
 
     } else if (Double.compare(value, -0.0) == 0) {
-      this.write(stream, (byte) (base | BYTES_2), (byte) 8, (byte) 0);
+      this.write(stream, (byte) (base | BYTES_2), (byte) 128, (byte) 0);
     } else {
       float asFloat = (float) value;
       if (value == (double) asFloat) {
