@@ -207,11 +207,14 @@ public abstract class Expr {
     }
 
     public static Expr getListElementType(Expr expr) {
-      if (expr.tag == Tags.APPLICATION) {
-        Constructors.Application tmp0 = (Constructors.Application) expr;
+      Expr realExpr = (expr.tag == Tags.NOTE) ? ((Parsed) expr).base : expr;
 
-        if (tmp0.base.tag == Tags.IDENTIFIER) {
-          Constructors.Identifier tmp1 = (Constructors.Identifier) tmp0.base;
+      if (realExpr.tag == Tags.APPLICATION) {
+        Constructors.Application tmp0 = (Constructors.Application) realExpr;
+        realExpr = (tmp0.base.tag == Tags.NOTE) ? ((Parsed) tmp0.base).base : tmp0.base;
+
+        if (realExpr.tag == Tags.IDENTIFIER) {
+          Constructors.Identifier tmp1 = (Constructors.Identifier) realExpr;
 
           if (tmp1.value.equals("List") && tmp1.index == 0) {
             return tmp0.arg;
