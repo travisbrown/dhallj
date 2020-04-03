@@ -51,7 +51,7 @@ public abstract class CBORDecoder {
 
   private CBORExpression readNegativeInteger(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
-    return new CBORNegativeInteger(readBigInteger(info, b).multiply(BigInteger.valueOf(-1)));
+    return new CBORNegativeInteger(BigInteger.valueOf(-1).subtract(readBigInteger(info, b)));
   }
 
   private CBORExpression readByteString(byte b) {
@@ -197,7 +197,7 @@ public abstract class CBORDecoder {
     BigInteger result = BigInteger.ZERO;
     for (int i = 0; i < numBytes; i++) {
       int next = this.read() & 0xff;
-      result = result.shiftLeft(8).and(BigInteger.valueOf(next));
+      result = result.shiftLeft(8).or(BigInteger.valueOf(next));
     }
     return result;
   }
@@ -226,7 +226,7 @@ public abstract class CBORDecoder {
       System.arraycopy(bytes, this.cursor, bs, 0, count);
       this.cursor += count;
 
-      return bytes;
+      return bs;
     }
   }
 
