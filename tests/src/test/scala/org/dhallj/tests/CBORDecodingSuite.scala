@@ -2,16 +2,15 @@ package org.dhallj.tests
 
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
-import java.util
 
 import co.nstant.in.cbor.CborEncoder
+import co.nstant.in.cbor.model.{ByteString, DataItem, DoublePrecisionFloat, HalfPrecisionFloat, NegativeInteger, SimpleValue, SinglePrecisionFloat, UnicodeString, UnsignedInteger, Array => CBArray, Map => CBMap}
 import munit.FunSuite
-import org.dhallj.core.binary.CBORConstructors.{CBORByteString, CBORHeterogeneousArray, CBORHeterogeneousMap, CBORNegativeInteger, CBORTextString, CBORUnsignedInteger}
-import org.dhallj.core.binary.{CBORDecoder, CBORExpression}
-import co.nstant.in.cbor.model.{ByteString, DataItem, NegativeInteger, UnicodeString, UnsignedInteger, Array => CBArray, Map => CBMap}
-import org.dhallj.core.binary.CBORExpression.{mkNegativeInteger, mkTextString, mkUnsignedInteger}
-import scala.jdk.CollectionConverters._
+import org.dhallj.core.binary.CBORConstructors._
+import org.dhallj.core.binary.CBORDecoder
+import org.dhallj.core.binary.CBORExpression._
 
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 
 class CBORDecodingSuite extends FunSuite {
@@ -28,7 +27,7 @@ class CBORDecodingSuite extends FunSuite {
     val result = CBORDecoder.decode(bytes)
 
     assert(result.isInstanceOf[CBORUnsignedInteger])
-    assertEquals(result.asInstanceOf[CBORUnsignedInteger].getValue, BigInteger.valueOf(1))
+    assertEquals(result, mkUnsignedInteger(BigInteger.valueOf(1)))
   }
 
   test("Decode unsigned integer - short, 1 byte") {
@@ -36,7 +35,7 @@ class CBORDecodingSuite extends FunSuite {
     val result = CBORDecoder.decode(bytes)
 
     assert(result.isInstanceOf[CBORUnsignedInteger])
-    assertEquals(result.asInstanceOf[CBORUnsignedInteger].getValue, BigInteger.valueOf(24))
+    assertEquals(result, mkUnsignedInteger(BigInteger.valueOf(24)))
   }
 
   test("Decode unsigned integers - large") {
@@ -47,14 +46,9 @@ class CBORDecodingSuite extends FunSuite {
       val result = CBORDecoder.decode(bytes)
 
       assert(result.isInstanceOf[CBORUnsignedInteger])
-      assertEquals(result.asInstanceOf[CBORUnsignedInteger].getValue, value)
+      assertEquals(result, mkUnsignedInteger(value))
 
     }
-    val bytes = encode(new UnsignedInteger(24))
-    val result = CBORDecoder.decode(bytes)
-
-    assert(result.isInstanceOf[CBORUnsignedInteger])
-    assertEquals(result.asInstanceOf[CBORUnsignedInteger].getValue, BigInteger.valueOf(24))
   }
 
   test("Decode negative integer - tiny") {
@@ -62,18 +56,18 @@ class CBORDecodingSuite extends FunSuite {
     val result = CBORDecoder.decode(bytes)
 
     assert(result.isInstanceOf[CBORNegativeInteger])
-    assertEquals(result.asInstanceOf[CBORNegativeInteger].getValue, BigInteger.valueOf(-1))
+    assertEquals(result, mkNegativeInteger(BigInteger.valueOf(-1)))
   }
 
-  test("Decode unsigned integer - short, 1 byte") {
+  test("Decode negative integer - short, 1 byte") {
     val bytes = encode(new NegativeInteger(-24))
     val result = CBORDecoder.decode(bytes)
 
     assert(result.isInstanceOf[CBORNegativeInteger])
-    assertEquals(result.asInstanceOf[CBORNegativeInteger].getValue, BigInteger.valueOf(-24))
+    assertEquals(result, mkNegativeInteger(BigInteger.valueOf(-24)))
   }
 
-  test("Decode unsigned integers - large") {
+  test("Decode negative integers - large") {
     val initial = BigInteger.ONE
     for (i <- 0 to 63) {
       val value = initial.shiftLeft(1).multiply(MINUS_ONE)
@@ -81,7 +75,7 @@ class CBORDecodingSuite extends FunSuite {
       val result = CBORDecoder.decode(bytes)
 
       assert(result.isInstanceOf[CBORNegativeInteger])
-      assertEquals(result.asInstanceOf[CBORNegativeInteger].getValue, value)
+      assertEquals(result, mkNegativeInteger(value))
     }
   }
 
@@ -117,25 +111,25 @@ class CBORDecodingSuite extends FunSuite {
     val result = CBORDecoder.decode(bytes)
 
     assert(result.isInstanceOf[CBORTextString])
-    assertEquals(result.asInstanceOf[CBORTextString].getValue, "short")
+    assertEquals(result, mkTextString("short"))
   }
 
-  test("Decode text string - short") {
+  test("Decode text string - long") {
     val value = Random.nextString(1024)
     val bytes = encode(new UnicodeString(value))
     val result = CBORDecoder.decode(bytes)
 
     assert(result.isInstanceOf[CBORTextString])
-    assertEquals(result.asInstanceOf[CBORTextString].getValue, value)
+    assertEquals(result, mkTextString(value))
   }
 
-  test("Decode text string - short") {
+  test("Decode text string - longer") {
     val value = Random.nextString(16384)
     val bytes = encode(new UnicodeString(value))
     val result = CBORDecoder.decode(bytes)
 
     assert(result.isInstanceOf[CBORTextString])
-    assertEquals(result.asInstanceOf[CBORTextString].getValue, value)
+    assertEquals(result, mkTextString(value))
   }
 
   test("Decode array - short") {
@@ -154,10 +148,10 @@ class CBORDecodingSuite extends FunSuite {
     ).asJava
 
     assert(result.isInstanceOf[CBORHeterogeneousArray])
-    assertEquals(result.asInstanceOf[CBORHeterogeneousArray].getValue, expected)
+    assertEquals(result, mkArray(expected))
   }
 
-  test("Decode array - short") {
+  test("Decode map - short") {
     val key1 = new UnicodeString("one")
     val value1 = new UnsignedInteger(1)
     val key2 = new UnicodeString("two")
@@ -176,9 +170,62 @@ class CBORDecodingSuite extends FunSuite {
     ).asJava
 
     assert(result.isInstanceOf[CBORHeterogeneousMap])
-    assertEquals(result.asInstanceOf[CBORHeterogeneousMap].getValue, expected)
+    assertEquals(result, mkMap(expected))
   }
 
+  test("Decode false") {
+    val bytes = encode(SimpleValue.FALSE)
+    val result = CBORDecoder.decode(bytes)
+
+    assert(result.isInstanceOf[CBORFalse])
+  }
+
+  test("Decode true") {
+    val bytes = encode(SimpleValue.TRUE)
+    val result = CBORDecoder.decode(bytes)
+
+    assert(result.isInstanceOf[CBORTrue])
+  }
+
+  test("Decode false") {
+    val value = SimpleValue.NULL
+    val bytes = encode(SimpleValue.NULL)
+    val result = CBORDecoder.decode(bytes)
+
+    assert(result.isInstanceOf[CBORNull])
+  }
+
+  test("Decode half float") {
+    val value = new HalfPrecisionFloat(1.1f)
+    val bytes = encode(value)
+    val result = CBORDecoder.decode(bytes)
+
+    println(result.asInstanceOf[CBORHalfFloat].getValue)
+
+    assert(result.isInstanceOf[CBORHalfFloat])
+    //We lose some precision converting to and from Java 32bit floats
+    assert(Math.abs(result.asInstanceOf[CBORHalfFloat].getValue - 1.1f) < 0.0005)
+  }
+
+  test("Decode single float") {
+    val value = new SinglePrecisionFloat(1.1f)
+    val bytes = encode(value)
+    val result = CBORDecoder.decode(bytes)
+
+    assert(result.isInstanceOf[CBORSingleFloat])
+    assert(result == mkSingleFloat(1.1f))
+  }
+
+  test("Decode double float") {
+    val value = new DoublePrecisionFloat(1.1f)
+    val bytes = encode(value)
+    val result = CBORDecoder.decode(bytes)
+
+    println(result.asInstanceOf[CBORDoubleFloat].getValue)
+
+    assert(result.isInstanceOf[CBORDoubleFloat])
+    assert(result == mkDoubleFloat(1.1f))
+  }
   final private val MINUS_ONE: BigInteger = BigInteger.valueOf(-1)
 
 }

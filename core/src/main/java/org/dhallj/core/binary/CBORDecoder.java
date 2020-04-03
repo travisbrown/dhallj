@@ -136,6 +136,7 @@ public abstract class CBORDecoder {
         bits <<= 8;
         bits |= next;
       }
+
       int s = (bits & 0x8000) >> 15;
       int e = (bits & 0x7C00) >> 10;
       int f = bits & 0x03FF;
@@ -159,7 +160,7 @@ public abstract class CBORDecoder {
       return new CBORSingleFloat(Float.intBitsToFloat(result));
     } else if (value == 27) {
       long result = 0;
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 8; i++) {
         int next = this.read() & 0xff;
         result <<= 8;
         result |= next;

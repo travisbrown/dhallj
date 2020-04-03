@@ -130,7 +130,7 @@ public abstract class CBORExpression {
     return new CBORConstructors.CBORSingleFloat(value);
   }
 
-  public static CBORExpression mkDoubleFloat(float value) {
+  public static CBORExpression mkDoubleFloat(double value) {
     return new CBORConstructors.CBORDoubleFloat(value);
   }
 
