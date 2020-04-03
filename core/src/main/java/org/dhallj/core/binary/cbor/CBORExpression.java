@@ -1,10 +1,12 @@
-package org.dhallj.core.binary;
+package org.dhallj.core.binary.cbor;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
 public abstract class CBORExpression {
+
+  public abstract <R> R accept(Visitor<R> visitor);
 
   public static class Constants {
 
@@ -133,5 +135,4 @@ public abstract class CBORExpression {
   public static CBORExpression mkDoubleFloat(double value) {
     return new CBORConstructors.CBORDoubleFloat(value);
   }
-
 }

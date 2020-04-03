@@ -6,9 +6,9 @@ import java.math.BigInteger
 import co.nstant.in.cbor.CborEncoder
 import co.nstant.in.cbor.model.{ByteString, DataItem, DoublePrecisionFloat, HalfPrecisionFloat, NegativeInteger, SimpleValue, SinglePrecisionFloat, UnicodeString, UnsignedInteger, Array => CBArray, Map => CBMap}
 import munit.FunSuite
-import org.dhallj.core.binary.CBORConstructors._
-import org.dhallj.core.binary.CBORDecoder
+import org.dhallj.core.binary.cbor.CBORConstructors._
 import org.dhallj.core.binary.CBORExpression._
+import org.dhallj.core.binary.cbor.CBORDecoder
 
 import scala.jdk.CollectionConverters._
 import scala.util.Random

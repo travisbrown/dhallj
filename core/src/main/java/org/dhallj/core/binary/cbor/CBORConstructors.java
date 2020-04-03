@@ -1,4 +1,4 @@
-package org.dhallj.core.binary;
+package org.dhallj.core.binary.cbor;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -8,6 +8,11 @@ import java.util.Objects;
 
 public final class CBORConstructors {
   public static final class CBORUnsignedInteger extends CBORExpression {
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onUnsignedInteger(value);
+    }
 
     private final BigInteger value;
 
@@ -35,6 +40,11 @@ public final class CBORConstructors {
 
   public static final class CBORNegativeInteger extends CBORExpression {
 
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onNegativeInteger(value);
+    }
+
     private final BigInteger value;
 
     public CBORNegativeInteger(BigInteger value) {
@@ -60,6 +70,11 @@ public final class CBORConstructors {
   }
 
   public static final class CBORByteString extends CBORExpression {
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onByteString(value);
+    }
 
     private final byte[] value;
 
@@ -87,6 +102,11 @@ public final class CBORConstructors {
 
   public static final class CBORTextString extends CBORExpression {
 
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onTextString(value);
+    }
+
     private final String value;
 
     CBORTextString(String value) {
@@ -112,6 +132,11 @@ public final class CBORConstructors {
   }
 
   public static final class CBORHeterogeneousArray extends CBORExpression {
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onArray(value);
+    }
 
     private final List<CBORExpression> value;
 
@@ -139,6 +164,11 @@ public final class CBORConstructors {
 
   public static final class CBORHeterogeneousMap extends CBORExpression {
 
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onMap(value);
+    }
+
     private final Map<CBORExpression, CBORExpression> value;
 
     CBORHeterogeneousMap(Map<CBORExpression, CBORExpression> value) {
@@ -165,35 +195,56 @@ public final class CBORConstructors {
 
   public static final class CBORFalse extends CBORExpression {
 
-    @Override public boolean equals(Object o) {
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onFalse();
+    }
+
+    @Override
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       return true;
     }
-
   }
 
   public static final class CBORTrue extends CBORExpression {
 
-    @Override public boolean equals(Object o) {
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onTrue();
+    }
+
+    @Override
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       return true;
     }
-
   }
 
   public static final class CBORNull extends CBORExpression {
 
-    @Override public boolean equals(Object o) {
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onNull();
+    }
+
+    @Override
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       return true;
     }
-
   }
 
   public static final class CBORHalfFloat extends CBORExpression {
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onHalfFloat(value);
+    }
+
     private final float value;
 
     CBORHalfFloat(float value) {
@@ -219,6 +270,11 @@ public final class CBORConstructors {
   }
 
   public static final class CBORSingleFloat extends CBORExpression {
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onSingleFloat(value);
+    }
 
     private final float value;
 
@@ -246,6 +302,11 @@ public final class CBORConstructors {
 
   public static final class CBORDoubleFloat extends CBORExpression {
 
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onDoubleFloat(value);
+    }
+
     private final double value;
 
     CBORDoubleFloat(double value) {
@@ -270,5 +331,11 @@ public final class CBORConstructors {
     }
   }
 
-  public static final class CBORTag extends CBORExpression {}
+  public static final class CBORTag extends CBORExpression {
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.onTag();
+    }
+  }
 }

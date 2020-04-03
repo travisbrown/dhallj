@@ -1,8 +1,8 @@
-package org.dhallj.core.binary;
+package org.dhallj.core.binary.cbor;
 
-import org.dhallj.core.binary.CBORConstructors.*;
-import org.dhallj.core.binary.CBORExpression.Constants.AdditionalInfo;
-import org.dhallj.core.binary.CBORExpression.Constants.MajorType;
+import org.dhallj.core.binary.cbor.CBORConstructors.*;
+import org.dhallj.core.binary.cbor.CBORExpression.Constants.AdditionalInfo;
+import org.dhallj.core.binary.cbor.CBORExpression.Constants.MajorType;
 
 import java.math.BigInteger;
 import java.nio.charset.Charset;
