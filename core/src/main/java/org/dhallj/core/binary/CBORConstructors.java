@@ -64,13 +64,7 @@ public final class CBORConstructors {
     private final byte[] value;
 
     CBORByteString(byte[] value) {
-      System.out.println("In constructor, length is " + value.length);
       this.value = value;
-      for (int i = 0; i < value.length; i++) {
-        System.out.print(value[i] & 0xff);
-        System.out.print(" ");
-      }
-      System.out.println("");
     }
 
     public byte[] getValue() {

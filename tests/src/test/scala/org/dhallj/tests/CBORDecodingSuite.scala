@@ -6,9 +6,11 @@ import java.util
 
 import co.nstant.in.cbor.CborEncoder
 import munit.FunSuite
-import org.dhallj.core.binary.CBORConstructors.{CBORByteString, CBORHeterogeneousArray, CBORNegativeInteger, CBORTextString, CBORUnsignedInteger}
+import org.dhallj.core.binary.CBORConstructors.{CBORByteString, CBORHeterogeneousArray, CBORHeterogeneousMap, CBORNegativeInteger, CBORTextString, CBORUnsignedInteger}
 import org.dhallj.core.binary.{CBORDecoder, CBORExpression}
-import co.nstant.in.cbor.model.{ByteString, DataItem, NegativeInteger, UnicodeString, UnsignedInteger, Array => CBArray}
+import co.nstant.in.cbor.model.{ByteString, DataItem, NegativeInteger, UnicodeString, UnsignedInteger, Array => CBArray, Map => CBMap}
+import org.dhallj.core.binary.CBORExpression.{mkNegativeInteger, mkTextString, mkUnsignedInteger}
+import scala.jdk.CollectionConverters._
 
 import scala.util.Random
 
@@ -145,13 +147,36 @@ class CBORDecodingSuite extends FunSuite {
     val bytes = encode(value)
     val result = CBORDecoder.decode(bytes)
 
-    val expected = util.Arrays.asList(
-      CBORExpression.mkUnsignedInteger(BigInteger.valueOf(1)),
-      CBORExpression.mkNegativeInteger(BigInteger.valueOf(-2)),
-      CBORExpression.mkTextString("foo"))
+    val expected = List(
+      mkUnsignedInteger(BigInteger.valueOf(1)),
+      mkNegativeInteger(BigInteger.valueOf(-2)),
+      mkTextString("foo")
+    ).asJava
 
     assert(result.isInstanceOf[CBORHeterogeneousArray])
     assertEquals(result.asInstanceOf[CBORHeterogeneousArray].getValue, expected)
+  }
+
+  test("Decode array - short") {
+    val key1 = new UnicodeString("one")
+    val value1 = new UnsignedInteger(1)
+    val key2 = new UnicodeString("two")
+    val value2 = new NegativeInteger(-2)
+    val key3 = new UnicodeString("three")
+    val value3 = new UnicodeString("foo")
+
+    val value = new CBMap().put(key1, value1).put(key2, value2).put(key3, value3)
+    val bytes = encode(value)
+    val result = CBORDecoder.decode(bytes)
+
+    val expected = Map(
+      mkTextString("one") -> mkUnsignedInteger(BigInteger.valueOf(1)),
+      mkTextString("two") -> mkNegativeInteger(BigInteger.valueOf(-2)),
+      mkTextString("three") -> mkTextString("foo")
+    ).asJava
+
+    assert(result.isInstanceOf[CBORHeterogeneousMap])
+    assertEquals(result.asInstanceOf[CBORHeterogeneousMap].getValue, expected)
   }
 
   final private val MINUS_ONE: BigInteger = BigInteger.valueOf(-1)
