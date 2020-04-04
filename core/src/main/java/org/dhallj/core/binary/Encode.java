@@ -590,7 +590,8 @@ public final class Encode implements Vis<Writer> {
   public Writer onLocalImport(final Path path, final Import.Mode mode, final byte[] hash) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
-        this.writeArrayStart(stream, 4 + path.getNameCount());
+        int size = 4 + path.getNameCount() - (path.isAbsolute() ? 0 : 1);
+        this.writeArrayStart(stream, size);
         this.writeLong(stream, Label.IMPORT);
         if (hash == null) {
           this.writeNull(stream);
