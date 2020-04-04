@@ -80,6 +80,6 @@ lazy val tests = project
   .settings(
     libraryDependencies ++= testDependencies,
     skip in publish := true,
-    Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "dhall-lang" / "tests"
+    Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "dhall-lang"
   )
   .dependsOn(scala)

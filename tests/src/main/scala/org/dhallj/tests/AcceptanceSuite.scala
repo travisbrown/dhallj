@@ -21,20 +21,19 @@ trait AcceptanceSuite[A, E, B] extends FunSuite {
 
   def ignored: Set[String] = Set.empty
 
-  private final def readString(path: String): String =
+  final private def readString(path: String): String =
     new String(readBytes(path))
 
-  private final def readBytes(path: String): Array[Byte] =
+  final private def readBytes(path: String): Array[Byte] =
     Files.readAllBytes(Paths.get(getClass.getClassLoader.getResource(path).toURI))
 
-
-  val acceptanceTestFiles = Source.fromResource(base).getLines.toSet
+  val acceptanceTestFiles = Source.fromResource(s"tests/$base").getLines.toSet
 
   val acceptanceTestPairs: List[(String, String, B)] = acceptanceTestFiles.filter(isInputFileName).toList.sorted.map {
     case inputFileName =>
       val name = toName(inputFileName)
       val expectedFileName = toExpectedFileName(inputFileName)
-      (name, readString(s"$base/$inputFileName"), loadExpected(readBytes(s"$base/$expectedFileName")))
+      (name, readString(s"tests/$base/$inputFileName"), loadExpected(readBytes(s"tests/$base/$expectedFileName")))
   }
 
   acceptanceTestPairs.map {
@@ -56,12 +55,12 @@ class ExprTypeCheckingFailureSuite(val base: String) extends FunSuite {
   def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhall")
   def toName(inputFileName: String): String = inputFileName.dropRight(7)
 
-  val acceptanceTestFiles = Source.fromResource(base).getLines.toSet
+  val acceptanceTestFiles = Source.fromResource(s"tests/$base").getLines.toSet
 
   val acceptanceTests = acceptanceTestFiles.filter(isInputFileName).toList.sorted.map {
     case inputFileName =>
       val name = toName(inputFileName)
-      (name, Source.fromResource(s"$base/$inputFileName").getLines.mkString("\n"))
+      (name, Source.fromResource(s"tests/$base/$inputFileName").getLines.mkString("\n"))
   }
 
   acceptanceTests.map {
