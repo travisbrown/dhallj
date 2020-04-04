@@ -45,7 +45,7 @@ final class ParsingHelpers {
     if (token.image.startsWith("0x")) {
       value = new BigInteger(token.image.substring(2), 16);
     } else if (token.image.startsWith("-0x")) {
-      value = new BigInteger(token.image.substring(3), 16);
+      value = new BigInteger(token.image.substring(3), 16).negate();
     } else {
       value = new BigInteger(token.image);
     }
