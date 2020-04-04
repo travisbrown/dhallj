@@ -42,7 +42,11 @@ public class ToStringVisitor extends PureVis<String> {
   }
 
   public String onPi(String name, String type, String result) {
-    return String.format("∀(%s : %s) → %s", name, type, result);
+    if (name.equals("_")) {
+      return String.format("%s → %s", type, result);
+    } else {
+      return String.format("∀(%s : %s) → %s", name, type, result);
+    }
   }
 
   public String onLet(String name, String type, String value, String body) {
