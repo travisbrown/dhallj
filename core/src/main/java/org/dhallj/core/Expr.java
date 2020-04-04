@@ -148,17 +148,25 @@ public abstract class Expr {
   }
 
   public final String asBuiltIn() {
-    if (this.tag == Tags.BUILT_IN) {
-      return ((Constructors.BuiltIn) this).name;
-    } else if (this.tag == Tags.NOTE && ((Parsed) this).base.tag == Tags.BUILT_IN) {
-      return ((Constructors.BuiltIn) ((Parsed) this).base).name;
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.BUILT_IN) {
+      return ((Constructors.BuiltIn) value).name;
     } else {
       return null;
     }
   }
 
   public final List<Expr> asListLiteral() {
-    return this.acceptExternal(AsListLiteral.instance);
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.NON_EMPTY_LIST) {
+      return Arrays.asList(((Constructors.NonEmptyListLiteral) value).values);
+    } else if (value.tag == Tags.EMPTY_LIST) {
+      return new ArrayList<Expr>(0);
+    } else {
+      return null;
+    }
   }
 
   public final Iterable<Entry<String, Expr>> asRecordLiteral() {
@@ -169,8 +177,14 @@ public abstract class Expr {
     return this.acceptExternal(AsRecordType.instance);
   }
 
-  public final Iterable<Entry<String, Expr>> asUnionType() {
-    return this.acceptExternal(AsUnionType.instance);
+  public final List<Entry<String, Expr>> asUnionType() {
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.UNION_TYPE) {
+      return Arrays.asList(((Constructors.UnionType) value).fields);
+    } else {
+      return null;
+    }
   }
 
   public final boolean isResolved() {
@@ -192,6 +206,10 @@ public abstract class Expr {
 
   public final String toString() {
     return this.show();
+  }
+
+  private Expr getNonNote() {
+    return (this.tag == Tags.NOTE) ? ((Parsed) this).base : this;
   }
 
   public static final class Sugar {

@@ -17,8 +17,6 @@ import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Vis;
-import org.dhallj.core.ast.CollectApplication;
-import org.dhallj.core.util.FieldUtilities;
 
 public final class Encode implements Vis<Writer> {
   public static Vis<Writer> instance = new Encode();
