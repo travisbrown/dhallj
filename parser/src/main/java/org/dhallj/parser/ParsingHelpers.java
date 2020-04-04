@@ -31,13 +31,26 @@ final class ParsingHelpers {
   }
 
   static final Expr.Parsed makeNaturalLiteral(Token token) {
-    return new Expr.Parsed(
-        Expr.makeNaturalLiteral(new BigInteger(token.image)), sourceFromToken(token));
+    BigInteger value =
+        token.image.startsWith("0x")
+            ? new BigInteger(token.image.substring(2), 16)
+            : new BigInteger(token.image);
+
+    return new Expr.Parsed(Expr.makeNaturalLiteral(value), sourceFromToken(token));
   }
 
   static final Expr.Parsed makeIntegerLiteral(Token token) {
-    return new Expr.Parsed(
-        Expr.makeIntegerLiteral(new BigInteger(token.image)), sourceFromToken(token));
+    BigInteger value;
+
+    if (token.image.startsWith("0x")) {
+      value = new BigInteger(token.image.substring(2), 16);
+    } else if (token.image.startsWith("-0x")) {
+      value = new BigInteger(token.image.substring(3), 16);
+    } else {
+      value = new BigInteger(token.image);
+    }
+
+    return new Expr.Parsed(Expr.makeIntegerLiteral(value), sourceFromToken(token));
   }
 
   static final Expr.Parsed makeTextLiteral(
@@ -393,8 +406,13 @@ final class ParsingHelpers {
     Source source =
         Source.fromString(
             builder.toString(), value.beginLine, value.beginColumn, index.endLine, index.endColumn);
-    return new Expr.Parsed(
-        Expr.makeIdentifier(unescapeLabel(value.image), Long.parseLong(index.image)), source);
+
+    long indexValue =
+        index.image.startsWith("0x")
+            ? Long.parseLong(index.image.substring(2), 16)
+            : Long.parseLong(index.image);
+
+    return new Expr.Parsed(Expr.makeIdentifier(unescapeLabel(value.image), indexValue), source);
   }
 
   static final Expr.Parsed makeRecordLiteral(
