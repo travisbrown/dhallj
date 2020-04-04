@@ -31,7 +31,7 @@ trait AcceptanceSuite[A, B] extends FunSuite {
   acceptanceTestPairs.map {
     case (name, input, expected) =>
       test(name) {
-        assert(compare(transform(parseInput(clue(input))), parseExpected(clue(expected))))
+        assert(compare(clue(transform(parseInput(clue(input)))), parseExpected(clue(expected))))
       }
   }
 

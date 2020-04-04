@@ -48,15 +48,13 @@ public enum Universe {
     }
 
     @Override
-    public final Universe onIdentifier(String name, long index) {
-      if (index == 0) {
-        if (name.equals("Type")) {
-          return TYPE;
-        } else if (name.equals("Kind")) {
-          return KIND;
-        } else if (name.equals("Sort")) {
-          return SORT;
-        }
+    public final Universe onBuiltIn(String name) {
+      if (name.equals("Type")) {
+        return TYPE;
+      } else if (name.equals("Kind")) {
+        return KIND;
+      } else if (name.equals("Sort")) {
+        return SORT;
       }
       return null;
     }

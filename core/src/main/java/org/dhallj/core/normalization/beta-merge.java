@@ -41,13 +41,13 @@ final class BetaNormalizeMerge {
                     }
 
                   } else {
-                    String baseAsIdentifier = base.asSimpleIdentifier();
+                    String baseAsBuiltIn = base.asBuiltIn();
 
-                    if (baseAsIdentifier != null) {
-                      if (baseAsIdentifier.equals("Some")) {
-                        return merge(leftAsRecord, baseAsIdentifier, arg);
-                      } else if (baseAsIdentifier.equals("None")) {
-                        return merge(leftAsRecord, baseAsIdentifier);
+                    if (baseAsBuiltIn != null) {
+                      if (baseAsBuiltIn.equals("Some")) {
+                        return merge(leftAsRecord, baseAsBuiltIn, arg);
+                      } else if (baseAsBuiltIn.equals("None")) {
+                        return merge(leftAsRecord, baseAsBuiltIn);
                       }
                     }
                     return null;

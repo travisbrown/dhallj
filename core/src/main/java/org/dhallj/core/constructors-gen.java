@@ -279,22 +279,39 @@ final class Constructors {
     }
   }
 
+  static final class BuiltIn extends Expr {
+    final String name;
+
+    BuiltIn(String name) {
+      super(Tags.BUILT_IN);
+      this.name = name;
+    }
+
+    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
+      return visitor.onBuiltIn(this.name);
+    }
+
+    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+      return visitor.onBuiltIn(this.name);
+    }
+  }
+
   static final class Identifier extends Expr {
-    final String value;
+    final String name;
     final long index;
 
-    Identifier(String value, long index) {
+    Identifier(String name, long index) {
       super(Tags.IDENTIFIER);
-      this.value = value;
+      this.name = name;
       this.index = index;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onIdentifier(this.value, this.index);
+      return visitor.onIdentifier(this.name, this.index);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onIdentifier(this.value, this.index);
+      return visitor.onIdentifier(this.name, this.index);
     }
   }
 

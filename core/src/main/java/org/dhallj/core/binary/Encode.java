@@ -55,21 +55,29 @@ public final class Encode implements Vis<Writer> {
     };
   }
 
-  public Writer onIdentifier(final String value, final long index) {
+  public Writer onBuiltIn(final String name) {
+    return new Writer() {
+      public void writeToStream(OutputStream stream) throws IOException {
+        if (name.equals("True")) {
+          this.writeBoolean(stream, true);
+        } else if (name.equals("False")) {
+          this.writeBoolean(stream, false);
+        } else {
+          this.writeString(stream, name);
+        }
+      }
+    };
+  }
+
+  public Writer onIdentifier(final String name, final long index) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
 
-        if (value.equals("_")) {
+        if (name.equals("_")) {
           this.writeLong(stream, index);
-        } else if (value.equals("True")) {
-          this.writeBoolean(stream, true);
-        } else if (value.equals("False")) {
-          this.writeBoolean(stream, false);
-        } else if (Expr.Constants.isBuiltInConstant(value)) {
-          this.writeString(stream, value);
         } else {
           this.writeArrayStart(stream, 2);
-          this.writeString(stream, value);
+          this.writeString(stream, name);
           this.writeLong(stream, index);
         }
       }
@@ -381,9 +389,9 @@ public final class Encode implements Vis<Writer> {
   public Writer onApplication(Expr baseExpr, Writer base, final List<Writer> args) {
     List<Writer> writers = new ArrayList<Writer>(args.size() + 1);
 
-    String asSimpleIdentifier = baseExpr.asSimpleIdentifier();
+    String asBuiltIn = baseExpr.asBuiltIn();
 
-    if (asSimpleIdentifier != null && asSimpleIdentifier.equals("Some")) {
+    if (asBuiltIn != null && asBuiltIn.equals("Some")) {
       writers.add(
           new Writer() {
             public void writeToStream(OutputStream stream) throws IOException {

@@ -10,7 +10,8 @@ trait ConstantVisitor[I, A] extends Visitor[I, A] {
   def onDoubleLiteral(value: Double): A = constantValue
   def onNaturalLiteral(value: BigInt): A = constantValue
   def onIntegerLiteral(value: BigInt): A = constantValue
-  def onIdentifier(value: String, index: Option[Long]): A = constantValue
+  def onBuiltIn(namee: String): A = constantValue
+  def onIdentifier(name: String, index: Option[Long]): A = constantValue
   def onTextLiteral(parts: Iterable[String], interpolated: Iterable[I]): A = constantValue
   def onApplication(base: I, arg: I): A = constantValue
   def onOperatorApplication(operator: Operator, lhs: I, rhs: I): A = constantValue

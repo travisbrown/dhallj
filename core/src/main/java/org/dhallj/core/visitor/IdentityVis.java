@@ -34,6 +34,10 @@ public abstract class IdentityVis extends PureVis<Expr> {
     return Expr.makeDoubleLiteral(value);
   }
 
+  public Expr onBuiltIn(String value) {
+    return Expr.makeBuiltIn(value);
+  }
+
   public Expr onIdentifier(String value, long index) {
     return Expr.makeIdentifier(value, index);
   }

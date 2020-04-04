@@ -362,19 +362,32 @@ final class ParsingHelpers {
     return new Expr.Parsed(Expr.makeProjectionByType(base, tpe), source);
   }
 
-  static final String unescapeLabel(String input) {
+  private static final boolean isBuiltIn(String input) {
+    return input.charAt(0) != '`' && Expr.Constants.isBuiltIn(input);
+  }
+
+  private static final String unescapeLabel(String input) {
     return (input.charAt(0) != '`') ? input : input.substring(1, input.length() - 1);
   }
 
-  static final Expr.Parsed makeIdentifier(Token value) {
-    return new Expr.Parsed(Expr.makeIdentifier(unescapeLabel(value.image)), sourceFromToken(value));
+  static final Expr.Parsed makeBuiltInOrIdentifier(Token value) {
+    if (isBuiltIn(value.image)) {
+      return new Expr.Parsed(Expr.makeBuiltIn(value.image), sourceFromToken(value));
+    } else {
+      return new Expr.Parsed(
+          Expr.makeIdentifier(unescapeLabel(value.image)), sourceFromToken(value));
+    }
   }
 
-  static final Expr.Parsed makeIdentifier(Token value, Token whsp, Token index) {
+  static final Expr.Parsed makeIdentifier(Token value, Token whsp0, Token whsp1, Token index) {
     StringBuilder builder = new StringBuilder();
     builder.append(value.image);
-    if (whsp != null) {
-      builder.append(whsp.image);
+    if (whsp0 != null) {
+      builder.append(whsp0.image);
+    }
+    builder.append("@");
+    if (whsp1 != null) {
+      builder.append(whsp1.image);
     }
     builder.append(index.image);
     Source source =

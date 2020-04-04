@@ -53,15 +53,15 @@ public enum Operator {
       return TEXT_APPEND;
     } else if (input.equals(LIST_APPEND.value)) {
       return LIST_APPEND;
-    } else if (input.equals(COMBINE.value) || input.equals("\u2227")) {
+    } else if (input.equals(COMBINE.value) || input.equals("/\\")) {
       return COMBINE;
-    } else if (input.equals(PREFER.value) || input.equals("\u2afd")) {
+    } else if (input.equals(PREFER.value) || input.equals("//")) {
       return PREFER;
-    } else if (input.equals(COMBINE_TYPES.value) || input.equals("\u2a53")) {
+    } else if (input.equals(COMBINE_TYPES.value) || input.equals("//\\\\")) {
       return COMBINE_TYPES;
     } else if (input.equals(IMPORT_ALT.value)) {
       return IMPORT_ALT;
-    } else if (input.equals(EQUIVALENT.value) || input.equals("\u2261")) {
+    } else if (input.equals(EQUIVALENT.value) || input.equals("===")) {
       return EQUIVALENT;
     } else if (input.equals(COMPLETE.value)) {
       return COMPLETE;

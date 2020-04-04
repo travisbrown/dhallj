@@ -39,6 +39,8 @@ public interface Visitor<I, A> {
 
   A onProjectionByType(I base, I tpe);
 
+  A onBuiltIn(String name);
+
   A onIdentifier(String value, long index);
 
   A onRecordLiteral(Iterable<Entry<String, I>> fields, int size);

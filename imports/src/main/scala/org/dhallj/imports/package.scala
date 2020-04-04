@@ -110,6 +110,7 @@ package object imports {
         t <- tpe.apply
       } yield Expr.makeProjectionByType(b, t)
 
+    override def onBuiltIn(name: String): F[Expr] = F.pure(Expr.makeBuiltIn(name))
     override def onIdentifier(value: String, index: Long): F[Expr] = F.pure(Expr.makeIdentifier(value, index))
 
     override def onRecordLiteral(fields: lang.Iterable[Map.Entry[String, Thunk[F[Expr]]]], size: Int): F[Expr] =

@@ -186,6 +186,14 @@ public final class EqualsVisitor implements ExternalVisitor<Visitor<Expr, Boolea
     };
   }
 
+  public Visitor<Expr, Boolean> onBuiltIn(final String name) {
+    return new FalseVisitor() {
+      public Boolean onBuiltIn(String name1) {
+        return name.equals(name1);
+      }
+    };
+  }
+
   public Visitor<Expr, Boolean> onIdentifier(final String value, final long index) {
     return new FalseVisitor() {
       public Boolean onIdentifier(String value1, long index1) {

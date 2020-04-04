@@ -41,6 +41,10 @@ public final class BetaNormalize extends PureVis<Expr> {
     return Expr.makeDoubleLiteral(value);
   }
 
+  public Expr onBuiltIn(String name) {
+    return Expr.makeBuiltIn(name);
+  }
+
   public Expr onIdentifier(String name, long index) {
     return Expr.makeIdentifier(name, index);
   }

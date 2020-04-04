@@ -117,15 +117,55 @@ final class ToStringVisitor extends PureVis<ToStringState> {
     return new ToStringState(Double.toString(value));
   }
 
-  public ToStringState onIdentifier(String value, long index) {
-    return new ToStringState((index == 0) ? value : String.format("%s@%d", value, index));
+  public ToStringState onBuiltIn(String name) {
+    return new ToStringState(name);
+  }
+
+  private static boolean isAlpha(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+  }
+
+  private static boolean isDigit(char c) {
+    return (c >= '0' && c <= '9');
+  }
+
+  private static boolean isSimpleLabel(String name) {
+    char c = name.charAt(0);
+    if (!isAlpha(c) && c != '_') {
+      return false;
+    }
+
+    for (int i = 1; i < name.length(); i++) {
+      c = name.charAt(i);
+      if (!isAlpha(c) && !isDigit(c) && c != '-' && c != '/' && c != '_') {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static String escapeName(String name) {
+    if (!isSimpleLabel(name) || Expr.Constants.isBuiltIn(name) || Expr.Constants.isKeyword(name)) {
+      return String.format("`%s`", name);
+    } else {
+      return name;
+    }
+  }
+
+  public ToStringState onIdentifier(String name, long index) {
+    String maybeEscaped = escapeName(name);
+    return new ToStringState(
+        (index == 0) ? maybeEscaped : String.format("%s@%d", maybeEscaped, index));
   }
 
   public ToStringState onLambda(String name, ToStringState type, ToStringState result) {
     return new ToStringState(
         String.format(
             "λ(%s : %s) → %s",
-            name, type.toString(ToStringState.LAMBDA), result.toString(ToStringState.LAMBDA)),
+            escapeName(name),
+            type.toString(ToStringState.LAMBDA),
+            result.toString(ToStringState.LAMBDA)),
         ToStringState.LAMBDA);
   }
 
@@ -136,7 +176,7 @@ final class ToStringVisitor extends PureVis<ToStringState> {
     return new ToStringState(
         name.equals("_")
             ? String.format("%s → %s", typeString, resultString)
-            : String.format("∀(%s : %s) → %s", name, typeString, resultString),
+            : String.format("∀(%s : %s) → %s", escapeName(name), typeString, resultString),
         ToStringState.PI);
   }
 
@@ -147,7 +187,10 @@ final class ToStringVisitor extends PureVis<ToStringState> {
     return new ToStringState(
         String.format(
             "let %s%s = %s in %s",
-            name, typeString, value.toString(ToStringState.LET), body.toString(ToStringState.LET)),
+            escapeName(name),
+            typeString,
+            value.toString(ToStringState.LET),
+            body.toString(ToStringState.LET)),
         ToStringState.LET);
   }
 

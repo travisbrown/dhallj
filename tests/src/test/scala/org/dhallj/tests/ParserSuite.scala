@@ -64,12 +64,16 @@ class ParserSuite extends CheckersFunSuite() {
   checkBetaNormalization(
     "Normalize partially-applied List/fold safely with two arguments (A)",
     "λ(list : Natural) → List/fold Natural [list]",
-    Dhall.parse("λ(list : Natural) → λ(list : Type) → λ(cons : Natural → list → list) → λ(nil : list) → cons list@1 nil")
+    Dhall.parse(
+      "λ(list : Natural) → λ(list : Type) → λ(cons : Natural → list → list) → λ(nil : list) → cons list@1 nil"
+    )
   )
 
   checkBetaNormalization(
     "Normalize partially-applied List/fold safely with two arguments (B)",
     "λ(cons : Natural) → List/fold Natural [cons]",
-    Dhall.parse("λ(cons : Natural) → λ(list : Type) → λ(cons : Natural → list → list) → λ(nil : list) → cons cons@1 nil")
+    Dhall.parse(
+      "λ(cons : Natural) → λ(list : Type) → λ(cons : Natural → list → list) → λ(nil : list) → cons cons@1 nil"
+    )
   )
 }

@@ -110,6 +110,10 @@ public class ConstantVisitor<I, A> implements Visitor<I, A> {
     return this.getReturnValue();
   }
 
+  public A onBuiltIn(String name) {
+    return this.getReturnValue();
+  }
+
   public A onIdentifier(String value, long index) {
     return this.getReturnValue();
   }

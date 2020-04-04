@@ -43,25 +43,21 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return new RuntimeException(message);
   }
 
-  public final Expr onIdentifier(String name, long index) {
-    if (index == 0) {
-      Expr builtIn = this.builtInTypes.get(name);
-      if (builtIn != null) {
-        return builtIn;
-      }
+  public final Expr onBuiltIn(String name) {
+    if (name.equals("Sort")) {
+      throw fail("Cannot type-check Sort");
+    } else {
+      return this.builtInTypes.get(name);
     }
+  }
 
+  public final Expr onIdentifier(String name, long index) {
     Expr fromContext = this.context.lookup(name, index);
 
     if (fromContext != null) {
       return fromContext;
     } else {
-      if (name.equals("Sort")) {
-
-        throw fail("Cannot type-check Sort");
-      } else {
-        throw fail(String.format("Unknown identifier: %s", name));
-      }
+      throw fail(String.format("Unknown identifier: %s", name));
     }
   }
 
@@ -202,12 +198,15 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             new ConstantVisitor.External<Expr>(null) {
 
               @Override
-              public Expr onIdentifier(String name, long index) {
-                if (name.equals("Some")
-                    && index == 0
-                    && isType(argType.acceptExternal(TypeCheck.this))) {
+              public Expr onBuiltIn(String name) {
+                if (name.equals("Some") && isType(argType.acceptExternal(TypeCheck.this))) {
                   return Expr.makeApplication(Expr.Constants.OPTIONAL, argType);
                 }
+                throw fail(String.format("can't apply %s", name));
+              }
+
+              @Override
+              public Expr onIdentifier(String name, long index) {
                 throw fail(String.format("can't apply %s", name));
               }
 
@@ -510,9 +509,9 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             new ConstantVisitor.External<Expr>(null) {
               @Override
               public Expr onApplication(Expr base, Expr arg) {
-                String baseAsIdentifier = base.asSimpleIdentifier();
+                String baseAsBuiltIn = base.asBuiltIn();
 
-                if (baseAsIdentifier == null || !baseAsIdentifier.equals("List")) {
+                if (baseAsBuiltIn == null || !baseAsBuiltIn.equals("List")) {
                   throw fail("non-empty list type problem");
                 } else {
                   return arg;
@@ -725,35 +724,34 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     throw fail("cannot type-check import");
   }
 
-  private static final Visitor<Expr, Boolean> isBool = new IsIdentifier("Bool");
-  private static final Visitor<Expr, Boolean> isText = new IsIdentifier("Text");
-  private static final Visitor<Expr, Boolean> isList = new IsIdentifier("List");
-  private static final Visitor<Expr, Boolean> isNatural = new IsIdentifier("Natural");
-  private static final Visitor<Expr, Boolean> isOptional = new IsIdentifier("Optional");
-  private static final Visitor<Expr, Boolean> isType = new IsIdentifier("Type");
-
   static boolean isBool(Expr expr) {
-    return expr.acceptExternal(isBool);
+    String asBuiltIn = expr.asBuiltIn();
+    return asBuiltIn != null && asBuiltIn.equals("Bool");
   }
 
   static boolean isText(Expr expr) {
-    return expr.acceptExternal(isText);
+    String asBuiltIn = expr.asBuiltIn();
+    return asBuiltIn != null && asBuiltIn.equals("Text");
   }
 
   static boolean isList(Expr expr) {
-    return expr.acceptExternal(isList);
+    String asBuiltIn = expr.asBuiltIn();
+    return asBuiltIn != null && asBuiltIn.equals("List");
   }
 
   static boolean isNatural(Expr expr) {
-    return expr.acceptExternal(isNatural);
+    String asBuiltIn = expr.asBuiltIn();
+    return asBuiltIn != null && asBuiltIn.equals("Natural");
   }
 
   static boolean isOptional(Expr expr) {
-    return expr.acceptExternal(isOptional);
+    String asBuiltIn = expr.asBuiltIn();
+    return asBuiltIn != null && asBuiltIn.equals("Optional");
   }
 
   static boolean isType(Expr expr) {
-    return expr.acceptExternal(isType);
+    String asBuiltIn = expr.asBuiltIn();
+    return asBuiltIn != null && asBuiltIn.equals("Type");
   }
 
   private static final int BUILT_IN_SIZE = 34;

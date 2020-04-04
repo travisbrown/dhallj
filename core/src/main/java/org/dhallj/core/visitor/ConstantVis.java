@@ -47,6 +47,10 @@ public abstract class ConstantVis<A> extends PureVis<A> {
     return this.getReturnValue();
   }
 
+  public A onBuiltIn(String value) {
+    return this.getReturnValue();
+  }
+
   public A onIdentifier(String value, long index) {
     return this.getReturnValue();
   }

@@ -20,6 +20,8 @@ public interface Vis<A> {
 
   A onDouble(double value);
 
+  A onBuiltIn(String value);
+
   A onIdentifier(String value, long index);
 
   void bind(String param, Expr type);

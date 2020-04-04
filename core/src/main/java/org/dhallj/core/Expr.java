@@ -10,10 +10,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.dhallj.cbor.Writer;
@@ -117,7 +119,16 @@ public abstract class Expr {
   }
 
   public final Boolean asBoolLiteral() {
-    return this.acceptExternal(AsBoolLiteral.instance);
+    String asBuiltIn = this.asBuiltIn();
+
+    if (asBuiltIn != null) {
+      if (asBuiltIn.equals("True")) {
+        return true;
+      } else if (asBuiltIn.equals("False")) {
+        return false;
+      }
+    }
+    return null;
   }
 
   public final BigInteger asNaturalLiteral() {
@@ -136,16 +147,14 @@ public abstract class Expr {
     return this.acceptExternal(AsSimpleTextLiteral.instance);
   }
 
-  public final String asSimpleIdentifier() {
-    return this.acceptExternal(AsSimpleIdentifier.instance);
-  }
-
-  public final boolean isIdentifier(String name, long index) {
-    return this.acceptExternal(new IsIdentifier(name, index));
-  }
-
-  public final boolean isIdentifier(String name) {
-    return this.isIdentifier(name, 0);
+  public final String asBuiltIn() {
+    if (this.tag == Tags.BUILT_IN) {
+      return ((Constructors.BuiltIn) this).name;
+    } else if (this.tag == Tags.NOTE && ((Parsed) this).base.tag == Tags.BUILT_IN) {
+      return ((Constructors.BuiltIn) ((Parsed) this).base).name;
+    } else {
+      return null;
+    }
   }
 
   public final List<Expr> asListLiteral() {
@@ -215,7 +224,7 @@ public abstract class Expr {
         if (realExpr.tag == Tags.IDENTIFIER) {
           Constructors.Identifier tmp1 = (Constructors.Identifier) realExpr;
 
-          if (tmp1.value.equals("List") && tmp1.index == 0) {
+          if (tmp1.name.equals("List") && tmp1.index == 0) {
             return tmp0.arg;
           }
         }
@@ -229,22 +238,22 @@ public abstract class Expr {
     private static List<Entry<String, Expr>> emptyFields = new ArrayList(0);
 
     public static Expr UNDERSCORE = makeIdentifier("_");
-    public static Expr SORT = makeIdentifier("Sort");
-    public static Expr KIND = makeIdentifier("Kind");
-    public static Expr TYPE = makeIdentifier("Type");
-    public static Expr BOOL = makeIdentifier("Bool");
-    public static Expr TRUE = makeIdentifier("True");
-    public static Expr FALSE = makeIdentifier("False");
-    public static Expr LIST = makeIdentifier("List");
-    public static Expr OPTIONAL = makeIdentifier("Optional");
-    public static Expr DOUBLE = makeIdentifier("Double");
-    public static Expr NATURAL = makeIdentifier("Natural");
-    public static Expr INTEGER = makeIdentifier("Integer");
-    public static Expr TEXT = makeIdentifier("Text");
-    public static Expr NONE = makeIdentifier("None");
-    public static Expr SOME = makeIdentifier("Some");
-    public static Expr NATURAL_FOLD = makeIdentifier("Natural/fold");
-    public static Expr LIST_FOLD = makeIdentifier("List/fold");
+    public static Expr SORT = new Constructors.BuiltIn("Sort");
+    public static Expr KIND = new Constructors.BuiltIn("Kind");
+    public static Expr TYPE = new Constructors.BuiltIn("Type");
+    public static Expr BOOL = new Constructors.BuiltIn("Bool");
+    public static Expr TRUE = new Constructors.BuiltIn("True");
+    public static Expr FALSE = new Constructors.BuiltIn("False");
+    public static Expr LIST = new Constructors.BuiltIn("List");
+    public static Expr OPTIONAL = new Constructors.BuiltIn("Optional");
+    public static Expr DOUBLE = new Constructors.BuiltIn("Double");
+    public static Expr NATURAL = new Constructors.BuiltIn("Natural");
+    public static Expr INTEGER = new Constructors.BuiltIn("Integer");
+    public static Expr TEXT = new Constructors.BuiltIn("Text");
+    public static Expr NONE = new Constructors.BuiltIn("None");
+    public static Expr SOME = new Constructors.BuiltIn("Some");
+    public static Expr NATURAL_FOLD = new Constructors.BuiltIn("Natural/fold");
+    public static Expr LIST_FOLD = new Constructors.BuiltIn("List/fold");
     public static Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
     public static Expr EMPTY_RECORD_LITERAL = makeRecordLiteral(emptyFields);
     public static Expr EMPTY_RECORD_TYPE = makeRecordType(emptyFields);
@@ -261,49 +270,76 @@ public abstract class Expr {
     public static String MAP_KEY_FIELD_NAME = "mapKey";
     public static String MAP_VALUE_FIELD_NAME = "mapValue";
 
-    private static Set<String> builtInNames = new HashSet();
+    private static Map<String, Expr> builtIns = new HashMap<String, Expr>(36);
+    private static Set<String> keywords = new HashSet<String>(16);
 
     static {
-      builtInNames.add("Bool");
-      builtInNames.add("Double");
-      builtInNames.add("Double/show");
-      builtInNames.add("False");
-      builtInNames.add("Integer");
-      builtInNames.add("Integer/clamp");
-      builtInNames.add("Integer/negate");
-      builtInNames.add("Integer/show");
-      builtInNames.add("Integer/toDouble");
-      builtInNames.add("Kind");
-      builtInNames.add("List");
-      builtInNames.add("List/build");
-      builtInNames.add("List/fold");
-      builtInNames.add("List/head");
-      builtInNames.add("List/indexed");
-      builtInNames.add("List/last");
-      builtInNames.add("List/length");
-      builtInNames.add("List/reverse");
-      builtInNames.add("Natural");
-      builtInNames.add("Natural/build");
-      builtInNames.add("Natural/even");
-      builtInNames.add("Natural/isZero");
-      builtInNames.add("Natural/odd");
-      builtInNames.add("Natural/show");
-      builtInNames.add("Natural/subtract");
-      builtInNames.add("Natural/toInteger");
-      builtInNames.add("None");
-      builtInNames.add("Optional");
-      builtInNames.add("Optional/build");
-      builtInNames.add("Optional/fold");
-      builtInNames.add("Some");
-      builtInNames.add("Text");
-      builtInNames.add("Text/show");
-      builtInNames.add("True");
-      builtInNames.add("Type");
-      builtInNames.add("Sort");
+      builtIns.put("Bool", BOOL);
+      builtIns.put("Double", DOUBLE);
+      builtIns.put("Double/show", new Constructors.BuiltIn("Double/show"));
+      builtIns.put("False", FALSE);
+      builtIns.put("Integer", INTEGER);
+      builtIns.put("Integer/clamp", new Constructors.BuiltIn("Integer/clamp"));
+      builtIns.put("Integer/negate", new Constructors.BuiltIn("Integer/negate"));
+      builtIns.put("Integer/show", new Constructors.BuiltIn("Integer/show"));
+      builtIns.put("Integer/toDouble", new Constructors.BuiltIn("Integer/toDouble"));
+      builtIns.put("Kind", KIND);
+      builtIns.put("List", LIST);
+      builtIns.put("List/build", new Constructors.BuiltIn("List/build"));
+      builtIns.put("List/fold", new Constructors.BuiltIn("List/fold"));
+      builtIns.put("List/head", new Constructors.BuiltIn("List/head"));
+      builtIns.put("List/indexed", new Constructors.BuiltIn("List/indexed"));
+      builtIns.put("List/last", new Constructors.BuiltIn("List/last"));
+      builtIns.put("List/length", new Constructors.BuiltIn("List/length"));
+      builtIns.put("List/reverse", new Constructors.BuiltIn("List/reverse"));
+      builtIns.put("Natural", NATURAL);
+      builtIns.put("Natural/build", new Constructors.BuiltIn("Natural/build"));
+      builtIns.put("Natural/even", new Constructors.BuiltIn("Natural/even"));
+      builtIns.put("Natural/fold", new Constructors.BuiltIn("Natural/fold"));
+      builtIns.put("Natural/isZero", new Constructors.BuiltIn("Natural/isZero"));
+      builtIns.put("Natural/odd", new Constructors.BuiltIn("Natural/odd"));
+      builtIns.put("Natural/show", new Constructors.BuiltIn("Natural/show"));
+      builtIns.put("Natural/subtract", new Constructors.BuiltIn("Natural/subtract"));
+      builtIns.put("Natural/toInteger", new Constructors.BuiltIn("Natural/toInteger"));
+      builtIns.put("None", NONE);
+      builtIns.put("Optional", OPTIONAL);
+      builtIns.put("Optional/build", new Constructors.BuiltIn("Optional/build"));
+      builtIns.put("Optional/fold", new Constructors.BuiltIn("Optional/fold"));
+      builtIns.put("Some", SOME);
+      builtIns.put("Sort", SORT);
+      builtIns.put("Text", TEXT);
+      builtIns.put("Text/show", new Constructors.BuiltIn("Text/show"));
+      builtIns.put("True", TRUE);
+      builtIns.put("Type", TYPE);
+
+      keywords.add("if");
+      keywords.add("then");
+      keywords.add("else");
+      keywords.add("let");
+      keywords.add("in");
+      keywords.add("using");
+      keywords.add("missing");
+      keywords.add("assert");
+      keywords.add("as");
+      keywords.add("Infinity");
+      keywords.add("NaN");
+      keywords.add("merge");
+      keywords.add("Some");
+      keywords.add("toMap");
+      keywords.add("forall");
+      keywords.add("with");
     }
 
-    public static boolean isBuiltInConstant(String name) {
-      return builtInNames.contains(name);
+    static Expr getBuiltIn(String name) {
+      return builtIns.get(name);
+    }
+
+    public static boolean isBuiltIn(String name) {
+      return builtIns.containsKey(name);
+    }
+
+    public static boolean isKeyword(String name) {
+      return keywords.contains(name);
     }
   }
 
@@ -409,12 +445,16 @@ public abstract class Expr {
     return new Constructors.ProjectionByType(base, tpe);
   }
 
-  public static final Expr makeIdentifier(String value, long index) {
-    return new Constructors.Identifier(value, index);
+  public static final Expr makeBuiltIn(String name) {
+    return Constants.getBuiltIn(name);
   }
 
-  public static final Expr makeIdentifier(String value) {
-    return makeIdentifier(value, 0);
+  public static final Expr makeIdentifier(String name, long index) {
+    return new Constructors.Identifier(name, index);
+  }
+
+  public static final Expr makeIdentifier(String name) {
+    return makeIdentifier(name, 0);
   }
 
   public static final Expr makeRecordLiteral(Entry<String, Expr>[] fields) {
@@ -571,9 +611,13 @@ public abstract class Expr {
         case Tags.DOUBLE:
           values.push(vis.onDouble(((Constructors.DoubleLiteral) current.expr).value));
           break;
+        case Tags.BUILT_IN:
+          Constructors.BuiltIn tmpBuiltIn = (Constructors.BuiltIn) current.expr;
+          values.push(vis.onBuiltIn(tmpBuiltIn.name));
+          break;
         case Tags.IDENTIFIER:
           Constructors.Identifier tmpIdentifier = (Constructors.Identifier) current.expr;
-          values.push(vis.onIdentifier(tmpIdentifier.value, tmpIdentifier.index));
+          values.push(vis.onIdentifier(tmpIdentifier.name, tmpIdentifier.index));
           break;
         case Tags.LAMBDA:
           Constructors.Lambda tmpLambda = (Constructors.Lambda) current.expr;

@@ -53,37 +53,36 @@ final class BetaNormalizeApplication {
   }
 
   static final Expr apply(Expr base, final List<Expr> args) {
+    String builtIn = base.asBuiltIn();
 
-    String identifier = base.asSimpleIdentifier();
-
-    if (identifier != null) {
-      if (identifier.equals("Natural/fold")) {
+    if (builtIn != null) {
+      if (builtIn.equals("Natural/fold")) {
         Expr result = naturalFold(base, args);
 
         if (result != null) {
           return result;
         }
 
-      } else if (identifier.equals("List/fold") && args.size() > 1) {
+      } else if (builtIn.equals("List/fold") && args.size() > 1) {
         Expr result = listFold(base, args);
 
         if (result != null) {
           return result;
         }
-      } else if (identifier.equals("Optional/fold") && args.size() > 1) {
+      } else if (builtIn.equals("Optional/fold") && args.size() > 1) {
         Expr result = optionalFold(base, args);
 
         if (result != null) {
           return result;
         }
       } else if (args.size() == 1) {
-        Expr result = arity1(identifier, args.get(0));
+        Expr result = arity1(builtIn, args.get(0));
 
         if (result != null) {
           return result;
         }
       } else if (args.size() == 2) {
-        Expr result = arity2(identifier, args.get(0), args.get(1));
+        Expr result = arity2(builtIn, args.get(0), args.get(1));
 
         if (result != null) {
           return result;
@@ -553,7 +552,7 @@ final class BetaNormalizeApplication {
     Entry<Expr, Expr> optionArg = newArgs.get(1).acceptExternal(AsApplication.instance);
 
     if (optionArg != null) {
-      String constructor = optionArg.getKey().asSimpleIdentifier();
+      String constructor = optionArg.getKey().asBuiltIn();
 
       if (constructor != null) {
         Expr applied = null;

@@ -50,13 +50,22 @@ object TextLiteral extends Constructor[(Iterable[String], Iterable[Expr])] {
     }
 }
 
-object Identifier extends Constructor[(String, Option[Long])] {
-  def apply(value: String, index: Option[Long] = None): Expr = Expr.makeIdentifier(value, index.getOrElse(0))
+object BuiltIn extends Constructor[String] {
+  def apply(name: String): Option[Expr] = Option(Expr.makeBuiltIn(name))
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] =
     new ConstantVisitor.Optional[Result] {
-      override def onIdentifier(value: String, index: Option[Long]): Option[(String, Option[Long])] =
-        Some((value, index))
+      override def onBuiltIn(name: String): Option[String] = Some(name)
+    }
+}
+
+object Identifier extends Constructor[(String, Option[Long])] {
+  def apply(name: String, index: Option[Long] = None): Expr = Expr.makeIdentifier(name, index.getOrElse(0))
+
+  protected[this] val extractor: Visitor[Expr, Option[Result]] =
+    new ConstantVisitor.Optional[Result] {
+      override def onIdentifier(name: String, index: Option[Long]): Option[(String, Option[Long])] =
+        Some((name, index))
     }
 }
 

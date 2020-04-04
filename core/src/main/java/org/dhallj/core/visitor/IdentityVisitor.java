@@ -32,6 +32,10 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
     return Expr.makeIntegerLiteral(value);
   }
 
+  public Expr onBuiltIn(String name) {
+    return Expr.makeBuiltIn(name);
+  }
+
   public Expr onIdentifier(String value, long index) {
     return Expr.makeIdentifier(value, index);
   }
