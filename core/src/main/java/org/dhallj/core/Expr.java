@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.security.MessageDigest;
 import org.dhallj.cbor.Writer;
 import org.dhallj.core.ast.*;
 import org.dhallj.core.binary.Encode;
@@ -29,13 +31,6 @@ import org.dhallj.core.properties.IsResolved;
 import org.dhallj.core.typechecking.TypeCheck;
 import org.dhallj.core.util.ThunkUtilities;
 
-import java.math.BigInteger;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.*;
-import java.util.Map.Entry;
-
 /**
  * Represents a Dhall expression.
  *
@@ -44,6 +39,7 @@ import java.util.Map.Entry;
  */
 public abstract class Expr {
   final int tag;
+  private final AtomicReference<byte[]> cachedHashBytes = new AtomicReference<byte[]>();
 
   Expr(int tag) {
     this.tag = tag;
@@ -93,17 +89,28 @@ public abstract class Expr {
     }
   }
 
-  public final String hash() {
-    byte[] bs = this.encodeToByteArray();
+  public final byte[] hashBytes() {
+    byte[] result = this.cachedHashBytes.get();
 
-    java.security.MessageDigest digest = null;
-    try {
-      digest = java.security.MessageDigest.getInstance("SHA-256");
-    } catch (java.security.NoSuchAlgorithmException e) {
+    if (result == null) {
+      byte[] valueEncodedBytes = this.encodeToByteArray();
 
+      MessageDigest digest = null;
+      try {
+        digest = java.security.MessageDigest.getInstance("SHA-256");
+      } catch (java.security.NoSuchAlgorithmException e) {
+
+      }
+      result = digest.digest(valueEncodedBytes);
+      if (!this.cachedHashBytes.compareAndSet(null, result)) {
+        return this.cachedHashBytes.get();
+      }
     }
-    byte[] encoded = digest.digest(bs);
-    return Util.encodeBytes(encoded);
+    return result;
+  }
+
+  public final String hash() {
+    return Util.encodeBytes(this.hashBytes());
   }
 
   public final boolean isType() {
