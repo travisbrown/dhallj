@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
 import org.dhallj.core.ast.AsApplication;
-import org.dhallj.core.ast.CollectApplication;
 import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeApplication {
@@ -125,7 +124,7 @@ final class BetaNormalizeApplication {
       if (c == '"') {
         builder.append("\\\"");
       } else if (c == '$') {
-        builder.append('\u0024');
+        builder.append("u0024");
       } else if (c == '\\') {
         builder.append("\\\\");
       } else if (c == '\b') {
@@ -472,14 +471,16 @@ final class BetaNormalizeApplication {
       Expr applied = null;
       if (!listArg.isEmpty()) {
         Expr head = listArg.get(0);
-        listArg.remove(0);
 
         Expr tail;
-        if (listArg.isEmpty()) {
+        if (listArg.size() == 1) {
           tail = Expr.makeEmptyListLiteral(newArgs.get(0));
 
         } else {
-          tail = Expr.makeNonEmptyListLiteral(listArg);
+          List<Expr> listArgTail = new ArrayList(listArg);
+          listArgTail.remove(0);
+
+          tail = Expr.makeNonEmptyListLiteral(listArgTail);
         }
         applied =
             Expr.makeApplication(
