@@ -55,32 +55,26 @@ final class BetaNormalizeApplication {
   static final Expr apply(Expr base, final List<Expr> args) {
 
     String identifier = base.asSimpleIdentifier();
-    final Expr arg = args.get(0);
 
     if (identifier != null) {
       if (identifier.equals("Natural/fold")) {
-        if (args.size() >= 4) {
-          Expr result = naturalFold(base, args);
+        Expr result = naturalFold(base, args);
 
-          if (result != null) {
-            return result;
-          }
+        if (result != null) {
+          return result;
         }
-      } else if (identifier.equals("List/fold")) {
-        if (args.size() >= 5) {
-          Expr result = listFold(base, args);
 
-          if (result != null) {
-            return result;
-          }
+      } else if (identifier.equals("List/fold") && args.size() > 1) {
+        Expr result = listFold(base, args);
+
+        if (result != null) {
+          return result;
         }
-      } else if (identifier.equals("Optional/fold")) {
-        if (args.size() >= 5) {
-          Expr result = optionalFold(base, args);
+      } else if (identifier.equals("Optional/fold") && args.size() > 1) {
+        Expr result = optionalFold(base, args);
 
-          if (result != null) {
-            return result;
-          }
+        if (result != null) {
+          return result;
         }
       } else if (args.size() == 1) {
         Expr result = arity1(identifier, args.get(0));
@@ -377,13 +371,35 @@ final class BetaNormalizeApplication {
     BigInteger firstAsNaturalLiteral = args.get(0).asNaturalLiteral();
 
     if (firstAsNaturalLiteral != null) {
+      List<Expr> newArgs = new ArrayList<Expr>(4);
+
+      // Temporarily necessary to match a bug in the Haskell implementation.
+      if (args.size() == 1) {
+        newArgs.add(args.get(0));
+        newArgs.add(Expr.makeIdentifier("natural"));
+        newArgs.add(Expr.makeIdentifier("succ"));
+        newArgs.add(Expr.makeIdentifier("zero"));
+      } else if (args.size() == 2) {
+        newArgs.add(args.get(0));
+        newArgs.add(args.get(1));
+        newArgs.add(Expr.makeIdentifier("succ"));
+        newArgs.add(Expr.makeIdentifier("zero"));
+      } else if (args.size() == 3) {
+        newArgs.add(args.get(0));
+        newArgs.add(args.get(1));
+        newArgs.add(args.get(2).increment("zero"));
+        newArgs.add(Expr.makeIdentifier("zero"));
+      } else {
+        newArgs.addAll(args);
+      }
+
       Expr applied = null;
       if (firstAsNaturalLiteral.equals(BigInteger.ZERO)) {
-        applied = args.get(3);
+        applied = newArgs.get(3);
       } else {
         applied =
             Expr.makeApplication(
-                    args.get(2),
+                    newArgs.get(2),
                     Expr.makeApplication(
                         Expr.makeApplication(
                             Expr.makeApplication(
@@ -391,24 +407,69 @@ final class BetaNormalizeApplication {
                                     Expr.Constants.NATURAL_FOLD,
                                     Expr.makeNaturalLiteral(
                                         firstAsNaturalLiteral.subtract(BigInteger.ONE))),
-                                args.get(1)),
-                            args.get(2)),
-                        args.get(3)))
+                                newArgs.get(1)),
+                            newArgs.get(2)),
+                        newArgs.get(3)))
                 .acceptVis(BetaNormalize.instance);
       }
-      if (args.size() == 4) {
+
+      if (applied == null) {
+        return null;
+      }
+
+      if (args.size() == 1) {
+        return Expr.makeLambda(
+            "natural",
+            Expr.Constants.TYPE,
+            Expr.makeLambda(
+                "succ",
+                Expr.makePi(Expr.makeIdentifier("natural"), Expr.makeIdentifier("natural")),
+                Expr.makeLambda("zero", Expr.makeIdentifier("natural"), applied)));
+      } else if (args.size() == 2) {
+        return Expr.makeLambda(
+            "succ",
+            Expr.makePi(newArgs.get(1), newArgs.get(1)),
+            Expr.makeLambda("zero", newArgs.get(1).increment("succ"), applied));
+      } else if (args.size() == 3) {
+        return Expr.makeLambda("zero", newArgs.get(1), applied);
+      } else if (args.size() == 4) {
         return applied;
       } else {
-        return Expr.makeApplication(applied, drop(args, 4)).acceptVis(BetaNormalize.instance);
+        return Expr.makeApplication(applied, drop(newArgs, 4)).acceptVis(BetaNormalize.instance);
       }
     }
     return null;
   }
 
   static final Expr listFold(Expr base, final List<Expr> args) {
-    List<Expr> listArg = args.get(1).asListLiteral();
+    List<Expr> newArgs = new ArrayList<Expr>(5);
+
+    if (args.size() == 2) {
+      newArgs.add(args.get(0).increment("list").increment("cons").increment("nil"));
+      newArgs.add(args.get(1).increment("list").increment("cons").increment("nil"));
+      newArgs.add(Expr.makeIdentifier("list"));
+      newArgs.add(Expr.makeIdentifier("cons"));
+      newArgs.add(Expr.makeIdentifier("nil"));
+    } else if (args.size() == 3) {
+      newArgs.add(args.get(0).increment("cons").increment("nil"));
+      newArgs.add(args.get(1).increment("cons").increment("nil"));
+      newArgs.add(args.get(2).increment("cons").increment("nil"));
+      newArgs.add(Expr.makeIdentifier("cons"));
+      newArgs.add(Expr.makeIdentifier("nil"));
+    } else if (args.size() == 4) {
+      newArgs.add(args.get(0).increment("nil"));
+      newArgs.add(args.get(1).increment("nil"));
+      newArgs.add(args.get(2).increment("nil"));
+      newArgs.add(args.get(3).increment("nil"));
+      newArgs.add(Expr.makeIdentifier("nil"));
+    } else {
+      newArgs.addAll(args);
+    }
+
+    List<Expr> listArg = newArgs.get(1).asListLiteral();
 
     if (listArg != null) {
+
       Expr applied = null;
       if (!listArg.isEmpty()) {
         Expr head = listArg.get(0);
@@ -416,39 +477,80 @@ final class BetaNormalizeApplication {
 
         Expr tail;
         if (listArg.isEmpty()) {
-          tail = Expr.makeEmptyListLiteral(args.get(0));
+          tail = Expr.makeEmptyListLiteral(newArgs.get(0));
 
         } else {
           tail = Expr.makeNonEmptyListLiteral(listArg);
         }
         applied =
             Expr.makeApplication(
-                    Expr.makeApplication(args.get(3), head),
+                    Expr.makeApplication(newArgs.get(3), head),
                     Expr.makeApplication(
                         Expr.makeApplication(
                             Expr.makeApplication(
                                 Expr.makeApplication(
-                                    Expr.makeApplication(Expr.Constants.LIST_FOLD, args.get(0)),
+                                    Expr.makeApplication(Expr.Constants.LIST_FOLD, newArgs.get(0)),
                                     tail),
-                                args.get(2)),
-                            args.get(3)),
-                        args.get(4)))
+                                newArgs.get(2)),
+                            newArgs.get(3)),
+                        newArgs.get(4)))
                 .acceptVis(BetaNormalize.instance);
       } else {
-        applied = args.get(4);
+        applied = newArgs.get(4);
       }
 
-      if (args.size() == 5) {
+      if (args.size() == 2) {
+        return Expr.makeLambda(
+            "list",
+            Expr.Constants.TYPE,
+            Expr.makeLambda(
+                "cons",
+                Expr.makePi(
+                    newArgs.get(0),
+                    Expr.makePi(Expr.makeIdentifier("list"), Expr.makeIdentifier("list"))),
+                Expr.makeLambda("nil", Expr.makeIdentifier("list"), applied)));
+      } else if (args.size() == 3) {
+        return Expr.makeLambda(
+            "cons",
+            Expr.makePi(newArgs.get(2).increment("cons"), newArgs.get(2).increment("cons")),
+            Expr.makeLambda("nil", newArgs.get(2).increment("cons"), applied));
+      } else if (args.size() == 4) {
+        return Expr.makeLambda("nil", newArgs.get(2).increment("cons"), applied);
+      } else if (args.size() == 5) {
         return applied;
       } else {
-        return Expr.makeApplication(applied, drop(args, 5)).acceptVis(BetaNormalize.instance);
+        return Expr.makeApplication(applied, drop(newArgs, 5)).acceptVis(BetaNormalize.instance);
       }
     }
     return null;
   }
 
   static final Expr optionalFold(Expr base, final List<Expr> args) {
-    Entry<Expr, Expr> optionArg = args.get(1).acceptExternal(AsApplication.instance);
+    List<Expr> newArgs = new ArrayList<Expr>(5);
+
+    if (args.size() == 2) {
+      newArgs.add(args.get(0).increment("optional").increment("some").increment("none"));
+      newArgs.add(args.get(1).increment("optional").increment("some").increment("none"));
+      newArgs.add(Expr.makeIdentifier("optional"));
+      newArgs.add(Expr.makeIdentifier("some"));
+      newArgs.add(Expr.makeIdentifier("none"));
+    } else if (args.size() == 3) {
+      newArgs.add(args.get(0).increment("some").increment("none"));
+      newArgs.add(args.get(1).increment("some").increment("none"));
+      newArgs.add(args.get(2).increment("some").increment("none"));
+      newArgs.add(Expr.makeIdentifier("some"));
+      newArgs.add(Expr.makeIdentifier("none"));
+    } else if (args.size() == 4) {
+      newArgs.add(args.get(0).increment("none"));
+      newArgs.add(args.get(1).increment("none"));
+      newArgs.add(args.get(2).increment("none"));
+      newArgs.add(args.get(3).increment("none"));
+      newArgs.add(Expr.makeIdentifier("none"));
+    } else {
+      newArgs.addAll(args);
+    }
+
+    Entry<Expr, Expr> optionArg = newArgs.get(1).acceptExternal(AsApplication.instance);
 
     if (optionArg != null) {
       String constructor = optionArg.getKey().asSimpleIdentifier();
@@ -457,16 +559,31 @@ final class BetaNormalizeApplication {
         Expr applied = null;
         if (constructor.equals("Some")) {
           applied =
-              Expr.makeApplication(args.get(3), optionArg.getValue())
+              Expr.makeApplication(newArgs.get(3), optionArg.getValue())
                   .acceptVis(BetaNormalize.instance);
         } else if (constructor.equals("None")) {
-          applied = args.get(4);
+          applied = newArgs.get(4);
         }
 
-        if (args.size() == 5) {
+        if (args.size() == 2) {
+          return Expr.makeLambda(
+              "optional",
+              Expr.Constants.TYPE,
+              Expr.makeLambda(
+                  "some",
+                  Expr.makePi(Expr.makeIdentifier("optional"), Expr.makeIdentifier("optional")),
+                  Expr.makeLambda("none", Expr.makeIdentifier("optional"), applied)));
+        } else if (args.size() == 3) {
+          return Expr.makeLambda(
+              "some",
+              Expr.makePi(newArgs.get(2).increment("some"), newArgs.get(2).increment("some")),
+              Expr.makeLambda("none", newArgs.get(2).increment("some"), applied));
+        } else if (args.size() == 4) {
+          return Expr.makeLambda("none", newArgs.get(2).increment("some"), applied);
+        } else if (newArgs.size() == 5) {
           return applied;
         } else {
-          return Expr.makeApplication(applied, drop(args, 5)).acceptVis(BetaNormalize.instance);
+          return Expr.makeApplication(applied, drop(newArgs, 5)).acceptVis(BetaNormalize.instance);
         }
       }
     }
