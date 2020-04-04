@@ -45,3 +45,11 @@ class TypeCheckingSimpleSuite extends ExprTypeCheckingSuite("type-inference/succ
 class TypeCheckingUnitSuite extends ExprTypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends ExprTypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingFailureUnitSuite extends ExprTypeCheckingFailureSuite("type-inference/failure/unit")
+
+class ParserUnitSuite extends ParserAcceptanceSuite("parser/success/unit") {
+  override def ignored = Set("SomeXYZ")
+}
+
+class ParserSuccessSuite extends ParserAcceptanceSuite("parser/success") {
+  override def ignored = Set("largeExpression")
+}
