@@ -26,7 +26,6 @@ import org.dhallj.core.normalization.Substitute;
 import org.dhallj.core.properties.IsResolved;
 import org.dhallj.core.typechecking.TypeCheck;
 import org.dhallj.core.util.ThunkUtilities;
-import org.dhallj.core.util.ToStringVisitor;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -179,7 +178,7 @@ public abstract class Expr {
   }
 
   public final String show() {
-    return this.acceptVis(ToStringVisitor.instance);
+    return this.acceptVis(ToStringVisitor.instance).toString();
   }
 
   public final String toString() {
@@ -1047,6 +1046,24 @@ public abstract class Expr {
   }
 
   private static final Expr gatherApplicationArgs(Expr candidate, LinkedList<Expr> args) {
+    Expr current = candidate;
+
+    while (current.tag == Tags.APPLICATION
+        || (current.tag == Tags.NOTE && ((Parsed) current).base.tag == Tags.APPLICATION)) {
+      Constructors.Application currentApplication =
+          (Constructors.Application)
+              ((current.tag == Tags.APPLICATION) ? current : ((Parsed) current).base);
+
+      if (args != null) {
+        args.push(currentApplication.arg);
+      }
+      current = currentApplication.base;
+    }
+
+    return current;
+  }
+
+  private static final Expr gatherLets(Expr candidate, LinkedList<Expr> args) {
     Expr current = candidate;
 
     while (current.tag == Tags.APPLICATION

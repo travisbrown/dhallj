@@ -9,11 +9,11 @@ public enum Operator {
   TIMES("*", false),
   TEXT_APPEND("++", false),
   LIST_APPEND("#", false),
-  COMBINE("/\\", false),
-  PREFER("//", false),
-  COMBINE_TYPES("//\\\\", false),
+  COMBINE("\u2227", false),
+  PREFER("\u2afd", false),
+  COMBINE_TYPES("\u2a53", false),
   IMPORT_ALT("?", false),
-  EQUIVALENT("===", false),
+  EQUIVALENT("\u2261", false),
   COMPLETE("::", false);
 
   private final String value;
