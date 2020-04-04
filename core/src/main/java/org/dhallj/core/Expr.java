@@ -221,10 +221,10 @@ public abstract class Expr {
         Constructors.Application tmp0 = (Constructors.Application) realExpr;
         realExpr = (tmp0.base.tag == Tags.NOTE) ? ((Parsed) tmp0.base).base : tmp0.base;
 
-        if (realExpr.tag == Tags.IDENTIFIER) {
-          Constructors.Identifier tmp1 = (Constructors.Identifier) realExpr;
+        if (realExpr.tag == Tags.BUILT_IN) {
+          Constructors.BuiltIn tmp1 = (Constructors.BuiltIn) realExpr;
 
-          if (tmp1.name.equals("List") && tmp1.index == 0) {
+          if (tmp1.name.equals("List")) {
             return tmp0.arg;
           }
         }
