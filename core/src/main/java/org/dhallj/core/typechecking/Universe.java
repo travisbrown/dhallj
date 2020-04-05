@@ -1,8 +1,6 @@
 package org.dhallj.core.typechecking;
 
 import org.dhallj.core.Expr;
-import org.dhallj.core.Visitor;
-import org.dhallj.core.visitor.ConstantVisitor;
 
 public enum Universe {
   TYPE,
@@ -33,22 +31,13 @@ public enum Universe {
   }
 
   public static final boolean isUniverse(Expr expr) {
-    return expr.acceptExternal(FromExpr.instance) != null;
+    return fromExpr(expr) != null;
   }
 
   public static final Universe fromExpr(Expr expr) {
-    return expr.acceptExternal(FromExpr.instance);
-  }
+    String name = expr.asBuiltIn();
 
-  private static class FromExpr extends ConstantVisitor.External {
-    private static final Visitor<Expr, Universe> instance = new FromExpr();
-
-    FromExpr() {
-      super(null);
-    }
-
-    @Override
-    public final Universe onBuiltIn(String name) {
+    if (name != null) {
       if (name.equals("Type")) {
         return TYPE;
       } else if (name.equals("Kind")) {
@@ -56,7 +45,7 @@ public enum Universe {
       } else if (name.equals("Sort")) {
         return SORT;
       }
-      return null;
     }
+    return null;
   }
 }
