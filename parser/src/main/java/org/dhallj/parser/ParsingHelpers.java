@@ -84,6 +84,53 @@ final class ParsingHelpers {
         Expr.makeTextLiteral(parts.toArray(new String[parts.size()]), (List) interpolated), source);
   }
 
+  static final void dedent(String[] input) {
+    List<Character> candidate = null;
+
+    for (int i = 0; i < input.length; i++) {
+      String part = input[i].replace("\r\n", "\n");
+      input[i] = part;
+
+      for (int j = 0; j < part.length(); j++) {
+        // Check if this character is a newline, but not before a blank line.
+        if (part.charAt(j) == '\n' && (j == part.length() - 1 || part.charAt(j + 1) != '\n')) {
+          if (candidate == null) {
+            candidate = new ArrayList<Character>();
+            for (int k = j + 1; k < part.length(); k++) {
+              char c = part.charAt(k);
+              if (c == ' ' || c == '\t') {
+                candidate.add(c);
+              } else {
+                break;
+              }
+            }
+          } else {
+            for (int k = j + 1; k < part.length(); k++) {
+              if (part.charAt(k) != candidate.get(k - j - 1).charValue()) {
+                for (int r = candidate.size() - 1; r >= k - j + 1; r--) {
+                  candidate.remove(r);
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!candidate.isEmpty()) {
+      StringBuilder builder = new StringBuilder("\n");
+      for (Character c : candidate) {
+        builder.append(c);
+      }
+      String target = builder.toString();
+
+      for (int i = 0; i < input.length; i++) {
+        input[i] = input[i].replace(target, "\n");
+      }
+    }
+  }
+
   static final Expr.Parsed makeSingleQuotedTextLiteral(
       List<Entry<String, Expr.Parsed>> chunks, Token first) {
     // TODO: fix source.
@@ -113,8 +160,10 @@ final class ParsingHelpers {
       parts.add("");
     }
 
-    return new Expr.Parsed(
-        Expr.makeTextLiteral(parts.toArray(new String[parts.size()]), (List) interpolated), source);
+    String[] partArray = parts.toArray(new String[parts.size()]);
+    dedent(partArray);
+
+    return new Expr.Parsed(Expr.makeTextLiteral(partArray, (List) interpolated), source);
   }
 
   static final Expr.Parsed makeApplication(Expr.Parsed base, Expr.Parsed arg, Token whsp) {
