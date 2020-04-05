@@ -21,7 +21,6 @@ import org.dhallj.core.Source;
 import org.dhallj.core.Thunk;
 import org.dhallj.core.Visitor;
 import org.dhallj.core.Expr.Constants;
-import org.dhallj.core.ast.AsApplication;
 import org.dhallj.core.normalization.BetaNormalize;
 import org.dhallj.core.util.FieldUtilities;
 import org.dhallj.core.visitor.ConstantVisitor;
@@ -87,14 +86,11 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
           throw fail("++ not a Text");
         }
       case LIST_APPEND:
-        Entry<Expr, Expr> lhsApplication = lhsType.acceptExternal(AsApplication.instance);
-        Entry<Expr, Expr> rhsApplication = rhsType.acceptExternal(AsApplication.instance);
+        Expr lhsListElementType = Expr.Util.getListArg(lhsType);
+        Expr rhsListElementType = Expr.Util.getListArg(rhsType);
 
-        if (lhsApplication != null && rhsApplication != null) {
-          if (isList(lhsApplication.getKey())
-              && isList(rhsApplication.getKey())
-              && lhsApplication.getValue().equivalent(rhsApplication.getValue())) {
-
+        if (lhsListElementType != null && rhsListElementType != null) {
+          if (lhsListElementType.equivalent(rhsListElementType)) {
             return lhsType;
           } else {
             throw fail("# not Lists with the same type");
@@ -503,23 +499,10 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     Expr typeType = type.acceptExternal(this);
 
     Expr typeNormalized = type.acceptVis(BetaNormalize.instance);
-    Expr result =
-        typeNormalized.acceptExternal(
-            new ConstantVisitor.External<Expr>(null) {
-              @Override
-              public Expr onApplication(Expr base, Expr arg) {
-                String baseAsBuiltIn = base.asBuiltIn();
+    Expr listElementType = Expr.Util.getListArg(typeNormalized);
 
-                if (baseAsBuiltIn == null || !baseAsBuiltIn.equals("List")) {
-                  throw fail("non-empty list type problem");
-                } else {
-                  return arg;
-                }
-              }
-            });
-
-    if (result != null && isType(result.acceptExternal(this))) {
-      return Expr.makeApplication(Constants.LIST, result);
+    if (listElementType != null && isType(listElementType.acceptExternal(this))) {
+      return Expr.makeApplication(Constants.LIST, listElementType);
     } else {
       throw fail("non-empty list type problem");
     }
@@ -599,11 +582,10 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
           if (isType(typeType)) {
 
             Expr typeNormalized = type.acceptVis(BetaNormalize.instance);
-            Entry<Expr, Expr> typeApplication =
-                typeNormalized.acceptExternal(AsApplication.instance);
+            Expr listElementType = Expr.Util.getListArg(typeNormalized);
 
-            if (typeApplication != null && isList(typeApplication.getKey())) {
-              Iterable<Entry<String, Expr>> typeFields = typeApplication.getValue().asRecordType();
+            if (listElementType != null) {
+              Iterable<Entry<String, Expr>> typeFields = listElementType.asRecordType();
 
               if (typeFields != null) {
                 boolean sawKey = false;
@@ -676,10 +658,9 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         }
       } else {
         Expr rightType = right.acceptExternal(this);
-        Entry<Expr, Expr> rightTypeApplied = rightType.acceptExternal(AsApplication.instance);
-        if (isOptional(rightTypeApplied.getKey())) {
-          Expr mergeType =
-              checkMerge(leftRecord, makeOptionalConstructors(rightTypeApplied.getValue()));
+        Expr optionalElementType = Expr.Util.getOptionalArg(rightType);
+        if (optionalElementType != null) {
+          Expr mergeType = checkMerge(leftRecord, makeOptionalConstructors(optionalElementType));
 
           if (mergeType != null) {
             if (type == null || mergeType.equivalent(type)) {

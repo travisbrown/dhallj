@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
-import org.dhallj.core.ast.AsApplication;
 import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeApplication {
@@ -550,41 +549,34 @@ final class BetaNormalizeApplication {
       newArgs.addAll(args);
     }
 
-    Entry<Expr, Expr> optionArg = newArgs.get(1).acceptExternal(AsApplication.instance);
+    Expr someArg = Expr.Util.getSomeArg(newArgs.get(1));
+    Expr noneArg = Expr.Util.getNoneArg(newArgs.get(1));
 
-    if (optionArg != null) {
-      String constructor = optionArg.getKey().asBuiltIn();
+    if (someArg != null || noneArg != null) {
+      Expr applied =
+          (someArg != null)
+              ? (Expr.makeApplication(newArgs.get(3), someArg).acceptVis(BetaNormalize.instance))
+              : newArgs.get(4);
 
-      if (constructor != null) {
-        Expr applied = null;
-        if (constructor.equals("Some")) {
-          applied =
-              Expr.makeApplication(newArgs.get(3), optionArg.getValue())
-                  .acceptVis(BetaNormalize.instance);
-        } else if (constructor.equals("None")) {
-          applied = newArgs.get(4);
-        }
-
-        if (args.size() == 2) {
-          return Expr.makeLambda(
-              "optional",
-              Expr.Constants.TYPE,
-              Expr.makeLambda(
-                  "some",
-                  Expr.makePi(Expr.makeIdentifier("optional"), Expr.makeIdentifier("optional")),
-                  Expr.makeLambda("none", Expr.makeIdentifier("optional"), applied)));
-        } else if (args.size() == 3) {
-          return Expr.makeLambda(
-              "some",
-              Expr.makePi(newArgs.get(2).increment("some"), newArgs.get(2).increment("some")),
-              Expr.makeLambda("none", newArgs.get(2).increment("some"), applied));
-        } else if (args.size() == 4) {
-          return Expr.makeLambda("none", newArgs.get(2).increment("some"), applied);
-        } else if (newArgs.size() == 5) {
-          return applied;
-        } else {
-          return Expr.makeApplication(applied, drop(newArgs, 5)).acceptVis(BetaNormalize.instance);
-        }
+      if (args.size() == 2) {
+        return Expr.makeLambda(
+            "optional",
+            Expr.Constants.TYPE,
+            Expr.makeLambda(
+                "some",
+                Expr.makePi(Expr.makeIdentifier("optional"), Expr.makeIdentifier("optional")),
+                Expr.makeLambda("none", Expr.makeIdentifier("optional"), applied)));
+      } else if (args.size() == 3) {
+        return Expr.makeLambda(
+            "some",
+            Expr.makePi(newArgs.get(2).increment("some"), newArgs.get(2).increment("some")),
+            Expr.makeLambda("none", newArgs.get(2).increment("some"), applied));
+      } else if (args.size() == 4) {
+        return Expr.makeLambda("none", newArgs.get(2).increment("some"), applied);
+      } else if (newArgs.size() == 5) {
+        return applied;
+      } else {
+        return Expr.makeApplication(applied, drop(newArgs, 5)).acceptVis(BetaNormalize.instance);
       }
     }
     return null;

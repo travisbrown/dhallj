@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.security.MessageDigest;
 import org.dhallj.cbor.Writer;
-import org.dhallj.core.ast.*;
 import org.dhallj.core.binary.Encode;
 import org.dhallj.core.normalization.AlphaNormalize;
 import org.dhallj.core.normalization.BetaNormalize;
@@ -236,6 +235,17 @@ public abstract class Expr {
     }
   }
 
+  public final Entry<Expr, String> asFieldAccess() {
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.FIELD_ACCESS) {
+      Constructors.FieldAccess fieldAccess = (Constructors.FieldAccess) value;
+      return new SimpleImmutableEntry(fieldAccess.base, fieldAccess.fieldName);
+    } else {
+      return null;
+    }
+  }
+
   public final boolean isResolved() {
     return this.acceptVis(IsResolved.instance);
   }
@@ -281,19 +291,33 @@ public abstract class Expr {
       return hexString.toString();
     }
 
-    public static Expr getListElementType(Expr expr) {
-      Expr realExpr = (expr.tag == Tags.NOTE) ? ((Parsed) expr).base : expr;
+    public static Expr getListArg(Expr expr) {
+      return getElementType(expr, "List");
+    }
 
-      if (realExpr.tag == Tags.APPLICATION) {
-        Constructors.Application tmp0 = (Constructors.Application) realExpr;
-        realExpr = (tmp0.base.tag == Tags.NOTE) ? ((Parsed) tmp0.base).base : tmp0.base;
+    public static Expr getOptionalArg(Expr expr) {
+      return getElementType(expr, "Optional");
+    }
 
-        if (realExpr.tag == Tags.BUILT_IN) {
-          Constructors.BuiltIn tmp1 = (Constructors.BuiltIn) realExpr;
+    public static Expr getSomeArg(Expr expr) {
+      return getElementType(expr, "Some");
+    }
 
-          if (tmp1.name.equals("List")) {
-            return tmp0.arg;
-          }
+    public static Expr getNoneArg(Expr expr) {
+      return getElementType(expr, "None");
+    }
+
+    private static Expr getElementType(Expr expr, String typeConstructor) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.APPLICATION) {
+        Constructors.Application application = (Constructors.Application) value;
+
+        Expr applied = application.base.getNonNote();
+
+        if (applied.tag == Tags.BUILT_IN
+            && ((Constructors.BuiltIn) applied).name.equals(typeConstructor)) {
+          return application.arg;
         }
       }
 

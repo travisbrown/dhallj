@@ -205,7 +205,7 @@ public final class Encode implements Vis<Writer> {
 
   public Writer onEmptyList(Expr typeExpr, Writer type) {
     List<Writer> writers = new ArrayList<Writer>(2);
-    final Expr listElementType = Expr.Util.getListElementType(typeExpr);
+    final Expr listElementType = Expr.Util.getListArg(typeExpr);
 
     writers.add(
         new Writer() {
