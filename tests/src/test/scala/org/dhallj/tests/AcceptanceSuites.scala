@@ -53,3 +53,7 @@ class ParserUnitSuite extends ParserAcceptanceSuite("parser/success/unit") {
 class ParserSuccessSuite extends ParserAcceptanceSuite("parser/success") {
   override def ignored = Set("largeExpression")
 }
+
+class ParserFailureUnitSuite extends ParserFailureSuite("parser/failure/unit")
+class ParserFailureSpacingSuite extends ParserFailureSuite("parser/failure/spacing")
+class ParserFailureOtherSuite extends ParserFailureSuite("parser/failure")

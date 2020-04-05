@@ -3,8 +3,9 @@ package org.dhallj.tests
 import java.nio.file.{Files, Paths}
 import munit.{FunSuite, Ignore}
 import org.dhallj.core.Expr
-import org.dhallj.parser.Dhall
+import org.dhallj.parser.{Dhall, ParseException}
 import scala.io.Source
+import scala.reflect.ClassTag
 
 trait AcceptanceSuite[A, E, B] extends FunSuite {
   def base: String
@@ -51,25 +52,37 @@ trait AcceptanceSuite[A, E, B] extends FunSuite {
 
 }
 
-class ExprTypeCheckingFailureSuite(val base: String) extends FunSuite {
+abstract class FailureSuite[A, E <: Throwable: ClassTag](val base: String) extends FunSuite {
+  def loadInput(input: String): A
   def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhall")
   def toName(inputFileName: String): String = inputFileName.dropRight(7)
 
   val acceptanceTestFiles = Source.fromResource(s"tests/$base").getLines.toSet
 
+  final private def readBytes(path: String): Array[Byte] =
+    Files.readAllBytes(Paths.get(getClass.getClassLoader.getResource(path).toURI))
+
   val acceptanceTests = acceptanceTestFiles.filter(isInputFileName).toList.sorted.map {
     case inputFileName =>
       val name = toName(inputFileName)
-      (name, Source.fromResource(s"tests/$base/$inputFileName").getLines.mkString("\n"))
+      (name, new String(readBytes(s"tests/$base/$inputFileName")))
   }
 
   acceptanceTests.map {
     case (name, input) =>
       test(name) {
-        intercept[RuntimeException](Dhall.parse(input).typeCheck())
+        intercept[E](loadInput(input))
       }
   }
 
+}
+
+class ParserFailureSuite(base: String) extends FailureSuite[Expr, Exception](base) {
+  def loadInput(input: String): Expr = Dhall.parse(input)
+}
+
+class ExprTypeCheckingFailureSuite(base: String) extends FailureSuite[Expr, RuntimeException](base) {
+  def loadInput(input: String): Expr = Dhall.parse(input).typeCheck
 }
 
 class ExprAcceptanceSuite(val base: String, transformation: Expr => Expr) extends AcceptanceSuite[Expr, String, Expr] {
