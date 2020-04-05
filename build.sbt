@@ -74,6 +74,12 @@ lazy val imports = project
   .settings(libraryDependencies ++= catsDependencies)
   .dependsOn(parser, core)
 
+lazy val importsMini = project
+  .in(file("imports-mini"))
+  .settings(baseSettings ++ javaSettings)
+  .settings(moduleName := "dhall-imports-mini")
+  .dependsOn(parser, core)
+
 lazy val tests = project
   .in(file("tests"))
   .settings(baseSettings ++ scalaSettings)
@@ -82,4 +88,4 @@ lazy val tests = project
     skip in publish := true,
     Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "dhall-lang"
   )
-  .dependsOn(scala)
+  .dependsOn(scala, importsMini)
