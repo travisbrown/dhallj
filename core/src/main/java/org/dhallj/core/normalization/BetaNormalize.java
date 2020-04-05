@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
+import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Vis;
@@ -59,6 +60,19 @@ public final class BetaNormalize extends PureVis<Expr> {
 
   public Expr onLet(String name, Expr type, Expr value, Expr body) {
     return body.substitute(name, value.increment(name)).decrement(name).acceptVis(this);
+  }
+
+  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
+    Expr result = body;
+
+    for (int i = bindings.size() - 1; i >= 0; i--) {
+      LetBinding<Expr> binding = bindings.get(i);
+      String name = binding.getName();
+
+      result = result.substitute(name, binding.getValue().increment(name)).decrement(name);
+    }
+
+    return result.acceptVis(this);
   }
 
   public Expr onText(String[] parts, List<Expr> interpolated) {

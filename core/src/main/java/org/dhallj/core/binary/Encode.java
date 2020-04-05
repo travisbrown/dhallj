@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import org.dhallj.cbor.Writer;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
+import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Vis;
@@ -154,6 +155,39 @@ public final class Encode implements Vis<Writer> {
             }
           });
     */
+  }
+
+  public Writer onLet(final List<LetBinding<Writer>> bindings, Writer body) {
+    List<Writer> writers = new ArrayList<Writer>();
+
+    writers.add(
+        new Writer() {
+          public void writeToStream(OutputStream stream) throws IOException {
+            this.writeArrayStart(stream, 2 + bindings.size() * 3);
+            this.writeLong(stream, Label.LET);
+          }
+        });
+
+    for (final LetBinding<Writer> binding : bindings) {
+      writers.add(
+          new Writer() {
+            public void writeToStream(OutputStream stream) throws IOException {
+              this.writeString(stream, binding.getName());
+              if (!binding.hasType()) {
+                this.writeNull(stream);
+              }
+            }
+          });
+
+      if (binding.hasType()) {
+        writers.add(binding.getType());
+      }
+
+      writers.add(binding.getValue());
+    }
+    writers.add(body);
+
+    return new Writer.Nested(writers);
   }
 
   public void preText(int size) {}

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
+import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 
@@ -52,6 +53,10 @@ public abstract class IdentityVis extends PureVis<Expr> {
 
   public Expr onLet(String name, Expr type, Expr value, Expr body) {
     return Expr.makeLet(name, type, value, body);
+  }
+
+  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
+    return Expr.makeLet(bindings, body);
   }
 
   public Expr onText(String[] parts, List<Expr> interpolated) {

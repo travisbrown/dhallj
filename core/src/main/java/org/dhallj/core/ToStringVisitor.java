@@ -183,7 +183,7 @@ final class ToStringVisitor extends PureVis<ToStringState> {
   public ToStringState onLet(
       String name, ToStringState type, ToStringState value, ToStringState body) {
     String typeString =
-        (type == null) ? "" : String.format(": %s", type.toString(ToStringState.LET));
+        (type == null) ? "" : String.format(" : %s", type.toString(ToStringState.LET));
     return new ToStringState(
         String.format(
             "let %s%s = %s in %s",
@@ -192,6 +192,28 @@ final class ToStringVisitor extends PureVis<ToStringState> {
             value.toString(ToStringState.LET),
             body.toString(ToStringState.LET)),
         ToStringState.LET);
+  }
+
+  public ToStringState onLet(List<LetBinding<ToStringState>> bindings, ToStringState body) {
+    String result = body.toString(ToStringState.LET);
+
+    for (int i = bindings.size() - 1; i >= 0; i--) {
+      LetBinding<ToStringState> binding = bindings.get(i);
+
+      String typeString =
+          binding.hasType()
+              ? String.format(" : %s", binding.getType().toString(ToStringState.LET))
+              : "";
+
+      String.format(
+          "let %s%s = %s in %s",
+          escapeName(binding.getName()),
+          typeString,
+          binding.getValue().toString(ToStringState.LET),
+          result);
+    }
+
+    return new ToStringState(result, ToStringState.LET);
   }
 
   public ToStringState onText(String[] parts, List<ToStringState> interpolated) {

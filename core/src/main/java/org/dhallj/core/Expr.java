@@ -612,6 +612,18 @@ public abstract class Expr {
     return new Constructors.Let(name, type, value, body);
   }
 
+  public static final Expr makeLet(List<LetBinding<Expr>> bindings, Expr body) {
+    Expr result = body;
+
+    for (int i = bindings.size() - 1; i >= 0; i--) {
+      LetBinding<Expr> binding = bindings.get(i);
+      result =
+          new Constructors.Let(binding.getName(), binding.getType(), binding.getValue(), result);
+    }
+
+    return result;
+  }
+
   public static final Expr makeLet(String name, Expr value, Expr body) {
     return makeLet(name, null, value, body);
   }

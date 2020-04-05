@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
+import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 
@@ -64,6 +65,10 @@ public abstract class ConstantVis<A> extends PureVis<A> {
   }
 
   public A onLet(String name, A type, A value, A body) {
+    return this.getReturnValue();
+  }
+
+  public A onLet(List<LetBinding<A>> bindings, A body) {
     return this.getReturnValue();
   }
 

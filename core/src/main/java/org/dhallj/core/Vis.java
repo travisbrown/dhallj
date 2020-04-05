@@ -32,6 +32,8 @@ public interface Vis<A> {
 
   A onLet(String name, A type, A value, A body);
 
+  A onLet(List<LetBinding<A>> bindings, A body);
+
   void preText(int size);
 
   A onText(String[] parts, List<A> interpolated);
