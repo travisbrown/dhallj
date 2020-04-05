@@ -106,7 +106,8 @@ final class ParsingHelpers {
             }
           } else {
             for (int k = j + 1; k < part.length(); k++) {
-              if (part.charAt(k) != candidate.get(k - j - 1).charValue()) {
+              if (candidate.size() >= k - j
+                  && part.charAt(k) != candidate.get(k - j - 1).charValue()) {
                 for (int r = candidate.size() - 1; r >= k - j + 1; r--) {
                   candidate.remove(r);
                 }
