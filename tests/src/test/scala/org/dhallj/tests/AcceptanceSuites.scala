@@ -1,60 +1,32 @@
 package org.dhallj.tests
 
-class NormalizationSimpleSuite extends ExprNormalizationSuite("normalization/success/simple")
+class NormalizationSimpleSuite extends NormalizationSuite("normalization/success/simple")
+class NormalizationRegressionSuite extends NormalizationSuite("normalization/success/regression")
+class NormalizationUnitSuite extends NormalizationSuite("normalization/success/unit")
+class NormalizationSimplificationsSuite extends NormalizationSuite("normalization/success/simplifications")
+class NormalizationOtherSuite extends NormalizationSuite("normalization/success")
+class NormalizationHTAccessSuite extends NormalizationSuite("normalization/success/haskell-tutorial/access")
+class NormalizationHTCombineTypesSuite extends NormalizationSuite("normalization/success/haskell-tutorial/combineTypes")
+class NormalizationHTPreferSuite extends NormalizationSuite("normalization/success/haskell-tutorial/prefer")
+class NormalizationHTProjectionSuite extends NormalizationSuite("normalization/success/haskell-tutorial/projection")
 
-class NormalizationHaskellTutorialAccessSuite
-    extends ExprNormalizationSuite("normalization/success/haskell-tutorial/access")
+class HashingSimpleSuite extends HashingSuite("semantic-hash/success/simple")
+class HashingHTAccessSuite extends HashingSuite("semantic-hash/success/haskell-tutorial/access")
+class HashingHTCombineTypesSuite extends HashingSuite("semantic-hash/success/haskell-tutorial/combineTypes")
+class HashingHTPreferSuite extends HashingSuite("semantic-hash/success/haskell-tutorial/prefer")
+class HashingHTProjectionSuite extends HashingSuite("semantic-hash/success/haskell-tutorial/projection")
 
-class NormalizationHaskellTutorialCombineTypesSuite
-    extends ExprNormalizationSuite(
-      "normalization/success/haskell-tutorial/combineTypes"
-    )
+class AlphaNormalizationUnitSuite extends AlphaNormalizationSuite("alpha-normalization/success/unit")
+class AlphaNormalizationRegressionSuite extends AlphaNormalizationSuite("alpha-normalization/success/regression")
 
-class NormalizationHaskellTutorialPreferSuite
-    extends ExprNormalizationSuite(
-      "normalization/success/haskell-tutorial/prefer"
-    )
+class TypeCheckingSimpleSuite extends TypeCheckingSuite("type-inference/success/simple")
+class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/unit")
+class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
+class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
 
-class NormalizationHaskellTutorialProjectionSuite
-    extends ExprNormalizationSuite(
-      "normalization/success/haskell-tutorial/projection"
-    )
+class ParsingUnitSuite extends ParsingSuite("parser/success/unit") { override def ignored = Set("SomeXYZ") }
+class ParsingOtherSuite extends ParsingSuite("parser/success") { override def ignored = Set("largeExpression") }
 
-class NormalizationRegressionSuite extends ExprNormalizationSuite("normalization/success/regression")
-
-class NormalizationUnitSuite extends ExprNormalizationSuite("normalization/success/unit")
-class NormalizationSimplificationsSuite extends ExprNormalizationSuite("normalization/success/simplifications")
-class NormalizationOtherSuite extends ExprNormalizationSuite("normalization/success")
-
-class HashSimpleSuite extends HashAcceptanceSuite("semantic-hash/success/simple")
-
-class HashHaskellTutorialAccessSuite extends HashAcceptanceSuite("semantic-hash/success/haskell-tutorial/access")
-
-class HashHaskellTutorialCombineTypesSuite
-    extends HashAcceptanceSuite("semantic-hash/success/haskell-tutorial/combineTypes")
-
-class HashHaskellTutorialPreferSuite extends HashAcceptanceSuite("semantic-hash/success/haskell-tutorial/prefer")
-
-class HashHaskellTutorialProjectionSuite
-    extends HashAcceptanceSuite("semantic-hash/success/haskell-tutorial/projection")
-
-class AlphaNormalizationUnitSuite extends ExprAcceptanceSuite("alpha-normalization/success/unit", _.alphaNormalize)
-class AlphaNormalizationRegressionSuite
-    extends ExprAcceptanceSuite("alpha-normalization/success/regression", _.alphaNormalize)
-
-class TypeCheckingSimpleSuite extends ExprTypeCheckingSuite("type-inference/success/simple")
-class TypeCheckingUnitSuite extends ExprTypeCheckingSuite("type-inference/success/unit")
-class TypeCheckingRegressionSuite extends ExprTypeCheckingSuite("type-inference/success/regression")
-class TypeCheckingFailureUnitSuite extends ExprTypeCheckingFailureSuite("type-inference/failure/unit")
-
-class ParserUnitSuite extends ParserAcceptanceSuite("parser/success/unit") {
-  override def ignored = Set("SomeXYZ")
-}
-
-class ParserSuccessSuite extends ParserAcceptanceSuite("parser/success") {
-  override def ignored = Set("largeExpression")
-}
-
-class ParserFailureUnitSuite extends ParserFailureSuite("parser/failure/unit")
-class ParserFailureSpacingSuite extends ParserFailureSuite("parser/failure/spacing")
-class ParserFailureOtherSuite extends ParserFailureSuite("parser/failure")
+class ParsingFailureUnitSuite extends ParsingFailureSuite("parser/failure/unit")
+class ParsingFailureSpacingSuite extends ParsingFailureSuite("parser/failure/spacing")
+class ParsingFailureOtherSuite extends ParsingFailureSuite("parser/failure")
