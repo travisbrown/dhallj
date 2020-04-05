@@ -1,6 +1,8 @@
 package org.dhallj.tests
 
+import java.nio.file.Paths
 import org.dhallj.core.Expr
+import org.dhallj.imports.mini.Resolver
 import org.dhallj.parser.Dhall
 
 trait SuccessSuite[A, B] extends AcceptanceSuite {
@@ -28,7 +30,18 @@ trait ExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
   def parseInput(input: String): Expr = Dhall.parse(input)
 }
 
-abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extends ExprAcceptanceSuite[Expr] {
+trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
+  def parseInput(input: String): Expr = {
+    val parsed = Dhall.parse(input)
+
+    if (parsed.isResolved) parsed
+    else {
+      Resolver.resolveFromResources(parsed, false, Paths.get(s"$prefix/$base"), this.getClass.getClassLoader)
+    }
+  }
+}
+
+abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extends ResolvingExprAcceptanceSuite[Expr] {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
 
   def transform(input: Expr): Expr = transformation(input)
@@ -40,7 +53,7 @@ class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(_
 class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize)
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize)
 
-class HashingSuite(val base: String) extends ExprAcceptanceSuite[String] {
+class HashingSuite(val base: String) extends ResolvingExprAcceptanceSuite[String] {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
 
   def transform(input: Expr): String = input.normalize.alphaNormalize.hash

@@ -32,7 +32,7 @@ val root = project
     initialCommands in console := "import org.dhallj.parser.Dhall.parse"
   )
   .aggregate(core, parser, demo, scala, tests)
-  .dependsOn(parser, scala)
+  .dependsOn(importsMini, scala)
 
 lazy val core = project
   .in(file("core"))

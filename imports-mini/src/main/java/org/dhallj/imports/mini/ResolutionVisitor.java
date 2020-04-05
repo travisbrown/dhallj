@@ -16,9 +16,11 @@ import org.dhallj.parser.ParseException;
 
 abstract class ResolutionVisitor extends IdentityVis {
   private final Path currentPath;
+  protected final boolean integrityChecks;
 
-  ResolutionVisitor(Path currentPath) {
+  ResolutionVisitor(Path currentPath, boolean integrityChecks) {
     this.currentPath = currentPath;
+    this.integrityChecks = integrityChecks;
   }
 
   protected abstract String readContents(Path path) throws IOException, URISyntaxException;
@@ -128,8 +130,8 @@ abstract class ResolutionVisitor extends IdentityVis {
     return checkHash(result, hash);
   }
 
-  private static Expr checkHash(Expr result, byte[] expected) {
-    if (expected != null) {
+  private final Expr checkHash(Expr result, byte[] expected) {
+    if (expected != null && this.integrityChecks) {
       byte[] received = result.normalize().alphaNormalize().hashBytes();
       if (!Arrays.equals(received, expected)) {
         throw new IntegrityCheckException(expected, received);
@@ -139,12 +141,12 @@ abstract class ResolutionVisitor extends IdentityVis {
   }
 
   static final class Filesystem extends ResolutionVisitor {
-    Filesystem(Path currentPath) {
-      super(currentPath);
+    Filesystem(Path currentPath, boolean integrityChecks) {
+      super(currentPath, integrityChecks);
     }
 
     protected ResolutionVisitor withCurrentPath(Path newCurrentPath) {
-      return new Filesystem(newCurrentPath);
+      return new Filesystem(newCurrentPath, this.integrityChecks);
     }
 
     protected String readContents(Path path) throws IOException, URISyntaxException {
@@ -155,13 +157,13 @@ abstract class ResolutionVisitor extends IdentityVis {
   static final class Resources extends ResolutionVisitor {
     private final ClassLoader classLoader;
 
-    Resources(Path currentPath, ClassLoader classLoader) {
-      super(currentPath);
+    Resources(Path currentPath, boolean integrityChecks, ClassLoader classLoader) {
+      super(currentPath, integrityChecks);
       this.classLoader = classLoader;
     }
 
     protected ResolutionVisitor withCurrentPath(Path newCurrentPath) {
-      return new Resources(newCurrentPath, this.classLoader);
+      return new Resources(newCurrentPath, this.integrityChecks, this.classLoader);
     }
 
     protected String readContents(Path path) throws IOException, URISyntaxException {

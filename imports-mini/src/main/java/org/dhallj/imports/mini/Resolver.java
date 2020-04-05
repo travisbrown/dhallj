@@ -4,26 +4,31 @@ import org.dhallj.core.Expr;
 import java.nio.file.Path;
 
 public final class Resolver {
-  public static final Expr resolve(Expr expr, Path currentPath) throws ResolutionException {
-    return resolveWithVisitor(expr, new ResolutionVisitor.Filesystem(currentPath));
+  public static final Expr resolve(Expr expr, boolean integrityChecks, Path currentPath)
+      throws ResolutionException {
+    return resolveWithVisitor(expr, new ResolutionVisitor.Filesystem(currentPath, integrityChecks));
   }
 
-  public static final Expr resolve(Expr expr) throws ResolutionException {
-    return resolve(expr, null);
+  public static final Expr resolve(Expr expr, boolean integrityChecks) throws ResolutionException {
+    return resolve(expr, integrityChecks, null);
   }
 
   public static final Expr resolveFromResources(
-      Expr expr, Path currentPath, ClassLoader classLoader) throws ResolutionException {
-    return resolveWithVisitor(expr, new ResolutionVisitor.Resources(currentPath, classLoader));
-  }
-
-  public static final Expr resolveFromResources(Expr expr, Path currentPath)
+      Expr expr, boolean integrityChecks, Path currentPath, ClassLoader classLoader)
       throws ResolutionException {
-    return resolveFromResources(expr, currentPath, Resolver.class.getClassLoader());
+    return resolveWithVisitor(
+        expr, new ResolutionVisitor.Resources(currentPath, integrityChecks, classLoader));
   }
 
-  public static final Expr resolveFromResources(Expr expr) throws ResolutionException {
-    return resolveFromResources(expr, null);
+  public static final Expr resolveFromResources(
+      Expr expr, boolean integrityChecks, Path currentPath) throws ResolutionException {
+    return resolveFromResources(
+        expr, integrityChecks, currentPath, Resolver.class.getClassLoader());
+  }
+
+  public static final Expr resolveFromResources(Expr expr, boolean integrityChecks)
+      throws ResolutionException {
+    return resolveFromResources(expr, integrityChecks, null);
   }
 
   private static final Expr resolveWithVisitor(Expr expr, ResolutionVisitor visitor)

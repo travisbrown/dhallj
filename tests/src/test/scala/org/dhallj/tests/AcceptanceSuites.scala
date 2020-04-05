@@ -11,6 +11,8 @@ class NormalizationHTPreferSuite extends NormalizationSuite("normalization/succe
 class NormalizationHTProjectionSuite extends NormalizationSuite("normalization/success/haskell-tutorial/projection")
 
 class HashingSimpleSuite extends HashingSuite("semantic-hash/success/simple")
+class HashingSimplificationsSuite extends HashingSuite("semantic-hash/success/simplifications")
+class HashingOtherSuite extends HashingSuite("semantic-hash/success")
 class HashingHTAccessSuite extends HashingSuite("semantic-hash/success/haskell-tutorial/access")
 class HashingHTCombineTypesSuite extends HashingSuite("semantic-hash/success/haskell-tutorial/combineTypes")
 class HashingHTPreferSuite extends HashingSuite("semantic-hash/success/haskell-tutorial/prefer")
@@ -24,8 +26,11 @@ class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/un
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
 
-class ParsingUnitSuite extends ParsingSuite("parser/success/unit") { override def ignored = Set("SomeXYZ") }
-class ParsingOtherSuite extends ParsingSuite("parser/success") { override def ignored = Set("largeExpression") }
+class ParsingUnitSuite extends ParsingSuite("parser/success/unit") {
+  // I'm pretty much convinced we're doing the right thing on SomeXYZ.
+  override def ignored = Set("SomeXYZ")
+}
+class ParsingOtherSuite extends ParsingSuite("parser/success") //{ override def ignored = Set("largeExpression") }
 
 class ParsingFailureUnitSuite extends ParsingFailureSuite("parser/failure/unit")
 class ParsingFailureSpacingSuite extends ParsingFailureSuite("parser/failure/spacing")
