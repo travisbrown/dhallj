@@ -681,7 +681,7 @@ Expr.Parsed APPLICATION_EXPRESSION(): {
           whsp1=<WHSP> current1=IMPORT_EXPRESSION() { base = ParsingHelpers.makeMerge(current0, current1, first, whsp0, whsp1); }
         )
       | (first=<SOME> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeApplication(ParsingHelpers.makeBuiltInOrIdentifier(first), current0, whsp0); })
-      | (first=<TOMAP> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeToMap(current0, first, whsp0); })
+      //| (first=<TOMAP> whsp0=<WHSP> current0=IMPORT_EXPRESSION() { base = ParsingHelpers.makeToMap(current0, first, whsp0); })
       | base=IMPORT_EXPRESSION()
     ) (
       LOOKAHEAD(2)
@@ -1231,16 +1231,18 @@ Expr.Parsed BASE_EXPRESSION(): {
         expr = ParsingHelpers.makeMerge(expr, other, type, operator, whsp0, whsp1, whsp2, whsp3);
       })
     | LOOKAHEAD(EMPTY_LIST_LITERAL()) expr=EMPTY_LIST_LITERAL()
-    | LOOKAHEAD(<TOMAP> <WHSP> IMPORT_EXPRESSION() (<WHSP>)? <COLON>)
+    | //LOOKAHEAD(10)//<TOMAP> <WHSP> IMPORT_EXPRESSION() (<WHSP>)? <COLON>)
       (operator=<TOMAP>
       whsp0=<WHSP>
       expr=IMPORT_EXPRESSION()
-      (whsp1=<WHSP>)?
-      <COLON>
-      whsp2=<WHSP>
-      type=APPLICATION_EXPRESSION() {
-        expr = ParsingHelpers.makeToMap(expr, type, operator, whsp0, whsp1, whsp2);
-      })
+      (LOOKAHEAD(2)
+        (whsp1=<WHSP>)?
+        <COLON>
+        whsp2=<WHSP>
+        type=APPLICATION_EXPRESSION()
+      )?) {
+          expr = ParsingHelpers.makeToMap(expr, type, operator, whsp0, whsp1, whsp2);
+      }
     | expr=ASSERT_EXPRESSION()
     | expr=FUNCTION_TYPE_OR_ANNOTATED_EXPRESSION()
     //| LOOKAHEAD(OPERATOR_EXPRESSION() (<WHSP>)? <ARROW>) expr=FUNCTION_TYPE()

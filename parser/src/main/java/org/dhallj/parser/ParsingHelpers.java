@@ -212,16 +212,24 @@ final class ParsingHelpers {
     if (whsp1 != null) {
       builder.append(whsp1.image);
     }
-    builder.append(":");
-    builder.append(whsp2.image);
-    Source source =
-        new SESESource(
-            first.image + whsp0.image,
-            base,
-            builder.toString(),
-            tpe,
-            first.beginLine,
-            first.beginColumn);
+    if (whsp2 != null) {
+      builder.append(":");
+      builder.append(whsp2.image);
+    }
+    Source source;
+
+    if (tpe != null) {
+      source =
+          new SESESource(
+              first.image + whsp0.image,
+              base,
+              builder.toString(),
+              tpe,
+              first.beginLine,
+              first.beginColumn);
+    } else {
+      source = new SESource(first.image + whsp0.image, base, first.beginLine, first.beginColumn);
+    }
 
     return new Expr.Parsed(Expr.makeToMap(base, tpe), source);
   }
