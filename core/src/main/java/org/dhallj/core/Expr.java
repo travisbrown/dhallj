@@ -667,10 +667,16 @@ public abstract class Expr {
   private final class State {
     final Expr expr;
     int state;
+    int size;
 
-    State(Expr expr, int state) {
+    State(Expr expr, int state, int size) {
       this.expr = expr;
       this.state = state;
+      this.size = size;
+    }
+
+    State(Expr expr, int state) {
+      this(expr, state, 0);
     }
 
     public String toString() {
@@ -688,6 +694,9 @@ public abstract class Expr {
     A v2;
 
     LinkedList<LinkedList<Expr>> applicationStack = new LinkedList<LinkedList<Expr>>();
+    LinkedList<LinkedList<LetBinding<Expr>>> letBindingsStack =
+        new LinkedList<LinkedList<LetBinding<Expr>>>();
+    LinkedList<List<String>> letBindingNamesStack = new LinkedList<List<String>>();
 
     while (current != null) {
       switch (current.expr.tag) {
@@ -764,34 +773,76 @@ public abstract class Expr {
           break;
         case Tags.LET:
           Constructors.Let tmpLet = (Constructors.Let) current.expr;
-          switch (current.state) {
-            case 0:
-              current.state = 1;
-              if (tmpLet.type != null) {
-                stack.push(current);
-                stack.push(new State(tmpLet.type, 0));
-                break;
-              } else {
-                values.push(null);
-                continue;
-              }
-            case 1:
-              current.state = 2;
-              stack.push(current);
-              stack.push(new State(tmpLet.value, 0));
-              break;
-            case 2:
-              vis.bind(tmpLet.name, tmpLet.type);
+
+          LinkedList<LetBinding<Expr>> letBindings;
+
+          if (current.state == 0) {
+            letBindings = new LinkedList<LetBinding<Expr>>();
+            letBindings.push(new LetBinding(tmpLet.name, tmpLet.type, tmpLet.value));
+
+            gatherLetBindings(tmpLet.body, letBindings);
+
+            current.state = 1;
+            current.size = letBindings.size();
+
+            List<String> letBindingNames = new ArrayList(current.size);
+
+            for (LetBinding<Expr> letBinding : letBindings) {
+              letBindingNames.add(letBinding.getName());
+            }
+
+            letBindingNamesStack.push(letBindingNames);
+          } else {
+            letBindings = letBindingsStack.poll();
+          }
+
+          if (letBindings.isEmpty()) {
+            if (current.state == 1) {
               current.state = 3;
               stack.push(current);
-              stack.push(new State(tmpLet.body, 0));
-              break;
-            case 3:
-              v2 = values.poll();
-              v1 = values.poll();
-              v0 = values.poll();
-              values.push(vis.onLet(tmpLet.name, v0, v1, v2));
+              stack.push(new State(gatherLetBindings(tmpLet.body, null), 0));
+              letBindingsStack.push(letBindings);
+            } else {
+              List<String> letBindingNames = letBindingNamesStack.poll();
+              List<LetBinding<A>> valueBindings = new ArrayList<LetBinding<A>>(current.size);
+
+              A body = values.poll();
+
+              for (int i = 0; i < current.size; i++) {
+                v1 = values.poll();
+                v0 = values.poll();
+
+                valueBindings.add(
+                    new LetBinding(letBindingNames.get(current.size - i - 1), v0, v1));
+              }
+
+              values.push(vis.onLet(valueBindings, body));
+            }
+          } else {
+            LetBinding<Expr> letBinding = letBindings.poll();
+
+            switch (current.state) {
+              case 1:
+                current.state = 2;
+                if (letBinding.hasType()) {
+                  stack.push(current);
+                  stack.push(new State(letBinding.getType(), 0));
+                  letBindings.push(letBinding);
+                  letBindingsStack.push(letBindings);
+                  break;
+                } else {
+                  values.push(null);
+                }
+              case 2:
+                current.state = 1;
+                vis.bind(letBinding.getName(), letBinding.getType());
+                stack.push(current);
+                stack.push(new State(letBinding.getValue(), 0));
+                letBindingsStack.push(letBindings);
+                break;
+            }
           }
+
           break;
         case Tags.TEXT:
           Constructors.TextLiteral tmpText = (Constructors.TextLiteral) current.expr;
@@ -993,15 +1044,15 @@ public abstract class Expr {
             application.push(base);
 
             vis.preApplication(application.size());
-            current.state = application.size();
+            current.state = 1;
+            current.size = application.size();
           } else {
             application = applicationStack.poll();
           }
 
           if (application.isEmpty()) {
-            List<A> args = new ArrayList<A>(current.state);
-
-            for (int i = 0; i < current.state - 1; i++) {
+            List<A> args = new ArrayList<A>(current.size);
+            for (int i = 0; i < current.size - 1; i++) {
               args.add(values.poll());
             }
             Collections.reverse(args);
@@ -1103,7 +1154,6 @@ public abstract class Expr {
                 break;
               } else {
                 values.push(null);
-                continue;
               }
             case 3:
               v2 = values.poll();
@@ -1131,7 +1181,6 @@ public abstract class Expr {
                 break;
               } else {
                 values.push(null);
-                continue;
               }
             case 2:
               v1 = values.poll();
@@ -1172,7 +1221,6 @@ public abstract class Expr {
                 break;
               } else {
                 values.push(null);
-                continue;
               }
             case 1:
               values.push(
@@ -1193,36 +1241,30 @@ public abstract class Expr {
   }
 
   private static final Expr gatherApplicationArgs(Expr candidate, LinkedList<Expr> args) {
-    Expr current = candidate;
+    Expr current = candidate.getNonNote();
 
-    while (current.tag == Tags.APPLICATION
-        || (current.tag == Tags.NOTE && ((Parsed) current).base.tag == Tags.APPLICATION)) {
-      Constructors.Application currentApplication =
-          (Constructors.Application)
-              ((current.tag == Tags.APPLICATION) ? current : ((Parsed) current).base);
+    while (current.tag == Tags.APPLICATION) {
+      Constructors.Application currentApplication = (Constructors.Application) current;
 
       if (args != null) {
         args.push(currentApplication.arg);
       }
-      current = currentApplication.base;
+      current = currentApplication.base.getNonNote();
     }
 
     return current;
   }
 
-  private static final Expr gatherLets(Expr candidate, LinkedList<Expr> args) {
-    Expr current = candidate;
+  private static final Expr gatherLetBindings(Expr candidate, LinkedList<LetBinding<Expr>> args) {
+    Expr current = candidate.getNonNote();
 
-    while (current.tag == Tags.APPLICATION
-        || (current.tag == Tags.NOTE && ((Parsed) current).base.tag == Tags.APPLICATION)) {
-      Constructors.Application currentApplication =
-          (Constructors.Application)
-              ((current.tag == Tags.APPLICATION) ? current : ((Parsed) current).base);
+    while (current.tag == Tags.LET) {
+      Constructors.Let currentLet = (Constructors.Let) current;
 
       if (args != null) {
-        args.push(currentApplication.arg);
+        args.push(new LetBinding(currentLet.name, currentLet.type, currentLet.value));
       }
-      current = currentApplication.base;
+      current = currentLet.body.getNonNote();
     }
 
     return current;

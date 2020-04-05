@@ -1,6 +1,6 @@
 package org.dhallj.core;
 
-public class LetBinding<A> {
+public final class LetBinding<A> {
   private final String name;
   private final A type;
   private final A value;
@@ -25,5 +25,9 @@ public class LetBinding<A> {
 
   public A getValue() {
     return this.value;
+  }
+
+  public String toString() {
+    return String.format("%s: %s %s", name, type, value);
   }
 }

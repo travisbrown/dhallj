@@ -205,12 +205,13 @@ final class ToStringVisitor extends PureVis<ToStringState> {
               ? String.format(" : %s", binding.getType().toString(ToStringState.LET))
               : "";
 
-      String.format(
-          "let %s%s = %s in %s",
-          escapeName(binding.getName()),
-          typeString,
-          binding.getValue().toString(ToStringState.LET),
-          result);
+      result =
+          String.format(
+              "let %s%s = %s in %s",
+              escapeName(binding.getName()),
+              typeString,
+              binding.getValue().toString(ToStringState.LET),
+              result);
     }
 
     return new ToStringState(result, ToStringState.LET);

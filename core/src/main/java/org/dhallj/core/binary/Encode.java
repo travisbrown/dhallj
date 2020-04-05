@@ -435,7 +435,6 @@ public final class Encode implements Vis<Writer> {
       writers.add(args.get(0));
 
     } else {
-
       writers.add(
           new Writer() {
             public void writeToStream(OutputStream stream) throws IOException {
@@ -657,7 +656,7 @@ public final class Encode implements Vis<Writer> {
   }
 
   public Writer onRemoteImport(
-      final URI url, Writer using, final Import.Mode mode, final byte[] hash) {
+      final URI url, final Writer using, final Import.Mode mode, final byte[] hash) {
     List<Writer> writers = new ArrayList<Writer>(3);
 
     final List<String> parts = new ArrayList<String>();
@@ -686,6 +685,10 @@ public final class Encode implements Vis<Writer> {
             }
             this.writeLong(stream, modeLabel(mode));
             this.writeLong(stream, urlLabel(url));
+
+            if (using == null) {
+              this.writeNull(stream);
+            }
           }
         });
 
