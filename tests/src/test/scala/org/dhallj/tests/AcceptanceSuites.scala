@@ -24,6 +24,7 @@ class NormalizationRegressionSuite extends ExprNormalizationSuite("normalization
 
 class NormalizationUnitSuite extends ExprNormalizationSuite("normalization/success/unit")
 class NormalizationSimplificationsSuite extends ExprNormalizationSuite("normalization/success/simplifications")
+class NormalizationOtherSuite extends ExprNormalizationSuite("normalization/success")
 
 class HashSimpleSuite extends HashAcceptanceSuite("semantic-hash/success/simple")
 
