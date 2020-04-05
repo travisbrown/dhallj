@@ -64,10 +64,6 @@ public abstract class ConstantVis<A> extends PureVis<A> {
     return this.getReturnValue();
   }
 
-  public A onLet(String name, A type, A value, A body) {
-    return this.getReturnValue();
-  }
-
   public A onLet(List<LetBinding<A>> bindings, A body) {
     return this.getReturnValue();
   }

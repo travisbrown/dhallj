@@ -58,10 +58,6 @@ public final class BetaNormalize extends PureVis<Expr> {
     return Expr.makePi(name, type, result);
   }
 
-  public Expr onLet(String name, Expr type, Expr value, Expr body) {
-    return body.substitute(name, value.increment(name)).decrement(name).acceptVis(this);
-  }
-
   public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
     Expr result = body;
 

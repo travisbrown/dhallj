@@ -1,6 +1,8 @@
 package org.dhallj.core.normalization;
 
+import java.util.List;
 import org.dhallj.core.Expr;
+import org.dhallj.core.LetBinding;
 import org.dhallj.core.visitor.IdentityVis;
 
 /**
@@ -60,13 +62,14 @@ public final class Substitute extends IdentityVis {
   }
 
   @Override
-  public Expr onLet(String name, Expr type, Expr value, Expr body) {
-    this.replacement = this.replacement.decrement(name);
-
-    if (name.equals(this.name)) {
-      this.index -= 1;
+  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
+    for (LetBinding<Expr> binding : bindings) {
+      String name = binding.getName();
+      this.replacement = this.replacement.decrement(name);
+      if (name.equals(this.name)) {
+        this.index -= 1;
+      }
     }
-
-    return Expr.makeLet(name, type, value, body);
+    return Expr.makeLet(bindings, body);
   }
 }

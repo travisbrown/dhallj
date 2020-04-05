@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
+import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.visitor.IdentityVis;
@@ -64,10 +65,12 @@ public final class Shift extends IdentityVis {
   }
 
   @Override
-  public Expr onLet(String name, Expr type, Expr value, Expr body) {
-    if (name.equals(this.name)) {
-      this.cutoff -= 1;
+  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
+    for (LetBinding<Expr> binding : bindings) {
+      if (binding.getName().equals(this.name)) {
+        this.cutoff -= 1;
+      }
     }
-    return Expr.makeLet(name, type, value, body);
+    return Expr.makeLet(bindings, body);
   }
 }

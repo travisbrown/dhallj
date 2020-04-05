@@ -51,10 +51,6 @@ public abstract class IdentityVis extends PureVis<Expr> {
     return Expr.makePi(name, type, result);
   }
 
-  public Expr onLet(String name, Expr type, Expr value, Expr body) {
-    return Expr.makeLet(name, type, value, body);
-  }
-
   public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
     return Expr.makeLet(bindings, body);
   }

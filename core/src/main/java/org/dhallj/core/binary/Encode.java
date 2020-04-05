@@ -141,22 +141,6 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
-  public Writer onLet(final String name, Writer type, Writer value, Writer body) {
-    throw new UnsupportedOperationException("let serialization not yet implemented");
-
-    /*
-    List<Writer> writers = new ArrayList<Writer>();
-
-    writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeArrayStart(stream, 3);
-              this.writeLong(stream, Label.LET);
-            }
-          });
-    */
-  }
-
   public Writer onLet(final List<LetBinding<Writer>> bindings, Writer body) {
     List<Writer> writers = new ArrayList<Writer>();
 

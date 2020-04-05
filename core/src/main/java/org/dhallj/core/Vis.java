@@ -30,8 +30,6 @@ public interface Vis<A> {
 
   A onPi(String name, A type, A result);
 
-  A onLet(String name, A type, A value, A body);
-
   A onLet(List<LetBinding<A>> bindings, A body);
 
   void preText(int size);
