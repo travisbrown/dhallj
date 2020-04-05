@@ -379,14 +379,14 @@ final class ToStringVisitor extends PureVis<ToStringState> {
   public ToStringState onAnnotated(ToStringState base, ToStringState type) {
     return new ToStringState(
         String.format(
-            "%s: %s",
+            "%s : %s",
             base.toString(ToStringState.ANNOTATED), type.toString(ToStringState.ANNOTATED)),
         ToStringState.ANNOTATED);
   }
 
   public ToStringState onAssert(ToStringState base) {
     return new ToStringState(
-        String.format("assert: %s", base.toString(ToStringState.ASSERT)), ToStringState.ASSERT);
+        String.format("assert : %s", base.toString(ToStringState.ASSERT)), ToStringState.ASSERT);
   }
 
   public ToStringState onMerge(ToStringState handlers, ToStringState union, ToStringState type) {
@@ -396,7 +396,7 @@ final class ToStringVisitor extends PureVis<ToStringState> {
     builder.append(" ");
     builder.append(union.toString(ToStringState.MERGE));
     if (type != null) {
-      builder.append(": ");
+      builder.append(" : ");
       builder.append(type.toString(ToStringState.MERGE));
     }
 
@@ -408,7 +408,7 @@ final class ToStringVisitor extends PureVis<ToStringState> {
 
     builder.append(base.toString(ToStringState.TO_MAP));
     if (type != null) {
-      builder.append(": ");
+      builder.append(" : ");
       builder.append(type.toString(ToStringState.TO_MAP));
     }
 
