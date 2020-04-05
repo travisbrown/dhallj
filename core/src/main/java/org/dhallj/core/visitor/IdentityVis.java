@@ -35,12 +35,12 @@ public abstract class IdentityVis extends PureVis<Expr> {
     return Expr.makeDoubleLiteral(value);
   }
 
-  public Expr onBuiltIn(String value) {
-    return Expr.makeBuiltIn(value);
+  public Expr onBuiltIn(String name) {
+    return Expr.makeBuiltIn(name);
   }
 
-  public Expr onIdentifier(String value, long index) {
-    return Expr.makeIdentifier(value, index);
+  public Expr onIdentifier(String name, long index) {
+    return Expr.makeIdentifier(name, index);
   }
 
   public Expr onLambda(String name, Expr type, Expr result) {
@@ -96,8 +96,7 @@ public abstract class IdentityVis extends PureVis<Expr> {
   }
 
   public Expr onApplication(Expr baseExpr, Expr base, List<Expr> args) {
-    Expr tmp = Expr.makeApplication(base, args);
-    return tmp;
+    return Expr.makeApplication(base, args);
   }
 
   public Expr onOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
