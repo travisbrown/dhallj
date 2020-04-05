@@ -139,19 +139,49 @@ public abstract class Expr {
   }
 
   public final BigInteger asNaturalLiteral() {
-    return this.acceptExternal(AsNaturalLiteral.instance);
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.NATURAL) {
+      return ((Constructors.NaturalLiteral) value).value;
+    } else {
+      return null;
+    }
   }
 
   public final BigInteger asIntegerLiteral() {
-    return this.acceptExternal(AsIntegerLiteral.instance);
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.INTEGER) {
+      return ((Constructors.IntegerLiteral) value).value;
+    } else {
+      return null;
+    }
   }
 
   public final Double asDoubleLiteral() {
-    return this.acceptExternal(AsDoubleLiteral.instance);
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.DOUBLE) {
+      return ((Constructors.DoubleLiteral) value).value;
+    } else {
+      return null;
+    }
   }
 
   public final String asSimpleTextLiteral() {
-    return this.acceptExternal(AsSimpleTextLiteral.instance);
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.TEXT) {
+      Constructors.TextLiteral text = (Constructors.TextLiteral) value;
+
+      if (text.parts.length == 1) {
+        return text.parts[0];
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
   }
 
   public final String asBuiltIn() {
@@ -177,11 +207,23 @@ public abstract class Expr {
   }
 
   public final Iterable<Entry<String, Expr>> asRecordLiteral() {
-    return this.acceptExternal(AsRecordLiteral.instance);
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.RECORD) {
+      return Arrays.asList(((Constructors.RecordLiteral) value).fields);
+    } else {
+      return null;
+    }
   }
 
   public final Iterable<Entry<String, Expr>> asRecordType() {
-    return this.acceptExternal(AsRecordType.instance);
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.RECORD_TYPE) {
+      return Arrays.asList(((Constructors.RecordType) value).fields);
+    } else {
+      return null;
+    }
   }
 
   public final List<Entry<String, Expr>> asUnionType() {
@@ -195,7 +237,7 @@ public abstract class Expr {
   }
 
   public final boolean isResolved() {
-    return this.accept(IsResolved.instance);
+    return this.acceptVis(IsResolved.instance);
   }
 
   public final boolean same(Expr other) {

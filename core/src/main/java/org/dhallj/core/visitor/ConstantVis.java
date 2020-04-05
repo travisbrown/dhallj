@@ -75,7 +75,7 @@ public abstract class ConstantVis<A> extends PureVis<A> {
     return this.getReturnValue();
   }
 
-  public A onEmptyList(A type) {
+  public A onEmptyList(Expr typeExpr, A type) {
     return this.getReturnValue();
   }
 

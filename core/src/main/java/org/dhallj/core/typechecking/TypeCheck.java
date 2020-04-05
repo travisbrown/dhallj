@@ -22,7 +22,6 @@ import org.dhallj.core.Thunk;
 import org.dhallj.core.Visitor;
 import org.dhallj.core.Expr.Constants;
 import org.dhallj.core.ast.AsApplication;
-import org.dhallj.core.ast.IsIdentifier;
 import org.dhallj.core.normalization.BetaNormalize;
 import org.dhallj.core.util.FieldUtilities;
 import org.dhallj.core.visitor.ConstantVisitor;

@@ -4,11 +4,11 @@ import java.net.URI;
 import java.nio.file.Path;
 import org.dhallj.core.Import;
 import org.dhallj.core.Thunk;
-import org.dhallj.core.Visitor;
-import org.dhallj.core.visitor.ConstantVisitor;
+import org.dhallj.core.Vis;
+import org.dhallj.core.visitor.ConstantVis;
 
-public final class IsResolved extends ConstantVisitor.Internal<Boolean> {
-  public static final Visitor<Thunk<Boolean>, Boolean> instance = new IsResolved();
+public final class IsResolved extends ConstantVis<Boolean> {
+  public static final Vis<Boolean> instance = new IsResolved();
 
   IsResolved() {
     super(true);
@@ -20,7 +20,7 @@ public final class IsResolved extends ConstantVisitor.Internal<Boolean> {
   }
 
   @Override
-  public Boolean onRemoteImport(URI url, Thunk<Boolean> using, Import.Mode mode, byte[] hash) {
+  public Boolean onRemoteImport(URI url, Boolean using, Import.Mode mode, byte[] hash) {
     return false;
   }
 
