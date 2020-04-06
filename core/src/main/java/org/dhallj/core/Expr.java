@@ -1448,7 +1448,7 @@ public abstract class Expr {
         Entry<String, Expr>[] fieldsB = recordB.fields;
 
         if (fieldsA.length == fieldsB.length) {
-          for (int i = 0; i <= fieldsA.length; i++) {
+          for (int i = 0; i < fieldsA.length; i++) {
             if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
               return new SimpleImmutableEntry<Expr, Expr>(
                   fieldsA[i].getValue(), fieldsB[i].getValue());
@@ -1468,7 +1468,7 @@ public abstract class Expr {
         Entry<String, Expr>[] fieldsB = recordTypeB.fields;
 
         if (fieldsA.length == fieldsB.length) {
-          for (int i = 0; i <= fieldsA.length; i++) {
+          for (int i = 0; i < fieldsA.length; i++) {
             if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
               return new SimpleImmutableEntry<Expr, Expr>(
                   fieldsA[i].getValue(), fieldsB[i].getValue());
@@ -1488,7 +1488,7 @@ public abstract class Expr {
         Entry<String, Expr>[] fieldsB = unionTypeB.fields;
 
         if (fieldsA.length == fieldsB.length) {
-          for (int i = 0; i <= fieldsA.length; i++) {
+          for (int i = 0; i < fieldsA.length; i++) {
             if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
               return new SimpleImmutableEntry<Expr, Expr>(
                   fieldsA[i].getValue(), fieldsB[i].getValue());
