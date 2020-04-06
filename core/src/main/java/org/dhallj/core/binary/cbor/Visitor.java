@@ -14,7 +14,9 @@ public interface Visitor<R> {
 
   public R onTextString(String value);
 
-  public R onArray(BigInteger length);
+  public R onVariableArray(BigInteger length, String name);
+
+  public R onArray(BigInteger length, BigInteger tagI);
 
   public R onMap(BigInteger size);
 

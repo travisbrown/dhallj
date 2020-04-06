@@ -12,7 +12,13 @@ import java.nio.charset.Charset;
  */
 public abstract class CBORDecoder {
 
+  /**
+   * Only allow symbols that correspond to entire encoded
+   * Dhall expressions
+   */
+  //TODO the above
   public <R> R nextSymbol(Visitor<R> visitor) {
+    System.out.println("Next symbol");
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
       case UNSIGNED_INTEGER:
@@ -24,7 +30,7 @@ public abstract class CBORDecoder {
       case TEXT_STRING:
         return visitor.onTextString(readTextString(b));
       case ARRAY:
-        return visitor.onArray(readArrayStart(b));
+        return readArrayStart(b, visitor);
       case MAP:
         return visitor.onMap(readMapStart(b));
       case SEMANTIC_TAG:
@@ -43,7 +49,15 @@ public abstract class CBORDecoder {
   protected abstract byte[] read(int count);
 
   public BigInteger readUnsignedInteger() {
-    return null;
+    return readUnsignedInteger(read());
+  }
+
+  public BigInteger readNegativeInteger() {
+    return readNegativeInteger(read());
+  }
+
+  public String readTextString() {
+    return readTextString(read());
   }
 
   private BigInteger readUnsignedInteger(byte b) {
@@ -79,14 +93,23 @@ public abstract class CBORDecoder {
     }
   }
 
-  private BigInteger readArrayStart(byte b) {
+  private <R> R readArrayStart(byte b, Visitor<R> visitor) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
       throw new RuntimeException("Indefinite array not needed for Dhall");
     } else {
-      // We don't handle the case where the length is > Integer.MaxValue
-      return length;
+      System.out.println("Length is " + length.intValue());
+      byte next = read();
+      System.out.println(MajorType.fromByte(next));
+      switch (MajorType.fromByte(next)) {
+        case UNSIGNED_INTEGER:
+          return visitor.onArray(length, readUnsignedInteger(next));
+        case TEXT_STRING:
+          return visitor.onVariableArray(length, readTextString(next));
+        default:
+          throw new RuntimeException(String.format("Invalid start to CBOR-encoded Dhall expression %s", MajorType.fromByte(b).toString()));
+      }
     }
   }
 
