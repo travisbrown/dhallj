@@ -262,13 +262,22 @@ public abstract class Expr {
     return this.acceptVis(IsResolved.instance);
   }
 
-  public final boolean same(Expr other) {
-    return org.dhallj.core.util.EqualsVisitor.equals(this, other);
+  public final boolean equivalent(Expr other) {
+    return Arrays.equals(
+        this.normalize().alphaNormalize().hashBytes(),
+        other.normalize().alphaNormalize().hashBytes());
   }
 
-  public final boolean equivalent(Expr other) {
-    // TODO fix
-    return this.normalize().alphaNormalize().same(other.normalize().alphaNormalize());
+  public final boolean equals(Object obj) {
+    if (obj instanceof Expr) {
+      return this.equivalent((Expr) obj);
+    } else {
+      return false;
+    }
+  }
+
+  public final int hashCode() {
+    return Arrays.hashCode(this.normalize().alphaNormalize().hashBytes());
   }
 
   public final String show() {

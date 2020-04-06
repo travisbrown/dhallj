@@ -31,8 +31,8 @@ val root = project
     scalaVersion := "2.13.1",
     initialCommands in console := "import org.dhallj.parser.Dhall.parse"
   )
-  .aggregate(core, parser, javagen, demo, scala, tests, benchmarks)
-  .dependsOn(importsMini, scala, javagen)
+  .aggregate(core, parser, javagen, prelude, demo, scala, imports, importsMini, tests, benchmarks)
+  .dependsOn(importsMini, scala, javagen, prelude)
 
 lazy val core = project
   .in(file("core"))

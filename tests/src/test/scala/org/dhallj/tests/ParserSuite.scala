@@ -13,12 +13,12 @@ class ParserSuite extends CheckersFunSuite() {
     Arbitrary(Gen.alphaNumStr.map(AsciiPrintableString(_)))
 
   def checkParse(name: String, input: String, expected: Expr)(implicit loc: munit.Location): Unit =
-    test(name)(assert(clue(Dhall.parse(input)).same(clue(expected))))
+    test(name)(assert(clue(Dhall.parse(input)).equivalent(clue(expected))))
 
   def checkBetaNormalization(name: String, input: String, expected: Expr)(implicit loc: munit.Location): Unit =
-    test(name)(assert(clue(Dhall.parse(input).normalize).same(clue(expected))))
+    test(name)(assert(clue(Dhall.parse(input).normalize).equivalent(clue(expected))))
 
-  def parsesTo(input: String, expected: Expr): Boolean = Dhall.parse(input).same(expected)
+  def parsesTo(input: String, expected: Expr): Boolean = Dhall.parse(input).equivalent(expected)
 
   testAll1("doubles")((value: Double) => parsesTo(value.toString, DoubleLiteral(value)))
   testAll1("naturals")((value: BigInt) => parsesTo(value.abs.toString, NaturalLiteral(value.abs)))

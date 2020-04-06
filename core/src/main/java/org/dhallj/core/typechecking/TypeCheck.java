@@ -910,7 +910,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
           } else {
             // We check that the handler result type is the same as previous result types.
             // TODO: fix when we have real equivalence.
-            if (!handlerResultType.normalize().same(resultType.normalize())) {
+            if (!handlerResultType.normalize().equivalent(resultType.normalize())) {
               throw fail("handler types aren't consistent");
             }
           }
