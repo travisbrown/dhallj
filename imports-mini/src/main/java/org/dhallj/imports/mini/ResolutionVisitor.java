@@ -89,7 +89,7 @@ abstract class ResolutionVisitor extends IdentityVis {
               Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Local"),
               Expr.makeTextLiteral(path.toString()));
     } else {
-      Path resolvedPath = (currentPath == null) ? path : currentPath.resolve(path);
+      Path resolvedPath = (currentPath == null) ? path : currentPath.resolveSibling(path);
       String contents;
 
       try {

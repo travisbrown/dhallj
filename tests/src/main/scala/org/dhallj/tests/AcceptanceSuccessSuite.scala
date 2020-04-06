@@ -8,35 +8,35 @@ import org.dhallj.parser.Dhall
 trait SuccessSuite[A, B] extends AcceptanceSuite {
   def makeExpectedPath(inputPath: String): String
 
-  def parseInput(input: String): A
+  def parseInput(path: String, input: String): A
   def transform(input: A): B
   def loadExpected(input: Array[Byte]): B
   def compare(result: B, expected: B): Boolean
 
-  def testPairs: List[(String, (String, B))] = testInputs.map {
+  def testPairs: List[(String, String, (String, B))] = testInputs.map {
     case (name, path) =>
-      (name, (readString(path), loadExpected(readBytes(makeExpectedPath(path)))))
+      (name, path, (readString(path), loadExpected(readBytes(makeExpectedPath(path)))))
   }
 
   testPairs.foreach {
-    case (name, (input, expected)) =>
+    case (name, path, (input, expected)) =>
       test(name) {
-        assert(compare(clue(transform(parseInput(clue(input)))), clue(expected)))
+        assert(compare(clue(transform(parseInput(path, clue(input)))), clue(expected)))
       }
   }
 }
 
 trait ExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
-  def parseInput(input: String): Expr = Dhall.parse(input)
+  def parseInput(path: String, input: String): Expr = Dhall.parse(input)
 }
 
 trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
-  def parseInput(input: String): Expr = {
+  def parseInput(path: String, input: String): Expr = {
     val parsed = Dhall.parse(input)
 
     if (parsed.isResolved) parsed
     else {
-      Resolver.resolveFromResources(parsed, false, Paths.get(s"$prefix/$base"), this.getClass.getClassLoader)
+      Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
     }
   }
 }
