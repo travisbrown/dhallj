@@ -246,6 +246,18 @@ public abstract class Expr {
     }
   }
 
+  public final long asUnderscore() {
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.IDENTIFIER) {
+      Constructors.Identifier identifier = (Constructors.Identifier) value;
+      if (identifier.name.equals("_")) {
+        return identifier.index;
+      }
+    }
+    return -1;
+  }
+
   public final boolean isResolved() {
     return this.acceptVis(IsResolved.instance);
   }
@@ -348,6 +360,7 @@ public abstract class Expr {
     public static Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
     public static Expr EMPTY_RECORD_LITERAL = makeRecordLiteral(emptyFields);
     public static Expr EMPTY_RECORD_TYPE = makeRecordType(emptyFields);
+    public static Expr EMPTY_UNION_TYPE = makeUnionType(emptyFields);
     public static Expr LOCATION_TYPE =
         makeUnionType(
             new HashMap<String, Expr>() {
