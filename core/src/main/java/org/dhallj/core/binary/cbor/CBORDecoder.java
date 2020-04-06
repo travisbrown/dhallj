@@ -38,7 +38,13 @@ public abstract class CBORDecoder {
 
   protected abstract byte read();
 
+  protected abstract byte peek();
+
   protected abstract byte[] read(int count);
+
+  public BigInteger readUnsignedInteger() {
+    return null;
+  }
 
   private BigInteger readUnsignedInteger(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
@@ -203,6 +209,11 @@ public abstract class CBORDecoder {
     @Override
     protected byte read() {
       return this.bytes[this.cursor++];
+    }
+
+    @Override
+    protected byte peek() {
+      return this.bytes[this.cursor];
     }
 
     @Override
