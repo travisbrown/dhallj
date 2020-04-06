@@ -236,6 +236,15 @@ class BinaryDecodingTests extends FunSuite {
     assert(decoded.equivalent(expected))
   }
 
+  test("Decode type annotation") {
+    val bytes = load("annotation.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("1 : Natural")
+
+    assert(decoded.equivalent(expected))
+  }
+
   private def load(resource: String): Array[Byte] =
     Files.readAllBytes(Paths.get(getClass.getResource(s"/binary/$resource").toURI))
 
