@@ -505,6 +505,14 @@ public abstract class Expr {
     return new Constructors.Application(base, arg);
   }
 
+  public static final Expr makeApplication(Expr base, Expr[] args) {
+    Expr acc = base;
+    for (int i = 0; i < args.length; i++) {
+      acc = Expr.makeApplication(acc, args[i]);
+    }
+    return acc;
+  }
+
   public static final Expr makeApplication(Expr base, List<Expr> args) {
     Expr acc = base;
     for (int i = 0; i < args.size(); i++) {
@@ -550,6 +558,9 @@ public abstract class Expr {
   }
 
   public static final Expr makeBuiltIn(String name) {
+    if (Constants.getBuiltIn(name) == null) {
+      throw new RuntimeException("Bad name" + name);
+    }
     return Constants.getBuiltIn(name);
   }
 
