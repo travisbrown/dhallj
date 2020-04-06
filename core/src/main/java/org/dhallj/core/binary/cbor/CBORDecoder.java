@@ -5,6 +5,8 @@ import org.dhallj.core.binary.cbor.CBORExpression.Constants.MajorType;
 
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An implementation of enough of the CBOR spec to cope with decoding the CBOR values we need for
@@ -58,6 +60,23 @@ public abstract class CBORDecoder {
 
   public String readTextString() {
     return readTextString(read());
+  }
+
+  public <R> Map<String, R> readMap(Visitor<R> visitor) {
+    byte b = this.read();
+    switch (MajorType.fromByte(b)) {
+      case MAP:
+        BigInteger length = readMapStart(b);
+        Map<String, R> entries = new HashMap<>();
+        for(int i=0; i< length.longValue(); i++) {
+          String key = readTextString();
+          R value = nextSymbol(visitor);
+          entries.put(key, value);
+        }
+        return entries;
+      default:
+        throw new RuntimeException(String.format("Cannot read map - major type is %s", MajorType.fromByte(b)));
+    }
   }
 
   private BigInteger readUnsignedInteger(byte b) {

@@ -93,7 +93,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     } else if (tag == 27) {
       return readMap(length);
     } else if (tag == 28) {
-      return readList(length);
+      return readEmptyListAbstractType(length);
     } else throw new RuntimeException(String.format("Array tag %d undefined", tag));
   }
 
@@ -250,6 +250,20 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     }
   }
 
+  private Expr readEmptyListAbstractType(BigInteger length) {
+    Expr tpe = readExpr();
+    if (length.intValue() == 2) {
+      if (tpe == null) {
+        throw new RuntimeException("Type must be specified if list is empty");
+      } else {
+        return Expr.makeEmptyListLiteral(tpe);
+      }
+    } else {
+      throw new RuntimeException(String.format("List of abstract type %s must be empty"));
+    }
+
+  }
+
   private Expr readSome(BigInteger length) {
     int len = length.intValue();
     if (len != 3) {
@@ -292,23 +306,23 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   }
 
   private Expr readRecordType(BigInteger length) {
-    Map<String, Expr> fields = new HashMap<>();
-    for (int i = 0; i < length.longValue() - 1; i++) {
-      String key = decoder.readTextString();
-      Expr value = readExpr();
-      fields.put(key, value);
+    long len = length.longValue();
+    if (len != 2) {
+      throw  new RuntimeException("Record literal must be encoded in an array of length 2");
+    } else {
+      Map<String, Expr> entries = decoder.readMap(this);
+      return Expr.makeRecordType(entries.entrySet());
     }
-    return Expr.makeRecordType(fields.entrySet());
   }
 
   private Expr readRecordLiteral(BigInteger length) {
-    Map<String, Expr> fields = new HashMap<>();
-    for (int i = 0; i < length.longValue() - 1; i++) {
-      String key = decoder.readTextString();
-      Expr value = readExpr();
-      fields.put(key, value);
+    long len = length.longValue();
+    if (len != 2) {
+      throw  new RuntimeException("Record literal must be encoded in an array of length 2");
+    } else {
+      Map<String, Expr> entries = decoder.readMap(this);
+      return Expr.makeRecordLiteral(entries.entrySet());
     }
-    return Expr.makeRecordLiteral(fields.entrySet());
   }
 
   private Expr readFieldAccess(BigInteger length) {
