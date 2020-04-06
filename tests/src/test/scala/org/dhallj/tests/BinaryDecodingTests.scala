@@ -205,9 +205,15 @@ class BinaryDecodingTests extends FunSuite {
 
     val decoded = decode(bytes)
     val expected = parse("toMap { bar = 2, foo = 1 }")
-    println(decoded)
-    println(decoded.normalize())
-    println(expected)
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode assert") {
+    val bytes = load("assert.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("assert : Natural/even 2 === True")
 
     assert(decoded.equivalent(expected))
   }
