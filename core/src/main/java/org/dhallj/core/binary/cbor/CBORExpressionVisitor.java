@@ -364,7 +364,22 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   }
 
   private Expr readLet(BigInteger length) {
-    return null;
+    return readLet(length.longValue());
+  }
+
+  private Expr readLet(long len) {
+    if (len == 5) {
+      String name = decoder.readTextString();
+      Expr tpe = readExpr();
+      Expr value = readExpr();
+      Expr body = readExpr();
+      return Expr.makeLet(name, tpe, value, body);
+    } else {
+      String name = decoder.readTextString();
+      Expr tpe = readExpr();
+      Expr value = readExpr();
+      return Expr.makeLet(name, tpe, value, readLet(len - 3));
+    }
   }
 
   private Expr readImport(BigInteger length) {
