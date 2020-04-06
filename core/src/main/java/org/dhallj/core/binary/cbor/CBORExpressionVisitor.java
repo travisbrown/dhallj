@@ -308,7 +308,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readRecordType(BigInteger length) {
     long len = length.longValue();
     if (len != 2) {
-      throw  new RuntimeException("Record literal must be encoded in an array of length 2");
+      throw new RuntimeException("Record literal must be encoded in an array of length 2");
     } else {
       Map<String, Expr> entries = decoder.readMap(this);
       return Expr.makeRecordType(entries.entrySet());
@@ -318,7 +318,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readRecordLiteral(BigInteger length) {
     long len = length.longValue();
     if (len != 2) {
-      throw  new RuntimeException("Record literal must be encoded in an array of length 2");
+      throw new RuntimeException("Record literal must be encoded in an array of length 2");
     } else {
       Map<String, Expr> entries = decoder.readMap(this);
       return Expr.makeRecordLiteral(entries.entrySet());
@@ -336,9 +336,9 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     }
   }
 
+  //TODO - this is messy :(
   private Expr readProjection(BigInteger length) {
     Expr fn = decoder.nextSymbol(this); // Pattern match again
-    // TODO Check that this is a fn
     return fn;
   }
 
@@ -387,7 +387,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     List<Expr> exprs = new ArrayList<>();
     String lit = decoder.readTextString();
     lits.add(lit);
-    for (int i=2; i<length.longValue(); i+=2) {
+    for (int i = 2; i < length.longValue(); i += 2) {
       Expr e = readExpr();
       exprs.add(e);
       lit = decoder.readTextString();

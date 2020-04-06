@@ -191,6 +191,27 @@ class BinaryDecodingTests extends FunSuite {
     assert(decoded.equivalent(expected))
   }
 
+  test("Decode merge") {
+    val bytes = load("merge.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("merge { Foo = False, Bar = Natural/even } < Foo | Bar : Natural >")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode to map") {
+    val bytes = load("to_map.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("toMap { bar = 2, foo = 1 }")
+    println(decoded)
+    println(decoded.normalize())
+    println(expected)
+
+    assert(decoded.equivalent(expected))
+  }
+
   private def load(resource: String): Array[Byte] =
     Files.readAllBytes(Paths.get(getClass.getResource(s"/binary/$resource").toURI))
 
