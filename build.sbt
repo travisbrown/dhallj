@@ -31,7 +31,7 @@ val root = project
     scalaVersion := "2.13.1",
     initialCommands in console := "import org.dhallj.parser.Dhall.parse"
   )
-  .aggregate(core, parser, javagen, demo, scala, tests)
+  .aggregate(core, parser, javagen, demo, scala, tests, benchmarks)
   .dependsOn(importsMini, scala, javagen)
 
 lazy val core = project
@@ -50,6 +50,14 @@ lazy val parser = project
     sources in (Compile, doc) := Nil
   )
   .enablePlugins(JavaCCPlugin)
+  .dependsOn(core)
+
+lazy val prelude = project
+  .in(file("prelude"))
+  .settings(baseSettings ++ javaSettings)
+  .settings(
+    moduleName := "dhall-prelude"
+  )
   .dependsOn(core)
 
 lazy val demo = project
@@ -96,4 +104,13 @@ lazy val tests = project
     skip in publish := true,
     Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "dhall-lang"
   )
+  .dependsOn(scala, importsMini)
+
+lazy val benchmarks = project
+  .in(file("benchmarks"))
+  .settings(baseSettings ++ scalaSettings)
+  .settings(
+    skip in publish := true
+  )
+  .enablePlugins(JmhPlugin)
   .dependsOn(scala, importsMini)
