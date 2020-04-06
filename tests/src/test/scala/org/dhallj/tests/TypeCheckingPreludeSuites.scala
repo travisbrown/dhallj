@@ -11,7 +11,8 @@ class TypeCheckingPreludeBoolShowSuite extends TypeCheckingSuite("type-inference
 
 class TypeCheckingPreludeDoubleShowSuite extends TypeCheckingSuite("type-inference/success/prelude/Double/show")
 class TypeCheckingPreludeIntegerShowSuite extends TypeCheckingSuite("type-inference/success/prelude/Integer/show")
-class TypeCheckingPreludeIntegerToDoubleSuite extends TypeCheckingSuite("type-inference/success/prelude/Integer/toDouble")
+class TypeCheckingPreludeIntegerToDoubleSuite
+    extends TypeCheckingSuite("type-inference/success/prelude/Integer/toDouble")
 
 class TypeCheckingPreludeListAllSuite extends TypeCheckingSuite("type-inference/success/prelude/List/all")
 class TypeCheckingPreludeListBuildSuite extends TypeCheckingSuite("type-inference/success/prelude/List/build")
@@ -36,7 +37,8 @@ class TypeCheckingPreludeListShiftedSuite extends TypeCheckingSuite("type-infere
 class TypeCheckingPreludeMonoidSuite extends TypeCheckingSuite("type-inference/success/prelude/Monoid")
 
 class TypeCheckingPreludeNaturalBuildSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/build")
-class TypeCheckingPreludeNaturalEnumerateSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/enumerate")
+class TypeCheckingPreludeNaturalEnumerateSuite
+    extends TypeCheckingSuite("type-inference/success/prelude/Natural/enumerate")
 class TypeCheckingPreludeNaturalEvenSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/even")
 class TypeCheckingPreludeNaturalFoldSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/fold")
 class TypeCheckingPreludeNaturalIsZeroSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/isZero")
@@ -44,8 +46,10 @@ class TypeCheckingPreludeNaturalOddSuite extends TypeCheckingSuite("type-inferen
 class TypeCheckingPreludeNaturalProductSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/product")
 class TypeCheckingPreludeNaturalShowSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/show")
 class TypeCheckingPreludeNaturalSumSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/sum")
-class TypeCheckingPreludeNaturalToDoubleSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/toDouble")
-class TypeCheckingPreludeNaturalToIntegerSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/toInteger")
+class TypeCheckingPreludeNaturalToDoubleSuite
+    extends TypeCheckingSuite("type-inference/success/prelude/Natural/toDouble")
+class TypeCheckingPreludeNaturalToIntegerSuite
+    extends TypeCheckingSuite("type-inference/success/prelude/Natural/toInteger")
 
 class TypeCheckingPreludeOptionalAllSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/all")
 class TypeCheckingPreludeOptionalAnySuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/any")
@@ -63,5 +67,6 @@ class TypeCheckingPreludeOptionalUnzipSuite extends TypeCheckingSuite("type-infe
 
 class TypeCheckingPreludeTextConcatSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concat")
 class TypeCheckingPreludeTextConcatMapSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concatMap")
-class TypeCheckingPreludeTextConcatMapSepSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concatMapSep")
+class TypeCheckingPreludeTextConcatMapSepSuite
+    extends TypeCheckingSuite("type-inference/success/prelude/Text/concatMapSep")
 class TypeCheckingPreludeTextConcatSepSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concatSep")
