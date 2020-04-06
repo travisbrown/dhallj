@@ -178,25 +178,25 @@ final class Constructors {
   }
 
   static final class Pi extends Expr {
-    final String param;
-    final Expr input;
+    final String name;
+    final Expr type;
     final Expr result;
 
-    Pi(String param, Expr input, Expr result) {
+    Pi(String name, Expr type, Expr result) {
       super(Tags.PI);
-      this.param = param;
-      this.input = input;
+      this.name = name;
+      this.type = type;
       this.result = result;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> inputVisited = new ExprUtilities.ExprThunk(visitor, this.input);
+      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
       Thunk<A> resultVisited = new ExprUtilities.ExprThunk(visitor, this.result);
-      return visitor.onPi(this.param, inputVisited, resultVisited);
+      return visitor.onPi(this.name, typeVisited, resultVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onPi(this.param, input, result);
+      return visitor.onPi(this.name, type, result);
     }
   }
 
@@ -521,23 +521,23 @@ final class Constructors {
   }
 
   static final class EnvImport extends Expr {
-    final String value;
+    final String name;
     final Import.Mode mode;
     final byte[] hash;
 
-    EnvImport(String value, Import.Mode mode, byte[] hash) {
+    EnvImport(String name, Import.Mode mode, byte[] hash) {
       super(Tags.ENV_IMPORT);
-      this.value = value;
+      this.name = name;
       this.mode = mode;
       this.hash = hash;
     }
 
     public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onEnvImport(this.value, this.mode, this.hash);
+      return visitor.onEnvImport(this.name, this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onEnvImport(this.value, this.mode, this.hash);
+      return visitor.onEnvImport(this.name, this.mode, this.hash);
     }
   }
 

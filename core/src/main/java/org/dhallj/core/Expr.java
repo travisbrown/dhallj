@@ -279,7 +279,7 @@ public abstract class Expr {
     return this.show();
   }
 
-  private Expr getNonNote() {
+  Expr getNonNote() {
     return (this.tag == Tags.NOTE) ? ((Parsed) this).base : this;
   }
 
@@ -781,10 +781,10 @@ public abstract class Expr {
             case 0:
               current.state = 1;
               stack.push(current);
-              stack.push(new State(tmpPi.input, 0));
+              stack.push(new State(tmpPi.type, 0));
               break;
             case 1:
-              vis.bind(tmpPi.param, tmpPi.input);
+              vis.bind(tmpPi.name, tmpPi.type);
               current.state = 2;
               stack.push(current);
               stack.push(new State(tmpPi.result, 0));
@@ -792,7 +792,7 @@ public abstract class Expr {
             case 2:
               v1 = values.poll();
               v0 = values.poll();
-              values.push(vis.onPi(tmpPi.param, v0, v1));
+              values.push(vis.onPi(tmpPi.name, v0, v1));
           }
           break;
         case Tags.LET:
@@ -1224,7 +1224,7 @@ public abstract class Expr {
         case Tags.ENV_IMPORT:
           Constructors.EnvImport tmpEnvImport = (Constructors.EnvImport) current.expr;
 
-          values.push(vis.onEnvImport(tmpEnvImport.value, tmpEnvImport.mode, tmpEnvImport.hash));
+          values.push(vis.onEnvImport(tmpEnvImport.name, tmpEnvImport.mode, tmpEnvImport.hash));
           break;
         case Tags.LOCAL_IMPORT:
           Constructors.LocalImport tmpLocalImport = (Constructors.LocalImport) current.expr;
@@ -1292,5 +1292,367 @@ public abstract class Expr {
     }
 
     return current;
+  }
+
+  public final Entry<Expr, Expr> firstDiff(Expr other) {
+    LinkedList<Expr> stackA = new LinkedList<Expr>();
+    LinkedList<Expr> stackB = new LinkedList<Expr>();
+
+    Expr currentA = this;
+    Expr currentB = other;
+
+    stackA.add(currentA);
+    stackB.add(currentB);
+
+    while (true) {
+      currentA = stackA.poll();
+      currentB = stackB.poll();
+
+      if (currentA == null || currentB == null) {
+        break;
+      }
+
+      currentA = currentA.getNonNote();
+      currentB = currentB.getNonNote();
+
+      if (currentA.tag != currentB.tag) {
+        break;
+      }
+
+      if (currentA.tag == Tags.NATURAL) {
+        if (((Constructors.NaturalLiteral) currentA)
+            .value.equals(((Constructors.NaturalLiteral) currentB).value)) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.INTEGER) {
+        if (((Constructors.IntegerLiteral) currentA)
+            .value.equals(((Constructors.IntegerLiteral) currentB).value)) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.DOUBLE) {
+        if (((Constructors.DoubleLiteral) currentA).value
+            == ((Constructors.DoubleLiteral) currentB).value) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.BUILT_IN) {
+        Constructors.BuiltIn builtInA = (Constructors.BuiltIn) currentA;
+        Constructors.BuiltIn builtInB = (Constructors.BuiltIn) currentB;
+        if (builtInA.name.equals(builtInB.name)) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.IDENTIFIER) {
+        Constructors.Identifier identifierA = (Constructors.Identifier) currentA;
+        Constructors.Identifier identifierB = (Constructors.Identifier) currentB;
+        if (identifierA.name.equals(identifierB.name) && identifierA.index == identifierB.index) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.LAMBDA) {
+        Constructors.Lambda lambdaA = (Constructors.Lambda) currentA;
+        Constructors.Lambda lambdaB = (Constructors.Lambda) currentB;
+        if (lambdaA.name.equals(lambdaB.name)) {
+          stackA.add(lambdaA.type);
+          stackB.add(lambdaB.type);
+          stackA.add(lambdaA.result);
+          stackB.add(lambdaB.result);
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.PI) {
+        Constructors.Pi piA = (Constructors.Pi) currentA;
+        Constructors.Pi piB = (Constructors.Pi) currentB;
+        if (piA.name.equals(piB.name) && !(piA.type == null ^ piB.type == null)) {
+          if (piA.type != null) {
+            stackA.add(piA.type);
+            stackB.add(piB.type);
+          }
+          stackA.add(piA.result);
+          stackB.add(piB.result);
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.LET) {
+        Constructors.Let letA = (Constructors.Let) currentA;
+        Constructors.Let letB = (Constructors.Let) currentB;
+        if (letA.name.equals(letB.name) && !(letA.type == null ^ letB.type == null)) {
+          if (letA.type != null) {
+            stackA.add(letA.type);
+            stackB.add(letB.type);
+          }
+          stackA.add(letA.value);
+          stackB.add(letB.value);
+          stackA.add(letA.body);
+          stackB.add(letB.body);
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.TEXT) {
+        Constructors.TextLiteral textA = (Constructors.TextLiteral) currentA;
+        Constructors.TextLiteral textB = (Constructors.TextLiteral) currentB;
+        if (Arrays.equals(textA.interpolated, textB.interpolated)) {
+          for (Expr interpolation : textA.interpolated) {
+            stackA.add(interpolation);
+          }
+
+          for (Expr interpolation : textB.interpolated) {
+            stackB.add(interpolation);
+          }
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.NON_EMPTY_LIST) {
+        Constructors.NonEmptyListLiteral nonEmptyListA =
+            (Constructors.NonEmptyListLiteral) currentA;
+        Constructors.NonEmptyListLiteral nonEmptyListB =
+            (Constructors.NonEmptyListLiteral) currentB;
+        for (Expr value : nonEmptyListA.values) {
+          stackA.add(value);
+        }
+
+        for (Expr value : nonEmptyListB.values) {
+          stackB.add(value);
+        }
+        continue;
+      } else if (currentA.tag == Tags.EMPTY_LIST) {
+        Constructors.EmptyListLiteral emptyListA = (Constructors.EmptyListLiteral) currentA;
+        Constructors.EmptyListLiteral emptyListB = (Constructors.EmptyListLiteral) currentB;
+        stackA.add(emptyListA.type);
+        stackB.add(emptyListB.type);
+        continue;
+      } else if (currentA.tag == Tags.RECORD) {
+        Constructors.RecordLiteral recordA = (Constructors.RecordLiteral) currentA;
+        Constructors.RecordLiteral recordB = (Constructors.RecordLiteral) currentB;
+        Entry<String, Expr>[] fieldsA = recordA.fields;
+        Entry<String, Expr>[] fieldsB = recordB.fields;
+
+        if (fieldsA.length == fieldsB.length) {
+          for (int i = 0; i <= fieldsA.length; i++) {
+            if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
+              return new SimpleImmutableEntry<Expr, Expr>(
+                  fieldsA[i].getValue(), fieldsB[i].getValue());
+            }
+
+            stackA.add(fieldsA[i].getValue());
+            stackB.add(fieldsB[i].getValue());
+          }
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.RECORD_TYPE) {
+        Constructors.RecordType recordTypeA = (Constructors.RecordType) currentA;
+        Constructors.RecordType recordTypeB = (Constructors.RecordType) currentB;
+        Entry<String, Expr>[] fieldsA = recordTypeA.fields;
+        Entry<String, Expr>[] fieldsB = recordTypeB.fields;
+
+        if (fieldsA.length == fieldsB.length) {
+          for (int i = 0; i <= fieldsA.length; i++) {
+            if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
+              return new SimpleImmutableEntry<Expr, Expr>(
+                  fieldsA[i].getValue(), fieldsB[i].getValue());
+            }
+
+            stackA.add(fieldsA[i].getValue());
+            stackB.add(fieldsB[i].getValue());
+          }
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.UNION_TYPE) {
+        Constructors.UnionType unionTypeA = (Constructors.UnionType) currentA;
+        Constructors.UnionType unionTypeB = (Constructors.UnionType) currentB;
+        Entry<String, Expr>[] fieldsA = unionTypeA.fields;
+        Entry<String, Expr>[] fieldsB = unionTypeB.fields;
+
+        if (fieldsA.length == fieldsB.length) {
+          for (int i = 0; i <= fieldsA.length; i++) {
+            if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
+              return new SimpleImmutableEntry<Expr, Expr>(
+                  fieldsA[i].getValue(), fieldsB[i].getValue());
+            }
+
+            if (fieldsA[i].getValue() == null ^ fieldsB[i].getValue() == null) {
+              return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
+            }
+            stackA.add(fieldsA[i].getValue());
+            stackB.add(fieldsB[i].getValue());
+          }
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.FIELD_ACCESS) {
+        Constructors.FieldAccess fieldAccessA = (Constructors.FieldAccess) currentA;
+        Constructors.FieldAccess fieldAccessB = (Constructors.FieldAccess) currentB;
+
+        if (fieldAccessA.fieldName.equals(fieldAccessB.fieldName)) {
+          stackA.add(fieldAccessA.base);
+          stackB.add(fieldAccessB.base);
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.PROJECTION) {
+        Constructors.Projection projectionA = (Constructors.Projection) currentA;
+        Constructors.Projection projectionB = (Constructors.Projection) currentB;
+
+        if (Arrays.equals(projectionA.fieldNames, projectionB.fieldNames)) {
+          stackA.add(projectionA.base);
+          stackB.add(projectionB.base);
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.PROJECTION_BY_TYPE) {
+        Constructors.ProjectionByType projectionByTypeA = (Constructors.ProjectionByType) currentA;
+        Constructors.ProjectionByType projectionByTypeB = (Constructors.ProjectionByType) currentB;
+
+        stackA.add(projectionByTypeA.base);
+        stackB.add(projectionByTypeB.base);
+        stackA.add(projectionByTypeA.type);
+        stackB.add(projectionByTypeB.type);
+        continue;
+      } else if (currentA.tag == Tags.APPLICATION) {
+        Constructors.Application applicationA = (Constructors.Application) currentA;
+        Constructors.Application applicationB = (Constructors.Application) currentB;
+
+        stackA.add(applicationA.base);
+        stackB.add(applicationB.base);
+        stackA.add(applicationA.arg);
+        stackB.add(applicationB.arg);
+        continue;
+      } else if (currentA.tag == Tags.OPERATOR_APPLICATION) {
+        Constructors.OperatorApplication operatorApplicationA =
+            (Constructors.OperatorApplication) currentA;
+        Constructors.OperatorApplication operatorApplicationB =
+            (Constructors.OperatorApplication) currentB;
+
+        if (operatorApplicationA.operator.equals(operatorApplicationB.operator)) {
+          stackA.add(operatorApplicationA.lhs);
+          stackB.add(operatorApplicationB.lhs);
+          stackA.add(operatorApplicationA.rhs);
+          stackB.add(operatorApplicationB.rhs);
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.IF) {
+        Constructors.If ifA = (Constructors.If) currentA;
+        Constructors.If ifB = (Constructors.If) currentB;
+
+        stackA.add(ifA.predicate);
+        stackB.add(ifB.predicate);
+        stackA.add(ifA.thenValue);
+        stackB.add(ifB.thenValue);
+        stackA.add(ifA.elseValue);
+        stackB.add(ifB.elseValue);
+        continue;
+      } else if (currentA.tag == Tags.ANNOTATED) {
+        Constructors.Annotated annotatedA = (Constructors.Annotated) currentA;
+        Constructors.Annotated annotatedB = (Constructors.Annotated) currentB;
+
+        stackA.add(annotatedA.base);
+        stackB.add(annotatedB.base);
+        stackA.add(annotatedA.type);
+        stackB.add(annotatedB.type);
+        continue;
+      } else if (currentA.tag == Tags.ASSERT) {
+        Constructors.Assert assertA = (Constructors.Assert) currentA;
+        Constructors.Assert assertB = (Constructors.Assert) currentB;
+
+        stackA.add(assertA.base);
+        stackB.add(assertB.base);
+        continue;
+      } else if (currentA.tag == Tags.MERGE) {
+        Constructors.Merge mergeA = (Constructors.Merge) currentA;
+        Constructors.Merge mergeB = (Constructors.Merge) currentB;
+        if (!(mergeA.type == null ^ mergeB.type == null)) {
+          stackA.add(mergeA.handlers);
+          stackB.add(mergeB.handlers);
+          stackA.add(mergeA.union);
+          stackB.add(mergeB.union);
+          if (mergeA.type != null) {
+            stackA.add(mergeA.type);
+            stackB.add(mergeB.type);
+          }
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.TO_MAP) {
+        Constructors.ToMap toMapA = (Constructors.ToMap) currentA;
+        Constructors.ToMap toMapB = (Constructors.ToMap) currentB;
+        if (!(toMapA.type == null ^ toMapB.type == null)) {
+          stackA.add(toMapA.base);
+          stackB.add(toMapB.base);
+          if (toMapA.type != null) {
+            stackA.add(toMapA.type);
+            stackB.add(toMapB.type);
+          }
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.MISSING_IMPORT) {
+        Constructors.MissingImport missingImportA = (Constructors.MissingImport) currentA;
+        Constructors.MissingImport missingImportB = (Constructors.MissingImport) currentB;
+        if (missingImportA.mode.equals(missingImportB.mode)
+            && Arrays.equals(missingImportA.hash, missingImportB.hash)) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.ENV_IMPORT) {
+        Constructors.EnvImport envImportA = (Constructors.EnvImport) currentA;
+        Constructors.EnvImport envImportB = (Constructors.EnvImport) currentB;
+        if (envImportA.name.equals(envImportB.name)
+            && envImportA.mode.equals(envImportB.mode)
+            && Arrays.equals(envImportA.hash, envImportB.hash)) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.LOCAL_IMPORT) {
+        Constructors.LocalImport localImportA = (Constructors.LocalImport) currentA;
+        Constructors.LocalImport localImportB = (Constructors.LocalImport) currentB;
+        if (localImportA.path.equals(localImportB.path)
+            && localImportA.mode.equals(localImportB.mode)
+            && Arrays.equals(localImportA.hash, localImportB.hash)) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.REMOTE_IMPORT) {
+        Constructors.RemoteImport remoteImportA = (Constructors.RemoteImport) currentA;
+        Constructors.RemoteImport remoteImportB = (Constructors.RemoteImport) currentB;
+        if (remoteImportA.url.equals(remoteImportB.url)
+            && remoteImportA.mode.equals(remoteImportB.mode)
+            && Arrays.equals(remoteImportA.hash, remoteImportB.hash)) {
+          continue;
+        } else {
+          break;
+        }
+      }
+    }
+
+    if (currentA == null && currentB == null) {
+      return null;
+    } else {
+      return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
+    }
   }
 }
