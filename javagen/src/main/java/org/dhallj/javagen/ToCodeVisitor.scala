@@ -47,7 +47,7 @@ final class ToCodeVisitor extends PureVis[Code] {
   def onPi(name: String, tpe: Code, result: Code): Code =
     result.merge(tpe) {
       case (resultContent, tpeContent) =>
-        s"""Expr.makeLambda("$name", $tpeContent, $resultContent)"""
+        s"""Expr.makePi("$name", $tpeContent, $resultContent)"""
     }
 
   def onLet(bindings: JList[LetBinding[Code]], body: Code): Code = unsupported

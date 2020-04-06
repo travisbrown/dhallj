@@ -26,10 +26,10 @@ public final class Prelude {
   private static final Expr f000013 =
       Expr.makeApplication(f000002, new Expr[] {f000001, f000007, f000012});
   private static final Expr f000014 = Expr.makeIdentifier("_", 2);
-  private static final Expr f000015 = Expr.makeLambda("_", f000003, f000014);
-  private static final Expr f000016 = Expr.makeLambda("_", f000002, f000015);
+  private static final Expr f000015 = Expr.makePi("_", f000003, f000014);
+  private static final Expr f000016 = Expr.makePi("_", f000002, f000015);
   private static final Expr f000017 = Expr.Constants.TYPE;
-  private static final Expr f000018 = Expr.makeLambda("_", f000017, f000016);
+  private static final Expr f000018 = Expr.makePi("_", f000017, f000016);
   private static final Expr f000019 = Expr.makeLambda("_", f000018, f000013);
   private static final Expr f000020 =
       Expr.makeOperatorApplication(Operator.EQUALS, f000003, f000002);
@@ -83,7 +83,7 @@ public final class Prelude {
   private static final Expr f000051 = Expr.makeApplication(f000003, new Expr[] {f000050});
   private static final Expr f000052 = Expr.makeIdentifier("_", 4);
   private static final Expr f000053 = Expr.makeLambda("_", f000052, f000051);
-  private static final Expr f000054 = Expr.makeLambda("_", f000014, f000014);
+  private static final Expr f000054 = Expr.makePi("_", f000014, f000014);
   private static final Expr f000055 = Expr.makeLambda("_", f000054, f000053);
   private static final Expr f000056 = Expr.makeLambda("_", f000054, f000055);
   private static final Expr f000057 = Expr.makeLambda("_", f000017, f000056);
@@ -262,11 +262,11 @@ public final class Prelude {
           });
   private static final Expr f000186 = Expr.makeLambda("_", f000017, f000185);
   private static final Expr f000187 = Expr.makeApplication(f000009, new Expr[] {f000002});
-  private static final Expr f000188 = Expr.makeLambda("_", f000187, f000003);
-  private static final Expr f000189 = Expr.makeLambda("_", f000001, f000003);
+  private static final Expr f000188 = Expr.makePi("_", f000187, f000003);
+  private static final Expr f000189 = Expr.makePi("_", f000001, f000003);
   private static final Expr f000190 = Expr.Constants.DOUBLE;
-  private static final Expr f000191 = Expr.makeLambda("_", f000190, f000003);
-  private static final Expr f000192 = Expr.makeLambda("_", f000071, f000003);
+  private static final Expr f000191 = Expr.makePi("_", f000190, f000003);
+  private static final Expr f000192 = Expr.makePi("_", f000071, f000003);
   private static final Expr f000193 =
       Expr.makeRecordType(
           new Entry[] {
@@ -274,8 +274,8 @@ public final class Prelude {
             new SimpleImmutableEntry<String, Expr>("mapValue", f000002)
           });
   private static final Expr f000194 = Expr.makeApplication(f000009, new Expr[] {f000193});
-  private static final Expr f000195 = Expr.makeLambda("_", f000194, f000003);
-  private static final Expr f000196 = Expr.makeLambda("_", f000183, f000003);
+  private static final Expr f000195 = Expr.makePi("_", f000194, f000003);
+  private static final Expr f000196 = Expr.makePi("_", f000183, f000003);
   private static final Expr f000197 =
       Expr.makeRecordType(
           new Entry[] {
@@ -287,8 +287,8 @@ public final class Prelude {
             new SimpleImmutableEntry<String, Expr>("object", f000195),
             new SimpleImmutableEntry<String, Expr>("string", f000196)
           });
-  private static final Expr f000198 = Expr.makeLambda("_", f000197, f000003);
-  private static final Expr f000199 = Expr.makeLambda("_", f000017, f000198);
+  private static final Expr f000198 = Expr.makePi("_", f000197, f000003);
+  private static final Expr f000199 = Expr.makePi("_", f000017, f000198);
   private static final Expr f000200 = Expr.makeFieldAccess(f000002, "array");
   private static final Expr f000201 = Expr.makeApplication(f000009, new Expr[] {f000003});
   private static final Expr f000202 = Expr.makeApplication(f000003, new Expr[] {f000025, f000014});
@@ -1302,7 +1302,7 @@ public final class Prelude {
   private static final Expr f000746 =
       Expr.makeApplication(f000000, new Expr[] {f000014, f000002, f000001, f000745, f000007});
   private static final Expr f000747 = Expr.makeLambda("_", f000201, f000746);
-  private static final Expr f000748 = Expr.makeLambda("_", f000002, f000001);
+  private static final Expr f000748 = Expr.makePi("_", f000002, f000001);
   private static final Expr f000749 = Expr.makeLambda("_", f000748, f000747);
   private static final Expr f000750 = Expr.makeLambda("_", f000017, f000749);
   private static final Expr f000751 = Expr.makeOperatorApplication(Operator.OR, f000742, f000002);
@@ -1332,7 +1332,7 @@ public final class Prelude {
   private static final Expr f000771 =
       Expr.makeApplication(f000000, new Expr[] {f000025, f000002, f000205, f000770, f000274});
   private static final Expr f000772 = Expr.makeLambda("_", f000205, f000771);
-  private static final Expr f000773 = Expr.makeLambda("_", f000003, f000201);
+  private static final Expr f000773 = Expr.makePi("_", f000003, f000201);
   private static final Expr f000774 = Expr.makeLambda("_", f000773, f000772);
   private static final Expr f000775 = Expr.makeLambda("_", f000017, f000774);
   private static final Expr f000776 = Expr.makeLambda("_", f000017, f000775);
@@ -1401,7 +1401,7 @@ public final class Prelude {
   private static final Expr f000819 = Expr.makeLambda("_", f000805, f000818);
   private static final Expr f000820 =
       Expr.makeApplication(f000000, new Expr[] {f000805, f000814, f000201, f000819, f000208});
-  private static final Expr f000821 = Expr.makeLambda("_", f000178, f000003);
+  private static final Expr f000821 = Expr.makePi("_", f000178, f000003);
   private static final Expr f000822 = Expr.makeLambda("_", f000821, f000820);
   private static final Expr f000823 = Expr.makeLambda("_", f000017, f000822);
   private static final Expr f000824 = Expr.makeLambda("_", f000178, f000823);
@@ -1418,7 +1418,7 @@ public final class Prelude {
   private static final Expr f000832 =
       Expr.makeApplication(f000000, new Expr[] {f000805, f000826, f000205, f000831, f000274});
   private static final Expr f000833 = Expr.makeLambda("_", f000003, f000832);
-  private static final Expr f000834 = Expr.makeLambda("_", f000002, f000003);
+  private static final Expr f000834 = Expr.makePi("_", f000002, f000003);
   private static final Expr f000835 = Expr.makeLambda("_", f000834, f000833);
   private static final Expr f000836 = Expr.makeLambda("_", f000017, f000835);
   private static final Expr f000837 = Expr.makeLambda("_", f000178, f000836);
@@ -1431,7 +1431,7 @@ public final class Prelude {
   private static final Expr f000843 =
       Expr.makeApplication(f000000, new Expr[] {f000025, f000002, f000205, f000842, f000274});
   private static final Expr f000844 = Expr.makeLambda("_", f000205, f000843);
-  private static final Expr f000845 = Expr.makeLambda("_", f000003, f000003);
+  private static final Expr f000845 = Expr.makePi("_", f000003, f000003);
   private static final Expr f000846 = Expr.makeLambda("_", f000845, f000844);
   private static final Expr f000847 = Expr.makeLambda("_", f000017, f000846);
   private static final Expr f000848 = Expr.makeLambda("_", f000017, f000847);
@@ -1498,7 +1498,7 @@ public final class Prelude {
             new SimpleImmutableEntry<String, Expr>("value", f000014)
           });
   private static final Expr f000877 = Expr.makeApplication(f000009, new Expr[] {f000876});
-  private static final Expr f000878 = Expr.makeLambda("_", f000178, f000877);
+  private static final Expr f000878 = Expr.makePi("_", f000178, f000877);
   private static final Expr f000879 =
       Expr.makeRecordType(
           new Entry[] {
@@ -1555,7 +1555,7 @@ public final class Prelude {
             new SimpleImmutableEntry<String, Expr>("diff", f000900)
           });
   private static final Expr f000902 = Expr.makeApplication(f000009, new Expr[] {f000881});
-  private static final Expr f000903 = Expr.makeLambda("_", f000178, f000902);
+  private static final Expr f000903 = Expr.makePi("_", f000178, f000902);
   private static final Expr f000904 =
       Expr.makeRecordType(
           new Entry[] {
@@ -1980,8 +1980,8 @@ public final class Prelude {
   private static final Expr f001107 = Expr.makeApplication(f000177, new Expr[] {f000003});
   private static final Expr f001108 =
       Expr.makeApplication(f000002, new Expr[] {f001096, f001106, f001107});
-  private static final Expr f001109 = Expr.makeLambda("_", f000845, f000015);
-  private static final Expr f001110 = Expr.makeLambda("_", f000017, f001109);
+  private static final Expr f001109 = Expr.makePi("_", f000845, f000015);
+  private static final Expr f001110 = Expr.makePi("_", f000017, f001109);
   private static final Expr f001111 = Expr.makeLambda("_", f001110, f001108);
   private static final Expr f001112 = Expr.makeLambda("_", f000017, f001111);
   private static final Expr f001113 = Expr.makeLambda("_", f001096, f000002);
@@ -2029,7 +2029,7 @@ public final class Prelude {
           });
   private static final Expr f001136 = Expr.makeMerge(f001135, f000025, null);
   private static final Expr f001137 = Expr.makeLambda("_", f000003, f001136);
-  private static final Expr f001138 = Expr.makeLambda("_", f000014, f000003);
+  private static final Expr f001138 = Expr.makePi("_", f000014, f000003);
   private static final Expr f001139 = Expr.makeLambda("_", f001138, f001137);
   private static final Expr f001140 = Expr.makeLambda("_", f000017, f001139);
   private static final Expr f001141 = Expr.makeLambda("_", f001116, f001140);
@@ -2169,7 +2169,7 @@ public final class Prelude {
   private static final Expr f001208 =
       Expr.makeApplication(f000000, new Expr[] {f000014, f000002, f000183, f001207, f000639});
   private static final Expr f001209 = Expr.makeLambda("_", f000201, f001208);
-  private static final Expr f001210 = Expr.makeLambda("_", f000002, f000183);
+  private static final Expr f001210 = Expr.makePi("_", f000002, f000183);
   private static final Expr f001211 = Expr.makeLambda("_", f001210, f001209);
   private static final Expr f001212 = Expr.makeLambda("_", f000017, f001211);
   private static final Expr f001213 = Expr.makeLambda("_", f000183, f000002);
@@ -2273,15 +2273,15 @@ public final class Prelude {
             new SimpleImmutableEntry<String, Expr>("content", f000187),
             new SimpleImmutableEntry<String, Expr>("name", f000183)
           });
-  private static final Expr f001259 = Expr.makeLambda("_", f001258, f000003);
+  private static final Expr f001259 = Expr.makePi("_", f001258, f000003);
   private static final Expr f001260 =
       Expr.makeRecordType(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("element", f001259),
             new SimpleImmutableEntry<String, Expr>("text", f000196)
           });
-  private static final Expr f001261 = Expr.makeLambda("_", f001260, f000003);
-  private static final Expr f001262 = Expr.makeLambda("_", f000017, f001261);
+  private static final Expr f001261 = Expr.makePi("_", f001260, f000003);
+  private static final Expr f001262 = Expr.makePi("_", f000017, f001261);
   private static final Expr f001263 = Expr.makeFieldAccess(f000002, "element");
   private static final Expr f001264 = Expr.makeFieldAccess(f000014, "attributes");
   private static final Expr f001265 = Expr.makeFieldAccess(f000014, "content");
