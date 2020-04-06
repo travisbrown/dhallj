@@ -328,7 +328,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readFieldAccess(BigInteger length) {
     int len = length.intValue();
     if (len != 3) {
-      throw new RuntimeException("Type annotation must be encoded in array of length 3");
+      throw new RuntimeException("Field access must be encoded in array of length 3");
     } else {
       Expr e = readExpr();
       String field = decoder.readTextString();
@@ -343,9 +343,13 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   }
 
   private Expr readUnion(BigInteger length) {
-    Expr fn = decoder.nextSymbol(this); // Pattern match again
-    // TODO Check that this is a fn
-    return fn;
+    int len = length.intValue();
+    if (len != 2) {
+      throw new RuntimeException("Union must be encoded in array of length 2");
+    } else {
+      Map<String, Expr> entries = decoder.readMap(this);
+      return Expr.makeUnionType(entries.entrySet());
+    }
   }
 
   private Expr readTypeAnnotation(BigInteger length) {

@@ -87,7 +87,6 @@ class BinaryDecodingTests extends FunSuite {
     val bytes = load("list.bin")
 
     val decoded = decode(bytes)
-    println(decoded)
     val expected = parse("[1,2,3]")
 
     assert(decoded.equivalent(expected))
@@ -98,7 +97,6 @@ class BinaryDecodingTests extends FunSuite {
 
     val decoded = decode(bytes)
     val expected = parse("Some \"foo\"")
-    println(expected)
 
     assert(decoded.equivalent(expected))
   }
@@ -117,8 +115,6 @@ class BinaryDecodingTests extends FunSuite {
 
     val decoded = decode(bytes)
     val expected = parse("\\(_: Text) -> \"foo\"")
-
-    println(decoded)
 
     assert(decoded.equivalent(expected))
   }
@@ -154,7 +150,6 @@ class BinaryDecodingTests extends FunSuite {
     val bytes = load("record_type.bin")
 
     val decoded = decode(bytes)
-    println(decoded)
     val expected = parse("{x: Text, y: Natural}")
 
     assert(decoded.equivalent(expected))
@@ -164,8 +159,34 @@ class BinaryDecodingTests extends FunSuite {
     val bytes = load("record_literal.bin")
 
     val decoded = decode(bytes)
-    println(decoded)
     val expected = parse("{x = \"foo\", y = 3}")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode field access") {
+    val bytes = load("field_access.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("{x: Text, y: Natural}.x")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode record projection") {
+    val bytes = load("record_projection.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("{x: Text, y: Natural, z: Bool}.{x,y}")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode union") {
+    val bytes = load("union.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("<Local : Text | Remote : Text | Missing>")
 
     assert(decoded.equivalent(expected))
   }
