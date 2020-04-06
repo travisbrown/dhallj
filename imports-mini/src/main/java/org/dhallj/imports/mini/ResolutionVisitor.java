@@ -104,7 +104,7 @@ abstract class ResolutionVisitor extends IdentityVis {
         result = Expr.makeTextLiteral(contents);
       } else {
         try {
-          result = Dhall.parse(contents).acceptVis(this.withCurrentPath(resolvedPath.getParent()));
+          result = Dhall.parse(contents).acceptVis(this.withCurrentPath(resolvedPath));
         } catch (ParseException underlying) {
           throw new WrappedParseException(path.toString(), underlying);
         }
