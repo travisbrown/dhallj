@@ -8,11 +8,11 @@ import java.math.BigInteger;
  * Pattern match against the top-level CBOR representation of Dhall expressions At this level,
  * expressions may be represented as arrays, strings, bools or doubles
  */
-public final class CBORTopLevelVisitor implements Visitor<Expr> {
+public final class CBORExpressionVisitor implements Visitor<Expr> {
 
   private CBORDecoder decoder;
 
-  public CBORTopLevelVisitor(CBORDecoder decoder) {
+  public CBORExpressionVisitor(CBORDecoder decoder) {
     this.decoder = decoder;
   }
 
@@ -58,7 +58,7 @@ public final class CBORTopLevelVisitor implements Visitor<Expr> {
 
   @Override
   public Expr onNull() {
-    return notExpected("Null");
+    return null;
   }
 
   @Override
