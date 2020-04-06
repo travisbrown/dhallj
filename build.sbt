@@ -113,4 +113,4 @@ lazy val benchmarks = project
     skip in publish := true
   )
   .enablePlugins(JmhPlugin)
-  .dependsOn(scala, importsMini)
+  .dependsOn(core, prelude)
