@@ -39,7 +39,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
 
   @Override
   public Expr onTextString(String value) {
-    return Expr.makeIdentifier(value);
+    return Expr.makeBuiltIn(value);
   }
 
   @Override

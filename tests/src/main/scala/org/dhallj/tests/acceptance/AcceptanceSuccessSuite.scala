@@ -23,7 +23,6 @@ trait SuccessSuite[A, B] extends AcceptanceSuite {
   testPairs.foreach {
     case (name, path, (input, expected)) =>
       test(name) {
-        println(path)
         assert(compare(clue(transform(parseInput(path, clue(input)))), clue(expected)))
       }
   }
