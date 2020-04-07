@@ -14,7 +14,9 @@ import java.util.Map;
  */
 public abstract class CBORDecoder {
 
-  /** Only allow symbols that correspond to entire encoded Dhall expressions */
+  /**
+   * Only allow symbols that correspond to entire encoded Dhall expressions
+   */
   // TODO the above
   public <R> R nextSymbol(Visitor<R> visitor) {
     byte b = this.read();
@@ -35,7 +37,8 @@ public abstract class CBORDecoder {
         readSemanticTag(b); //We ignore tags
         return nextSymbol(visitor);
       case PRIMITIVE:
-        return readPrimitive(b, visitor); default:
+        return readPrimitive(b, visitor);
+      default:
         throw new RuntimeException(String.format("Invalid CBOR major type %d", b));
     }
   }
@@ -48,6 +51,41 @@ public abstract class CBORDecoder {
 
   public BigInteger readUnsignedInteger() {
     return readUnsignedInteger(read());
+  }
+
+  public BigInteger readPositiveBigNum() {
+    BigInteger result = readBigNum();
+    if (result.compareTo(BigInteger.ZERO) < 0) {
+      throw new RuntimeException(String.format("%s is not a positive big num", result));
+    } else {
+      return result;
+    }
+  }
+
+  public BigInteger readBigNum() {
+    byte next = read();
+    switch (MajorType.fromByte(next)) {
+      case UNSIGNED_INTEGER:
+        return readUnsignedInteger(next);
+      case NEGATIVE_INTEGER:
+        return readNegativeInteger(next);
+      case SEMANTIC_TAG:
+        AdditionalInfo info = AdditionalInfo.fromByte(next);
+        BigInteger t = readBigInteger(info, next);
+        long tag = t.longValue();
+        BigInteger length = readUnsignedInteger();
+        long len = length.longValue(); //Don't handle Bignums larger than this
+        BigInteger result = readBigInteger(len);
+        if (tag == 2) {
+          return result;
+        } else if (tag == 3) {
+          return BigInteger.valueOf(-1).subtract(result);
+        } else {
+          throw new RuntimeException(String.format("%d is not a valid tag for a bignum", tag));
+        }
+      default:
+        throw new RuntimeException(String.format("%d not a valid major type for an Unsigned Integer"));
+    }
   }
 
   public BigInteger readNegativeInteger() {
@@ -283,9 +321,9 @@ public abstract class CBORDecoder {
     throw new RuntimeException("Why does Java not have exhaustivity checking?");
   }
 
-  private BigInteger readBigInteger(int numBytes) {
+  private BigInteger readBigInteger(long numBytes) {
     BigInteger result = BigInteger.ZERO;
-    for (int i = 0; i < numBytes; i++) {
+    for (long i = 0; i < numBytes; i++) {
       int next = this.read() & 0xff;
       result = result.shiftLeft(8).or(BigInteger.valueOf(next));
     }

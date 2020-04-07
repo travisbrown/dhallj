@@ -48,7 +48,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     if (length.intValue() != 2) {
       throw new RuntimeException("Variables must be encoded in an array of length 2");
     } else {
-      BigInteger idx = decoder.readUnsignedInteger();
+      BigInteger idx = decoder.readPositiveBigNum();
       return Expr.makeIdentifier(name, idx.longValue());
     }
   }
@@ -516,11 +516,11 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   }
 
   private Expr readInteger(BigInteger length) {
-    return Expr.makeIntegerLiteral(decoder.readNegativeInteger());
+    return Expr.makeIntegerLiteral(decoder.readBigNum());
   }
 
   private Expr readNatural(BigInteger length) {
-    return Expr.makeNaturalLiteral(decoder.readUnsignedInteger());
+    return Expr.makeNaturalLiteral(decoder.readPositiveBigNum());
   }
 
   private Expr readExpr() {
