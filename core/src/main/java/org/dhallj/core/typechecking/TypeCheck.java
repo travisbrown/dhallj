@@ -414,7 +414,11 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             field.getValue().acceptExternal(this).acceptVis(BetaNormalize.instance));
       }
 
-      return Expr.makeRecordType(fieldTypes.entrySet());
+      Expr recordType = Expr.makeRecordType(fieldTypes.entrySet());
+
+      // The inferred type must also be well-typed.
+      recordType.acceptExternal(this);
+      return recordType;
     }
   }
 
