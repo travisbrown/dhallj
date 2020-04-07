@@ -1,4 +1,4 @@
-package org.dhallj.tests
+package org.dhallj.tests.acceptance
 
 import org.dhallj.core.Expr
 import org.dhallj.parser.Dhall

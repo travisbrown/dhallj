@@ -1,4 +1,4 @@
-package org.dhallj.tests
+package org.dhallj.tests.acceptance
 
 class NormalizationSimpleSuite extends NormalizationSuite("normalization/success/simple")
 class NormalizationRegressionSuite extends NormalizationSuite("normalization/success/regression")

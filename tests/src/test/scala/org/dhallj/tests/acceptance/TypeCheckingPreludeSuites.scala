@@ -1,4 +1,4 @@
-package org.dhallj.tests
+package org.dhallj.tests.acceptance
 
 class TypeCheckingPreludeBoolAndSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/and")
 class TypeCheckingPreludeBoolBuildSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/build")

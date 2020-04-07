@@ -1,4 +1,4 @@
-package org.dhallj.tests
+package org.dhallj.tests.acceptance
 
 import java.nio.file.{Files, Paths}
 import munit.{FunSuite, Ignore}

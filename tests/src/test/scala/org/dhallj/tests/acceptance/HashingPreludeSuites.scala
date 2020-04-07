@@ -1,4 +1,4 @@
-package org.dhallj.tests
+package org.dhallj.tests.acceptance
 
 class HashingPreludeBoolAndSuite extends HashingSuite("semantic-hash/success/prelude/Bool/and")
 class HashingPreludeBoolBuildSuite extends HashingSuite("semantic-hash/success/prelude/Bool/build")
