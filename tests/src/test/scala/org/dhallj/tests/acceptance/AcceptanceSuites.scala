@@ -24,7 +24,10 @@ class AlphaNormalizationRegressionSuite extends AlphaNormalizationSuite("alpha-n
 class TypeCheckingSimpleSuite extends TypeCheckingSuite("type-inference/success/simple")
 class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
-class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
+class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit") {
+  // The spec says we shouldn't have to worry about duplicate fields during type checking.
+  override def ignored = Set("RecordTypeDuplicateField")
+}
 
 class ParsingUnitSuite extends ParsingSuite("parser/success/unit") {
   // I'm pretty much convinced we're doing the right thing on SomeXYZ.
