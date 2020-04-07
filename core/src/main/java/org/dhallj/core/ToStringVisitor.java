@@ -16,6 +16,7 @@ import org.dhallj.core.visitor.PureVis;
 
 final class ToStringState {
   static final int BASE = 0;
+  static final int APPLICATION_ARGUMENT = 0;
   static final int APPLICATION = 1;
   static final int ANNOTATED = 2;
   static final int ASSERT = 2;
@@ -346,7 +347,7 @@ final class ToStringVisitor extends PureVis<ToStringState> {
     builder.append(" ");
 
     for (int i = 0; i < args.size(); i += 1) {
-      builder.append(args.get(i).toString(ToStringState.APPLICATION));
+      builder.append(args.get(i).toString(ToStringState.APPLICATION_ARGUMENT));
       if (i < args.size() - 1) {
         builder.append(" ");
       }
