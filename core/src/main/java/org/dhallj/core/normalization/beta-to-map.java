@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Thunk;
 
 final class BetaNormalizeToMap {
   static final Expr apply(Expr base, Expr type) {

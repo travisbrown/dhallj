@@ -15,7 +15,6 @@ import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Vis;
 import org.dhallj.core.util.FieldUtilities;
-import org.dhallj.core.util.ThunkUtilities;
 import org.dhallj.core.visitor.PureVis;
 
 /**

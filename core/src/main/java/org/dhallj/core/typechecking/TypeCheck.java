@@ -18,7 +18,6 @@ import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
-import org.dhallj.core.Thunk;
 import org.dhallj.core.Visitor;
 import org.dhallj.core.Expr.Constants;
 import org.dhallj.core.normalization.BetaNormalize;

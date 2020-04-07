@@ -1,7 +1,6 @@
 package org.dhallj.core.normalization;
 
 import org.dhallj.core.Expr;
-import org.dhallj.core.Thunk;
 import org.dhallj.core.Visitor;
 import org.dhallj.core.visitor.IdentityVisitor;
 

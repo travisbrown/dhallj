@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Thunk;
 
 /**
  * Utility methods related to fields that are useful across packages.
