@@ -1,14 +1,17 @@
 package org.dhallj.core.typechecking;
 
+import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,7 +113,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         Iterable<Entry<String, Expr>> rhsTypeRecordType = rhsType.asRecordType();
 
         if (lhsTypeRecordType != null && rhsTypeRecordType != null) {
-          return Expr.makeRecordType(FieldUtilities.prefer(lhsTypeRecordType, rhsTypeRecordType));
+          return Expr.makeRecordType(prefer(lhsTypeRecordType, rhsTypeRecordType));
         } else {
           throw fail("prefer requires record literals");
         }
@@ -937,5 +940,39 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     } else {
       throw fail("extra handler for merge");
     }
+  }
+
+  private static final Entry<String, Expr>[] prefer(
+      Iterable<Entry<String, Expr>> base, Iterable<Entry<String, Expr>> updates) {
+    Map<String, Expr> updateMap = new LinkedHashMap();
+
+    for (Entry<String, Expr> field : updates) {
+      updateMap.put(field.getKey(), field.getValue());
+    }
+
+    List<Entry<String, Expr>> result = new ArrayList();
+
+    for (Entry<String, Expr> field : base) {
+      String key = field.getKey();
+
+      Expr inUpdates = updateMap.remove(key);
+
+      if (inUpdates == null) {
+        result.add(field);
+      } else {
+        result.add(new SimpleImmutableEntry(key, inUpdates));
+      }
+    }
+
+    for (Entry<String, Expr> field : updateMap.entrySet()) {
+      result.add(field);
+    }
+
+    Entry<String, Expr>[] resultArray =
+        result.toArray((Entry<String, Expr>[]) Array.newInstance(Entry.class, result.size()));
+
+    Arrays.sort(resultArray, FieldUtilities.entryComparator);
+
+    return resultArray;
   }
 }
