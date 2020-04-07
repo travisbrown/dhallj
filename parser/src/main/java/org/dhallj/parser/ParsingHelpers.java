@@ -71,7 +71,11 @@ final class ParsingHelpers {
         interpolated.add(chunk.getValue());
         lastWasInterpolated = true;
       } else {
-        parts.add(chunk.getKey());
+        parts.add(chunk.getKey().replaceAll("\\\\([\"$])", "$1") /*.replaceAll("\\\\b", "\b")
+                .replaceAll("\\\\f", "\f")
+                .replaceAll("\\\\n", "\n")
+                .replaceAll("\\\\r", "\r")
+                .replaceAll("\\\\t", "\t")*/);
         lastWasInterpolated = false;
       }
     }
