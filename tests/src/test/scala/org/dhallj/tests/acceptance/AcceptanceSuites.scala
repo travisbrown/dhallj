@@ -43,3 +43,4 @@ class ParsingFailureSpacingSuite extends ParsingFailureSuite("parser/failure/spa
 class ParsingFailureOtherSuite extends ParsingFailureSuite("parser/failure")
 
 class BinaryDecodingUnitSuite extends BinaryDecodingSuite("binary-decode/success/unit")
+class BinaryDecodingImportsUnitSuite extends BinaryDecodingSuite("binary-decode/success/unit/imports")

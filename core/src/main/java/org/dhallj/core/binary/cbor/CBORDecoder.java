@@ -19,6 +19,7 @@ public abstract class CBORDecoder {
    */
   // TODO the above
   public <R> R nextSymbol(Visitor<R> visitor) {
+    skip55799();
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
       case UNSIGNED_INTEGER:
@@ -34,8 +35,7 @@ public abstract class CBORDecoder {
       case MAP:
         return visitor.onMap(readMapStart(b));
       case SEMANTIC_TAG:
-        readSemanticTag(b); //We ignore tags
-        return nextSymbol(visitor);
+        throw new RuntimeException("We should have skipped semantic tags");
       case PRIMITIVE:
         return readPrimitive(b, visitor);
       default:
@@ -50,10 +50,12 @@ public abstract class CBORDecoder {
   protected abstract byte[] read(int count);
 
   public BigInteger readUnsignedInteger() {
+    skip55799();
     return readUnsignedInteger(read());
   }
 
   public BigInteger readPositiveBigNum() {
+    skip55799();
     BigInteger result = readBigNum();
     if (result.compareTo(BigInteger.ZERO) < 0) {
       throw new RuntimeException(String.format("%s is not a positive big num", result));
@@ -63,6 +65,7 @@ public abstract class CBORDecoder {
   }
 
   public BigInteger readBigNum() {
+    skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
       case UNSIGNED_INTEGER:
@@ -88,11 +91,8 @@ public abstract class CBORDecoder {
     }
   }
 
-  public BigInteger readNegativeInteger() {
-    return readNegativeInteger(read());
-  }
-
   public String readNullableTextString() {
+    skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
       case TEXT_STRING:
@@ -105,6 +105,7 @@ public abstract class CBORDecoder {
   }
 
   public byte[] readNullableByteString() {
+    skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
       case BYTE_STRING:
@@ -124,6 +125,7 @@ public abstract class CBORDecoder {
    * element what type of expression we're decoding - could be projection or projection by type
    */
   public String tryReadTextString() {
+    skip55799();
     byte next = peek();
     switch (MajorType.fromByte(next)) {
       case TEXT_STRING:
@@ -134,6 +136,7 @@ public abstract class CBORDecoder {
   }
 
   public BigInteger readArrayStart() {
+    skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
       case ARRAY:
@@ -150,6 +153,7 @@ public abstract class CBORDecoder {
   }
 
   public <R> Map<String, R> readMap(Visitor<R> visitor) {
+    skip55799();
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
       case MAP:
@@ -206,6 +210,7 @@ public abstract class CBORDecoder {
     if (length.compareTo(BigInteger.ZERO) < 0) {
       throw new RuntimeException("Indefinite array not needed for Dhall");
     } else {
+      skip55799();
       byte next = read();
       switch (MajorType.fromByte(next)) {
         case UNSIGNED_INTEGER:
@@ -292,12 +297,24 @@ public abstract class CBORDecoder {
     }
   }
 
-  private void readSemanticTag(byte b) {
-    AdditionalInfo info = AdditionalInfo.fromByte(b);
-    BigInteger tag = readBigInteger(info, b);
-    int t = tag.intValue();
-    if (t != 55799) {
-      throw new RuntimeException(String.format("Unrecognized CBOR semantic tag %d", t));
+  private void skip55799() {
+    byte next = peek();
+    switch (MajorType.fromByte(next)) {
+      case SEMANTIC_TAG:
+        AdditionalInfo info = AdditionalInfo.fromByte(next);
+        switch (info) {
+          case DIRECT:
+            return; //Don't advance pointer if it's a Bignum
+          default:
+            BigInteger tag = readBigInteger(info, read()); //Now advance pointer
+            int t = tag.intValue();
+            if (t != 55799) {
+              throw new RuntimeException(String.format("Unrecognized CBOR semantic tag %d", t));
+            } else {
+              skip55799(); //Please tell me no encoders do this
+            }
+        }
+      default:
     }
   }
 
