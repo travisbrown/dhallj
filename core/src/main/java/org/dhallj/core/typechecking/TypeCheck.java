@@ -274,7 +274,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
     if (isType(baseType)) {
       Expr normalized = base.acceptVis(BetaNormalize.instance);
-      if (normalized != null && normalized.acceptExternal(CheckEquivalence.instance)) {
+      Boolean isEquivalent = normalized.acceptExternal(CheckEquivalence.instance);
+      if (isEquivalent != null && isEquivalent) {
         return normalized;
       }
     }
