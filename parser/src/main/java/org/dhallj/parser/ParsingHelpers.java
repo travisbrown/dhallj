@@ -111,13 +111,15 @@ final class ParsingHelpers {
   static final void dedent(String[] input) {
     List<Character> candidate = null;
 
+    input[0] = "\n" + input[0];
+
     for (int i = 0; i < input.length; i++) {
       String part = input[i].replace("\r\n", "\n");
       input[i] = part;
 
       for (int j = 0; j < part.length(); j++) {
-        // Check if this character is a newline, but not before a blank line.
-        if (part.charAt(j) == '\n' && (j == part.length() - 1 || part.charAt(j + 1) != '\n')) {
+        // Check if this character is a newline (but not before a blank line).
+        if ((part.charAt(j) == '\n') && (j == part.length() - 1 || part.charAt(j + 1) != '\n')) {
           if (candidate == null) {
             candidate = new ArrayList<Character>();
             for (int k = j + 1; k < part.length(); k++) {
@@ -132,7 +134,7 @@ final class ParsingHelpers {
             for (int k = j + 1; k < part.length(); k++) {
               if (candidate.size() >= k - j
                   && part.charAt(k) != candidate.get(k - j - 1).charValue()) {
-                for (int r = candidate.size() - 1; r >= k - j + 1; r--) {
+                for (int r = candidate.size() - 1; r >= k - j - 1; r--) {
                   candidate.remove(r);
                 }
                 break;
@@ -151,9 +153,23 @@ final class ParsingHelpers {
       String target = builder.toString();
 
       for (int i = 0; i < input.length; i++) {
-        input[i] = input[i].replace("\n" + target, "\n").replaceAll("^" + target, "");
+        input[i] = input[i].replace("\n" + target, "\n");
       }
     }
+
+    input[0] = input[0].substring(1);
+
+    for (int i = 0; i < input.length; i += 1) {
+      input[i] = reEscape(input[i]);
+    }
+  }
+
+  static final String reEscape(String input) {
+    return input
+        .replace("\n", "\\n")
+        .replace("'''", "''")
+        .replace("''${", "\\${")
+        .replace("\\\"", "x\"");
   }
 
   static final Expr.Parsed makeSingleQuotedTextLiteral(
