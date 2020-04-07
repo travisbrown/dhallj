@@ -254,7 +254,7 @@ class BinaryDecodingTests extends FunSuite {
     assert(decoded.equivalent(expected))
   }
 
-  test("Decode local importtext") {
+  test("Decode local import") {
     val bytes = load("local_import.bin")
 
     val decoded = decode(bytes)
@@ -277,6 +277,18 @@ class BinaryDecodingTests extends FunSuite {
 
     val decoded = decode(bytes)
     val expected = parse("/foo/bar as Location")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode remote import") {
+    val bytes = load("remote_import.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("https://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/package.dhall?foo=bar using { pwd = \"secret\"}")
+
+    println(decoded)
+    println(expected)
 
     assert(decoded.equivalent(expected))
   }

@@ -59,7 +59,13 @@ public abstract class CBORDecoder {
   }
 
   public String readTextString() {
-    return readTextString(read());
+    byte next = read();
+    switch (MajorType.fromByte(next)) {
+      case TEXT_STRING:
+        return readTextString(next);
+      default:
+        return readPrimitive(next, new NullVisitor<String>());
+    }
   }
 
   public byte[] readByteString() {
@@ -68,7 +74,7 @@ public abstract class CBORDecoder {
       case BYTE_STRING:
         return readByteString(next);
       default:
-        return null;
+        return readPrimitive(next, new NullVisitor<byte[]>());
     }
   }
 
@@ -78,7 +84,7 @@ public abstract class CBORDecoder {
       case MAP:
         BigInteger length = readMapStart(b);
         Map<String, R> entries = new HashMap<>();
-        for(int i=0; i< length.longValue(); i++) {
+        for (int i = 0; i < length.longValue(); i++) {
           String key = readTextString();
           R value = nextSymbol(visitor);
           entries.put(key, value);

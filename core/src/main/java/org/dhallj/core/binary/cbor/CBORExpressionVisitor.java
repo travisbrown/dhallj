@@ -5,6 +5,7 @@ import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -54,7 +55,6 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   @Override
   public Expr onArray(BigInteger length, BigInteger tagI) {
     int tag = tagI.intValue();
-    System.out.println("In onArray");
     if (tag == 0) {
       return readFnApplication(length);
     } else if (tag == 1) {
@@ -117,7 +117,6 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
 
   @Override
   public Expr onNull() {
-    System.out.println("OnNull");
     //TODO this might not be correct!
     return null;
   }
@@ -164,7 +163,6 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       return Expr.makeLambda("_", tpe, result);
     } else if (len == 4) {
       String param = decoder.readTextString();
-      System.out.println("Decoded param " + param);
       if (param.equals("_")) {
         throw new RuntimeException(("Illegal explicit bound variable '_' in function"));
       }
@@ -390,14 +388,16 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     Import.Mode mode = readMode();
     int tag = decoder.readUnsignedInteger().intValue();
     if (tag == 0) {
-      return readRemoteImport(length, mode, hash, "http");
+      Expr using = readExpr();
+      return readRemoteImport(length, mode, hash, "http:/", using);
     } else if (tag == 1) {
-      return readRemoteImport(length, mode, hash, "https");
+      Expr using = readExpr();
+      return readRemoteImport(length, mode, hash, "https:/", using);
     } else if (tag == 2) {
       return readLocalImport(length, mode, hash, "/");
     } else if (tag == 3) {
       return readLocalImport(length, mode, hash, "./");
-    } else  if (tag == 4) {
+    } else if (tag == 4) {
       return readLocalImport(length, mode, hash, "../");
     } else if (tag == 5) {
       return readLocalImport(length, mode, hash, "~");
@@ -426,14 +426,28 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readLocalImport(BigInteger length, Import.Mode mode, byte[] hash, String prefix) {
     Path path = Paths.get(prefix);
     int len = length.intValue();
-    for (int i=4; i<len; i++) {
+    for (int i = 4; i < len; i++) {
       path = path.resolve(decoder.readTextString());
     }
     return Expr.makeLocalImport(path, mode, hash);
   }
 
-  private Expr readRemoteImport(BigInteger length, Import.Mode mode, byte[] hash, String prefix) {
-    return null;
+  private Expr readRemoteImport(BigInteger length, Import.Mode mode, byte[] hash, String prefix, Expr using) {
+    String uri = prefix;
+    int len = length.intValue();
+    System.out.println("len is " + len);
+    for (int i = 5; i < len - 1; i++) {
+      uri = uri + "/" + decoder.readTextString();
+    }
+    String query = decoder.readTextString();
+    if (query != null) {
+      uri = uri + "?" + query;
+    }
+    try {
+      return Expr.makeRemoteImport(new URI(uri), using, mode, hash);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private Expr readEnvImport(BigInteger length, Import.Mode mode, byte[] hash) {
@@ -452,7 +466,6 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   }
 
   private Expr readTextLiteral(BigInteger length) {
-    System.out.println(length.longValue());
     List<String> lits = new ArrayList<>();
     List<Expr> exprs = new ArrayList<>();
     String lit = decoder.readTextString();
