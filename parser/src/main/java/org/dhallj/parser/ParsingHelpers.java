@@ -53,6 +53,30 @@ final class ParsingHelpers {
     return new Expr.Parsed(Expr.makeIntegerLiteral(value), sourceFromToken(token));
   }
 
+  private static String unescapeText(String in) {
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < in.length(); i++) {
+      if (in.charAt(i) == '\\') {
+        i += 1;
+        char next = in.charAt(i);
+        if (next == '"' || next == '$') {
+          builder.append(next);
+        } else if (next == 'u') {
+          // TODO: handle braced escapes.
+          long code = Long.parseLong(in.substring(i + 1, i + 5), 16);
+          builder.append((char) code);
+          i += 4;
+        } else {
+          builder.append('\\');
+          builder.append(next);
+        }
+      } else {
+        builder.append(in.charAt(i));
+      }
+    }
+    return builder.toString();
+  }
+
   static final Expr.Parsed makeTextLiteral(
       List<Entry<String, Expr.Parsed>> chunks, Token first, Token last) {
     // TODO: fix source.
@@ -71,11 +95,7 @@ final class ParsingHelpers {
         interpolated.add(chunk.getValue());
         lastWasInterpolated = true;
       } else {
-        parts.add(chunk.getKey().replaceAll("\\\\([\"$])", "$1") /*.replaceAll("\\\\b", "\b")
-                .replaceAll("\\\\f", "\f")
-                .replaceAll("\\\\n", "\n")
-                .replaceAll("\\\\r", "\r")
-                .replaceAll("\\\\t", "\t")*/);
+        parts.add(unescapeText(chunk.getKey()));
         lastWasInterpolated = false;
       }
     }

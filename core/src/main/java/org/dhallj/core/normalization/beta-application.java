@@ -115,7 +115,7 @@ final class BetaNormalizeApplication {
   }
 
   private static String escapeText(String input) {
-    StringBuilder builder = new StringBuilder("\"");
+    StringBuilder builder = new StringBuilder("\\\"");
 
     for (int i = 0; i < input.length(); i++) {
       char c = input.charAt(i);
@@ -126,12 +126,13 @@ final class BetaNormalizeApplication {
       } else if (c == '\\') {
         builder.append("\\\\");
       } else if (c >= '\u0000' && c <= '\u001f') {
-        builder.append(String.format("\\u%04X", c));
+        builder.append('\\');
+        builder.append(String.format("\\u%04X", (long) c));
       } else {
         builder.append(c);
       }
     }
-    builder.append("\"");
+    builder.append("\\\"");
 
     return builder.toString();
   }

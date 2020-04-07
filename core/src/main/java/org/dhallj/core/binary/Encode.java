@@ -192,7 +192,8 @@ public final class Encode implements Vis<Writer> {
       writers.add(
           new Writer() {
             public void writeToStream(OutputStream stream) throws IOException {
-              this.writeString(stream, part);
+              this.writeString(
+                  stream, part.replaceAll("\\\\\"", "\"").replaceAll("\\\\\\\\", "\\\\"));
             }
           });
       if (it.hasNext()) {
