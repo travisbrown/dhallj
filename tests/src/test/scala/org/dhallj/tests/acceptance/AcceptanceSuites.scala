@@ -36,7 +36,7 @@ class ParsingUnitSuite extends ParsingSuite("parser/success/unit") {
   // I'm pretty much convinced we're doing the right thing on SomeXYZ.
   override def ignored = Set("SomeXYZ")
 }
-class ParsingOtherSuite extends ParsingSuite("parser/success") //{ override def ignored = Set("largeExpression") }
+class ParsingOtherSuite extends ParsingSuite("parser/success")
 
 class ParsingFailureUnitSuite extends ParsingFailureSuite("parser/failure/unit")
 class ParsingFailureSpacingSuite extends ParsingFailureSuite("parser/failure/spacing")
