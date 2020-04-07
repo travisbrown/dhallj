@@ -176,6 +176,40 @@ public final class Encode implements Vis<Writer> {
 
   public void preText(int size) {}
 
+  private static final String unescapeText(String input) {
+    StringBuilder builder = new StringBuilder();
+
+    for (int i = 0; i < input.length(); i += 1) {
+      if (input.charAt(i) == '\\') {
+        i += 1;
+        char next = input.charAt(i);
+
+        if (next == '"') {
+          builder.append('"');
+        } else if (next == '\\') {
+          builder.append('\\');
+        } else if (next == 'b') {
+          builder.append('\b');
+        } else if (next == 'f') {
+          builder.append('\f');
+        } else if (next == 'n') {
+          builder.append('\n');
+        } else if (next == 'r') {
+          builder.append('\r');
+        } else if (next == 't') {
+          builder.append('\t');
+        } else {
+          builder.append('\\');
+          builder.append(next);
+        }
+      } else {
+        builder.append(input.charAt(i));
+      }
+    }
+
+    return builder.toString();
+  }
+
   public Writer onText(final String[] parts, List<Writer> interpolated) {
     List<Writer> writers = new ArrayList<Writer>(parts.length + 1);
 
@@ -192,8 +226,7 @@ public final class Encode implements Vis<Writer> {
       writers.add(
           new Writer() {
             public void writeToStream(OutputStream stream) throws IOException {
-              this.writeString(
-                  stream, part.replaceAll("\\\\\"", "\"").replaceAll("\\\\\\\\", "\\\\"));
+              this.writeString(stream, unescapeText(part));
             }
           });
       if (it.hasNext()) {

@@ -1,6 +1,8 @@
 package org.dhallj.tests
 
+import java.nio.file.Paths
 import munit.FunSuite
+import org.dhallj.imports.mini.Resolver
 import org.dhallj.core.Expr
 import org.dhallj.parser.Dhall
 import scala.io.Source
@@ -17,10 +19,14 @@ class PreludeSuite extends FunSuite() {
       }
   }
 
-  def checkHash(name: String)(implicit loc: munit.Location): Unit = {
-    val content = Source.fromResource(name).getLines.mkString("\n")
-    test(name)(assert(Dhall.parse(content).normalize.alphaNormalize.hash == clue(HaskellDhall.hash(content))))
+  def checkHash(path: String)(implicit loc: munit.Location): Unit = {
+    val content = Source.fromResource(path).getLines.mkString("\n")
+    val parsed = Dhall.parse(content)
+
+    val resolved = Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
+
+    test(path)(assert(resolved.normalize.alphaNormalize.hash == clue(HaskellDhall.hash(content))))
   }
 
-  //preludeFiles.filterNot(_.endsWith("dhall")).foreach(checkHash)
+  preludeFiles.filterNot(_.endsWith("dhall")).foreach(checkHash)
 }
