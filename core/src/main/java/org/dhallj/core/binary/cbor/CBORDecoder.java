@@ -1,5 +1,6 @@
 package org.dhallj.core.binary.cbor;
 
+import org.dhallj.core.Expr;
 import org.dhallj.core.binary.cbor.CBORExpression.Constants.AdditionalInfo;
 import org.dhallj.core.binary.cbor.CBORExpression.Constants.MajorType;
 
@@ -20,7 +21,6 @@ public abstract class CBORDecoder {
    */
   //TODO the above
   public <R> R nextSymbol(Visitor<R> visitor) {
-    System.out.println("Next symbol");
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
       case UNSIGNED_INTEGER:
@@ -58,23 +58,61 @@ public abstract class CBORDecoder {
     return readNegativeInteger(read());
   }
 
-  public String readTextString() {
+  public String readNullableTextString() {
     byte next = read();
     switch (MajorType.fromByte(next)) {
       case TEXT_STRING:
         return readTextString(next);
-      default:
+      case PRIMITIVE:
         return readPrimitive(next, new NullVisitor<String>());
+      default:
+        throw new RuntimeException("Next symbol is neither a text string or null");
     }
   }
 
-  public byte[] readByteString() {
+  public byte[] readNullableByteString() {
     byte next = read();
     switch (MajorType.fromByte(next)) {
       case BYTE_STRING:
         return readByteString(next);
-      default:
+      case PRIMITIVE:
         return readPrimitive(next, new NullVisitor<byte[]>());
+      default:
+        throw new RuntimeException("Next symbol is neither a byte string or null");
+    }
+  }
+
+  /**
+   * This is unfortunate and horrible.
+   *
+   * A hack to support decoding record projections, which are the only expressions which
+   * have a CBOR representation where we don't know simply from the length of the array
+   * and the first element what type of expression we're decoding - could be projection
+   * or projection by type
+   */
+  public String tryReadTextString() {
+    byte next = peek();
+    switch (MajorType.fromByte(next)) {
+      case TEXT_STRING:
+        return readTextString(read());
+      default:
+        return null;
+    }
+  }
+
+  public BigInteger readArrayStart() {
+    byte next = read();
+    switch (MajorType.fromByte(next)) {
+      case ARRAY:
+        AdditionalInfo info = AdditionalInfo.fromByte(next);
+        BigInteger length = readBigInteger(info, next);
+        if (length.compareTo(BigInteger.ZERO) < 0) {
+          throw new RuntimeException("Indefinite array not needed for Dhall");
+        } else {
+          return length;
+        }
+      default:
+        throw new RuntimeException("Next symbol is not an array");
     }
   }
 
@@ -85,7 +123,7 @@ public abstract class CBORDecoder {
         BigInteger length = readMapStart(b);
         Map<String, R> entries = new HashMap<>();
         for (int i = 0; i < length.longValue(); i++) {
-          String key = readTextString();
+          String key = readNullableTextString();
           R value = nextSymbol(visitor);
           entries.put(key, value);
         }
@@ -134,9 +172,7 @@ public abstract class CBORDecoder {
     if (length.compareTo(BigInteger.ZERO) < 0) {
       throw new RuntimeException("Indefinite array not needed for Dhall");
     } else {
-      System.out.println("Length is " + length.intValue());
       byte next = read();
-      System.out.println(MajorType.fromByte(next));
       switch (MajorType.fromByte(next)) {
         case UNSIGNED_INTEGER:
           return visitor.onArray(length, readUnsignedInteger(next));

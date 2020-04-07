@@ -1,12 +1,9 @@
 package org.dhallj.tests
 
-import java.math.BigInteger
 import java.nio.file.{Files, Paths}
 
 import munit.FunSuite
-import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
-import scala.jdk.CollectionConverters._
 import org.dhallj.parser.Dhall.parse
 
 class BinaryDecodingTests extends FunSuite {
@@ -182,6 +179,15 @@ class BinaryDecodingTests extends FunSuite {
     assert(decoded.equivalent(expected))
   }
 
+  test("Decode record projection by type") {
+    val bytes = load("record_type_projection.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("{x = 1, y = 2, z = \"foo\"}.({x : Natural, y : Natural})")
+
+    assert(decoded.equivalent(expected))
+  }
+
   test("Decode union") {
     val bytes = load("union.bin")
 
@@ -286,9 +292,6 @@ class BinaryDecodingTests extends FunSuite {
 
     val decoded = decode(bytes)
     val expected = parse("https://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/package.dhall?foo=bar using { pwd = \"secret\"}")
-
-    println(decoded)
-    println(expected)
 
     assert(decoded.equivalent(expected))
   }
