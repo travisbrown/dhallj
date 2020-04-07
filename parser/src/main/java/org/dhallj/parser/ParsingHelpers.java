@@ -274,38 +274,37 @@ final class ParsingHelpers {
       Token whsp1,
       Token whsp2,
       Token whsp3) {
-    StringBuilder builder = new StringBuilder();
-    if (whsp2 != null) {
-      builder.append(whsp2.image);
+    Source source;
+
+    if (tpe != null) {
+      StringBuilder builder = new StringBuilder();
+      if (whsp2 != null) {
+        builder.append(whsp2.image);
+      }
+      builder.append(":");
+      builder.append(whsp3.image);
+      source =
+          new SESESESource(
+              first.image + whsp0.image,
+              left,
+              whsp1.image,
+              right,
+              builder.toString(),
+              tpe,
+              first.beginLine,
+              first.beginColumn);
+    } else {
+      source =
+          new SESESource(
+              first.image + whsp0.image,
+              left,
+              whsp1.image,
+              right,
+              first.beginLine,
+              first.beginColumn);
     }
-    builder.append(":");
-    builder.append(whsp3.image);
-    Source source =
-        new SESESESource(
-            first.image + whsp0.image,
-            left,
-            whsp1.image,
-            right,
-            builder.toString(),
-            tpe,
-            first.beginLine,
-            first.beginColumn);
 
     return new Expr.Parsed(Expr.makeMerge(left, right, tpe), source);
-  }
-
-  static final Expr.Parsed makeMerge(
-      Expr.Parsed left, Expr.Parsed right, Token first, Token whsp0, Token whsp1) {
-    Source source =
-        new SESESource(
-            first.image + whsp0.image,
-            left,
-            whsp1.image,
-            right,
-            first.beginLine,
-            first.beginColumn);
-
-    return new Expr.Parsed(Expr.makeMerge(left, right), source);
   }
 
   static final Expr.Parsed makeLambda(
