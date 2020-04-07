@@ -14,10 +14,7 @@ import java.util.Map;
  */
 public abstract class CBORDecoder {
 
-  /**
-   * Only allow symbols that correspond to entire encoded Dhall expressions
-   */
-  // TODO the above
+  /** Only allow symbols that correspond to entire encoded Dhall expressions */
   public <R> R nextSymbol(Visitor<R> visitor) {
     skip55799();
     byte b = this.read();
@@ -77,7 +74,7 @@ public abstract class CBORDecoder {
         BigInteger t = readBigInteger(info, next);
         long tag = t.longValue();
         BigInteger length = readUnsignedInteger();
-        long len = length.longValue(); //Don't handle Bignums larger than this
+        long len = length.longValue(); // Don't handle Bignums larger than this
         BigInteger result = readBigInteger(len);
         if (tag == 2) {
           return result;
@@ -87,7 +84,8 @@ public abstract class CBORDecoder {
           throw new RuntimeException(String.format("%d is not a valid tag for a bignum", tag));
         }
       default:
-        throw new RuntimeException(String.format("%d not a valid major type for an Unsigned Integer"));
+        throw new RuntimeException(
+            String.format("%d not a valid major type for an Unsigned Integer"));
     }
   }
 
@@ -304,14 +302,14 @@ public abstract class CBORDecoder {
         AdditionalInfo info = AdditionalInfo.fromByte(next);
         switch (info) {
           case DIRECT:
-            return; //Don't advance pointer if it's a Bignum
+            return; // Don't advance pointer if it's a Bignum
           default:
-            BigInteger tag = readBigInteger(info, read()); //Now advance pointer
+            BigInteger tag = readBigInteger(info, read()); // Now advance pointer
             int t = tag.intValue();
             if (t != 55799) {
               throw new RuntimeException(String.format("Unrecognized CBOR semantic tag %d", t));
             } else {
-              skip55799(); //Please tell me no encoders do this
+              skip55799(); // Please tell me no encoders do this
             }
         }
       default:
