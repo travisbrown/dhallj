@@ -245,6 +245,42 @@ class BinaryDecodingTests extends FunSuite {
     assert(decoded.equivalent(expected))
   }
 
+  test("Decode env import") {
+    val bytes = load("env_import.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("env:foo")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode local importtext") {
+    val bytes = load("local_import.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("~/foo/bar")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode local import as text") {
+    val bytes = load("local_import_text.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("../foo/bar as Text")
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode local import as location") {
+    val bytes = load("local_import_location.bin")
+
+    val decoded = decode(bytes)
+    val expected = parse("/foo/bar as Location")
+
+    assert(decoded.equivalent(expected))
+  }
+
   private def load(resource: String): Array[Byte] =
     Files.readAllBytes(Paths.get(getClass.getResource(s"/binary/$resource").toURI))
 

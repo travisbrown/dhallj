@@ -1,9 +1,12 @@
 package org.dhallj.core.binary.cbor;
 
 import org.dhallj.core.Expr;
+import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -383,7 +386,59 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   }
 
   private Expr readImport(BigInteger length) {
+    byte[] hash = decoder.readByteString();
+    Import.Mode mode = readMode();
+    int tag = decoder.readUnsignedInteger().intValue();
+    if (tag == 0) {
+      return readRemoteImport(length, mode, hash, "http");
+    } else if (tag == 1) {
+      return readRemoteImport(length, mode, hash, "https");
+    } else if (tag == 2) {
+      return readLocalImport(length, mode, hash, "/");
+    } else if (tag == 3) {
+      return readLocalImport(length, mode, hash, "./");
+    } else  if (tag == 4) {
+      return readLocalImport(length, mode, hash, "../");
+    } else if (tag == 5) {
+      return readLocalImport(length, mode, hash, "~");
+    } else if (tag == 6) {
+      return readEnvImport(length, mode, hash);
+    } else if (tag == 7) {
+      return Expr.makeMissingImport(mode, hash);
+    } else {
+      throw new RuntimeException(String.format("Import type %d is undefined", tag));
+    }
+  }
+
+  private Import.Mode readMode() {
+    int m = decoder.readUnsignedInteger().intValue();
+    if (m == 0) {
+      return Import.Mode.CODE;
+    } else if (m == 1) {
+      return Import.Mode.RAW_TEXT;
+    } else if (m == 2) {
+      return Import.Mode.LOCATION;
+    } else {
+      throw new RuntimeException(String.format("Import mode %d is undefined", m));
+    }
+  }
+
+  private Expr readLocalImport(BigInteger length, Import.Mode mode, byte[] hash, String prefix) {
+    Path path = Paths.get(prefix);
+    int len = length.intValue();
+    for (int i=4; i<len; i++) {
+      path = path.resolve(decoder.readTextString());
+    }
+    return Expr.makeLocalImport(path, mode, hash);
+  }
+
+  private Expr readRemoteImport(BigInteger length, Import.Mode mode, byte[] hash, String prefix) {
     return null;
+  }
+
+  private Expr readEnvImport(BigInteger length, Import.Mode mode, byte[] hash) {
+    String value = decoder.readTextString();
+    return Expr.makeEnvImport(value, mode, hash);
   }
 
   private Expr readAssert(BigInteger length) {

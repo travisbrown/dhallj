@@ -62,6 +62,16 @@ public abstract class CBORDecoder {
     return readTextString(read());
   }
 
+  public byte[] readByteString() {
+    byte next = read();
+    switch (MajorType.fromByte(next)) {
+      case BYTE_STRING:
+        return readByteString(next);
+      default:
+        return null;
+    }
+  }
+
   public <R> Map<String, R> readMap(Visitor<R> visitor) {
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
