@@ -1348,8 +1348,8 @@ public abstract class Expr {
           break;
         }
       } else if (currentA.tag == Tags.DOUBLE) {
-        if (((Constructors.DoubleLiteral) currentA).value
-            == ((Constructors.DoubleLiteral) currentB).value) {
+        // We must compare double literals using the binary encoding.
+        if (Arrays.equals(currentA.encodeToByteArray(), currentB.encodeToByteArray())) {
           continue;
         } else {
           break;
