@@ -1,6 +1,6 @@
 package org.dhallj.tests.acceptance
 
-import java.nio.file.Paths
+import java.nio.file.{Files, Paths}
 
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
@@ -23,6 +23,7 @@ trait SuccessSuite[A, B] extends AcceptanceSuite {
   testPairs.foreach {
     case (name, path, (input, expected)) =>
       test(name) {
+        println(path)
         assert(compare(clue(transform(parseInput(path, clue(input)))), clue(expected)))
       }
   }
@@ -72,10 +73,15 @@ class ParsingSuite(val base: String) extends ExprAcceptanceSuite[Array[Byte]] {
 }
 
 abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends ExprAcceptanceSuite[Expr] {
-  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
+  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(8) + "B.dhall"
+
+  override def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhallb")
+
+  override def parseInput(path: String, input: String): Expr =
+    decode(readBytes(path))
 
   def transform(input: Expr): Expr = transformation(input)
-  def loadExpected(input: Array[Byte]): Expr = decode(input)
+  def loadExpected(input: Array[Byte]): Expr = Dhall.parse(new String(input))
   def compare(result: Expr, expected: Expr): Boolean = result.equals(expected)
 }
 
