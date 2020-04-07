@@ -144,14 +144,14 @@ final class ParsingHelpers {
     }
 
     if (!candidate.isEmpty()) {
-      StringBuilder builder = new StringBuilder("\n");
+      StringBuilder builder = new StringBuilder();
       for (Character c : candidate) {
         builder.append(c);
       }
       String target = builder.toString();
 
       for (int i = 0; i < input.length; i++) {
-        input[i] = input[i].replace(target, "\n");
+        input[i] = input[i].replace("\n" + target, "\n").replaceAll("^" + target, "");
       }
     }
   }
