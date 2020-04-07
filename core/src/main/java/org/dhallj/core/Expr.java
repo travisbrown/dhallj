@@ -287,8 +287,14 @@ public abstract class Expr {
     return this.show();
   }
 
-  Expr getNonNote() {
-    return (this.tag == Tags.NOTE) ? ((Parsed) this).base : this;
+  private Expr getNonNote() {
+    Expr current = this;
+
+    while (current.tag == Tags.NOTE) {
+      current = ((Parsed) current).base;
+    }
+
+    return current;
   }
 
   public static final class Sugar {
