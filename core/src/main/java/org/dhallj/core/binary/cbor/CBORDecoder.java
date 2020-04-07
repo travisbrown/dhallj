@@ -33,10 +33,10 @@ public abstract class CBORDecoder {
       case MAP:
         return visitor.onMap(readMapStart(b));
       case SEMANTIC_TAG:
-        throw new RuntimeException("TODO");
+        readSemanticTag(b); //We ignore tags
+        return nextSymbol(visitor);
       case PRIMITIVE:
-        return readPrimitive(b, visitor);
-      default:
+        return readPrimitive(b, visitor); default:
         throw new RuntimeException(String.format("Invalid CBOR major type %d", b));
     }
   }
@@ -194,10 +194,6 @@ public abstract class CBORDecoder {
     }
   }
 
-  private CBORExpression readSemanticTag(byte b) {
-    return null;
-  }
-
   private <R> R readPrimitive(byte b, Visitor<R> visitor) {
     int value = b & 31;
     if (0 <= value && value <= 19) {
@@ -256,6 +252,15 @@ public abstract class CBORDecoder {
       throw new RuntimeException("Break stop code not needed for Dhall");
     } else {
       throw new RuntimeException(String.format("Primitive %d is not valid", value));
+    }
+  }
+
+  private void readSemanticTag(byte b) {
+    AdditionalInfo info = AdditionalInfo.fromByte(b);
+    BigInteger tag = readBigInteger(info, b);
+    int t = tag.intValue();
+    if (t != 55799) {
+      throw new RuntimeException(String.format("Unrecognized CBOR semantic tag %d", t));
     }
   }
 

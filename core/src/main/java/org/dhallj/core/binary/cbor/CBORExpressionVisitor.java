@@ -4,6 +4,7 @@ import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 
+import javax.management.relation.RoleUnresolved;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -79,6 +80,8 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       return readProjection(length);
     } else if (tag == 11) {
       return readUnion(length);
+    } else if (tag == 14) {
+      return readIf(length);
     } else if (tag == 15) {
       return readNatural(length);
     } else if (tag == 16) {
@@ -107,12 +110,12 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
 
   @Override
   public Expr onFalse() {
-    return Expr.makeIdentifier("False");
+    return Expr.Constants.FALSE;
   }
 
   @Override
   public Expr onTrue() {
-    return Expr.makeIdentifier("True");
+    return Expr.Constants.TRUE;
   }
 
   @Override
@@ -371,6 +374,18 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     } else {
       Map<String, Expr> entries = decoder.readMap(this);
       return Expr.makeUnionType(entries.entrySet());
+    }
+  }
+
+  private Expr readIf(BigInteger length) {
+    int len = length.intValue();
+    if (len != 4) {
+      throw new RuntimeException("If must be encoded in an array of length 4");
+    } else {
+      Expr cond = readExpr();
+      Expr ifE = readExpr();
+      Expr elseE = readExpr();
+      return Expr.makeIf(cond, ifE, elseE);
     }
   }
 
