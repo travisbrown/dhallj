@@ -1,6 +1,5 @@
 package org.dhallj.core.binary.cbor;
 
-import org.dhallj.core.Expr;
 import org.dhallj.core.binary.cbor.CBORExpression.Constants.AdditionalInfo;
 import org.dhallj.core.binary.cbor.CBORExpression.Constants.MajorType;
 
