@@ -137,7 +137,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
 
   @Override
   public Expr onTag() {
-    //TODO
+    // TODO
     return notExpected("Tag");
   }
 
@@ -260,7 +260,6 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     } else {
       throw new RuntimeException(String.format("List of abstract type %s must be empty"));
     }
-
   }
 
   private Expr readSome(BigInteger length) {
@@ -341,8 +340,8 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     if (len == 2) {
       return Expr.makeProjection(e, new String[0]);
     } else {
-      //This is horrible but so is the encoding of record projections - we don't know whether
-      //we expect an array or Strings next
+      // This is horrible but so is the encoding of record projections - we don't know whether
+      // we expect an array or Strings next
       String first = decoder.tryReadTextString();
       if (first != null) {
         List<String> fields = new ArrayList<>();
@@ -352,17 +351,17 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
         }
         return Expr.makeProjection(e, fields.toArray(new String[fields.size()]));
       } else {
-        //It was actually an array
+        // It was actually an array
         int innerLen = decoder.readArrayStart().intValue();
         if (innerLen != 1) {
-          throw new RuntimeException("Type for type  projection must be encoded in an array of length 1");
+          throw new RuntimeException(
+              "Type for type  projection must be encoded in an array of length 1");
         } else {
           Expr tpe = readExpr();
           return Expr.makeProjectionByType(e, tpe);
         }
       }
     }
-
   }
 
   private Expr readUnion(BigInteger length) {
@@ -454,7 +453,8 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     return Expr.makeLocalImport(path, mode, hash);
   }
 
-  private Expr readRemoteImport(BigInteger length, Import.Mode mode, byte[] hash, String prefix, Expr using) {
+  private Expr readRemoteImport(
+      BigInteger length, Import.Mode mode, byte[] hash, String prefix, Expr using) {
     String uri = prefix;
     int len = length.intValue();
     for (int i = 5; i < len - 1; i++) {

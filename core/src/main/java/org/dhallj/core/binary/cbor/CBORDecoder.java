@@ -15,11 +15,8 @@ import java.util.Map;
  */
 public abstract class CBORDecoder {
 
-  /**
-   * Only allow symbols that correspond to entire encoded
-   * Dhall expressions
-   */
-  //TODO the above
+  /** Only allow symbols that correspond to entire encoded Dhall expressions */
+  // TODO the above
   public <R> R nextSymbol(Visitor<R> visitor) {
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
@@ -85,10 +82,9 @@ public abstract class CBORDecoder {
   /**
    * This is unfortunate and horrible.
    *
-   * A hack to support decoding record projections, which are the only expressions which
-   * have a CBOR representation where we don't know simply from the length of the array
-   * and the first element what type of expression we're decoding - could be projection
-   * or projection by type
+   * <p>A hack to support decoding record projections, which are the only expressions which have a
+   * CBOR representation where we don't know simply from the length of the array and the first
+   * element what type of expression we're decoding - could be projection or projection by type
    */
   public String tryReadTextString() {
     byte next = peek();
@@ -129,7 +125,8 @@ public abstract class CBORDecoder {
         }
         return entries;
       default:
-        throw new RuntimeException(String.format("Cannot read map - major type is %s", MajorType.fromByte(b)));
+        throw new RuntimeException(
+            String.format("Cannot read map - major type is %s", MajorType.fromByte(b)));
     }
   }
 
@@ -179,7 +176,10 @@ public abstract class CBORDecoder {
         case TEXT_STRING:
           return visitor.onVariableArray(length, readTextString(next));
         default:
-          throw new RuntimeException(String.format("Invalid start to CBOR-encoded Dhall expression %s", MajorType.fromByte(b).toString()));
+          throw new RuntimeException(
+              String.format(
+                  "Invalid start to CBOR-encoded Dhall expression %s",
+                  MajorType.fromByte(b).toString()));
       }
     }
   }

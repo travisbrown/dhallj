@@ -1,7 +1,9 @@
 package org.dhallj.tests.acceptance
 
 import java.nio.file.Paths
+
 import org.dhallj.core.Expr
+import org.dhallj.core.binary.Decode.decode
 import org.dhallj.imports.mini.Resolver
 import org.dhallj.parser.Dhall
 
@@ -68,3 +70,13 @@ class ParsingSuite(val base: String) extends ExprAcceptanceSuite[Array[Byte]] {
   def loadExpected(input: Array[Byte]): Array[Byte] = input
   def compare(result: Array[Byte], expected: Array[Byte]): Boolean = result.sameElements(expected)
 }
+
+abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends ExprAcceptanceSuite[Expr] {
+  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
+
+  def transform(input: Expr): Expr = transformation(input)
+  def loadExpected(input: Array[Byte]): Expr = decode(input)
+  def compare(result: Expr, expected: Expr): Boolean = result.equals(expected)
+}
+
+class BinaryDecodingSuite(val base: String) extends ExprDecodingAcceptanceSuite(identity)

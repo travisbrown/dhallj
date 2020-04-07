@@ -2,9 +2,7 @@ package org.dhallj.core.binary.cbor;
 
 import java.math.BigInteger;
 
-/**
- * To read a CBOR primitive and ensure it is null
- */
+/** To read a CBOR primitive and ensure it is null */
 public class NullVisitor<R> implements Visitor<R> {
 
   @Override
