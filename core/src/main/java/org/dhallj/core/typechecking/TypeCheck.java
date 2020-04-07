@@ -893,11 +893,20 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
                   new ConstantVisitor.External<Expr>(null) {
                     public Expr onPi(String param, Expr input, Expr result) {
                       if (input.equivalent(constructorType)) {
-                        return result.decrement(param);
+                        Expr newResult = result.decrement(param);
+
+                        if (!newResult.acceptVis(NonNegativeIndices.instance)) {
+                          throw fail(
+                              String.format(
+                                  "handler result type %s may not depend on the input value",
+                                  result));
+                        }
+
+                        return newResult;
                       } else {
                         throw fail(
                             String.format(
-                                "handler result type %s doesn't match %s", input, constructorType));
+                                "handler input type %s doesn't match %s", input, constructorType));
                       }
                     }
                   });

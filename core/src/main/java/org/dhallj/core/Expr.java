@@ -26,7 +26,6 @@ import org.dhallj.core.normalization.AlphaNormalize;
 import org.dhallj.core.normalization.BetaNormalize;
 import org.dhallj.core.normalization.Shift;
 import org.dhallj.core.normalization.Substitute;
-import org.dhallj.core.properties.IsResolved;
 import org.dhallj.core.typechecking.TypeCheck;
 import org.dhallj.core.util.ThunkUtilities;
 
