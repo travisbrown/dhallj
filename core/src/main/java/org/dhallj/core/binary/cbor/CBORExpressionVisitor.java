@@ -48,6 +48,8 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   public Expr onVariableArray(BigInteger length, String name) {
     if (length.intValue() != 2) {
       throw new RuntimeException("Variables must be encoded in an array of length 2");
+    } else if (name.equals("_")) {
+      throw new RuntimeException("Variables cannot be explicitly named _");
     } else {
       BigInteger idx = decoder.readPositiveBigNum();
       return Expr.makeIdentifier(name, idx.longValue());
@@ -245,11 +247,15 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
         return Expr.makeEmptyListLiteral(Expr.makeApplication(Expr.Constants.LIST, tpe));
       }
     } else {
-      List<Expr> exprs = new ArrayList<>();
-      for (int i = 2; i < length.longValue(); i++) {
-        exprs.add(readExpr());
+      if (tpe == null) {
+        List<Expr> exprs = new ArrayList<>();
+        for (int i = 2; i < length.longValue(); i++) {
+          exprs.add(readExpr());
+        }
+        return Expr.makeNonEmptyListLiteral(exprs);
+      } else {
+        throw new RuntimeException("Non-empty lists must not have a type annotation");
       }
-      return Expr.makeNonEmptyListLiteral(exprs);
     }
   }
 
