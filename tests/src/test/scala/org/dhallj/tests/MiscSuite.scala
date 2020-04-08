@@ -6,7 +6,7 @@ import org.dhallj.parser.Dhall
 import org.dhallj.s.ast._
 import org.scalacheck.{Arbitrary, Gen}
 
-class ParserSuite extends CheckersFunSuite() {
+class MiscSuite extends CheckersFunSuite() {
   case class AsciiPrintableString(value: String)
 
   implicit val arbitraryAsciiPrintableString: Arbitrary[AsciiPrintableString] =
