@@ -209,7 +209,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
               @Override
               public Expr onPi(String param, Expr input, Expr result) {
-                // TODO: Shouldn't have to normalize here when we have real equivalence.
                 if (input.equivalent(argType)) {
                   return result
                       .substitute(param, arg.increment(param))
@@ -531,11 +530,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   public final Expr onAnnotated(Expr base, Expr type) {
     Expr inferred = base.acceptExternal(this);
-    // TODO: fix with equivalence.
-    if (inferred
-        .acceptVis(BetaNormalize.instance)
-        .alphaNormalize()
-        .equivalent(type.acceptVis(BetaNormalize.instance).alphaNormalize())) {
+    if (inferred.equivalent(type)) {
       return inferred;
     } else {
       throw fail(
@@ -575,10 +570,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         Expr resultType =
             Expr.makeApplication(Constants.LIST, Expr.makeRecordType(resultTypeFields));
 
-        if (type == null
-            || type.acceptVis(BetaNormalize.instance)
-                .alphaNormalize()
-                .equivalent(resultType.alphaNormalize())) {
+        if (type == null || type.equivalent(resultType)) {
           return resultType;
         } else {
           throw fail("toMap type doesn't match inferred");
@@ -925,8 +917,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             resultType = handlerResultType;
           } else {
             // We check that the handler result type is the same as previous result types.
-            // TODO: fix when we have real equivalence.
-            if (!handlerResultType.normalize().equivalent(resultType.normalize())) {
+            if (!handlerResultType.equivalent(resultType)) {
               throw fail("handler types aren't consistent");
             }
           }
