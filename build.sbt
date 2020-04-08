@@ -7,10 +7,10 @@ val testDependencies = Seq(
 )
 
 val catsDependencies = Seq(
-  "org.typelevel" %% "cats-core" % "2.0.0",
+  "org.typelevel" %% "cats-core" % "2.2.0-M1",
   "org.typelevel" %% "cats-effect" % "2.1.2",
-  "org.http4s" %% "http4s-dsl" % "0.21.1",
-  "org.http4s" %% "http4s-blaze-client" % "0.21.1"
+  "org.http4s" %% "http4s-dsl" % "0.21.3",
+  "org.http4s" %% "http4s-blaze-client" % "0.21.3"
 )
 
 val baseSettings = Seq(
