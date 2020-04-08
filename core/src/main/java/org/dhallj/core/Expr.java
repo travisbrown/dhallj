@@ -880,8 +880,6 @@ public abstract class Expr {
         case Tags.TEXT:
           Constructors.TextLiteral tmpText = (Constructors.TextLiteral) current.expr;
           if (current.state == 0) {
-            vis.preText(tmpText.interpolated.length);
-
             if (tmpText.interpolated.length == 0) {
               values.push(vis.onText(tmpText.parts, new ArrayList<A>()));
 
@@ -907,7 +905,6 @@ public abstract class Expr {
           Constructors.NonEmptyListLiteral tmpNonEmptyList =
               (Constructors.NonEmptyListLiteral) current.expr;
           if (current.state == 0) {
-            vis.preNonEmptyList(tmpNonEmptyList.values.length);
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
@@ -938,8 +935,6 @@ public abstract class Expr {
         case Tags.RECORD:
           Constructors.RecordLiteral tmpRecord = (Constructors.RecordLiteral) current.expr;
           if (current.state == 0) {
-            vis.preRecord(tmpRecord.fields.length);
-
             if (tmpRecord.fields.length == 0) {
               values.push(vis.onRecord(new ArrayList<Entry<String, A>>()));
             } else {
@@ -964,8 +959,6 @@ public abstract class Expr {
         case Tags.RECORD_TYPE:
           Constructors.RecordType tmpRecordType = (Constructors.RecordType) current.expr;
           if (current.state == 0) {
-            vis.preRecord(tmpRecordType.fields.length);
-
             if (tmpRecordType.fields.length == 0) {
               values.push(vis.onRecordType(new ArrayList<Entry<String, A>>()));
             } else {
@@ -991,8 +984,6 @@ public abstract class Expr {
         case Tags.UNION_TYPE:
           Constructors.UnionType tmpUnionType = (Constructors.UnionType) current.expr;
           if (current.state == 0) {
-            vis.preRecord(tmpUnionType.fields.length);
-
             if (tmpUnionType.fields.length == 0) {
               values.push(vis.onUnionType(new ArrayList<Entry<String, A>>()));
             } else {
@@ -1076,7 +1067,6 @@ public abstract class Expr {
 
             application.push(base);
 
-            vis.preApplication(application.size());
             current.state = 1;
             current.size = application.size();
           } else {

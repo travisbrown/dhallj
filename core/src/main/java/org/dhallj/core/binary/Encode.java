@@ -174,8 +174,6 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
-  public void preText(int size) {}
-
   private static final String unescapeText(String input) {
     StringBuilder builder = new StringBuilder();
 
@@ -236,8 +234,6 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
-  public void preNonEmptyList(int size) {}
-
   public Writer onNonEmptyList(final List<Writer> values) {
     List<Writer> writers = new ArrayList<Writer>(values.size() + 1);
     writers.add(
@@ -281,8 +277,6 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
-  public void preRecord(int size) {}
-
   public Writer onRecord(final List<Entry<String, Writer>> fields) {
 
     List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
@@ -307,8 +301,6 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
-  public void preRecordType(int size) {}
-
   public Writer onRecordType(final List<Entry<String, Writer>> fields) {
 
     List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
@@ -332,8 +324,6 @@ public final class Encode implements Vis<Writer> {
     }
     return new Writer.Nested(writers);
   }
-
-  public void preUnionType(int size) {}
 
   public Writer onUnionType(final List<Entry<String, Writer>> fields) {
     List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
@@ -433,8 +423,6 @@ public final class Encode implements Vis<Writer> {
     writers.add(type);
     return new Writer.Nested(writers);
   }
-
-  public void preApplication(int size) {}
 
   public Writer onApplication(Expr baseExpr, Writer base, final List<Writer> args) {
     List<Writer> writers = new ArrayList<Writer>(args.size() + 1);

@@ -33,25 +33,15 @@ public interface Vis<A> {
 
   A onLet(List<LetBinding<A>> bindings, A body);
 
-  void preText(int size);
-
   A onText(String[] parts, List<A> interpolated);
-
-  void preNonEmptyList(int size);
 
   A onNonEmptyList(List<A> values);
 
   A onEmptyList(Expr typeExpr, A type);
 
-  void preRecord(int size);
-
   A onRecord(List<Entry<String, A>> fields);
 
-  void preRecordType(int size);
-
   A onRecordType(List<Entry<String, A>> fields);
-
-  void preUnionType(int size);
 
   A onUnionType(List<Entry<String, A>> fields);
 
@@ -60,8 +50,6 @@ public interface Vis<A> {
   A onProjection(A base, String[] fieldNames);
 
   A onProjectionByType(A base, A type);
-
-  void preApplication(int size);
 
   A onApplication(Expr baseExpr, A base, List<A> args);
 

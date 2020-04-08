@@ -10,16 +10,4 @@ import org.dhallj.core.Vis;
 /** @param A The result type */
 public abstract class PureVis<A> implements Vis<A> {
   public void bind(String param, Expr type) {}
-
-  public void preText(int size) {}
-
-  public void preNonEmptyList(int size) {}
-
-  public void preRecord(int size) {}
-
-  public void preRecordType(int size) {}
-
-  public void preUnionType(int size) {}
-
-  public void preApplication(int size) {}
 }
