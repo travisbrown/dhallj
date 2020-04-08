@@ -1,7 +1,7 @@
 package org.dhallj.core.normalization;
 
+import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import org.dhallj.core.Expr;
 import org.dhallj.core.LetBinding;
@@ -15,7 +15,7 @@ import org.dhallj.core.visitor.IdentityVis;
 public final class Substitute extends IdentityVis {
   private final String name;
   private int index = 0;
-  private final Deque<Expr> replacementStack = new LinkedList<>();
+  private final Deque<Expr> replacementStack = new ArrayDeque<>();
 
   public Substitute(String name, Expr replacement) {
     this.name = name;
