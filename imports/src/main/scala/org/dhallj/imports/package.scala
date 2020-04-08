@@ -1,13 +1,13 @@
 package org.dhallj
 
-import java.lang
 import java.math.BigInteger
 import java.net.URI
 import java.nio.file.Path
-import java.util.Map
+import java.util.{List => JList, Map => JMap}
 
 import cats.effect.Sync
-import org.dhallj.core.{Expr, Import, Operator, Source, Thunk, Visitor}
+import org.dhallj.core.{Expr, Import, LetBinding, Operator, Source, Vis}
+import org.dhallj.core.visitor.PureVis
 import org.http4s.client._
 import cats.implicits._
 
@@ -32,7 +32,7 @@ package object imports {
   implicit class ResolveImports(e: Expr) {
     def resolveImports[F[_]](
       resolutionConfig: ResolutionConfig = ResolutionConfig(FromFileSystem)
-    )(implicit Client: Client[F], F: Sync[F]): F[Expr] = e.accept(ResolveImportsVisitor[F](resolutionConfig, Nil))
+    )(implicit Client: Client[F], F: Sync[F]): F[Expr] = e.acceptVis(ResolveImportsVisitor[F](resolutionConfig, Nil))
   }
 
   case class ResolutionConfig(
@@ -46,129 +46,133 @@ package object imports {
   private case class ResolveImportsVisitor[F[_]](resolutionConfig: ResolutionConfig, parents: List[ImportContext])(
     implicit Client: Client[F],
     F: Sync[F]
-  ) extends Visitor.Internal[F[Expr]] {
-    override def onDoubleLiteral(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
+  ) extends PureVis[F[Expr]] {
+    override def onDouble(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
 
-    override def onNaturalLiteral(value: BigInteger): F[Expr] = F.pure(Expr.makeNaturalLiteral(value))
+    override def onNatural(value: BigInteger): F[Expr] = F.pure(Expr.makeNaturalLiteral(value))
 
-    override def onIntegerLiteral(value: BigInteger): F[Expr] = F.pure(Expr.makeIntegerLiteral(value))
+    override def onInteger(value: BigInteger): F[Expr] = F.pure(Expr.makeIntegerLiteral(value))
 
-    override def onTextLiteral(parts: Array[String], interpolated: lang.Iterable[Thunk[F[Expr]]]): F[Expr] =
+    override def onText(parts: Array[String], interpolated: JList[F[Expr]]): F[Expr] =
       for {
-        i <- interpolated.asScala.toList.traverse(_.apply)
+        i <- interpolated.asScala.toList.sequence
       } yield Expr.makeTextLiteral(parts, i.asJava)
 
-    override def onApplication(base: Thunk[F[Expr]], arg: Thunk[F[Expr]]): F[Expr] =
+    override def onApplication(baseExpr: Expr, base: F[Expr], args: JList[F[Expr]]): F[Expr] =
       for {
-        b <- base.apply
-        a <- arg.apply
-      } yield Expr.makeApplication(b, a)
+        b <- base
+        a <- args.asScala.toList.sequence
+      } yield Expr.makeApplication(b, a.asJava)
 
-    override def onOperatorApplication(operator: Operator, lhs: Thunk[F[Expr]], rhs: Thunk[F[Expr]]): F[Expr] =
-      if (operator == Operator.IMPORT_ALT) lhs.apply
+    override def onOperatorApplication(operator: Operator, lhs: F[Expr], rhs: F[Expr]): F[Expr] =
+      if (operator == Operator.IMPORT_ALT) lhs
       else {
         for {
-          l <- lhs.apply
-          r <- rhs.apply
+          l <- lhs
+          r <- rhs
         } yield Expr.makeOperatorApplication(operator, l, r)
       }
 
-    override def onIf(cond: Thunk[F[Expr]], thenValue: Thunk[F[Expr]], elseValue: Thunk[F[Expr]]): F[Expr] =
+    override def onIf(cond: F[Expr], thenValue: F[Expr], elseValue: F[Expr]): F[Expr] =
       for {
-        c <- cond.apply
-        t <- thenValue.apply
-        e <- elseValue.apply
+        c <- cond
+        t <- thenValue
+        e <- elseValue
       } yield Expr.makeIf(c, t, e)
 
-    override def onLambda(param: String, input: Thunk[F[Expr]], result: Thunk[F[Expr]]): F[Expr] =
+    override def onLambda(param: String, input: F[Expr], result: F[Expr]): F[Expr] =
       for {
-        i <- input.apply
-        r <- result.apply
+        i <- input
+        r <- result
       } yield Expr.makeLambda(param, i, r)
 
-    override def onPi(param: String, input: Thunk[F[Expr]], result: Thunk[F[Expr]]): F[Expr] =
+    override def onPi(param: String, input: F[Expr], result: F[Expr]): F[Expr] =
       for {
-        i <- input.apply
-        r <- result.apply
+        i <- input
+        r <- result
       } yield Expr.makePi(param, i, r)
 
-    override def onAssert(base: Thunk[F[Expr]]): F[Expr] =
+    override def onAssert(base: F[Expr]): F[Expr] =
       for {
-        b <- base.apply
+        b <- base
       } yield Expr.makeAssert(b)
 
-    override def onFieldAccess(base: Thunk[F[Expr]], fieldName: String): F[Expr] =
+    override def onFieldAccess(base: F[Expr], fieldName: String): F[Expr] =
       for {
-        b <- base.apply
+        b <- base
       } yield Expr.makeFieldAccess(b, fieldName)
 
-    override def onProjection(base: Thunk[F[Expr]], fieldNames: Array[String]): F[Expr] =
+    override def onProjection(base: F[Expr], fieldNames: Array[String]): F[Expr] =
       for {
-        b <- base.apply
+        b <- base
       } yield Expr.makeProjection(b, fieldNames)
 
-    override def onProjectionByType(base: Thunk[F[Expr]], tpe: Thunk[F[Expr]]): F[Expr] =
+    override def onProjectionByType(base: F[Expr], tpe: F[Expr]): F[Expr] =
       for {
-        b <- base.apply
-        t <- tpe.apply
+        b <- base
+        t <- tpe
       } yield Expr.makeProjectionByType(b, t)
 
     override def onBuiltIn(name: String): F[Expr] = F.pure(Expr.makeBuiltIn(name))
     override def onIdentifier(value: String, index: Long): F[Expr] = F.pure(Expr.makeIdentifier(value, index))
 
-    override def onRecordLiteral(fields: lang.Iterable[Map.Entry[String, Thunk[F[Expr]]]], size: Int): F[Expr] =
+    override def onRecord(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
       for {
         f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
       } yield Expr.makeRecordLiteral(f.toMap.asJava.entrySet)
 
-    override def onRecordType(fields: lang.Iterable[Map.Entry[String, Thunk[F[Expr]]]], size: Int): F[Expr] =
+    override def onRecordType(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
       for {
         f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
       } yield Expr.makeRecordType(f.toMap.asJava.entrySet)
 
-    override def onUnionType(fields: lang.Iterable[Map.Entry[String, Thunk[F[Expr]]]], size: Int): F[Expr] =
+    override def onUnionType(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
       for {
         f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
       } yield Expr.makeUnionType(f.toMap.asJava.entrySet)
 
-    override def onNonEmptyListLiteral(values: lang.Iterable[Thunk[F[Expr]]], size: Int): F[Expr] =
+    override def onNonEmptyList(values: JList[F[Expr]]): F[Expr] =
       for {
-        v <- values.asScala.toList.traverse(_.apply)
+        v <- values.asScala.toList.sequence
       } yield Expr.makeNonEmptyListLiteral(v.asJava)
 
-    override def onEmptyListLiteral(tpe: Thunk[F[Expr]]): F[Expr] =
+    override def onEmptyList(tpeExpr: Expr, tpe: F[Expr]): F[Expr] =
       for {
-        t <- tpe.apply
+        t <- tpe
       } yield Expr.makeEmptyListLiteral(t)
 
-    override def onNote(base: Thunk[F[Expr]], source: Source): F[Expr] =
+    override def onNote(base: F[Expr], source: Source): F[Expr] =
       for {
-        b <- base.apply
+        b <- base
       } yield Expr.makeNote(b, source)
 
-    override def onLet(name: String, `type`: Thunk[F[Expr]], value: Thunk[F[Expr]], body: Thunk[F[Expr]]): F[Expr] =
+    override def onLet(bindings: JList[LetBinding[F[Expr]]], body: F[Expr]): F[Expr] =
       for {
-        t <- liftNull(`type`)
-        v <- value.apply
-        b <- body.apply
-      } yield Expr.makeLet(name, t, v, b)
+        bindings <- bindings.asScala.toList.traverse { binding =>
+          for {
+            t <- liftNull(binding.getType)
+            v <- binding.getValue
+          } yield new LetBinding(binding.getName, t, v)
+        }
+        b <- body
+      } yield Expr.makeLet(bindings.asJava, b)
 
-    override def onAnnotated(base: Thunk[F[Expr]], tpe: Thunk[F[Expr]]): F[Expr] =
+    override def onAnnotated(base: F[Expr], tpe: F[Expr]): F[Expr] =
       for {
-        b <- base.apply
-        t <- tpe.apply
+        b <- base
+        t <- tpe
       } yield Expr.makeAnnotated(b, t)
 
-    override def onToMap(base: Thunk[F[Expr]], tpe: Thunk[F[Expr]]): F[Expr] =
+    override def onToMap(base: F[Expr], tpe: F[Expr]): F[Expr] =
       for {
-        b <- base.apply
+        b <- base
         t <- liftNull(tpe)
       } yield Expr.makeToMap(b, t)
 
-    override def onMerge(left: Thunk[F[Expr]], right: Thunk[F[Expr]], tpe: Thunk[F[Expr]]): F[Expr] =
+    override def onMerge(left: F[Expr], right: F[Expr], tpe: F[Expr]): F[Expr] =
       for {
-        l <- left.apply
-        r <- right.apply
+        l <- left
+        r <- right
         t <- liftNull(tpe)
       } yield Expr.makeMerge(l, r, t)
 
@@ -176,7 +180,7 @@ package object imports {
       onImport(Local(path), mode, hash)
 
     //TODO handle using
-    override def onRemoteImport(url: URI, using: Thunk[F[Expr]], mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+    override def onRemoteImport(url: URI, using: F[Expr], mode: Import.Mode, hash: Array[Byte]): F[Expr] =
       onImport(Remote(url), mode, hash)
 
     override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
@@ -260,11 +264,11 @@ package object imports {
         _ <- if (isCyclic(imp, parents))
           F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
         else F.unit
-        result <- e.accept(ResolveImportsVisitor[F](resolutionConfig, imp :: parents))
+        result <- e.acceptVis(ResolveImportsVisitor[F](resolutionConfig, imp :: parents))
       } yield result
     }
 
-    private def liftNull(t: Thunk[F[Expr]]): F[Expr] = Option(t.apply).getOrElse(F.pure(null))
+    private def liftNull(t: F[Expr]): F[Expr] = Option(t).getOrElse(F.pure(null))
 
     private def checkSha256[F[_]](e: Expr, expected: Array[Byte]): F[Unit] = ???
 
