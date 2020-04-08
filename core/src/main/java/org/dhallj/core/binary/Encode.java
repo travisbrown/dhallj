@@ -245,9 +245,8 @@ public final class Encode implements Vis<Writer> {
           }
         });
 
-    for (Writer value : values) {
-      writers.add(value);
-    }
+    writers.addAll(values);
+
     return new Writer.Nested(writers);
   }
 
@@ -451,9 +450,7 @@ public final class Encode implements Vis<Writer> {
 
       writers.add(base);
 
-      for (Writer arg : args) {
-        writers.add(arg);
-      }
+      writers.addAll(args);
     }
     return new Writer.Nested(writers);
   }
