@@ -1,5 +1,6 @@
 package org.dhallj.core.normalization;
 
+import java.util.LinkedList;
 import java.util.List;
 import org.dhallj.core.Expr;
 import org.dhallj.core.LetBinding;
@@ -12,18 +13,17 @@ import org.dhallj.core.visitor.IdentityVis;
  */
 public final class Substitute extends IdentityVis {
   private final String name;
-  private int index;
-  private Expr replacement;
+  private int index = 0;
+  private final LinkedList<Expr> replacementStack = new LinkedList<>();
 
-  public Substitute(String name, int index, Expr replacement) {
+  public Substitute(String name, Expr replacement) {
     this.name = name;
-    this.index = index;
-    this.replacement = replacement;
+    this.replacementStack.push(replacement);
   }
 
   @Override
   public void bind(String name, Expr type) {
-    this.replacement = this.replacement.increment(name);
+    this.replacementStack.push(this.replacementStack.get(0).increment(name));
 
     if (name.equals(this.name)) {
       this.index += 1;
@@ -31,9 +31,15 @@ public final class Substitute extends IdentityVis {
   }
 
   @Override
-  public Expr onIdentifier(Expr self, String value, long index) {
-    if (value.equals(this.name) && index == this.index) {
-      return this.replacement;
+  public Expr onIdentifier(Expr self, String name, long index) {
+    if (name.equals(this.name)) {
+      if (index == this.index) {
+        return this.replacementStack.get(0);
+      } else if (index > this.index) {
+        return Expr.makeIdentifier(name, index - 1);
+      } else {
+        return self;
+      }
     } else {
       return self;
     }
@@ -41,7 +47,7 @@ public final class Substitute extends IdentityVis {
 
   @Override
   public Expr onLambda(String name, Expr type, Expr result) {
-    this.replacement = this.replacement.decrement(name);
+    this.replacementStack.pop();
 
     if (name.equals(this.name)) {
       this.index -= 1;
@@ -52,7 +58,7 @@ public final class Substitute extends IdentityVis {
 
   @Override
   public Expr onPi(String name, Expr type, Expr result) {
-    this.replacement = this.replacement.decrement(name);
+    this.replacementStack.pop();
 
     if (name.equals(this.name)) {
       this.index -= 1;
@@ -65,7 +71,9 @@ public final class Substitute extends IdentityVis {
   public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
     for (LetBinding<Expr> binding : bindings) {
       String name = binding.getName();
-      this.replacement = this.replacement.decrement(name);
+
+      this.replacementStack.pop();
+
       if (name.equals(this.name)) {
         this.index -= 1;
       }

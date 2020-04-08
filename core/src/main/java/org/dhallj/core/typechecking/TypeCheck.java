@@ -220,10 +220,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
               @Override
               public Expr onPi(String param, Expr input, Expr result) {
                 if (input.equivalent(argType)) {
-                  return result
-                      .substitute(param, arg.increment(param))
-                      .decrement(param)
-                      .normalize();
+                  return result.substitute(param, arg).normalize();
                 } else {
                   throw TypeCheckFailure.makeApplicationTypeError(input, argType);
                 }
@@ -544,9 +541,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       }
     }
 
-    return body.substitute(name, value.acceptVis(BetaNormalize.instance).increment(name))
-        .decrement(name)
-        .acceptExternal(this);
+    return body.substitute(name, value.acceptVis(BetaNormalize.instance)).acceptExternal(this);
   }
 
   public final Expr onAnnotated(Expr base, Expr type) {

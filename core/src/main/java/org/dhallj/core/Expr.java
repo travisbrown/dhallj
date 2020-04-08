@@ -53,7 +53,7 @@ public abstract class Expr {
   }
 
   public final Expr substitute(String name, Expr replacement) {
-    return this.acceptVis(new Substitute(name, 0, replacement));
+    return this.acceptVis(new Substitute(name, replacement));
   }
 
   public final Expr alphaNormalize() {
@@ -260,10 +260,7 @@ public abstract class Expr {
 
     if (value.tag == Tags.LAMBDA) {
       Constructors.Lambda lambda = ((Constructors.Lambda) value);
-      return lambda
-          .result
-          .substitute(lambda.name, arg.increment(lambda.name))
-          .decrement(lambda.name);
+      return lambda.result.substitute(lambda.name, arg);
     } else {
       return null;
     }

@@ -31,9 +31,9 @@ public final class Shift extends IdentityVis {
   }
 
   @Override
-  public Expr onIdentifier(Expr self, String value, long index) {
-    if (value.equals(this.name) && index >= this.cutoff) {
-      return Expr.makeIdentifier(value, index + this.change);
+  public Expr onIdentifier(Expr self, String name, long index) {
+    if (name.equals(this.name) && index >= this.cutoff) {
+      return Expr.makeIdentifier(name, index + this.change);
     } else {
       return self;
     }

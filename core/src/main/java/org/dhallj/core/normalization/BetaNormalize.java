@@ -64,7 +64,7 @@ public final class BetaNormalize extends PureVis<Expr> {
       LetBinding<Expr> binding = bindings.get(i);
       String name = binding.getName();
 
-      result = result.substitute(name, binding.getValue().increment(name)).decrement(name);
+      result = result.substitute(name, binding.getValue());
     }
 
     return result.acceptVis(this);
