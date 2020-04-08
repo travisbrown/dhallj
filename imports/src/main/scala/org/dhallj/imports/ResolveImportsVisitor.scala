@@ -260,7 +260,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     else
       for {
         bytes <- F.pure(e.normalize().encodeToByteArray())
-        encoded <- F.delay(sha256.digest(bytes)).guarantee(F.delay(sha256.reset()))
+        encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
         _ <- if (encoded.sameElements(expected)) F.unit
         else F.raiseError(new RuntimeException(s"SHA256 validation exception for ${imp}"))
       } yield ()
@@ -272,8 +272,6 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     }
     sb.toString
   }
-
-  private val sha256: MessageDigest = MessageDigest.getInstance("SHA-256")
 
 }
 
