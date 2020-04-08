@@ -20,7 +20,7 @@ class CachingSuite extends FunSuite {
     }
   )
 
-  val key = "0f86d"
+  val key = "0f86d".getBytes
 
   val bytes: Array[Byte] = "test".getBytes
 

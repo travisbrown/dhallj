@@ -8,13 +8,24 @@ import cats.implicits._
 private[imports] object Caching {
 
   trait ImportsCache[F[_]] {
-    def get(key: String): F[Option[Array[Byte]]]
+    def get(key: Array[Byte]): F[Option[Array[Byte]]]
 
-    def put(key: String, value: Array[Byte]): F[Unit]
+    def put(key: Array[Byte], value: Array[Byte]): F[Unit]
   }
 
-  case class ImportsCacheImpl[F[_]] private[Caching] (val rootDir: Path)(implicit F: Sync[F]) extends ImportsCache[F] {
-    override def get(key: String): F[Option[Array[Byte]]] = {
+  /*
+   * Improves the ergonomics when resolving imports if we don't have to check
+   * if the cache exists. So if we fail to construct an imports cache,
+   * we warn and return this instead.
+   */
+  case class NoopImportsCache[F[_]]()(implicit F: Sync[F]) extends ImportsCache[F] {
+    override def get(key: Array[Byte]): F[Option[Array[Byte]]] = F.pure(None)
+
+    override def put(key: Array[Byte], value: Array[Byte]): F[Unit] = F.unit
+  }
+
+  case class ImportsCacheImpl[F[_]] private[Caching] (rootDir: Path)(implicit F: Sync[F]) extends ImportsCache[F] {
+    override def get(key: Array[Byte]): F[Option[Array[Byte]]] = {
       val p = path(key)
       if (Files.exists(p)) {
         F.delay(Some(Files.readAllBytes(p)))
@@ -23,10 +34,19 @@ private[imports] object Caching {
       }
     }
 
-    override def put(key: String, value: Array[Byte]): F[Unit] =
+    override def put(key: Array[Byte], value: Array[Byte]): F[Unit] =
       F.delay(Files.write(path(key), value))
 
-    private def path(key: String): Path = rootDir.resolve("1220${key}")
+    private def path(key: Array[Byte]): Path = rootDir.resolve(s"1220${toHex(key)}")
+
+    private def toHex(bs: Array[Byte]): String = {
+      val sb = new StringBuilder
+      for (b <- bs) {
+        sb.append(String.format("%02x", Byte.box(b)))
+      }
+      println(sb.toString)
+      sb.toString
+    }
   }
 
   def mkImportsCache[F[_]](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportsCache[F]]] =
@@ -35,8 +55,8 @@ private[imports] object Caching {
       perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
     } yield (if (perms) Some(new ImportsCacheImpl[F](rootDir)) else None)
 
-  def mkImportsCache[F[_]](implicit F: Sync[F]): F[Option[ImportsCache[F]]] = {
-    def makeCache(env: String, relativePath: String): F[Option[ImportsCache[F]]] =
+  def mkImportsCache[F[_]](implicit F: Sync[F]): F[ImportsCache[F]] = {
+    def makeCacheFromEnvVar(env: String, relativePath: String): F[Option[ImportsCache[F]]] =
       for {
         envValO <- F.delay(sys.env.get(env))
         cache <- envValO.fold(F.pure(Option.empty[ImportsCache[F]]))(envVal =>
@@ -48,15 +68,25 @@ private[imports] object Caching {
       } yield cache
 
     def backupCache =
-      if (isWindows)
-        makeCache("LOCALAPPDATA", "")
-      else makeCache("HOME", ".cache")
+      for {
+        cacheO <- if (isWindows)
+          makeCacheFromEnvVar("LOCALAPPDATA", "")
+        else makeCacheFromEnvVar("HOME", ".cache")
+        cache <- cacheO.fold(warnCacheNotCreated >> F.pure[ImportsCache[F]](NoopImportsCache[F]))(F.pure)
+      } yield cache
 
     def isWindows = System.getProperty("os.name").toLowerCase.contains("Windows")
 
+    def warnCacheNotCreated: F[Unit] =
+      F.delay(
+        println(
+          "WARNING: failed to create cache at either $XDG_CACHE_HOME}/dhall or $HOME/.cache/dhall. Are these locations writable?"
+        )
+      )
+
     for {
-      xdgCache <- makeCache("XDG_HOME", "")
-      cache <- xdgCache.fold(backupCache)(c => F.pure(Some(c)))
+      xdgCache <- makeCacheFromEnvVar("XDG_HOME", "")
+      cache <- xdgCache.fold(backupCache)(F.pure)
     } yield cache
 
   }
