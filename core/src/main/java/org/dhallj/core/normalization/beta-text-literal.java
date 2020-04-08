@@ -9,7 +9,7 @@ import org.dhallj.core.visitor.ConstantVisitor;
 final class BetaNormalizeTextLiteral {
   static final Expr apply(String[] parts, List<Expr> interpolated) {
     if (parts.length == 1) {
-      return Expr.makeTextLiteral(parts, emptyInterpolated);
+      return Expr.makeTextLiteral(parts[0]);
     } else {
       int partsSize = 0;
       for (String part : parts) {
@@ -63,8 +63,6 @@ final class BetaNormalizeTextLiteral {
       return Expr.makeTextLiteral(newParts.toArray(new String[newParts.size()]), newInterpolated);
     }
   }
-
-  private static Iterable<Expr> emptyInterpolated = new ArrayList();
 
   private static final class InlineInterpolatedTextLiteral
       extends ConstantVisitor.External<Boolean> {

@@ -353,7 +353,7 @@ public abstract class Expr {
   }
 
   public static final class Constants {
-    private static List<Entry<String, Expr>> emptyFields = new ArrayList(0);
+    private static Entry[] emptyFields = {};
 
     public static Expr UNDERSCORE = makeIdentifier("_");
     public static Expr SORT = new Constructors.BuiltIn("Sort");
@@ -378,14 +378,12 @@ public abstract class Expr {
     public static Expr EMPTY_UNION_TYPE = makeUnionType(emptyFields);
     public static Expr LOCATION_TYPE =
         makeUnionType(
-            new HashMap<String, Expr>() {
-              {
-                put("Local", TEXT);
-                put("Remote", TEXT);
-                put("Environment", TEXT);
-                put("Missing", null);
-              }
-            }.entrySet());
+            new Entry[] {
+              new SimpleImmutableEntry("Local", TEXT),
+              new SimpleImmutableEntry("Remote", TEXT),
+              new SimpleImmutableEntry("Environment", TEXT),
+              new SimpleImmutableEntry("Missing", null)
+            });
     public static String MAP_KEY_FIELD_NAME = "mapKey";
     public static String MAP_VALUE_FIELD_NAME = "mapValue";
 
@@ -498,12 +496,14 @@ public abstract class Expr {
   }
 
   public static final Expr makeTextLiteral(String[] parts, Iterable<Expr> interpolated) {
-    return new Constructors.TextLiteral(parts, ExprUtilities.exprsToArray(interpolated));
+    return new Constructors.TextLiteral(parts, exprsToArray(interpolated));
   }
+
+  private static final Expr[] emptyExprArray = {};
 
   public static final Expr makeTextLiteral(String value) {
     String[] parts = {value};
-    return new Constructors.TextLiteral(parts, ExprUtilities.exprsToArray(new ArrayList(0)));
+    return new Constructors.TextLiteral(parts, emptyExprArray);
   }
 
   public static final Expr makeApplication(Expr base, Expr arg) {
@@ -582,11 +582,12 @@ public abstract class Expr {
   }
 
   public static final Expr makeRecordLiteral(Iterable<Entry<String, Expr>> fields) {
-    return new Constructors.RecordLiteral(ExprUtilities.entriesToArray(fields));
+    return new Constructors.RecordLiteral(entriesToArray(fields));
   }
 
   public static final Expr makeRecordLiteral(String key, Expr value) {
-    return new Constructors.RecordLiteral(ExprUtilities.entryToArray(key, value));
+    return new Constructors.RecordLiteral(
+        new Entry[] {new SimpleImmutableEntry<String, Expr>(key, value)});
   }
 
   public static final Expr makeRecordType(Entry<String, Expr>[] fields) {
@@ -594,7 +595,7 @@ public abstract class Expr {
   }
 
   public static final Expr makeRecordType(Iterable<Entry<String, Expr>> fields) {
-    return new Constructors.RecordType(ExprUtilities.entriesToArray(fields));
+    return new Constructors.RecordType(entriesToArray(fields));
   }
 
   public static final Expr makeUnionType(Entry<String, Expr>[] fields) {
@@ -602,7 +603,7 @@ public abstract class Expr {
   }
 
   public static final Expr makeUnionType(Iterable<Entry<String, Expr>> fields) {
-    return new Constructors.UnionType(ExprUtilities.entriesToArray(fields));
+    return new Constructors.UnionType(entriesToArray(fields));
   }
 
   public static final Expr makeNonEmptyListLiteral(Expr[] values) {
@@ -610,7 +611,7 @@ public abstract class Expr {
   }
 
   public static final Expr makeNonEmptyListLiteral(Iterable<Expr> values) {
-    return new Constructors.NonEmptyListLiteral(ExprUtilities.exprsToArray(values));
+    return new Constructors.NonEmptyListLiteral(exprsToArray(values));
   }
 
   public static final Expr makeEmptyListLiteral(Expr tpe) {
@@ -1643,5 +1644,25 @@ public abstract class Expr {
     } else {
       return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
     }
+  }
+
+  private static Expr[] exprsToArray(Iterable<Expr> values) {
+    List<Expr> result = new ArrayList();
+
+    for (Expr value : values) {
+      result.add(value);
+    }
+
+    return result.toArray(new Expr[result.size()]);
+  }
+
+  private static Entry<String, Expr>[] entriesToArray(Iterable<Entry<String, Expr>> entries) {
+    List<Entry<String, Expr>> result = new ArrayList();
+
+    for (Entry<String, Expr> entry : entries) {
+      result.add(entry);
+    }
+
+    return result.toArray(new Entry[result.size()]);
   }
 }
