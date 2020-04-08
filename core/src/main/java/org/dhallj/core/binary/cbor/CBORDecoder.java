@@ -96,7 +96,7 @@ public abstract class CBORDecoder {
       case TEXT_STRING:
         return readTextString(next);
       case PRIMITIVE:
-        return readPrimitive(next, new NullVisitor<String>());
+        return readPrimitive(next, NullVisitor.instanceForString);
       default:
         throw new RuntimeException("Next symbol is neither a text string or null");
     }
@@ -109,7 +109,7 @@ public abstract class CBORDecoder {
       case BYTE_STRING:
         return readByteString(next);
       case PRIMITIVE:
-        return readPrimitive(next, new NullVisitor<byte[]>());
+        return readPrimitive(next, NullVisitor.instanceForByteArray);
       default:
         throw new RuntimeException("Next symbol is neither a byte string or null");
     }

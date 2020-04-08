@@ -4,6 +4,8 @@ import java.math.BigInteger;
 
 /** To read a CBOR primitive and ensure it is null */
 public class NullVisitor<R> implements Visitor<R> {
+  static final Visitor<String> instanceForString = new NullVisitor<String>();
+  static final Visitor<byte[]> instanceForByteArray = new NullVisitor<byte[]>();
 
   @Override
   public R onUnsignedInteger(BigInteger value) {
