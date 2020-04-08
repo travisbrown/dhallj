@@ -52,12 +52,8 @@ public abstract class Expr {
     return this.acceptVis(new Shift(false, name));
   }
 
-  public final Expr substitute(String name, int index, Expr replacement) {
-    return this.acceptVis(new Substitute(name, index, replacement));
-  }
-
   public final Expr substitute(String name, Expr replacement) {
-    return this.substitute(name, 0, replacement);
+    return this.acceptVis(new Substitute(name, 0, replacement));
   }
 
   public final Expr alphaNormalize() {
