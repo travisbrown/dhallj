@@ -21,7 +21,7 @@ object ReferentialSanityCheck {
           )
       }
     case Missing => F.raiseError(new RuntimeException(s"Missing import cannot reference import $child"))
-    case _ => F.unit
+    case _       => F.unit
   }
 
 }

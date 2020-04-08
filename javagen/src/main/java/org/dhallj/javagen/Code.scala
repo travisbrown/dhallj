@@ -1,7 +1,7 @@
 package org.dhallj.javagen
 
 case class Code(content: String, defs: Vector[Code] = Vector.empty) {
-  private final def replace(in: String, target: Int, newName: String): String = {
+  final private def replace(in: String, target: Int, newName: String): String = {
     var last = 0
     var next = in.indexOf(Code.marker, last)
     val builder = new StringBuilder()
@@ -28,15 +28,15 @@ case class Code(content: String, defs: Vector[Code] = Vector.empty) {
   def merge(other: Code)(f: (String, String) => String): Code =
     Option(other) match {
       case Some(otherValue) => Code(f(Code.makeIdentifier(0), Code.makeIdentifier(1)), Vector(this, other))
-      case None => this.copy(content = f(content, "null"))
+      case None             => this.copy(content = f(content, "null"))
     }
 
   def merge(other0: Code, other1: Code)(f: (String, String, String) => String): Code =
     Option(other1) match {
-      case Some(otherValue) => Code(f(Code.makeIdentifier(0), Code.makeIdentifier(1), Code.makeIdentifier(2)), Vector(this, other0, other1))
+      case Some(otherValue) =>
+        Code(f(Code.makeIdentifier(0), Code.makeIdentifier(1), Code.makeIdentifier(2)), Vector(this, other0, other1))
       case None => Code(f(Code.makeIdentifier(0), Code.makeIdentifier(1), "null"), Vector(this, other0))
     }
-
 
   protected def toFields(known: Map[Code, (String, String)]): (String, Map[Code, (String, String)]) =
     known.get(this) match {
@@ -47,8 +47,8 @@ case class Code(content: String, defs: Vector[Code] = Vector.empty) {
             val (childName, newKnown) = code.toFields(accKnown)
 
             (this.replace(accContent, i, childName), newKnown)
-       }
- 
+        }
+
         val nextName = Code.makeFieldName(newKnown.size)
         (nextName, newKnown.updated(this, (nextName, newContent)))
     }
@@ -56,10 +56,13 @@ case class Code(content: String, defs: Vector[Code] = Vector.empty) {
   def toClassDef(packageName: String, className: String): String = {
     val (topLevelFieldName, fields) = toFields(Map.empty)
 
-    val fieldDefs = fields.values.toList.sortBy(_._1).map {
-      case (name, impl) =>
-        s"  private static final Expr $name = $impl;"
-    }.mkString("\n")
+    val fieldDefs = fields.values.toList
+      .sortBy(_._1)
+      .map {
+        case (name, impl) =>
+          s"  private static final Expr $name = $impl;"
+      }
+      .mkString("\n")
 
     s"""|package $packageName;
         |

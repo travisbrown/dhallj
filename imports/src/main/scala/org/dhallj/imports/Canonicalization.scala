@@ -12,16 +12,20 @@ import cats.effect.Sync
  */
 object Canonicalization {
 
-  def canonicalize[F[_]](resolutionConfig: ResolutionConfig, imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
+  def canonicalize[F[_]](resolutionConfig: ResolutionConfig,
+                         imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
     case Remote(uri) => F.delay(Remote(uri.normalize))
-    case Local(path) => resolutionConfig.localMode match {
-      case FromFileSystem => F.delay(Local(path.toAbsolutePath.normalize))
-      case FromResources => F.delay(Local(path.normalize))
-    }
-    case i           => F.pure(i)
+    case Local(path) =>
+      resolutionConfig.localMode match {
+        case FromFileSystem => F.delay(Local(path.toAbsolutePath.normalize))
+        case FromResources  => F.delay(Local(path.normalize))
+      }
+    case i => F.pure(i)
   }
 
-  def canonicalize[F[_]](resolutionConfig: ResolutionConfig, parent: ImportContext, child: ImportContext)(implicit F: Sync[F]): F[ImportContext] =
+  def canonicalize[F[_]](resolutionConfig: ResolutionConfig, parent: ImportContext, child: ImportContext)(
+    implicit F: Sync[F]
+  ): F[ImportContext] =
     parent match {
       case Remote(uri) =>
         child match {
@@ -30,7 +34,8 @@ object Canonicalization {
           //need to resolve this as a remote import
           //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
           case Local(path) =>
-            if (path.isAbsolute) canonicalize(resolutionConfig, child) else canonicalize(resolutionConfig, Remote(uri.resolve(path.toString)))
+            if (path.isAbsolute) canonicalize(resolutionConfig, child)
+            else canonicalize(resolutionConfig, Remote(uri.resolve(path.toString)))
           case _ => canonicalize(resolutionConfig, child)
         }
       case Local(path) =>

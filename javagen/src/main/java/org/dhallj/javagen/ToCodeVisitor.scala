@@ -21,7 +21,8 @@ object ToCodeVisitor {
 final class ToCodeVisitor extends PureVis[Code] {
   private val constants = Set("Natural", "Integer", "Double", "True", "False", "Type", "List", "Text")
 
-  private def unsupported: Nothing = throw new RuntimeException("Java generation only supported for fully-interpreted expressions")
+  private def unsupported: Nothing =
+    throw new RuntimeException("Java generation only supported for fully-interpreted expressions")
 
   def onNote(base: Code, source: Source): Code = base
 
@@ -70,25 +71,25 @@ final class ToCodeVisitor extends PureVis[Code] {
   def onEmptyList(typeExpr: Expr, tpe: Code): Code =
     tpe.mapContent(tpeContent => s"Expr.makeEmptyListLiteral($tpeContent)")
 
-
-  private def forFields(constructor: String, fields: JList[Entry[String, Code]]): Code = {
+  private def forFields(constructor: String, fields: JList[Entry[String, Code]]): Code =
     if (fields.isEmpty) {
       constructor match {
         case "makeRecordLiteral" => Code("Expr.Constants.EMPTY_RECORD_LITERAL")
-        case "makeRecordType" => Code("Expr.Constants.EMPTY_RECORD_TYPE")
-        case "makeUnionType" => Code("Expr.Constants.EMPTY_UNION_TYPE")
+        case "makeRecordType"    => Code("Expr.Constants.EMPTY_RECORD_TYPE")
+        case "makeUnionType"     => Code("Expr.Constants.EMPTY_UNION_TYPE")
       }
     } else {
       Code.mergeAll(fields.asScala.toVector)(entry => Option(entry.getValue)) { pairs =>
-        val entries = pairs.map {
-          case (entry, id) =>
-            s"""new SimpleImmutableEntry<String, Expr>("${entry.getKey}", $id)"""
-        }.mkString(", ")
+        val entries = pairs
+          .map {
+            case (entry, id) =>
+              s"""new SimpleImmutableEntry<String, Expr>("${entry.getKey}", $id)"""
+          }
+          .mkString(", ")
 
         s"Expr.$constructor(new Entry[] {$entries})"
       }
     }
-  }
 
   def onRecord(fields: JList[Entry[String, Code]]): Code = forFields("makeRecordLiteral", fields)
   def onRecordType(fields: JList[Entry[String, Code]]): Code = forFields("makeRecordType", fields)
@@ -116,20 +117,20 @@ final class ToCodeVisitor extends PureVis[Code] {
 
   def onOperatorApplication(operator: Operator, lhs: Code, rhs: Code): Code = {
     val operatorCode = operator match {
-      case Operator.OR => "Operator.OR"
-      case Operator.AND => "Operator.AND"
-      case Operator.EQUALS => "Operator.EQUALS"
-      case Operator.NOT_EQUALS => "Operator.NOT_EQUALS"
-      case Operator.PLUS => "Operator.PLUS"
-      case Operator.TIMES => "Operator.TIMES"
-      case Operator.TEXT_APPEND => "Operator.TEXT_APPEND"
-      case Operator.LIST_APPEND => "Operator.LIST_APPEND"
-      case Operator.COMBINE => "Operator.COMBINE"
-      case Operator.PREFER => "Operator.PREFER"
+      case Operator.OR            => "Operator.OR"
+      case Operator.AND           => "Operator.AND"
+      case Operator.EQUALS        => "Operator.EQUALS"
+      case Operator.NOT_EQUALS    => "Operator.NOT_EQUALS"
+      case Operator.PLUS          => "Operator.PLUS"
+      case Operator.TIMES         => "Operator.TIMES"
+      case Operator.TEXT_APPEND   => "Operator.TEXT_APPEND"
+      case Operator.LIST_APPEND   => "Operator.LIST_APPEND"
+      case Operator.COMBINE       => "Operator.COMBINE"
+      case Operator.PREFER        => "Operator.PREFER"
       case Operator.COMBINE_TYPES => "Operator.COMBINE_TYPES"
-      case Operator.IMPORT_ALT => "Operator.IMPORT_ALT"
-      case Operator.EQUIVALENT => "Operator.EQUIVALENT"
-      case Operator.COMPLETE => "Operator.COMPLETE"
+      case Operator.IMPORT_ALT    => "Operator.IMPORT_ALT"
+      case Operator.EQUIVALENT    => "Operator.EQUIVALENT"
+      case Operator.COMPLETE      => "Operator.COMPLETE"
     }
 
     lhs.merge(rhs) {

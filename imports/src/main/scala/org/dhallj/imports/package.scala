@@ -43,8 +43,10 @@ package object imports {
   case object FromFileSystem extends LocalMode
   case object FromResources extends LocalMode
 
-  private case class ResolveImportsVisitor[F[_]](resolutionConfig: ResolutionConfig, parents: List[ImportContext])(implicit Client: Client[F], F: Sync[F])
-      extends Visitor.Internal[F[Expr]] {
+  private case class ResolveImportsVisitor[F[_]](resolutionConfig: ResolutionConfig, parents: List[ImportContext])(
+    implicit Client: Client[F],
+    F: Sync[F]
+  ) extends Visitor.Internal[F[Expr]] {
     override def onDoubleLiteral(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
 
     override def onNaturalLiteral(value: BigInteger): F[Expr] = F.pure(Expr.makeNaturalLiteral(value))
@@ -63,7 +65,8 @@ package object imports {
       } yield Expr.makeApplication(b, a)
 
     override def onOperatorApplication(operator: Operator, lhs: Thunk[F[Expr]], rhs: Thunk[F[Expr]]): F[Expr] =
-      if (operator == Operator.IMPORT_ALT) lhs.apply else {
+      if (operator == Operator.IMPORT_ALT) lhs.apply
+      else {
         for {
           l <- lhs.apply
           r <- rhs.apply
@@ -247,7 +250,8 @@ package object imports {
       def isCyclic(imp: ImportContext, parents: List[ImportContext]): Boolean = parents.contains(imp)
 
       for {
-        imp <- if (parents.isEmpty) canonicalize(resolutionConfig, i) else canonicalize(resolutionConfig, parents.head, i)
+        imp <- if (parents.isEmpty) canonicalize(resolutionConfig, i)
+        else canonicalize(resolutionConfig, parents.head, i)
         _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
         r <- resolve(imp, mode)
         (e, headers) = r
