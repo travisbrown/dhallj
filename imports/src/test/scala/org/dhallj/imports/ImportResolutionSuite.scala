@@ -1,8 +1,10 @@
 package org.dhallj.imports
 
+import cats.effect.concurrent.{MVar, Ref}
 import cats.effect.{ContextShift, IO, Resource}
 import munit.FunSuite
 import org.dhallj.core.Expr
+import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.Dhall.parse
 import org.http4s.client._
@@ -140,5 +142,16 @@ class ImportResolutionSuite extends FunSuite {
 
       e.resolveImports[IO](ResolutionConfig(FromResources)).map(_.normalize)
     }.unsafeRunSync
+
+  //TODO just don't use the implicit class and then we don't have to rework it just to
+  //support injecting a different cache for testing
+  private class InMemoryCache extends ImportsCache[IO] {
+
+    private val store: Ref[IO, Map[Array[Byte], Array[Byte]]] = Ref.unsafe(Map.empty)
+
+    override def get(key: Array[Byte]): IO[Option[Array[Byte]]] = store.get.map(_.get(key))
+
+    override def put(key: Array[Byte], value: Array[Byte]): IO[Unit] = store.update(_ + (key -> value))
+  }
 
 }

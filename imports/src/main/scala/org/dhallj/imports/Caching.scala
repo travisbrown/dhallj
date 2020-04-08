@@ -44,7 +44,6 @@ private[imports] object Caching {
       for (b <- bs) {
         sb.append(String.format("%02x", Byte.box(b)))
       }
-      println(sb.toString)
       sb.toString
     }
   }
