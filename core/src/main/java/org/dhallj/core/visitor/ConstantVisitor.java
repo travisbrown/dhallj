@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
-import org.dhallj.core.Thunk;
 import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
 
@@ -31,19 +30,6 @@ public class ConstantVisitor<I, A> implements Visitor<I, A> {
 
   ConstantVisitor(A value) {
     this.returnValue = value;
-  }
-
-  public static class Internal<A> extends ConstantVisitor<Thunk<A>, A>
-      implements Visitor.Internal<A> {
-
-    public Internal(A value) {
-      super(value);
-    }
-
-    @Override
-    public A onNote(Thunk<A> base, Source source) {
-      return base.apply();
-    }
   }
 
   public static class External<A> extends ConstantVisitor<Expr, A> implements ExternalVisitor<A> {

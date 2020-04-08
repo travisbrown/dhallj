@@ -70,15 +70,4 @@ public interface Visitor<I, A> {
   A onEnvImport(String value, Mode mode, byte[] hash);
 
   A onMissingImport(Mode mode, byte[] hash);
-
-  /**
-   * Represents a function from a Dhall expression to a value that recurses through the structure of
-   * the expression.
-   *
-   * <p>Note that the internal result type used during recursion is a thunk, which allows
-   * implementers to determine the order of the recursion (but not its structure).
-   *
-   * @param A The final result type
-   */
-  static interface Internal<A> extends Visitor<Thunk<A>, A> {}
 }

@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map.Entry;
 
 /**
- * Represents a function from a Dhall expression to a value.
+ * Represents a function from a Dhall expression to a value that recurses through the structure of
+ * the expression.
  *
  * @param A The final result type
  */

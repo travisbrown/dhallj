@@ -6,7 +6,7 @@ import java.net.URI
 import java.nio.file.Path
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.{Map => JMap}
-import org.dhallj.core.{Import, Operator, Source, Thunk, Visitor => CoreVisitor}
+import org.dhallj.core.{Import, Operator, Source, Visitor => CoreVisitor}
 import org.dhallj.core.visitor.{ConstantVisitor => CoreConstantVisitor}
 import scala.jdk.CollectionConverters._
 
@@ -72,7 +72,4 @@ object Visitor {
   private[s] def entryToTuple[K, V](entry: JMap.Entry[K, V]): (K, V) = (entry.getKey, entry.getValue)
   private[s] def entryToOptionTuple[K, V](entry: JMap.Entry[K, V]): (K, Option[V]) =
     (entry.getKey, Option(entry.getValue))
-  private[s] def evalOptionTupleValue[K, V](tuple: (K, Option[Thunk[V]])): (K, Option[V]) =
-    (tuple._1, tuple._2.map(_.apply))
-  private[s] def evalTupleValue[K, V](tuple: (K, Thunk[V])): (K, V) = (tuple._1, tuple._2.apply)
 }

@@ -27,7 +27,6 @@ import org.dhallj.core.normalization.BetaNormalize;
 import org.dhallj.core.normalization.Shift;
 import org.dhallj.core.normalization.Substitute;
 import org.dhallj.core.typechecking.TypeCheck;
-import org.dhallj.core.util.ThunkUtilities;
 
 /**
  * Represents a Dhall expression.
@@ -42,8 +41,6 @@ public abstract class Expr {
   Expr(int tag) {
     this.tag = tag;
   }
-
-  public abstract <A> A accept(Visitor<Thunk<A>, A> visitor);
 
   public abstract <A> A acceptExternal(Visitor<Expr, A> visitor);
 
@@ -479,11 +476,6 @@ public abstract class Expr {
       return this.source;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      return visitor.onNote(baseVisited, this.source);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onNote(base, this.source);
     }
@@ -507,11 +499,6 @@ public abstract class Expr {
 
   public static final Expr makeTextLiteral(String[] parts, Iterable<Expr> interpolated) {
     return new Constructors.TextLiteral(parts, ExprUtilities.exprsToArray(interpolated));
-  }
-
-  public static final Expr makeTextLiteralThunked(
-      String[] parts, Iterable<Thunk<Expr>> interpolated) {
-    return new Constructors.TextLiteral(parts, ThunkUtilities.exprsToArray(interpolated));
   }
 
   public static final Expr makeTextLiteral(String value) {
@@ -598,10 +585,6 @@ public abstract class Expr {
     return new Constructors.RecordLiteral(ExprUtilities.entriesToArray(fields));
   }
 
-  public static final Expr makeRecordLiteralThunked(Iterable<Entry<String, Thunk<Expr>>> fields) {
-    return new Constructors.RecordLiteral(ExprUtilities.entriesToArrayThunked(fields));
-  }
-
   public static final Expr makeRecordLiteral(String key, Expr value) {
     return new Constructors.RecordLiteral(ExprUtilities.entryToArray(key, value));
   }
@@ -614,10 +597,6 @@ public abstract class Expr {
     return new Constructors.RecordType(ExprUtilities.entriesToArray(fields));
   }
 
-  public static final Expr makeRecordTypeThunked(Iterable<Entry<String, Thunk<Expr>>> fields) {
-    return new Constructors.RecordType(ExprUtilities.entriesToArrayThunked(fields));
-  }
-
   public static final Expr makeUnionType(Entry<String, Expr>[] fields) {
     return new Constructors.UnionType(fields);
   }
@@ -626,20 +605,12 @@ public abstract class Expr {
     return new Constructors.UnionType(ExprUtilities.entriesToArray(fields));
   }
 
-  public static final Expr makeUnionTypeThunked(Iterable<Entry<String, Thunk<Expr>>> fields) {
-    return new Constructors.UnionType(ExprUtilities.entriesToArrayThunked(fields));
-  }
-
   public static final Expr makeNonEmptyListLiteral(Expr[] values) {
     return new Constructors.NonEmptyListLiteral(values);
   }
 
   public static final Expr makeNonEmptyListLiteral(Iterable<Expr> values) {
     return new Constructors.NonEmptyListLiteral(ExprUtilities.exprsToArray(values));
-  }
-
-  public static final Expr makeNonEmptyListLiteralThunked(Iterable<Thunk<Expr>> values) {
-    return new Constructors.NonEmptyListLiteral(ThunkUtilities.exprsToArray(values));
   }
 
   public static final Expr makeEmptyListLiteral(Expr tpe) {

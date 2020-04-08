@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
-import org.dhallj.core.Thunk;
 import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
 
@@ -50,93 +49,6 @@ public abstract class IdentityVisitor<I> implements Visitor<I, Expr> {
 
   public Expr onMissingImport(Import.Mode mode, byte[] hash) {
     return Expr.makeMissingImport(mode, hash);
-  }
-
-  public static class Internal extends IdentityVisitor<Thunk<Expr>>
-      implements Visitor.Internal<Expr> {
-    public Expr onTextLiteral(String[] parts, Iterable<Thunk<Expr>> interpolated) {
-      return Expr.makeTextLiteralThunked(parts, interpolated);
-    }
-
-    public Expr onApplication(Thunk<Expr> base, Thunk<Expr> arg) {
-      return Expr.makeApplication(base.apply(), arg.apply());
-    }
-
-    public Expr onOperatorApplication(Operator operator, Thunk<Expr> lhs, Thunk<Expr> rhs) {
-      return Expr.makeOperatorApplication(operator, lhs.apply(), rhs.apply());
-    }
-
-    public Expr onIf(Thunk<Expr> cond, Thunk<Expr> thenValue, Thunk<Expr> elseValue) {
-      return Expr.makeIf(cond.apply(), thenValue.apply(), elseValue.apply());
-    }
-
-    public Expr onLambda(String param, Thunk<Expr> input, Thunk<Expr> result) {
-      return Expr.makeLambda(param, input.apply(), result.apply());
-    }
-
-    public Expr onPi(String param, Thunk<Expr> input, Thunk<Expr> result) {
-      return Expr.makePi(param, input.apply(), result.apply());
-    }
-
-    public Expr onAssert(Thunk<Expr> base) {
-      return Expr.makeAssert(base.apply());
-    }
-
-    public Expr onFieldAccess(Thunk<Expr> base, String fieldName) {
-      return Expr.makeFieldAccess(base.apply(), fieldName);
-    }
-
-    public Expr onProjection(Thunk<Expr> base, String[] fieldNames) {
-      return Expr.makeProjection(base.apply(), fieldNames);
-    }
-
-    public Expr onProjectionByType(Thunk<Expr> base, Thunk<Expr> type) {
-      return Expr.makeProjectionByType(base.apply(), type.apply());
-    }
-
-    public Expr onRecordLiteral(Iterable<Entry<String, Thunk<Expr>>> fields, int size) {
-      return Expr.makeRecordLiteralThunked(fields);
-    }
-
-    public Expr onRecordType(Iterable<Entry<String, Thunk<Expr>>> fields, int size) {
-      return Expr.makeRecordTypeThunked(fields);
-    }
-
-    public Expr onUnionType(Iterable<Entry<String, Thunk<Expr>>> fields, int size) {
-      return Expr.makeUnionTypeThunked(fields);
-    }
-
-    public Expr onNonEmptyListLiteral(Iterable<Thunk<Expr>> values, int size) {
-      return Expr.makeNonEmptyListLiteralThunked(values);
-    }
-
-    public Expr onEmptyListLiteral(Thunk<Expr> type) {
-      return Expr.makeEmptyListLiteral(type.apply());
-    }
-
-    public Expr onLet(String name, Thunk<Expr> type, Thunk<Expr> value, Thunk<Expr> body) {
-      return Expr.makeLet(name, type.apply(), value.apply(), body.apply());
-    }
-
-    public Expr onAnnotated(Thunk<Expr> base, Thunk<Expr> type) {
-      return Expr.makeAnnotated(base.apply(), type.apply());
-    }
-
-    public Expr onToMap(Thunk<Expr> base, Thunk<Expr> type) {
-      return Expr.makeToMap(base.apply(), type.apply());
-    }
-
-    public Expr onMerge(Thunk<Expr> left, Thunk<Expr> right, Thunk<Expr> type) {
-      return Expr.makeMerge(left.apply(), right.apply(), type.apply());
-    }
-
-    public Expr onNote(Thunk<Expr> base, Source source) {
-      return Expr.makeNote(base.apply(), source);
-    }
-
-    public Expr onRemoteImport(URI url, Thunk<Expr> using, Import.Mode mode, byte[] hash) {
-      return Expr.makeRemoteImport(url, using.apply(), mode, hash);
-    }
   }
 
   public static class External extends IdentityVisitor<Expr> implements ExternalVisitor<Expr> {

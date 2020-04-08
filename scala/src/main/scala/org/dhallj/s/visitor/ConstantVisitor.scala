@@ -2,7 +2,7 @@ package org.dhallj.s.visitor
 
 import java.net.URI
 import java.nio.file.Path
-import org.dhallj.core.{Expr, Import, Operator, Source, Thunk}
+import org.dhallj.core.{Expr, Import, Operator, Source}
 import org.dhallj.s.Visitor
 
 trait ConstantVisitor[I, A] extends Visitor[I, A] {

@@ -22,10 +22,6 @@ final class Constructors {
       this.value = value;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onNaturalLiteral(this.value);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onNaturalLiteral(this.value);
     }
@@ -39,10 +35,6 @@ final class Constructors {
       this.value = value;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onIntegerLiteral(this.value);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onIntegerLiteral(this.value);
     }
@@ -54,10 +46,6 @@ final class Constructors {
     DoubleLiteral(double value) {
       super(Tags.DOUBLE);
       this.value = value;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onDoubleLiteral(this.value);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -75,12 +63,6 @@ final class Constructors {
       this.interpolated = interpolated;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Iterable<Thunk<A>> interpolatedVisited =
-          new ExprUtilities.MappedExprArray(visitor, this.interpolated);
-      return visitor.onTextLiteral(this.parts, interpolatedVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onTextLiteral(this.parts, new ExprUtilities.IdentityArray<Expr>(interpolated));
     }
@@ -94,12 +76,6 @@ final class Constructors {
       super(Tags.APPLICATION);
       this.base = base;
       this.arg = arg;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      Thunk<A> argVisited = new ExprUtilities.ExprThunk(visitor, this.arg);
-      return visitor.onApplication(baseVisited, argVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -119,12 +95,6 @@ final class Constructors {
       this.rhs = rhs;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> lhsVisited = new ExprUtilities.ExprThunk(visitor, this.lhs);
-      Thunk<A> rhsVisited = new ExprUtilities.ExprThunk(visitor, this.rhs);
-      return visitor.onOperatorApplication(this.operator, lhsVisited, rhsVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onOperatorApplication(this.operator, lhs, rhs);
     }
@@ -140,13 +110,6 @@ final class Constructors {
       this.predicate = predicate;
       this.thenValue = thenValue;
       this.elseValue = elseValue;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> predicateVisited = new ExprUtilities.ExprThunk(visitor, this.predicate);
-      Thunk<A> thenValueVisited = new ExprUtilities.ExprThunk(visitor, this.thenValue);
-      Thunk<A> elseValueVisited = new ExprUtilities.ExprThunk(visitor, this.elseValue);
-      return visitor.onIf(predicateVisited, thenValueVisited, elseValueVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -166,12 +129,6 @@ final class Constructors {
       this.result = result;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      Thunk<A> resultVisited = new ExprUtilities.ExprThunk(visitor, this.result);
-      return visitor.onLambda(this.name, typeVisited, resultVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onLambda(this.name, type, result);
     }
@@ -189,12 +146,6 @@ final class Constructors {
       this.result = result;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      Thunk<A> resultVisited = new ExprUtilities.ExprThunk(visitor, this.result);
-      return visitor.onPi(this.name, typeVisited, resultVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onPi(this.name, type, result);
     }
@@ -206,11 +157,6 @@ final class Constructors {
     Assert(Expr base) {
       super(Tags.ASSERT);
       this.base = base;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      return visitor.onAssert(baseVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -228,11 +174,6 @@ final class Constructors {
       this.fieldName = fieldName;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      return visitor.onFieldAccess(baseVisited, this.fieldName);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onFieldAccess(base, this.fieldName);
     }
@@ -246,11 +187,6 @@ final class Constructors {
       super(Tags.PROJECTION);
       this.base = base;
       this.fieldNames = fieldNames;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      return visitor.onProjection(baseVisited, this.fieldNames);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -268,12 +204,6 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      Thunk<A> tpeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      return visitor.onProjectionByType(baseVisited, tpeVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onProjectionByType(base, type);
     }
@@ -285,10 +215,6 @@ final class Constructors {
     BuiltIn(String name) {
       super(Tags.BUILT_IN);
       this.name = name;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onBuiltIn(this.name);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -306,10 +232,6 @@ final class Constructors {
       this.index = index;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onIdentifier(this.name, this.index);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onIdentifier(this.name, this.index);
     }
@@ -321,11 +243,6 @@ final class Constructors {
     RecordLiteral(Entry<String, Expr>[] fields) {
       super(Tags.RECORD);
       this.fields = fields;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onRecordLiteral(
-          new ExprUtilities.MappedEntryArray<A>(visitor, this.fields), fields.length);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -342,11 +259,6 @@ final class Constructors {
       this.fields = fields;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onRecordType(
-          new ExprUtilities.MappedEntryArray<A>(visitor, this.fields), fields.length);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onRecordType(
           new ExprUtilities.IdentityArray<Entry<String, Expr>>(fields), fields.length);
@@ -359,11 +271,6 @@ final class Constructors {
     UnionType(Entry<String, Expr>[] fields) {
       super(Tags.UNION_TYPE);
       this.fields = fields;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onUnionType(
-          new ExprUtilities.MappedEntryArray<A>(visitor, this.fields), fields.length);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -380,11 +287,6 @@ final class Constructors {
       this.values = values;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Iterable<Thunk<A>> valuesVisited = new ExprUtilities.MappedExprArray(visitor, this.values);
-      return visitor.onNonEmptyListLiteral(valuesVisited, this.values.length);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onNonEmptyListLiteral(
           new ExprUtilities.IdentityArray<Expr>(values), this.values.length);
@@ -397,11 +299,6 @@ final class Constructors {
     EmptyListLiteral(Expr type) {
       super(Tags.EMPTY_LIST);
       this.type = type;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> tpeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      return visitor.onEmptyListLiteral(tpeVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -423,13 +320,6 @@ final class Constructors {
       this.body = body;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      Thunk<A> valueVisited = new ExprUtilities.ExprThunk(visitor, this.value);
-      Thunk<A> bodyVisited = new ExprUtilities.ExprThunk(visitor, this.body);
-      return visitor.onLet(name, typeVisited, valueVisited, bodyVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onLet(name, type, value, body);
     }
@@ -443,12 +333,6 @@ final class Constructors {
       super(Tags.ANNOTATED);
       this.base = base;
       this.type = type;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      return visitor.onAnnotated(baseVisited, typeVisited);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -468,13 +352,6 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> handlersVisited = new ExprUtilities.ExprThunk(visitor, this.handlers);
-      Thunk<A> unionVisited = new ExprUtilities.ExprThunk(visitor, this.union);
-      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      return visitor.onMerge(handlersVisited, unionVisited, typeVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onMerge(handlers, union, type);
     }
@@ -490,12 +367,6 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> baseVisited = new ExprUtilities.ExprThunk(visitor, this.base);
-      Thunk<A> typeVisited = new ExprUtilities.ExprThunk(visitor, this.type);
-      return visitor.onToMap(baseVisited, typeVisited);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onToMap(base, type);
     }
@@ -509,10 +380,6 @@ final class Constructors {
       super(Tags.MISSING_IMPORT);
       this.mode = mode;
       this.hash = hash;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onMissingImport(this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -532,10 +399,6 @@ final class Constructors {
       this.hash = hash;
     }
 
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onEnvImport(this.name, this.mode, this.hash);
-    }
-
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
       return visitor.onEnvImport(this.name, this.mode, this.hash);
     }
@@ -551,10 +414,6 @@ final class Constructors {
       this.path = path;
       this.mode = mode;
       this.hash = hash;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      return visitor.onLocalImport(this.path, this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
@@ -574,11 +433,6 @@ final class Constructors {
       this.using = using;
       this.mode = mode;
       this.hash = hash;
-    }
-
-    public final <A> A accept(Visitor<Thunk<A>, A> visitor) {
-      Thunk<A> usingVisited = new ExprUtilities.ExprThunk(visitor, this.using);
-      return visitor.onRemoteImport(this.url, usingVisited, this.mode, this.hash);
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
