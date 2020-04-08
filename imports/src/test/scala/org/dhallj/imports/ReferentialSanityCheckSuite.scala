@@ -3,8 +3,9 @@ package org.dhallj.imports
 import java.net.URI
 import java.nio.file.Paths
 
-import munit.FunSuite
 import cats.effect.IO
+import munit.FunSuite
+import org.dhallj.imports.ResolveImportsVisitor._
 
 class ReferentialSanityCheckSuite extends FunSuite {
 

@@ -5,6 +5,7 @@ import java.nio.file.Paths
 
 import cats.effect.IO
 import munit.FunSuite
+import org.dhallj.imports.ResolveImportsVisitor._
 import org.http4s.{Header, Headers}
 
 class CORSComplianceCheckSuite extends FunSuite {

@@ -6,6 +6,7 @@ import java.nio.file.Paths
 import cats.effect.IO
 import munit.FunSuite
 import org.dhallj.imports.Canonicalization._
+import org.dhallj.imports.ResolveImportsVisitor._
 
 /**
  * https://github.com/dhall-lang/dhall-lang/blob/master/standard/imports.md#canonicalization-of-directories

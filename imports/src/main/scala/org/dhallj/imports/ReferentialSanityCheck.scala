@@ -1,6 +1,7 @@
 package org.dhallj.imports
 
 import cats.effect.Sync
+import org.dhallj.imports.ResolveImportsVisitor._
 
 object ReferentialSanityCheck {
 

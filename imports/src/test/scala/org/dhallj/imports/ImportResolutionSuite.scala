@@ -1,13 +1,12 @@
 package org.dhallj.imports
 
-import org.dhallj.parser.Dhall.parse
-import org.dhallj.imports._
 import cats.effect.{ContextShift, IO, Resource}
-import cats.implicits._
 import munit.FunSuite
 import org.dhallj.core.Expr
-import org.http4s.client.blaze._
+import org.dhallj.imports.ResolveImportsVisitor._
+import org.dhallj.parser.Dhall.parse
 import org.http4s.client._
+import org.http4s.client.blaze._
 
 import scala.concurrent.ExecutionContext.global
 
@@ -99,6 +98,23 @@ class ImportResolutionSuite extends FunSuite {
   test("Cyclic imports - all relative".fail) {
     val expr = parse("let x = /cyclic-relative-paths/package.dhall in x")
     val expected = parse("True").normalize
+
+    assert(resolve(expr) == expected)
+  }
+
+  test("Alternate imports - first succeeds") {
+    val expr = parse("let x = /alternate/package.dhall ? /alternate/other.dhall in x")
+    val expected = parse("let x = 1 in x").normalize
+
+    assert(resolve(expr) == expected)
+  }
+
+  test("Alternate imports - first fails") {
+
+//    println(scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("/alternate/not_present.dhall")).mkString)
+    val expr = parse("let x = /alternate/not_present.dhall ? /alternate/package.dhall in x")
+    val expected = parse("let x = 1 in x").normalize
+
 
     assert(resolve(expr) == expected)
   }
