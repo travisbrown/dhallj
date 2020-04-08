@@ -3,27 +3,30 @@ package org.dhallj.imports
 import java.math.BigInteger
 import java.net.URI
 import java.nio.file.Path
+import java.security.MessageDigest
+import java.util.{List => JList, Map => JMap}
 
 import cats.effect.Sync
-import org.dhallj.core.{Expr, Import, LetBinding, Operator, Source}
+import cats.effect.implicits._
+import cats.implicits._
 import org.dhallj.core.visitor.PureVis
+import org.dhallj.core._
 import org.dhallj.imports.Canonicalization.canonicalize
+import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.Dhall
-import org.http4s.{EntityDecoder, Headers}
 import org.http4s.Status.Successful
 import org.http4s.client.Client
-import java.util.{List => JList, Map => JMap}
+import org.http4s.{EntityDecoder, Headers}
+
 import scala.jdk.CollectionConverters._
-import cats.implicits._
 
-import ResolveImportsVisitor._
-
-//TODO sha256 checking if required
 //TODO support caching
 //TODO quoted path components?
 //TODO handle duplicate imports - should be easy with caching logic
 //TODO proper error handling
-private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: ResolutionConfig, parents: List[ImportContext])(
+//TODO handle using
+private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: ResolutionConfig,
+                                                        parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends PureVis[F[Expr]] {
@@ -171,7 +174,6 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     onImport(Missing, mode, hash)
 
   private def onImport(i: ImportContext, mode: Import.Mode, hash: Array[Byte]): F[Expr] = {
-    //TODO handle missing and unresolved imports properly
     def resolve(i: ImportContext, mode: Import.Mode): F[(Expr, Headers)] = {
       def makeLocation(field: String, value: String): F[Expr] =
         F.pure(
@@ -232,7 +234,10 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     }
 
     //TODO check that equality is sensibly defined for URI and Path
-    def isCyclic(imp: ImportContext, parents: List[ImportContext]): Boolean = parents.contains(imp)
+    def rejectCyclicImports(imp: ImportContext, parents: List[ImportContext]): F[Unit] =
+      if (parents.contains(imp))
+        F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
+      else F.unit
 
     for {
       imp <- if (parents.isEmpty) canonicalize(resolutionConfig, i)
@@ -242,16 +247,23 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       (e, headers) = r
       _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
       //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
-      _ <- if (isCyclic(imp, parents))
-        F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
-      else F.unit
+      _ <- rejectCyclicImports(imp, parents)
       result <- e.acceptVis(ResolveImportsVisitor[F](resolutionConfig, imp :: parents))
+      _ <- validateHash(imp, result, hash)
     } yield result
   }
 
   private def liftNull(t: F[Expr]): F[Expr] = Option(t).getOrElse(F.pure(null))
 
-  private def checkSha256[F[_]](e: Expr, expected: Array[Byte]): F[Unit] = ???
+  private def validateHash(imp: ImportContext, e: Expr, expected: Array[Byte]): F[Unit] =
+    if (expected == null) F.unit
+    else
+      for {
+        bytes <- F.pure(e.normalize().encodeToByteArray())
+        encoded <- F.delay(sha256.digest(bytes)).guarantee(F.delay(sha256.reset()))
+        _ <- if (encoded.sameElements(expected)) F.unit
+        else F.raiseError(new RuntimeException(s"SHA256 validation exception for ${imp}"))
+      } yield ()
 
   private def toHex(bs: Array[Byte]): String = {
     val sb = new StringBuilder
@@ -260,6 +272,8 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     }
     sb.toString
   }
+
+  private val sha256: MessageDigest = MessageDigest.getInstance("SHA-256")
 
 }
 
@@ -273,7 +287,6 @@ object ResolveImportsVisitor {
   case object FromFileSystem extends LocalMode
   case object FromResources extends LocalMode
 
-
   sealed trait ImportContext
   case class Env(value: String) extends ImportContext
   case class Local(absolutePath: Path) extends ImportContext
@@ -281,4 +294,3 @@ object ResolveImportsVisitor {
   case object Missing extends ImportContext
 
 }
-

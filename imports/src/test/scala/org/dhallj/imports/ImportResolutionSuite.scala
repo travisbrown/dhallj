@@ -111,10 +111,25 @@ class ImportResolutionSuite extends FunSuite {
 
   test("Alternate imports - first fails") {
 
-//    println(scala.io.Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("/alternate/not_present.dhall")).mkString)
     val expr = parse("let x = /alternate/not_present.dhall ? /alternate/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
+
+    assert(resolve(expr) == expected)
+  }
+
+  test("Valid hash") {
+
+    val expr = parse("let x = /hashed/package.dhall sha256:d60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x")
+    val expected = parse("let x = 1 in x").normalize
+
+    assert(resolve(expr) == expected)
+  }
+
+  test("Invalid hash".fail) {
+
+    val expr = parse("let x = /hashed/package.dhall sha256:e60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x")
+    val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
   }

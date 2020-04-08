@@ -13,5 +13,4 @@ package object imports {
     )(implicit Client: Client[F], F: Sync[F]): F[Expr] = e.acceptVis(ResolveImportsVisitor[F](resolutionConfig, Nil))
   }
 
-
 }
