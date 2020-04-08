@@ -31,11 +31,11 @@ public final class Substitute extends IdentityVis {
   }
 
   @Override
-  public Expr onIdentifier(String value, long index) {
+  public Expr onIdentifier(Expr self, String value, long index) {
     if (value.equals(this.name) && index == this.index) {
       return this.replacement;
     } else {
-      return Expr.makeIdentifier(value, index);
+      return self;
     }
   }
 

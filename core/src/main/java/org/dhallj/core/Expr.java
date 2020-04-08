@@ -748,21 +748,24 @@ public abstract class Expr {
           }
           break;
         case Tags.NATURAL:
-          values.push(vis.onNatural(((Constructors.NaturalLiteral) current.expr).value));
+          values.push(
+              vis.onNatural(current.expr, ((Constructors.NaturalLiteral) current.expr).value));
           break;
         case Tags.INTEGER:
-          values.push(vis.onInteger(((Constructors.IntegerLiteral) current.expr).value));
+          values.push(
+              vis.onInteger(current.expr, ((Constructors.IntegerLiteral) current.expr).value));
           break;
         case Tags.DOUBLE:
-          values.push(vis.onDouble(((Constructors.DoubleLiteral) current.expr).value));
+          values.push(
+              vis.onDouble(current.expr, ((Constructors.DoubleLiteral) current.expr).value));
           break;
         case Tags.BUILT_IN:
           Constructors.BuiltIn tmpBuiltIn = (Constructors.BuiltIn) current.expr;
-          values.push(vis.onBuiltIn(tmpBuiltIn.name));
+          values.push(vis.onBuiltIn(current.expr, tmpBuiltIn.name));
           break;
         case Tags.IDENTIFIER:
           Constructors.Identifier tmpIdentifier = (Constructors.Identifier) current.expr;
-          values.push(vis.onIdentifier(tmpIdentifier.name, tmpIdentifier.index));
+          values.push(vis.onIdentifier(current.expr, tmpIdentifier.name, tmpIdentifier.index));
           break;
         case Tags.LAMBDA:
           Constructors.Lambda tmpLambda = (Constructors.Lambda) current.expr;

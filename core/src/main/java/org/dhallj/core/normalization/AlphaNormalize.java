@@ -35,14 +35,14 @@ public final class AlphaNormalize extends IdentityVis {
       new HashMap<String, LinkedList<Integer>>();
 
   @Override
-  public Expr onIdentifier(String name, long index) {
+  public Expr onIdentifier(Expr self, String name, long index) {
     if (name.equals("_")) {
       return Expr.makeIdentifier(name, index + this.newUnderscoreDepth);
     } else {
       LinkedList<Integer> depths = this.nameDepths.get(name);
 
       if (depths == null) {
-        return Expr.makeIdentifier(name, index);
+        return self;
       } else if (index < depths.size()) {
         return Expr.makeIdentifier("_", underscoreDepth - depths.get((int) index));
       } else {

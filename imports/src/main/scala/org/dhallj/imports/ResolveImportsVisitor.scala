@@ -31,11 +31,11 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
   implicit Client: Client[F],
   F: Sync[F]
 ) extends PureVis[F[Expr]] {
-  override def onDouble(value: Double): F[Expr] = F.pure(Expr.makeDoubleLiteral(value))
+  override def onDouble(self: Expr, value: Double): F[Expr] = F.pure(self)
 
-  override def onNatural(value: BigInteger): F[Expr] = F.pure(Expr.makeNaturalLiteral(value))
+  override def onNatural(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
 
-  override def onInteger(value: BigInteger): F[Expr] = F.pure(Expr.makeIntegerLiteral(value))
+  override def onInteger(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
 
   override def onText(parts: Array[String], interpolated: JList[F[Expr]]): F[Expr] =
     for {
@@ -98,8 +98,8 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       t <- tpe
     } yield Expr.makeProjectionByType(b, t)
 
-  override def onBuiltIn(name: String): F[Expr] = F.pure(Expr.makeBuiltIn(name))
-  override def onIdentifier(value: String, index: Long): F[Expr] = F.pure(Expr.makeIdentifier(value, index))
+  override def onBuiltIn(self: Expr, name: String): F[Expr] = F.pure(self)
+  override def onIdentifier(self: Expr, value: String, index: Long): F[Expr] = F.pure(self)
 
   override def onRecord(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
     for {

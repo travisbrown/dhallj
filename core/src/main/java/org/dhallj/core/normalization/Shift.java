@@ -31,11 +31,11 @@ public final class Shift extends IdentityVis {
   }
 
   @Override
-  public Expr onIdentifier(String value, long index) {
+  public Expr onIdentifier(Expr self, String value, long index) {
     if (value.equals(this.name) && index >= this.cutoff) {
       return Expr.makeIdentifier(value, index + this.change);
     } else {
-      return Expr.makeIdentifier(value, index);
+      return self;
     }
   }
 

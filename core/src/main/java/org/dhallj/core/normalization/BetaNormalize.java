@@ -29,24 +29,24 @@ public final class BetaNormalize extends PureVis<Expr> {
     return base;
   }
 
-  public Expr onNatural(BigInteger value) {
-    return Expr.makeNaturalLiteral(value);
+  public Expr onNatural(Expr self, BigInteger value) {
+    return self;
   }
 
-  public Expr onInteger(BigInteger value) {
-    return Expr.makeIntegerLiteral(value);
+  public Expr onInteger(Expr self, BigInteger value) {
+    return self;
   }
 
-  public Expr onDouble(double value) {
-    return Expr.makeDoubleLiteral(value);
+  public Expr onDouble(Expr self, double value) {
+    return self;
   }
 
-  public Expr onBuiltIn(String name) {
-    return Expr.makeBuiltIn(name);
+  public Expr onBuiltIn(Expr self, String name) {
+    return self;
   }
 
-  public Expr onIdentifier(String name, long index) {
-    return Expr.makeIdentifier(name, index);
+  public Expr onIdentifier(Expr self, String name, long index) {
+    return self;
   }
 
   public Expr onLambda(String name, Expr type, Expr result) {

@@ -15,15 +15,15 @@ import java.util.Map.Entry;
 public interface Vis<A> {
   A onNote(A base, Source source);
 
-  A onNatural(BigInteger value);
+  A onNatural(Expr self, BigInteger value);
 
-  A onInteger(BigInteger value);
+  A onInteger(Expr self, BigInteger value);
 
-  A onDouble(double value);
+  A onDouble(Expr self, double value);
 
-  A onBuiltIn(String value);
+  A onBuiltIn(Expr self, String value);
 
-  A onIdentifier(String value, long index);
+  A onIdentifier(Expr self, String value, long index);
 
   void bind(String name, Expr type);
 

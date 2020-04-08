@@ -36,23 +36,23 @@ public abstract class ConstantVis<A> extends PureVis<A> {
     return base;
   }
 
-  public A onNatural(BigInteger value) {
+  public A onNatural(Expr self, BigInteger value) {
     return this.getReturnValue();
   }
 
-  public A onInteger(BigInteger value) {
+  public A onInteger(Expr self, BigInteger value) {
     return this.getReturnValue();
   }
 
-  public A onDouble(double value) {
+  public A onDouble(Expr self, double value) {
     return this.getReturnValue();
   }
 
-  public A onBuiltIn(String value) {
+  public A onBuiltIn(Expr self, String value) {
     return this.getReturnValue();
   }
 
-  public A onIdentifier(String value, long index) {
+  public A onIdentifier(Expr self, String value, long index) {
     return this.getReturnValue();
   }
 

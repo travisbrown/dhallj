@@ -106,19 +106,19 @@ final class ToStringVisitor extends PureVis<ToStringState> {
     return base;
   }
 
-  public ToStringState onNatural(BigInteger value) {
+  public ToStringState onNatural(Expr self, BigInteger value) {
     return new ToStringState(value.toString());
   }
 
-  public ToStringState onInteger(BigInteger value) {
+  public ToStringState onInteger(Expr self, BigInteger value) {
     return new ToStringState(value.toString());
   }
 
-  public ToStringState onDouble(double value) {
+  public ToStringState onDouble(Expr self, double value) {
     return new ToStringState(Double.toString(value));
   }
 
-  public ToStringState onBuiltIn(String name) {
+  public ToStringState onBuiltIn(Expr self, String name) {
     return new ToStringState(name);
   }
 
@@ -154,7 +154,7 @@ final class ToStringVisitor extends PureVis<ToStringState> {
     }
   }
 
-  public ToStringState onIdentifier(String name, long index) {
+  public ToStringState onIdentifier(Expr self, String name, long index) {
     String maybeEscaped = escapeName(name);
     return new ToStringState(
         (index == 0) ? maybeEscaped : String.format("%s@%d", maybeEscaped, index));

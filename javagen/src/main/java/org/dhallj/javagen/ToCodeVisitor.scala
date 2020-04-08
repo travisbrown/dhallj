@@ -26,10 +26,10 @@ final class ToCodeVisitor extends PureVis[Code] {
 
   def onNote(base: Code, source: Source): Code = base
 
-  def onNatural(value: BigInteger): Code = Code(s"""Expr.makeNaturalLiteral(new BigInteger("$value"))""")
-  def onInteger(value: BigInteger): Code = Code(s"""Expr.makeIntegerLiteral(new BigInteger("$value"))""")
-  def onDouble(value: Double): Code = Code(s"""Expr.makeDoubleLiteral($value)""")
-  def onBuiltIn(name: String): Code = Code(
+  def onNatural(self: Expr, value: BigInteger): Code = Code(s"""Expr.makeNaturalLiteral(new BigInteger("$value"))""")
+  def onInteger(self: Expr, value: BigInteger): Code = Code(s"""Expr.makeIntegerLiteral(new BigInteger("$value"))""")
+  def onDouble(self: Expr, value: Double): Code = Code(s"""Expr.makeDoubleLiteral($value)""")
+  def onBuiltIn(self: Expr, name: String): Code = Code(
     if (constants(name)) {
       s"""Expr.Constants.${name.toUpperCase}"""
     } else {
@@ -37,7 +37,7 @@ final class ToCodeVisitor extends PureVis[Code] {
     }
   )
 
-  def onIdentifier(name: String, index: Long): Code = Code(s"""Expr.makeIdentifier("$name", $index)""")
+  def onIdentifier(self: Expr, name: String, index: Long): Code = Code(s"""Expr.makeIdentifier("$name", $index)""")
 
   def onLambda(name: String, tpe: Code, result: Code): Code =
     result.merge(tpe) {

@@ -26,7 +26,7 @@ public final class Encode implements Vis<Writer> {
     return base;
   }
 
-  public Writer onNatural(final BigInteger value) {
+  public Writer onNatural(Expr self, final BigInteger value) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
         this.writeArrayStart(stream, 2);
@@ -36,7 +36,7 @@ public final class Encode implements Vis<Writer> {
     };
   }
 
-  public Writer onInteger(final BigInteger value) {
+  public Writer onInteger(Expr self, final BigInteger value) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
         this.writeArrayStart(stream, 2);
@@ -46,7 +46,7 @@ public final class Encode implements Vis<Writer> {
     };
   }
 
-  public Writer onDouble(final double value) {
+  public Writer onDouble(Expr self, final double value) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
         this.writeDouble(stream, value);
@@ -54,7 +54,7 @@ public final class Encode implements Vis<Writer> {
     };
   }
 
-  public Writer onBuiltIn(final String name) {
+  public Writer onBuiltIn(Expr self, final String name) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
         if (name.equals("True")) {
@@ -68,7 +68,7 @@ public final class Encode implements Vis<Writer> {
     };
   }
 
-  public Writer onIdentifier(final String name, final long index) {
+  public Writer onIdentifier(Expr self, final String name, final long index) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
 
