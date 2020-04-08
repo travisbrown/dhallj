@@ -68,7 +68,7 @@ lazy val demo = project
     skip in publish := true
   )
   .enablePlugins(GraalVMNativeImagePlugin)
-  .dependsOn(parser)
+  .dependsOn(parser, importsMini)
 
 lazy val scala = project
   .in(file("scala"))

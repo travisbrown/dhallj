@@ -1,6 +1,7 @@
 package org.dhallj.demo;
 
 import org.dhallj.core.Expr;
+import org.dhallj.imports.mini.Resolver;
 import org.dhallj.parser.Dhall;
 
 public class Main {
@@ -11,8 +12,9 @@ public class Main {
       System.out.println(parsed.normalize().alphaNormalize().hash());
     } else {
       Expr parsed = Dhall.parse(args[0]);
-      parsed.typeCheck();
-      System.out.println(parsed.normalize().alphaNormalize().hash());
+      Expr resolved = Resolver.resolve(parsed, true, null);
+      resolved.typeCheck();
+      System.out.println(resolved.normalize().alphaNormalize().hash());
     }
   }
 }
