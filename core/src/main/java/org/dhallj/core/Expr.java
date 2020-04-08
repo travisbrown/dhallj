@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -713,16 +714,17 @@ public abstract class Expr {
 
   public final <A> A acceptVis(Vis<A> vis) {
     State current = new State(this, 0);
-    Deque<State> stack = new LinkedList<State>();
+    Deque<State> stack = new ArrayDeque<State>();
+    // Note that we have to use a linked list here because we store null values on the stack.
     Deque<A> values = new LinkedList<A>();
 
     A v0;
     A v1;
     A v2;
 
-    Deque<Deque<Expr>> applicationStack = new LinkedList<Deque<Expr>>();
-    Deque<Deque<LetBinding<Expr>>> letBindingsStack = new LinkedList<Deque<LetBinding<Expr>>>();
-    Deque<List<String>> letBindingNamesStack = new LinkedList<List<String>>();
+    Deque<Deque<Expr>> applicationStack = new ArrayDeque<>();
+    Deque<Deque<LetBinding<Expr>>> letBindingsStack = new ArrayDeque<>();
+    Deque<List<String>> letBindingNamesStack = new ArrayDeque<>();
 
     while (current != null) {
       switch (current.expr.tag) {
@@ -806,7 +808,7 @@ public abstract class Expr {
           Deque<LetBinding<Expr>> letBindings;
 
           if (current.state == 0) {
-            letBindings = new LinkedList<LetBinding<Expr>>();
+            letBindings = new ArrayDeque<LetBinding<Expr>>();
             letBindings.push(new LetBinding(tmpLet.name, tmpLet.type, tmpLet.value));
 
             gatherLetBindings(tmpLet.body, letBindings);
@@ -1056,7 +1058,7 @@ public abstract class Expr {
 
           Deque<Expr> application;
           if (current.state == 0) {
-            application = new LinkedList<Expr>();
+            application = new ArrayDeque<>();
             application.push(tmpApplication.arg);
 
             Expr base = gatherApplicationArgs(tmpApplication.base, application);
@@ -1070,7 +1072,7 @@ public abstract class Expr {
           }
 
           if (application.isEmpty()) {
-            List<A> args = new ArrayList<A>(current.size);
+            List<A> args = new ArrayList<>(current.size);
             for (int i = 0; i < current.size - 1; i++) {
               args.add(values.poll());
             }
@@ -1290,8 +1292,8 @@ public abstract class Expr {
   }
 
   public final Entry<Expr, Expr> firstDiff(Expr other) {
-    Deque<Expr> stackA = new LinkedList<Expr>();
-    Deque<Expr> stackB = new LinkedList<Expr>();
+    Deque<Expr> stackA = new ArrayDeque<Expr>();
+    Deque<Expr> stackB = new ArrayDeque<Expr>();
 
     Expr currentA = this;
     Expr currentB = other;
@@ -1480,11 +1482,12 @@ public abstract class Expr {
                   fieldsA[i].getValue(), fieldsB[i].getValue());
             }
 
-            if (fieldsA[i].getValue() == null ^ fieldsB[i].getValue() == null) {
+            if (fieldsA[i].getValue() != null && fieldsB[i].getValue() != null) {
+              stackA.add(fieldsA[i].getValue());
+              stackB.add(fieldsB[i].getValue());
+            } else if (fieldsA[i].getValue() == null ^ fieldsB[i].getValue() == null) {
               return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
             }
-            stackA.add(fieldsA[i].getValue());
-            stackB.add(fieldsB[i].getValue());
           }
           continue;
         } else {
