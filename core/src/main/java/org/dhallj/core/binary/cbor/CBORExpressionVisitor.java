@@ -202,39 +202,16 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     if (length.longValue() != 4) {
       throw new RuntimeException("Operator application must be encoded in an array of length 4");
     }
-    int op = decoder.readUnsignedInteger().intValue();
+    int operatorLabel = decoder.readUnsignedInteger().intValue();
     Expr lhs = readExpr();
     Expr rhs = readExpr();
-    if (op == 0) {
-      return Expr.makeOperatorApplication(Operator.OR, lhs, rhs);
-    } else if (op == 1) {
-      return Expr.makeOperatorApplication(Operator.AND, lhs, rhs);
-    } else if (op == 2) {
-      return Expr.makeOperatorApplication(Operator.EQUALS, lhs, rhs);
-    } else if (op == 3) {
-      return Expr.makeOperatorApplication(Operator.NOT_EQUALS, lhs, rhs);
-    } else if (op == 4) {
-      return Expr.makeOperatorApplication(Operator.PLUS, lhs, rhs);
-    } else if (op == 5) {
-      return Expr.makeOperatorApplication(Operator.TIMES, lhs, rhs);
-    } else if (op == 6) {
-      return Expr.makeOperatorApplication(Operator.TEXT_APPEND, lhs, rhs);
-    } else if (op == 7) {
-      return Expr.makeOperatorApplication(Operator.LIST_APPEND, lhs, rhs);
-    } else if (op == 8) {
-      return Expr.makeOperatorApplication(Operator.COMBINE, lhs, rhs);
-    } else if (op == 9) {
-      return Expr.makeOperatorApplication(Operator.PREFER, lhs, rhs);
-    } else if (op == 10) {
-      return Expr.makeOperatorApplication(Operator.COMBINE_TYPES, lhs, rhs);
-    } else if (op == 11) {
-      return Expr.makeOperatorApplication(Operator.IMPORT_ALT, lhs, rhs);
-    } else if (op == 12) {
-      return Expr.makeOperatorApplication(Operator.EQUIVALENT, lhs, rhs);
-    } else if (op == 13) {
-      return Expr.makeOperatorApplication(Operator.COMPLETE, lhs, rhs);
+
+    Operator operator = Operator.fromLabel(operatorLabel);
+
+    if (operator != null) {
+      return Expr.makeOperatorApplication(operator, lhs, rhs);
     } else {
-      throw new RuntimeException(String.format("Operator tag %d is undefined", op));
+      throw new RuntimeException(String.format("Operator tag %d is undefined", operatorLabel));
     }
   }
 

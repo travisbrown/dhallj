@@ -16,6 +16,8 @@ public enum Operator {
   EQUIVALENT("\u2261", false),
   COMPLETE("::", false);
 
+  private static final Operator[] values = values();
+
   private final String value;
   private final boolean isBoolOperator;
 
@@ -34,6 +36,14 @@ public enum Operator {
 
   public final String toString() {
     return this.value;
+  }
+
+  public static final Operator fromLabel(int ordinal) {
+    if (ordinal >= 0 && ordinal < values.length) {
+      return values[ordinal];
+    } else {
+      return null;
+    }
   }
 
   public static final Operator parse(String input) {
