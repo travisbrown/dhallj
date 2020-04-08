@@ -1,15 +1,16 @@
 package org.dhallj.tests.acceptance
 
 import org.dhallj.core.Expr
+import org.dhallj.core.binary.Decode.decode
 import org.dhallj.parser.Dhall
 import scala.reflect.ClassTag
 
 abstract class AcceptanceFailureSuite[A, E <: Throwable: ClassTag] extends AcceptanceSuite {
-  def loadInput(input: String): A
+  def loadInput(input: Array[Byte]): A
 
   testInputs
     .map {
-      case (name, path) => (name, readString(path))
+      case (name, path) => (name, readBytes(path))
     }
     .foreach {
       case (name, input) =>
@@ -20,9 +21,15 @@ abstract class AcceptanceFailureSuite[A, E <: Throwable: ClassTag] extends Accep
 }
 
 class ParsingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, Exception] {
-  def loadInput(input: String): Expr = Dhall.parse(input)
+  def loadInput(input: Array[Byte]): Expr = Dhall.parse(new String(input))
 }
 
 class TypeCheckingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, RuntimeException] {
-  def loadInput(input: String): Expr = Dhall.parse(input).typeCheck
+  def loadInput(input: Array[Byte]): Expr = Dhall.parse(new String(input)).typeCheck
+}
+
+class BinaryDecodingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, RuntimeException] {
+  override def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhallb")
+
+  def loadInput(input: Array[Byte]): Expr = decode(input)
 }
