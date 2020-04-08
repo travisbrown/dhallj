@@ -3,6 +3,7 @@ package org.dhallj.core.binary.cbor;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
+import org.dhallj.core.binary.Label;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -59,51 +60,55 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   @Override
   public Expr onArray(BigInteger length, BigInteger tagI) {
     int tag = tagI.intValue();
-    if (tag == 0) {
-      return readFnApplication(length);
-    } else if (tag == 1) {
-      return readFunction(length);
-    } else if (tag == 2) {
-      return readPi(length);
-    } else if (tag == 3) {
-      return readOperator(length);
-    } else if (tag == 4) {
-      return readList(length);
-    } else if (tag == 5) {
-      return readSome(length);
-    } else if (tag == 6) {
-      return readMerge(length);
-    } else if (tag == 7) {
-      return readRecordType(length);
-    } else if (tag == 8) {
-      return readRecordLiteral(length);
-    } else if (tag == 9) {
-      return readFieldAccess(length);
-    } else if (tag == 10) {
-      return readProjection(length);
-    } else if (tag == 11) {
-      return readUnion(length);
-    } else if (tag == 14) {
-      return readIf(length);
-    } else if (tag == 15) {
-      return readNatural(length);
-    } else if (tag == 16) {
-      return readInteger(length);
-    } else if (tag == 18) {
-      return readTextLiteral(length);
-    } else if (tag == 19) {
-      return readAssert(length);
-    } else if (tag == 24) {
-      return readImport(length);
-    } else if (tag == 25) {
-      return readLet(length);
-    } else if (tag == 26) {
-      return readTypeAnnotation(length);
-    } else if (tag == 27) {
-      return readMap(length);
-    } else if (tag == 28) {
-      return readEmptyListAbstractType(length);
-    } else throw new RuntimeException(String.format("Array tag %d undefined", tag));
+
+    switch (tag) {
+      case Label.APPLICATION:
+        return readFnApplication(length);
+      case Label.LAMBDA:
+        return readFunction(length);
+      case Label.PI:
+        return readPi(length);
+      case Label.OPERATOR_APPLICATION:
+        return readOperator(length);
+      case Label.LIST:
+        return readList(length);
+      case Label.SOME:
+        return readSome(length);
+      case Label.MERGE:
+        return readMerge(length);
+      case Label.RECORD_TYPE:
+        return readRecordType(length);
+      case Label.RECORD_LITERAL:
+        return readRecordLiteral(length);
+      case Label.FIELD_ACCESS:
+        return readFieldAccess(length);
+      case Label.PROJECTION:
+        return readProjection(length);
+      case Label.UNION_TYPE:
+        return readUnion(length);
+      case Label.IF:
+        return readIf(length);
+      case Label.NATURAL:
+        return readNatural(length);
+      case Label.INTEGER:
+        return readInteger(length);
+      case Label.TEXT:
+        return readTextLiteral(length);
+      case Label.ASSERT:
+        return readAssert(length);
+      case Label.IMPORT:
+        return readImport(length);
+      case Label.LET:
+        return readLet(length);
+      case Label.ANNOTATION:
+        return readTypeAnnotation(length);
+      case Label.TO_MAP:
+        return readMap(length);
+      case Label.EMPTY_LIST_WITH_ABSTRACT_TYPE:
+        return readEmptyListAbstractType(length);
+      default:
+        throw new RuntimeException(String.format("Array tag %d undefined", tag));
+    }
   }
 
   @Override
@@ -407,26 +412,28 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     byte[] hash = decoder.readNullableByteString();
     Import.Mode mode = readMode();
     int tag = decoder.readUnsignedInteger().intValue();
-    if (tag == 0) {
-      Expr using = readExpr();
-      return readRemoteImport(length, mode, hash, "http:/", using);
-    } else if (tag == 1) {
-      Expr using = readExpr();
-      return readRemoteImport(length, mode, hash, "https:/", using);
-    } else if (tag == 2) {
-      return readLocalImport(length, mode, hash, "/");
-    } else if (tag == 3) {
-      return readLocalImport(length, mode, hash, "./");
-    } else if (tag == 4) {
-      return readLocalImport(length, mode, hash, "../");
-    } else if (tag == 5) {
-      return readLocalImport(length, mode, hash, "~");
-    } else if (tag == 6) {
-      return readEnvImport(length, mode, hash);
-    } else if (tag == 7) {
-      return Expr.makeMissingImport(mode, hash);
-    } else {
-      throw new RuntimeException(String.format("Import type %d is undefined", tag));
+
+    switch (tag) {
+      case Label.IMPORT_TYPE_REMOTE_HTTP:
+        Expr httpUsing = readExpr();
+        return readRemoteImport(length, mode, hash, "http:/", httpUsing);
+      case Label.IMPORT_TYPE_REMOTE_HTTPS:
+        Expr httpsUsing = readExpr();
+        return readRemoteImport(length, mode, hash, "https:/", httpsUsing);
+      case Label.IMPORT_TYPE_LOCAL_ABSOLUTE:
+        return readLocalImport(length, mode, hash, "/");
+      case Label.IMPORT_TYPE_LOCAL_HERE:
+        return readLocalImport(length, mode, hash, "./");
+      case Label.IMPORT_TYPE_LOCAL_PARENT:
+        return readLocalImport(length, mode, hash, "../");
+      case Label.IMPORT_TYPE_LOCAL_HOME:
+        return readLocalImport(length, mode, hash, "~");
+      case Label.IMPORT_TYPE_ENV:
+        return readEnvImport(length, mode, hash);
+      case Label.IMPORT_TYPE_MISSING:
+        return Expr.makeMissingImport(mode, hash);
+      default:
+        throw new RuntimeException(String.format("Import type %d is undefined", tag));
     }
   }
 
