@@ -7,11 +7,10 @@ import java.security.MessageDigest
 import java.util.{List => JList, Map => JMap}
 
 import cats.effect.Sync
-import cats.effect.implicits._
 import cats.implicits._
-import org.dhallj.core.visitor.PureVis
 import org.dhallj.core._
 import org.dhallj.core.binary.Decode
+import org.dhallj.core.visitor.PureVis
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
 import org.dhallj.imports.ResolveImportsVisitor._
@@ -22,7 +21,6 @@ import org.http4s.{EntityDecoder, Headers}
 
 import scala.jdk.CollectionConverters._
 
-//TODO support caching
 //TODO quoted path components?
 //TODO handle duplicate imports - should be easy with caching logic
 //TODO proper error handling
@@ -262,6 +260,17 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
         F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
       else F.unit
 
+    def validateHash(imp: ImportContext, e: Expr, expected: Array[Byte]): F[Unit] =
+      if (expected == null) F.unit
+      else
+        for {
+          bytes <- F.pure(e.normalize().encodeToByteArray())
+          encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
+          _ <- if (encoded.sameElements(expected)) F.unit
+          else F.raiseError(new RuntimeException(s"SHA256 validation exception for ${imp}"))
+          _ <- cache.put(encoded, bytes)
+        } yield ()
+
     for {
       imp <- if (parents.isEmpty) canonicalize(resolutionConfig, i)
       else canonicalize(resolutionConfig, parents.head, i)
@@ -277,18 +286,6 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
   }
 
   private def liftNull(t: F[Expr]): F[Expr] = Option(t).getOrElse(F.pure(null))
-
-  private def validateHash(imp: ImportContext, e: Expr, expected: Array[Byte]): F[Unit] =
-    if (expected == null) F.unit
-    else
-      for {
-        bytes <- F.pure(e.normalize().encodeToByteArray())
-        encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
-        _ <- if (encoded.sameElements(expected)) F.unit
-        else F.raiseError(new RuntimeException(s"SHA256 validation exception for ${imp}"))
-        _ <- cache.put(encoded, bytes)
-      } yield ()
-
 }
 
 object ResolveImportsVisitor {
