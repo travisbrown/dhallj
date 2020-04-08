@@ -48,7 +48,7 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
 
   def transform(input: Expr): Expr = transformation(input)
   def loadExpected(input: Array[Byte]): Expr = Dhall.parse(new String(input))
-  def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected)
+  def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
 class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(_.typeCheck)
@@ -81,7 +81,7 @@ abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends
 
   def transform(input: Expr): Expr = transformation(input)
   def loadExpected(input: Array[Byte]): Expr = Dhall.parse(new String(input))
-  def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected)
+  def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
 class BinaryDecodingSuite(val base: String) extends ExprDecodingAcceptanceSuite(identity)
