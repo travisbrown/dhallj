@@ -1,5 +1,6 @@
 package org.dhallj.core.normalization;
 
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import org.dhallj.core.Expr;
@@ -14,7 +15,7 @@ import org.dhallj.core.visitor.IdentityVis;
 public final class Substitute extends IdentityVis {
   private final String name;
   private int index = 0;
-  private final LinkedList<Expr> replacementStack = new LinkedList<>();
+  private final Deque<Expr> replacementStack = new LinkedList<>();
 
   public Substitute(String name, Expr replacement) {
     this.name = name;
@@ -23,7 +24,7 @@ public final class Substitute extends IdentityVis {
 
   @Override
   public void bind(String name, Expr type) {
-    this.replacementStack.push(this.replacementStack.get(0).increment(name));
+    this.replacementStack.push(this.replacementStack.peekFirst().increment(name));
 
     if (name.equals(this.name)) {
       this.index += 1;
@@ -34,7 +35,7 @@ public final class Substitute extends IdentityVis {
   public Expr onIdentifier(Expr self, String name, long index) {
     if (name.equals(this.name)) {
       if (index == this.index) {
-        return this.replacementStack.get(0);
+        return this.replacementStack.peekFirst();
       } else if (index > this.index) {
         return Expr.makeIdentifier(name, index - 1);
       } else {

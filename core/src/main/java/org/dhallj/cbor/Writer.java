@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -201,7 +202,7 @@ public abstract class Writer {
     }
 
     public void writeToStream(OutputStream stream) throws IOException {
-      LinkedList<Iterator<Writer>> stack = new LinkedList<Iterator<Writer>>();
+      Deque<Iterator<Writer>> stack = new LinkedList<Iterator<Writer>>();
       Iterator<Writer> current = this.writers.iterator();
 
       do {

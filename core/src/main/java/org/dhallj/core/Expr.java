@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -712,17 +713,16 @@ public abstract class Expr {
 
   public final <A> A acceptVis(Vis<A> vis) {
     State current = new State(this, 0);
-    LinkedList<State> stack = new LinkedList<State>();
-    LinkedList<A> values = new LinkedList<A>();
+    Deque<State> stack = new LinkedList<State>();
+    Deque<A> values = new LinkedList<A>();
 
     A v0;
     A v1;
     A v2;
 
-    LinkedList<LinkedList<Expr>> applicationStack = new LinkedList<LinkedList<Expr>>();
-    LinkedList<LinkedList<LetBinding<Expr>>> letBindingsStack =
-        new LinkedList<LinkedList<LetBinding<Expr>>>();
-    LinkedList<List<String>> letBindingNamesStack = new LinkedList<List<String>>();
+    Deque<Deque<Expr>> applicationStack = new LinkedList<Deque<Expr>>();
+    Deque<Deque<LetBinding<Expr>>> letBindingsStack = new LinkedList<Deque<LetBinding<Expr>>>();
+    Deque<List<String>> letBindingNamesStack = new LinkedList<List<String>>();
 
     while (current != null) {
       switch (current.expr.tag) {
@@ -803,7 +803,7 @@ public abstract class Expr {
         case Tags.LET:
           Constructors.Let tmpLet = (Constructors.Let) current.expr;
 
-          LinkedList<LetBinding<Expr>> letBindings;
+          Deque<LetBinding<Expr>> letBindings;
 
           if (current.state == 0) {
             letBindings = new LinkedList<LetBinding<Expr>>();
@@ -1054,7 +1054,7 @@ public abstract class Expr {
         case Tags.APPLICATION:
           Constructors.Application tmpApplication = (Constructors.Application) current.expr;
 
-          LinkedList<Expr> application;
+          Deque<Expr> application;
           if (current.state == 0) {
             application = new LinkedList<Expr>();
             application.push(tmpApplication.arg);
@@ -1259,7 +1259,7 @@ public abstract class Expr {
     return values.poll();
   }
 
-  private static final Expr gatherApplicationArgs(Expr candidate, LinkedList<Expr> args) {
+  private static final Expr gatherApplicationArgs(Expr candidate, Deque<Expr> args) {
     Expr current = candidate.getNonNote();
 
     while (current.tag == Tags.APPLICATION) {
@@ -1274,7 +1274,7 @@ public abstract class Expr {
     return current;
   }
 
-  private static final Expr gatherLetBindings(Expr candidate, LinkedList<LetBinding<Expr>> args) {
+  private static final Expr gatherLetBindings(Expr candidate, Deque<LetBinding<Expr>> args) {
     Expr current = candidate.getNonNote();
 
     while (current.tag == Tags.LET) {
@@ -1290,8 +1290,8 @@ public abstract class Expr {
   }
 
   public final Entry<Expr, Expr> firstDiff(Expr other) {
-    LinkedList<Expr> stackA = new LinkedList<Expr>();
-    LinkedList<Expr> stackB = new LinkedList<Expr>();
+    Deque<Expr> stackA = new LinkedList<Expr>();
+    Deque<Expr> stackB = new LinkedList<Expr>();
 
     Expr currentA = this;
     Expr currentB = other;
