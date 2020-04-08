@@ -12,27 +12,13 @@ import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeApplication {
 
-  private static class ApplyLambda extends ConstantVisitor.External<Expr> {
-    private final Expr arg;
-
-    ApplyLambda(Expr arg) {
-      super(null);
-      this.arg = arg;
-    }
-
-    @Override
-    public Expr onLambda(String name, Expr type, Expr result) {
-      return result.substitute(name, arg.increment(name)).decrement(name);
-    }
-  }
-
   private static Expr applyLambdas(Expr base, final List<Expr> args) {
     Expr currentLambda = null;
     Expr current = base;
     int i = 0;
 
     while (current != null && i < args.size()) {
-      current = current.acceptExternal(new ApplyLambda(args.get(i)));
+      current = current.applyAsLambda(args.get(i));
       if (current == null) {
         break;
       } else {

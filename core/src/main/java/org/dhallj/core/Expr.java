@@ -254,6 +254,25 @@ public abstract class Expr {
     return -1;
   }
 
+  /**
+   * If this is expression is a lambda, apply it to the given argument.
+   *
+   * <p>Returns null if the expression is not a lambda.
+   */
+  public final Expr applyAsLambda(Expr arg) {
+    Expr value = this.getNonNote();
+
+    if (value.tag == Tags.LAMBDA) {
+      Constructors.Lambda lambda = ((Constructors.Lambda) value);
+      return lambda
+          .result
+          .substitute(lambda.name, arg.increment(lambda.name))
+          .decrement(lambda.name);
+    } else {
+      return null;
+    }
+  }
+
   public final boolean isResolved() {
     return this.acceptVis(IsResolved.instance);
   }
