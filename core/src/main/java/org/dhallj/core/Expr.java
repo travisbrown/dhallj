@@ -261,6 +261,10 @@ public abstract class Expr {
     return this.acceptVis(IsResolved.instance);
   }
 
+  public final boolean sameStructure(Expr other) {
+    return firstDiff(other) == null;
+  }
+
   public final boolean equivalent(Expr other) {
     return Arrays.equals(
         this.normalize().alphaNormalize().hashBytes(),
