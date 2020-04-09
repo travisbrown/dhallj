@@ -1,6 +1,5 @@
 package org.dhallj.core.typechecking;
 
-import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -877,8 +876,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       result.add(field);
     }
 
-    Entry<String, Expr>[] resultArray =
-        result.toArray((Entry<String, Expr>[]) Array.newInstance(Entry.class, result.size()));
+    Entry<String, Expr>[] resultArray = result.toArray((Entry[]) new Entry[result.size()]);
 
     Arrays.sort(resultArray, FieldUtilities.entryComparator);
 
