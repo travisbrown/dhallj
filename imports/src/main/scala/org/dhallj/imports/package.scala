@@ -1,10 +1,10 @@
 package org.dhallj
 
 import cats.effect.Sync
-import org.dhallj.core.Expr
-import org.dhallj.imports.ResolveImportsVisitor._
-import org.http4s.client._
 import cats.implicits._
+import org.dhallj.core.Expr
+import org.dhallj.imports.ResolutionConfig.FromFileSystem
+import org.http4s.client._
 
 package object imports {
 

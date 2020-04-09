@@ -13,12 +13,14 @@ import org.dhallj.core.binary.Decode
 import org.dhallj.core.visitor.PureVis
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
+import org.dhallj.imports.ResolutionConfig
+import org.dhallj.imports.ResolutionConfig.{FromFileSystem, FromResources}
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.DhallParser
 import org.http4s.Status.Successful
 import org.http4s.Uri.unsafeFromString
 import org.http4s.client.Client
-import org.http4s.{EntityDecoder, Header, Headers, Request, Response}
+import org.http4s.{EntityDecoder, Headers, Request}
 
 import scala.jdk.CollectionConverters._
 
@@ -295,14 +297,6 @@ object ResolveImportsVisitor {
 
   def mkVisitor[F[_]: Sync: Client](resolutionConfig: ResolutionConfig): F[ResolveImportsVisitor[F]] =
     Caching.mkImportsCache.map(c => ResolveImportsVisitor(resolutionConfig, c, Nil))
-
-  case class ResolutionConfig(
-    localMode: LocalMode
-  )
-
-  sealed trait LocalMode
-  case object FromFileSystem extends LocalMode
-  case object FromResources extends LocalMode
 
   sealed trait ImportContext
   case class Env(value: String) extends ImportContext
