@@ -201,7 +201,7 @@ public abstract class Expr {
     }
   }
 
-  public final Iterable<Entry<String, Expr>> asRecordLiteral() {
+  public final List<Entry<String, Expr>> asRecordLiteral() {
     Expr value = this.getNonNote();
 
     if (value.tag == Tags.RECORD) {
@@ -211,7 +211,7 @@ public abstract class Expr {
     }
   }
 
-  public final Iterable<Entry<String, Expr>> asRecordType() {
+  public final List<Entry<String, Expr>> asRecordType() {
     Expr value = this.getNonNote();
 
     if (value.tag == Tags.RECORD_TYPE) {
