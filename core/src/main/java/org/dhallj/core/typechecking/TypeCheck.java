@@ -47,7 +47,12 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     if (name.equals("Sort")) {
       throw fail("Cannot type-check Sort");
     } else {
-      return this.builtInTypes.get(name);
+      Expr type = BuiltInTypes.getType(name);
+      if (type != null) {
+        return type;
+      } else {
+        throw fail(String.format("Unknown built-in name: ", name));
+      }
     }
   }
 
@@ -731,106 +736,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   static boolean isType(Expr expr) {
     String asBuiltIn = expr.asBuiltIn();
     return asBuiltIn != null && asBuiltIn.equals("Type");
-  }
-
-  private static final int BUILT_IN_SIZE = 34;
-  private static final Map<String, Expr> builtInTypes = new HashMap(BUILT_IN_SIZE);
-
-  static {
-    Expr typeToType = Expr.makePi(Constants.TYPE, Constants.TYPE);
-    Expr naturalToBool = Expr.makePi(Constants.NATURAL, Constants.BOOL);
-    Expr naturalToNatural = Expr.makePi(Constants.NATURAL, Constants.NATURAL);
-    Expr _natural = Expr.makeIdentifier("natural");
-    Expr naturalType =
-        Expr.makePi(
-            "natural",
-            Constants.TYPE,
-            Expr.makePi(
-                "succ", Expr.makePi(_natural, _natural), Expr.makePi("zero", _natural, _natural)));
-    Expr _a = Expr.makeIdentifier("a");
-    Expr listA = Expr.makeApplication(Constants.LIST, _a);
-    Expr optionalA = Expr.makeApplication(Constants.OPTIONAL, _a);
-    Expr listAToOptionalA = Expr.makePi("a", Expr.Constants.TYPE, Expr.makePi(listA, optionalA));
-
-    Expr _list = Expr.makeIdentifier("list");
-    Expr listType =
-        Expr.makePi(
-            "list",
-            Constants.TYPE,
-            Expr.makePi(
-                "cons",
-                Expr.makePi(_a, Expr.makePi(_list, _list)),
-                Expr.makePi("nil", _list, _list)));
-
-    Expr _optional = Expr.makeIdentifier("optional");
-    Expr optionalType =
-        Expr.makePi(
-            "optional",
-            Constants.TYPE,
-            Expr.makePi(
-                "just", Expr.makePi(_a, _optional), Expr.makePi("nothing", _optional, _optional)));
-
-    builtInTypes.put("Kind", Constants.SORT);
-    builtInTypes.put("Type", Constants.KIND);
-    builtInTypes.put("Bool", Constants.TYPE);
-    builtInTypes.put("True", Constants.BOOL);
-    builtInTypes.put("False", Constants.BOOL);
-    builtInTypes.put("Natural", Constants.TYPE);
-    builtInTypes.put("Integer", Constants.TYPE);
-    builtInTypes.put("Text", Constants.TYPE);
-    builtInTypes.put("Double", Constants.TYPE);
-    builtInTypes.put("List", typeToType);
-    builtInTypes.put("Optional", typeToType);
-    builtInTypes.put(
-        "None",
-        Expr.makePi(
-            "A",
-            Constants.TYPE,
-            Expr.makeApplication(Constants.OPTIONAL, Expr.makeIdentifier("A"))));
-    builtInTypes.put("Text/show", Expr.makePi(Constants.TEXT, Constants.TEXT));
-
-    builtInTypes.put("Natural/build", Expr.makePi(naturalType, Constants.NATURAL));
-    builtInTypes.put("Natural/fold", Expr.makePi(Constants.NATURAL, naturalType));
-    builtInTypes.put("Natural/isZero", naturalToBool);
-    builtInTypes.put("Natural/even", naturalToBool);
-    builtInTypes.put("Natural/odd", naturalToBool);
-    builtInTypes.put("Natural/toInteger", Expr.makePi(Constants.NATURAL, Constants.INTEGER));
-    builtInTypes.put("Natural/show", Expr.makePi(Constants.NATURAL, Constants.TEXT));
-    builtInTypes.put("Natural/subtract", Expr.makePi(Constants.NATURAL, naturalToNatural));
-
-    builtInTypes.put("Integer/show", Expr.makePi(Constants.INTEGER, Constants.TEXT));
-    builtInTypes.put("Integer/toDouble", Expr.makePi(Constants.INTEGER, Constants.DOUBLE));
-    builtInTypes.put("Integer/negate", Expr.makePi(Constants.INTEGER, Constants.INTEGER));
-    builtInTypes.put("Integer/clamp", Expr.makePi(Constants.INTEGER, Constants.NATURAL));
-
-    builtInTypes.put("Double/show", Expr.makePi(Constants.DOUBLE, Constants.TEXT));
-
-    builtInTypes.put("List/build", Expr.makePi("a", Constants.TYPE, Expr.makePi(listType, listA)));
-    builtInTypes.put("List/fold", Expr.makePi("a", Constants.TYPE, Expr.makePi(listA, listType)));
-    builtInTypes.put(
-        "List/length",
-        Expr.makePi("a", Expr.Constants.TYPE, Expr.makePi(listA, Constants.NATURAL)));
-    builtInTypes.put("List/head", listAToOptionalA);
-    builtInTypes.put("List/last", listAToOptionalA);
-
-    List<Entry<String, Expr>> indexedRecord = new ArrayList(2);
-    indexedRecord.add(new SimpleImmutableEntry("index", Constants.NATURAL));
-    indexedRecord.add(new SimpleImmutableEntry("value", _a));
-
-    builtInTypes.put(
-        "List/indexed",
-        Expr.makePi(
-            "a",
-            Constants.TYPE,
-            Expr.makePi(
-                listA, Expr.makeApplication(Constants.LIST, Expr.makeRecordType(indexedRecord)))));
-    builtInTypes.put("List/reverse", Expr.makePi("a", Constants.TYPE, Expr.makePi(listA, listA)));
-
-    builtInTypes.put(
-        "Optional/build", Expr.makePi("a", Constants.TYPE, Expr.makePi(optionalType, optionalA)));
-    builtInTypes.put(
-        "Optional/fold", Expr.makePi("a", Constants.TYPE, Expr.makePi(optionalA, optionalType)));
-    builtInTypes.put("Some", Constants.SOME);
   }
 
   private final void checkRecursiveTypeMerge(
