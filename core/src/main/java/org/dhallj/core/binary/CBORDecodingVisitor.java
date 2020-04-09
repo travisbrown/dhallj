@@ -1,12 +1,15 @@
-package org.dhallj.core.binary.cbor;
+package org.dhallj.core.binary;
 
+import org.dhallj.cbor.Reader;
+import org.dhallj.cbor.Visitor;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
-import org.dhallj.core.binary.Label;
+import org.dhallj.core.error.DecodingException;
 
 import java.math.BigInteger;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -17,12 +20,12 @@ import java.util.Map;
  * Decodes CBOR expressions corresponding to encoded entire Dhall expressions (hence eg a negative
  * integer by itself is an error but a single float by itself is allowed)
  */
-public class CBORExpressionVisitor implements Visitor<Expr> {
+final class CBORDecodingVisitor implements Visitor<Expr> {
 
-  private CBORDecoder decoder;
+  private final Reader reader;
 
-  public CBORExpressionVisitor(CBORDecoder decoder) {
-    this.decoder = decoder;
+  CBORDecodingVisitor(Reader reader) {
+    this.reader = reader;
   }
 
   @Override
@@ -48,11 +51,11 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   @Override
   public Expr onVariableArray(BigInteger length, String name) {
     if (length.intValue() != 2) {
-      throw new RuntimeException("Variables must be encoded in an array of length 2");
+      throw new DecodingException("Variables must be encoded in an array of length 2");
     } else if (name.equals("_")) {
-      throw new RuntimeException("Variables cannot be explicitly named _");
+      throw new DecodingException("Variables cannot be explicitly named _");
     } else {
-      BigInteger idx = decoder.readPositiveBigNum();
+      BigInteger idx = this.reader.readPositiveBigNum();
       return Expr.makeIdentifier(name, idx.longValue());
     }
   }
@@ -107,7 +110,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       case Label.EMPTY_LIST_WITH_ABSTRACT_TYPE:
         return readEmptyListAbstractType(length);
       default:
-        throw new RuntimeException(String.format("Array tag %d undefined", tag));
+        throw new DecodingException(String.format("Array tag %d undefined", tag));
     }
   }
 
@@ -154,7 +157,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
 
   private Expr readFnApplication(BigInteger length) {
     if (length.longValue() < 3) {
-      throw new RuntimeException("Function application must have at least one argument");
+      throw new DecodingException("Function application must have at least one argument");
     }
     Expr fn = readExpr();
     ArrayList<Expr> args = new ArrayList<>();
@@ -172,15 +175,15 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       Expr result = readExpr();
       return Expr.makeLambda("_", tpe, result);
     } else if (len == 4) {
-      String param = decoder.readNullableTextString();
+      String param = this.reader.readNullableTextString();
       if (param.equals("_")) {
-        throw new RuntimeException(("Illegal explicit bound variable '_' in function"));
+        throw new DecodingException(("Illegal explicit bound variable '_' in function"));
       }
       Expr tpe = readExpr();
       Expr resultTpe = readExpr();
       return Expr.makeLambda(param, tpe, resultTpe);
     } else {
-      throw new RuntimeException("Function types must be encoded in an array of length 3 or 4");
+      throw new DecodingException("Function types must be encoded in an array of length 3 or 4");
     }
   }
 
@@ -191,23 +194,23 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       Expr resultTpe = readExpr();
       return Expr.makePi(tpe, resultTpe);
     } else if (len == 4) {
-      String param = decoder.readNullableTextString();
+      String param = this.reader.readNullableTextString();
       if (param.equals("_")) {
-        throw new RuntimeException(("Illegal explicit bound variable '_' in pi type"));
+        throw new DecodingException(("Illegal explicit bound variable '_' in pi type"));
       }
       Expr tpe = readExpr();
       Expr resultTpe = readExpr();
       return Expr.makePi(param, tpe, resultTpe);
     } else {
-      throw new RuntimeException("Pi types must be encoded in an array of length 3 or 4");
+      throw new DecodingException("Pi types must be encoded in an array of length 3 or 4");
     }
   }
 
   private Expr readOperator(BigInteger length) {
     if (length.longValue() != 4) {
-      throw new RuntimeException("Operator application must be encoded in an array of length 4");
+      throw new DecodingException("Operator application must be encoded in an array of length 4");
     }
-    int operatorLabel = decoder.readUnsignedInteger().intValue();
+    int operatorLabel = this.reader.readUnsignedInteger().intValue();
     Expr lhs = readExpr();
     Expr rhs = readExpr();
 
@@ -216,7 +219,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     if (operator != null) {
       return Expr.makeOperatorApplication(operator, lhs, rhs);
     } else {
-      throw new RuntimeException(String.format("Operator tag %d is undefined", operatorLabel));
+      throw new DecodingException(String.format("Operator tag %d is undefined", operatorLabel));
     }
   }
 
@@ -224,7 +227,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     Expr tpe = readExpr();
     if (length.intValue() == 2) {
       if (tpe == null) {
-        throw new RuntimeException("Type must be specified if list is empty");
+        throw new DecodingException("Type must be specified if list is empty");
       } else {
         return Expr.makeEmptyListLiteral(Expr.makeApplication(Expr.Constants.LIST, tpe));
       }
@@ -236,7 +239,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
         }
         return Expr.makeNonEmptyListLiteral(exprs);
       } else {
-        throw new RuntimeException("Non-empty lists must not have a type annotation");
+        throw new DecodingException("Non-empty lists must not have a type annotation");
       }
     }
   }
@@ -245,19 +248,19 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     Expr tpe = readExpr();
     if (length.intValue() == 2) {
       if (tpe == null) {
-        throw new RuntimeException("Type must be specified if list is empty");
+        throw new DecodingException("Type must be specified if list is empty");
       } else {
         return Expr.makeEmptyListLiteral(tpe);
       }
     } else {
-      throw new RuntimeException(String.format("List of abstract type %s must be empty"));
+      throw new DecodingException(String.format("List of abstract type %s must be empty"));
     }
   }
 
   private Expr readSome(BigInteger length) {
     int len = length.intValue();
     if (len != 3) {
-      throw new RuntimeException("Some must be encoded in an array of length 3");
+      throw new DecodingException("Some must be encoded in an array of length 3");
     } else {
       Expr tpe = readExpr();
       Expr value = readExpr();
@@ -277,7 +280,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       Expr tpe = readExpr();
       return Expr.makeMerge(l, r, tpe);
     } else {
-      throw new RuntimeException("Merge must be encoded in an array of length 3 or 4");
+      throw new DecodingException("Merge must be encoded in an array of length 3 or 4");
     }
   }
 
@@ -291,16 +294,16 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       Expr tpe = readExpr();
       return Expr.makeToMap(e, tpe);
     } else {
-      throw new RuntimeException("ToMap must be encoded in an array of length 2 or 3");
+      throw new DecodingException("ToMap must be encoded in an array of length 2 or 3");
     }
   }
 
   private Expr readRecordType(BigInteger length) {
     long len = length.longValue();
     if (len != 2) {
-      throw new RuntimeException("Record literal must be encoded in an array of length 2");
+      throw new DecodingException("Record literal must be encoded in an array of length 2");
     } else {
-      Map<String, Expr> entries = decoder.readMap(this);
+      Map<String, Expr> entries = this.reader.readMap(this);
       return Expr.makeRecordType(entries.entrySet());
     }
   }
@@ -308,9 +311,9 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readRecordLiteral(BigInteger length) {
     long len = length.longValue();
     if (len != 2) {
-      throw new RuntimeException("Record literal must be encoded in an array of length 2");
+      throw new DecodingException("Record literal must be encoded in an array of length 2");
     } else {
-      Map<String, Expr> entries = decoder.readMap(this);
+      Map<String, Expr> entries = this.reader.readMap(this);
       return Expr.makeRecordLiteral(entries.entrySet());
     }
   }
@@ -318,10 +321,10 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readFieldAccess(BigInteger length) {
     int len = length.intValue();
     if (len != 3) {
-      throw new RuntimeException("Field access must be encoded in array of length 3");
+      throw new DecodingException("Field access must be encoded in array of length 3");
     } else {
       Expr e = readExpr();
-      String field = decoder.readNullableTextString();
+      String field = this.reader.readNullableTextString();
       return Expr.makeFieldAccess(e, field);
     }
   }
@@ -334,19 +337,19 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     } else {
       // This is horrible but so is the encoding of record projections - we don't know whether
       // we expect an array or Strings next
-      String first = decoder.tryReadTextString();
+      String first = this.reader.tryReadTextString();
       if (first != null) {
         List<String> fields = new ArrayList<>();
         fields.add(first);
         for (int i = 3; i < len; i++) {
-          fields.add(decoder.tryReadTextString());
+          fields.add(this.reader.tryReadTextString());
         }
         return Expr.makeProjection(e, fields.toArray(new String[fields.size()]));
       } else {
         // It was actually an array
-        int innerLen = decoder.readArrayStart().intValue();
+        int innerLen = this.reader.readArrayStart().intValue();
         if (innerLen != 1) {
-          throw new RuntimeException(
+          throw new DecodingException(
               "Type for type  projection must be encoded in an array of length 1");
         } else {
           Expr tpe = readExpr();
@@ -359,9 +362,9 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readUnion(BigInteger length) {
     int len = length.intValue();
     if (len != 2) {
-      throw new RuntimeException("Union must be encoded in array of length 2");
+      throw new DecodingException("Union must be encoded in array of length 2");
     } else {
-      Map<String, Expr> entries = decoder.readMap(this);
+      Map<String, Expr> entries = this.reader.readMap(this);
       return Expr.makeUnionType(entries.entrySet());
     }
   }
@@ -369,7 +372,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readIf(BigInteger length) {
     int len = length.intValue();
     if (len != 4) {
-      throw new RuntimeException("If must be encoded in an array of length 4");
+      throw new DecodingException("If must be encoded in an array of length 4");
     } else {
       Expr cond = readExpr();
       Expr ifE = readExpr();
@@ -381,7 +384,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readTypeAnnotation(BigInteger length) {
     int len = length.intValue();
     if (len != 3) {
-      throw new RuntimeException("Type annotation must be encoded in array of length 3");
+      throw new DecodingException("Type annotation must be encoded in array of length 3");
     } else {
       Expr e = readExpr();
       Expr tpe = readExpr();
@@ -395,13 +398,13 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
 
   private Expr readLet(long len) {
     if (len == 5) {
-      String name = decoder.readNullableTextString();
+      String name = this.reader.readNullableTextString();
       Expr tpe = readExpr();
       Expr value = readExpr();
       Expr body = readExpr();
       return Expr.makeLet(name, tpe, value, body);
     } else {
-      String name = decoder.readNullableTextString();
+      String name = this.reader.readNullableTextString();
       Expr tpe = readExpr();
       Expr value = readExpr();
       return Expr.makeLet(name, tpe, value, readLet(len - 3));
@@ -409,9 +412,9 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   }
 
   private Expr readImport(BigInteger length) {
-    byte[] hash = decoder.readNullableByteString();
+    byte[] hash = this.reader.readNullableByteString();
     Import.Mode mode = readMode();
-    int tag = decoder.readUnsignedInteger().intValue();
+    int tag = this.reader.readUnsignedInteger().intValue();
 
     switch (tag) {
       case Label.IMPORT_TYPE_REMOTE_HTTP:
@@ -433,12 +436,12 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
       case Label.IMPORT_TYPE_MISSING:
         return Expr.makeMissingImport(mode, hash);
       default:
-        throw new RuntimeException(String.format("Import type %d is undefined", tag));
+        throw new DecodingException(String.format("Import type %d is undefined", tag));
     }
   }
 
   private Import.Mode readMode() {
-    int m = decoder.readUnsignedInteger().intValue();
+    int m = this.reader.readUnsignedInteger().intValue();
     if (m == 0) {
       return Import.Mode.CODE;
     } else if (m == 1) {
@@ -446,7 +449,7 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     } else if (m == 2) {
       return Import.Mode.LOCATION;
     } else {
-      throw new RuntimeException(String.format("Import mode %d is undefined", m));
+      throw new DecodingException(String.format("Import mode %d is undefined", m));
     }
   }
 
@@ -454,38 +457,38 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
     Path path = Paths.get(prefix);
     int len = length.intValue();
     for (int i = 4; i < len; i++) {
-      path = path.resolve(decoder.readNullableTextString());
+      path = path.resolve(this.reader.readNullableTextString());
     }
     return Expr.makeLocalImport(path, mode, hash);
   }
 
   private Expr readRemoteImport(
       BigInteger length, Import.Mode mode, byte[] hash, String prefix, Expr using) {
-    String uri = prefix;
+    String url = prefix;
     int len = length.intValue();
     for (int i = 5; i < len - 1; i++) {
-      uri = uri + "/" + decoder.readNullableTextString();
+      url = url + "/" + this.reader.readNullableTextString();
     }
-    String query = decoder.readNullableTextString();
+    String query = this.reader.readNullableTextString();
     if (query != null) {
-      uri = uri + "?" + query;
+      url = url + "?" + query;
     }
     try {
-      return Expr.makeRemoteImport(new URI(uri), using, mode, hash);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      return Expr.makeRemoteImport(new URI(url), using, mode, hash);
+    } catch (URISyntaxException cause) {
+      throw new DecodingException("Invalid URL in remote import", cause);
     }
   }
 
   private Expr readEnvImport(BigInteger length, Import.Mode mode, byte[] hash) {
-    String value = decoder.readNullableTextString();
+    String value = this.reader.readNullableTextString();
     return Expr.makeEnvImport(value, mode, hash);
   }
 
   private Expr readAssert(BigInteger length) {
     long len = length.longValue();
     if (len != 2) {
-      throw new RuntimeException("Assert must be encoded in array of length 2");
+      throw new DecodingException("Assert must be encoded in array of length 2");
     } else {
       Expr e = readExpr();
       return Expr.makeAssert(e);
@@ -495,31 +498,31 @@ public class CBORExpressionVisitor implements Visitor<Expr> {
   private Expr readTextLiteral(BigInteger length) {
     List<String> lits = new ArrayList<>();
     List<Expr> exprs = new ArrayList<>();
-    String lit = decoder.readNullableTextString();
+    String lit = this.reader.readNullableTextString();
     lits.add(lit);
     for (int i = 2; i < length.longValue(); i += 2) {
       Expr e = readExpr();
       exprs.add(e);
-      lit = decoder.readNullableTextString();
+      lit = this.reader.readNullableTextString();
       lits.add(lit);
     }
     return Expr.makeTextLiteral(lits.toArray(new String[0]), exprs.toArray(new Expr[0]));
   }
 
   private Expr readInteger(BigInteger length) {
-    return Expr.makeIntegerLiteral(decoder.readBigNum());
+    return Expr.makeIntegerLiteral(this.reader.readBigNum());
   }
 
   private Expr readNatural(BigInteger length) {
-    return Expr.makeNaturalLiteral(decoder.readPositiveBigNum());
+    return Expr.makeNaturalLiteral(this.reader.readPositiveBigNum());
   }
 
   private Expr readExpr() {
-    return decoder.nextSymbol(this);
+    return this.reader.nextSymbol(this);
   }
 
   private Expr notExpected(String msg) {
-    throw new RuntimeException(
+    throw new DecodingException(
         "Expected String or UnsignedInteger as first element of array. Found " + msg);
   }
 }

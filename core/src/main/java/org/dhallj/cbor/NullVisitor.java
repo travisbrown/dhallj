@@ -1,9 +1,9 @@
-package org.dhallj.core.binary.cbor;
+package org.dhallj.cbor;
 
 import java.math.BigInteger;
 
 /** To read a CBOR primitive and ensure it is null */
-public class NullVisitor<R> implements Visitor<R> {
+final class NullVisitor<R> implements Visitor<R> {
   static final Visitor<String> instanceForString = new NullVisitor<String>();
   static final Visitor<byte[]> instanceForByteArray = new NullVisitor<byte[]>();
 
@@ -78,6 +78,6 @@ public class NullVisitor<R> implements Visitor<R> {
   }
 
   private R notExpected(String msg) {
-    throw new RuntimeException(String.format("%s not expected - expected null", msg));
+    throw new CBORException(String.format("%s not expected - expected null", msg));
   }
 }

@@ -1,6 +1,6 @@
 package org.dhallj.core.binary;
 
-public final class Label {
+final class Label {
   public static final int APPLICATION = 0;
   public static final int LAMBDA = 1;
   public static final int PI = 2;

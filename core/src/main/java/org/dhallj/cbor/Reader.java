@@ -1,7 +1,4 @@
-package org.dhallj.core.binary.cbor;
-
-import org.dhallj.core.binary.cbor.CBORExpression.Constants.AdditionalInfo;
-import org.dhallj.core.binary.cbor.CBORExpression.Constants.MajorType;
+package org.dhallj.cbor;
 
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -12,7 +9,7 @@ import java.util.Map;
  * An implementation of enough of the CBOR spec to cope with decoding the CBOR values we need for
  * Dhall
  */
-public abstract class CBORDecoder {
+public abstract class Reader {
 
   /** Only allow symbols that correspond to entire encoded Dhall expressions */
   public <R> R nextSymbol(Visitor<R> visitor) {
@@ -32,11 +29,11 @@ public abstract class CBORDecoder {
       case MAP:
         return visitor.onMap(readMapStart(b));
       case SEMANTIC_TAG:
-        throw new RuntimeException("We should have skipped semantic tags");
+        throw new CBORException("We should have skipped semantic tags");
       case PRIMITIVE:
         return readPrimitive(b, visitor);
       default:
-        throw new RuntimeException(String.format("Invalid CBOR major type %d", b));
+        throw new CBORException(String.format("Invalid CBOR major type %d", b));
     }
   }
 
@@ -55,7 +52,7 @@ public abstract class CBORDecoder {
     skip55799();
     BigInteger result = readBigNum();
     if (result.compareTo(BigInteger.ZERO) < 0) {
-      throw new RuntimeException(String.format("%s is not a positive big num", result));
+      throw new CBORException(String.format("%s is not a positive big num", result));
     } else {
       return result;
     }
@@ -81,11 +78,10 @@ public abstract class CBORDecoder {
         } else if (tag == 3) {
           return BigInteger.valueOf(-1).subtract(result);
         } else {
-          throw new RuntimeException(String.format("%d is not a valid tag for a bignum", tag));
+          throw new CBORException(String.format("%d is not a valid tag for a bignum", tag));
         }
       default:
-        throw new RuntimeException(
-            String.format("%d not a valid major type for an Unsigned Integer"));
+        throw new CBORException(String.format("%d not a valid major type for an Unsigned Integer"));
     }
   }
 
@@ -98,7 +94,7 @@ public abstract class CBORDecoder {
       case PRIMITIVE:
         return readPrimitive(next, NullVisitor.instanceForString);
       default:
-        throw new RuntimeException("Next symbol is neither a text string or null");
+        throw new CBORException("Next symbol is neither a text string or null");
     }
   }
 
@@ -111,7 +107,7 @@ public abstract class CBORDecoder {
       case PRIMITIVE:
         return readPrimitive(next, NullVisitor.instanceForByteArray);
       default:
-        throw new RuntimeException("Next symbol is neither a byte string or null");
+        throw new CBORException("Next symbol is neither a byte string or null");
     }
   }
 
@@ -141,12 +137,12 @@ public abstract class CBORDecoder {
         AdditionalInfo info = AdditionalInfo.fromByte(next);
         BigInteger length = readBigInteger(info, next);
         if (length.compareTo(BigInteger.ZERO) < 0) {
-          throw new RuntimeException("Indefinite array not needed for Dhall");
+          throw new CBORException("Indefinite array not needed for Dhall");
         } else {
           return length;
         }
       default:
-        throw new RuntimeException("Next symbol is not an array");
+        throw new CBORException("Next symbol is not an array");
     }
   }
 
@@ -164,7 +160,7 @@ public abstract class CBORDecoder {
         }
         return entries;
       default:
-        throw new RuntimeException(
+        throw new CBORException(
             String.format("Cannot read map - major type is %s", MajorType.fromByte(b)));
     }
   }
@@ -183,7 +179,7 @@ public abstract class CBORDecoder {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
-      throw new RuntimeException("Indefinite byte string not needed for Dhall");
+      throw new CBORException("Indefinite byte string not needed for Dhall");
     } else {
       // We don't handle the case where the length is > Integer.MaxValue
       return this.read(length.intValue());
@@ -195,7 +191,7 @@ public abstract class CBORDecoder {
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
       // Indefinite length - do we need this for Dhall?
-      throw new RuntimeException("Indefinite text string not needed for Dhall");
+      throw new CBORException("Indefinite text string not needed for Dhall");
     } else {
       // We don't handle the case where the length is > Integer.MaxValue
       return new String(this.read(length.intValue()), Charset.forName("UTF-8"));
@@ -206,7 +202,7 @@ public abstract class CBORDecoder {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
-      throw new RuntimeException("Indefinite array not needed for Dhall");
+      throw new CBORException("Indefinite array not needed for Dhall");
     } else {
       skip55799();
       byte next = read();
@@ -216,7 +212,7 @@ public abstract class CBORDecoder {
         case TEXT_STRING:
           return visitor.onVariableArray(length, readTextString(next));
         default:
-          throw new RuntimeException(
+          throw new CBORException(
               String.format(
                   "Invalid start to CBOR-encoded Dhall expression %s",
                   MajorType.fromByte(b).toString()));
@@ -228,7 +224,7 @@ public abstract class CBORDecoder {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
-      throw new RuntimeException("Indefinite array not needed for Dhall");
+      throw new CBORException("Indefinite array not needed for Dhall");
     } else {
       return length;
     }
@@ -237,7 +233,7 @@ public abstract class CBORDecoder {
   private <R> R readPrimitive(byte b, Visitor<R> visitor) {
     int value = b & 31;
     if (0 <= value && value <= 19) {
-      throw new RuntimeException(String.format("Primitive %d is unassigned", value));
+      throw new CBORException(String.format("Primitive %d is unassigned", value));
     } else if (value == 20) {
       return visitor.onFalse();
     } else if (value == 21) {
@@ -245,9 +241,9 @@ public abstract class CBORDecoder {
     } else if (value == 22) {
       return visitor.onNull();
     } else if (value == 23) {
-      throw new RuntimeException(String.format("Primitive %d is unassigned", value));
+      throw new CBORException(String.format("Primitive %d is unassigned", value));
     } else if (value == 24) {
-      throw new RuntimeException("Simple value not needed for Dhall");
+      throw new CBORException("Simple value not needed for Dhall");
     } else if (value == 25) {
       // https://github.com/c-rack/cbor-java/blob/master/src/main/java/co/nstant/in/cbor/decoder/HalfPrecisionFloatDecoder.java
       int bits = 0;
@@ -287,11 +283,11 @@ public abstract class CBORDecoder {
       }
       return visitor.onDoubleFloat(Double.longBitsToDouble(result));
     } else if (28 <= value && value <= 30) {
-      throw new RuntimeException(String.format("Primitive %d is unassigned", value));
+      throw new CBORException(String.format("Primitive %d is unassigned", value));
     } else if (value == 31) {
-      throw new RuntimeException("Break stop code not needed for Dhall");
+      throw new CBORException("Break stop code not needed for Dhall");
     } else {
-      throw new RuntimeException(String.format("Primitive %d is not valid", value));
+      throw new CBORException(String.format("Primitive %d is not valid", value));
     }
   }
 
@@ -307,7 +303,7 @@ public abstract class CBORDecoder {
             BigInteger tag = readBigInteger(info, read()); // Now advance pointer
             int t = tag.intValue();
             if (t != 55799) {
-              throw new RuntimeException(String.format("Unrecognized CBOR semantic tag %d", t));
+              throw new CBORException(String.format("Unrecognized CBOR semantic tag %d", t));
             } else {
               skip55799(); // Please tell me no encoders do this
             }
@@ -329,11 +325,12 @@ public abstract class CBORDecoder {
       case EIGHT_BYTES:
         return readBigInteger(8);
       case RESERVED:
-        throw new RuntimeException("Additional info RESERVED should not require reading a uintXX");
+        throw new CBORException("Additional info RESERVED should not require reading a uintXX");
       case INDEFINITE:
         return BigInteger.valueOf(-1);
+      default:
+        throw new IllegalArgumentException("Invalid AdditionalInfo");
     }
-    throw new RuntimeException("Why does Java not have exhaustivity checking?");
   }
 
   private BigInteger readBigInteger(long numBytes) {
@@ -345,15 +342,11 @@ public abstract class CBORDecoder {
     return result;
   }
 
-  private Long readLength() {
-    return 0L;
-  }
-
-  public static final class ByteArrayCBORDecoder extends CBORDecoder {
+  public static final class ByteArrayReader extends Reader {
     private final byte[] bytes;
     private int cursor = 0;
 
-    public ByteArrayCBORDecoder(byte[] bytes) {
+    public ByteArrayReader(byte[] bytes) {
       this.bytes = bytes;
     }
 
