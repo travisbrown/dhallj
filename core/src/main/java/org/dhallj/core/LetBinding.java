@@ -1,5 +1,6 @@
 package org.dhallj.core;
 
+/** Represents the first part of a {@code let}-expression. */
 public final class LetBinding<A> {
   private final String name;
   private final A type;
@@ -25,9 +26,5 @@ public final class LetBinding<A> {
 
   public A getValue() {
     return this.value;
-  }
-
-  public String toString() {
-    return String.format("%s: %s %s", name, type, value);
   }
 }

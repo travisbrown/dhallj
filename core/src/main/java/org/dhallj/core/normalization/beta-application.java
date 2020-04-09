@@ -18,7 +18,7 @@ final class BetaNormalizeApplication {
     int i = 0;
 
     while (current != null && i < args.size()) {
-      current = current.applyAsLambda(args.get(i));
+      current = Expr.Util.applyAsLambda(current, args.get(i));
       if (current == null) {
         break;
       } else {
@@ -37,7 +37,7 @@ final class BetaNormalizeApplication {
   }
 
   static final Expr apply(Expr base, final List<Expr> args) {
-    String builtIn = base.asBuiltIn();
+    String builtIn = Expr.Util.asBuiltIn(base);
 
     if (builtIn != null) {
       if (builtIn.equals("Natural/fold")) {
@@ -84,9 +84,10 @@ final class BetaNormalizeApplication {
   }
 
   private static Expr indexedRecordType(Expr type) {
-    List<Entry<String, Expr>> fields = new ArrayList(2);
-    fields.add(new SimpleImmutableEntry("index", Expr.Constants.NATURAL));
-    fields.add(new SimpleImmutableEntry("value", type));
+    Entry[] fields = {
+      new SimpleImmutableEntry("index", Expr.Constants.NATURAL),
+      new SimpleImmutableEntry("value", type)
+    };
     return Expr.makeRecordType(fields);
   }
 
@@ -125,43 +126,43 @@ final class BetaNormalizeApplication {
 
   private static final Expr arity1(String identifier, Expr arg) {
     if (identifier.equals("Natural/isZero")) {
-      BigInteger argAsNaturalLiteral = arg.asNaturalLiteral();
+      BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
         return NormalizationUtilities.booleanToExpr(argAsNaturalLiteral.equals(BigInteger.ZERO));
       }
     } else if (identifier.equals("Natural/even")) {
-      BigInteger argAsNaturalLiteral = arg.asNaturalLiteral();
+      BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
         return NormalizationUtilities.booleanToExpr(isBigIntegerEven(argAsNaturalLiteral));
       }
     } else if (identifier.equals("Natural/odd")) {
-      BigInteger argAsNaturalLiteral = arg.asNaturalLiteral();
+      BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
         return NormalizationUtilities.booleanToExpr(!isBigIntegerEven(argAsNaturalLiteral));
       }
     } else if (identifier.equals("Natural/toInteger")) {
-      BigInteger argAsNaturalLiteral = arg.asNaturalLiteral();
+      BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
         return Expr.makeIntegerLiteral(argAsNaturalLiteral);
       }
     } else if (identifier.equals("Natural/show")) {
-      BigInteger argAsNaturalLiteral = arg.asNaturalLiteral();
+      BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
         return Expr.makeTextLiteral(argAsNaturalLiteral.toString());
       }
     } else if (identifier.equals("Integer/negate")) {
-      BigInteger argAsIntegerLiteral = arg.asIntegerLiteral();
+      BigInteger argAsIntegerLiteral = Expr.Util.asIntegerLiteral(arg);
 
       if (argAsIntegerLiteral != null) {
         return Expr.makeIntegerLiteral(argAsIntegerLiteral.negate());
       }
     } else if (identifier.equals("Integer/clamp")) {
-      BigInteger argAsIntegerLiteral = arg.asIntegerLiteral();
+      BigInteger argAsIntegerLiteral = Expr.Util.asIntegerLiteral(arg);
 
       if (argAsIntegerLiteral != null) {
         if (isBigIntegerNatural(argAsIntegerLiteral)) {
@@ -171,26 +172,26 @@ final class BetaNormalizeApplication {
         }
       }
     } else if (identifier.equals("Integer/toDouble")) {
-      BigInteger argAsIntegerLiteral = arg.asIntegerLiteral();
+      BigInteger argAsIntegerLiteral = Expr.Util.asIntegerLiteral(arg);
 
       if (argAsIntegerLiteral != null) {
         return Expr.makeDoubleLiteral(argAsIntegerLiteral.doubleValue());
       }
     } else if (identifier.equals("Integer/show")) {
-      BigInteger argAsIntegerLiteral = arg.asIntegerLiteral();
+      BigInteger argAsIntegerLiteral = Expr.Util.asIntegerLiteral(arg);
 
       if (argAsIntegerLiteral != null) {
         String sign = isBigIntegerNatural(argAsIntegerLiteral) ? "+" : "";
         return Expr.makeTextLiteral(sign + argAsIntegerLiteral.toString());
       }
     } else if (identifier.equals("Double/show")) {
-      Double argAsDoubleLiteral = arg.asDoubleLiteral();
+      Double argAsDoubleLiteral = Expr.Util.asDoubleLiteral(arg);
 
       if (argAsDoubleLiteral != null) {
         return Expr.makeTextLiteral(argAsDoubleLiteral.toString());
       }
     } else if (identifier.equals("Text/show")) {
-      String argAsSimpleTextLiteral = arg.asSimpleTextLiteral();
+      String argAsSimpleTextLiteral = Expr.Util.asSimpleTextLiteral(arg);
 
       if (argAsSimpleTextLiteral != null) {
         return Expr.makeTextLiteral(escapeText(argAsSimpleTextLiteral));
@@ -242,8 +243,8 @@ final class BetaNormalizeApplication {
           .acceptVis(BetaNormalize.instance);
     }
     if (identifier.equals("Natural/subtract")) {
-      BigInteger firstAsNaturalLiteral = arg1.asNaturalLiteral();
-      BigInteger secondAsNaturalLiteral = arg2.asNaturalLiteral();
+      BigInteger firstAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg1);
+      BigInteger secondAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg2);
 
       if (firstAsNaturalLiteral != null) {
         if (secondAsNaturalLiteral != null) {
@@ -267,16 +268,16 @@ final class BetaNormalizeApplication {
         return Expr.Constants.ZERO;
       }
     } else if (identifier.equals("List/length")) {
-      List<Expr> argAsListLiteral = arg2.asListLiteral();
+      List<Expr> argAsListLiteral = Expr.Util.asListLiteral(arg2);
 
       if (argAsListLiteral != null) {
         return Expr.makeNaturalLiteral(BigInteger.valueOf(argAsListLiteral.size()));
       }
     } else if (identifier.equals("List/reverse")) {
-      List<Expr> argAsListLiteral = arg2.asListLiteral();
+      List<Expr> argAsListLiteral = Expr.Util.asListLiteral(arg2);
 
       if (argAsListLiteral != null) {
-        List<Expr> result = new ArrayList(argAsListLiteral);
+        List<Expr> result = new ArrayList<>(argAsListLiteral);
         Collections.reverse(result);
         if (result.isEmpty()) {
           return arg2;
@@ -285,7 +286,7 @@ final class BetaNormalizeApplication {
         }
       }
     } else if (identifier.equals("List/head")) {
-      List<Expr> argAsListLiteral = arg2.asListLiteral();
+      List<Expr> argAsListLiteral = Expr.Util.asListLiteral(arg2);
 
       if (argAsListLiteral != null) {
         if (argAsListLiteral.isEmpty()) {
@@ -295,7 +296,7 @@ final class BetaNormalizeApplication {
         }
       }
     } else if (identifier.equals("List/last")) {
-      List<Expr> argAsListLiteral = arg2.asListLiteral();
+      List<Expr> argAsListLiteral = Expr.Util.asListLiteral(arg2);
 
       if (argAsListLiteral != null) {
         if (argAsListLiteral.isEmpty()) {
@@ -306,14 +307,14 @@ final class BetaNormalizeApplication {
         }
       }
     } else if (identifier.equals("List/indexed")) {
-      List<Expr> argAsListLiteral = arg2.asListLiteral();
+      List<Expr> argAsListLiteral = Expr.Util.asListLiteral(arg2);
 
       if (argAsListLiteral != null) {
-        List<Expr> result = new ArrayList(argAsListLiteral.size());
+        List<Expr> result = new ArrayList<>(argAsListLiteral.size());
         int i = 0;
 
         for (Expr value : argAsListLiteral) {
-          List<Entry<String, Expr>> fields = new ArrayList();
+          List<Entry<String, Expr>> fields = new ArrayList<>();
           fields.add(
               new SimpleImmutableEntry("index", Expr.makeNaturalLiteral(BigInteger.valueOf(i++))));
           fields.add(new SimpleImmutableEntry("value", value));
@@ -341,7 +342,7 @@ final class BetaNormalizeApplication {
   }
 
   static final Expr naturalFold(Expr base, final List<Expr> args) {
-    BigInteger firstAsNaturalLiteral = args.get(0).asNaturalLiteral();
+    BigInteger firstAsNaturalLiteral = Expr.Util.asNaturalLiteral(args.get(0));
 
     if (firstAsNaturalLiteral != null) {
       List<Expr> newArgs = new ArrayList<Expr>(4);
@@ -439,7 +440,7 @@ final class BetaNormalizeApplication {
       newArgs.addAll(args);
     }
 
-    List<Expr> listArg = newArgs.get(1).asListLiteral();
+    List<Expr> listArg = Expr.Util.asListLiteral(newArgs.get(1));
 
     if (listArg != null) {
 
@@ -452,7 +453,7 @@ final class BetaNormalizeApplication {
           tail = Expr.makeEmptyListLiteral(newArgs.get(0));
 
         } else {
-          List<Expr> listArgTail = new ArrayList(listArg);
+          List<Expr> listArgTail = new ArrayList<>(listArg);
           listArgTail.remove(0);
 
           tail = Expr.makeNonEmptyListLiteral(listArgTail);

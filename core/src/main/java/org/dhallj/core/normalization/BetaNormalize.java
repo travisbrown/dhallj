@@ -106,7 +106,7 @@ public final class BetaNormalize extends PureVis<Expr> {
   }
 
   public Expr onProjectionByType(Expr base, Expr arg) {
-    Iterable<Entry<String, Expr>> argAsRecordType = arg.asRecordType();
+    Iterable<Entry<String, Expr>> argAsRecordType = Expr.Util.asRecordType(arg);
     Set<String> keys = new TreeSet();
     for (Entry<String, Expr> entry : argAsRecordType) {
       keys.add(entry.getKey());

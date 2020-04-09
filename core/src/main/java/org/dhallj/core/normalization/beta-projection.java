@@ -49,7 +49,7 @@ final class BetaNormalizeProjection {
               @Override
               public Expr onOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
                 if (operator.equals(Operator.PREFER)) {
-                  Iterable<Entry<String, Expr>> rhsFields = rhs.asRecordLiteral();
+                  Iterable<Entry<String, Expr>> rhsFields = Expr.Util.asRecordLiteral(rhs);
                   if (rhsFields != null) {
 
                     Set<String> rhsKeys = new HashSet<String>();

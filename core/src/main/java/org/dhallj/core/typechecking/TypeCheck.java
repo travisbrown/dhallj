@@ -114,8 +114,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
         return combineTypes.acceptVis(BetaNormalize.instance);
       case PREFER:
-        List<Entry<String, Expr>> lhsTypeRecordType = lhsType.asRecordType();
-        List<Entry<String, Expr>> rhsTypeRecordType = rhsType.asRecordType();
+        List<Entry<String, Expr>> lhsTypeRecordType = Expr.Util.asRecordType(lhsType);
+        List<Entry<String, Expr>> rhsTypeRecordType = Expr.Util.asRecordType(rhsType);
 
         if (lhsTypeRecordType != null && rhsTypeRecordType != null) {
           return Expr.makeRecordType(prefer(lhsTypeRecordType, rhsTypeRecordType));
@@ -124,9 +124,9 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         }
       case COMBINE_TYPES:
         List<Entry<String, Expr>> lhsRecordType =
-            lhs.acceptVis(BetaNormalize.instance).asRecordType();
+            Expr.Util.asRecordType(lhs.acceptVis(BetaNormalize.instance));
         List<Entry<String, Expr>> rhsRecordType =
-            rhs.acceptVis(BetaNormalize.instance).asRecordType();
+            Expr.Util.asRecordType(rhs.acceptVis(BetaNormalize.instance));
 
         if (lhsRecordType != null && rhsRecordType != null) {
           if (isType(rhsType) && !rhsRecordType.iterator().hasNext()) {
@@ -168,7 +168,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         }
 
       case COMPLETE:
-        return Expr.Sugar.desugarComplete(lhs, rhs).acceptExternal(this);
+        return Expr.Util.desugarComplete(lhs, rhs).acceptExternal(this);
       default:
         return null;
     }
@@ -285,7 +285,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     Universe inputTypeUniverse = Universe.fromExpr(inputType);
     Universe resultTypeUniverse = Universe.fromExpr(resultType);
 
-    return FunctionCheck.check(inputTypeUniverse, resultTypeUniverse).toExpr();
+    return Universe.functionCheck(inputTypeUniverse, resultTypeUniverse).toExpr();
   }
 
   public final Expr onAssert(Expr base) {
@@ -303,7 +303,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   public final Expr onFieldAccess(Expr base, String fieldName) {
     Expr baseType = base.acceptExternal(this);
-    List<Entry<String, Expr>> fields = baseType.asRecordType();
+    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(baseType);
 
     if (fields != null) {
       for (Entry<String, Expr> field : fields) {
@@ -314,7 +314,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       throw TypeCheckFailure.makeFieldAccessRecordMissingError(fieldName);
     } else {
       Expr baseNormalized = base.acceptVis(BetaNormalize.instance);
-      List<Entry<String, Expr>> alternatives = baseNormalized.asUnionType();
+      List<Entry<String, Expr>> alternatives = Expr.Util.asUnionType(baseNormalized);
       if (alternatives != null) {
         for (Entry<String, Expr> alternative : alternatives) {
           if (alternative.getKey().equals(fieldName)) {
@@ -333,7 +333,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onProjection(Expr base, String[] fieldNames) {
-    List<Entry<String, Expr>> fields = base.acceptExternal(this).asRecordType();
+    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.acceptExternal(this));
 
     if (fields != null) {
       Map<String, Expr> fieldMap = new HashMap();
@@ -369,10 +369,11 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onProjectionByType(Expr base, Expr type) {
-    List<Entry<String, Expr>> fields = base.acceptExternal(this).asRecordType();
+    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.acceptExternal(this));
 
     if (fields != null) {
-      List<Entry<String, Expr>> projected = type.acceptVis(BetaNormalize.instance).asRecordType();
+      List<Entry<String, Expr>> projected =
+          Expr.Util.asRecordType(type.acceptVis(BetaNormalize.instance));
 
       if (projected != null) {
         Map<String, Expr> fieldMap = new HashMap();
@@ -555,7 +556,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   public final Expr onToMap(Expr base, Expr type) {
     Expr baseType = base.acceptExternal(this);
-    List<Entry<String, Expr>> baseAsRecord = baseType.asRecordType();
+    List<Entry<String, Expr>> baseAsRecord = Expr.Util.asRecordType(baseType);
 
     if (baseAsRecord == null) {
       throw TypeCheckFailure.makeToMapTypeError(baseType);
@@ -610,7 +611,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             if (listElementType == null) {
               throw TypeCheckFailure.makeToMapInvalidAnnotationError(type);
             } else {
-              List<Entry<String, Expr>> typeFields = listElementType.asRecordType();
+              List<Entry<String, Expr>> typeFields = Expr.Util.asRecordType(listElementType);
 
               if (typeFields == null) {
                 throw TypeCheckFailure.makeToMapInvalidAnnotationError(type);
@@ -651,13 +652,13 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   public final Expr onMerge(Expr handlers, Expr union, Expr type) {
     Expr handlersType = handlers.acceptExternal(this);
-    List<Entry<String, Expr>> handlersTypeFields = handlersType.asRecordType();
+    List<Entry<String, Expr>> handlersTypeFields = Expr.Util.asRecordType(handlersType);
 
     if (handlersTypeFields == null) {
       throw TypeCheckFailure.makeMergeHandlersTypeError(handlersType);
     } else {
       Expr unionType = union.acceptExternal(this);
-      List<Entry<String, Expr>> unionTypeFields = unionType.asUnionType();
+      List<Entry<String, Expr>> unionTypeFields = Expr.Util.asUnionType(unionType);
 
       if (unionTypeFields != null) {
         Expr inferredType = getMergeInferredType(handlersTypeFields, unionTypeFields);
@@ -719,32 +720,32 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   static boolean isBool(Expr expr) {
-    String asBuiltIn = expr.asBuiltIn();
+    String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Bool");
   }
 
   static boolean isText(Expr expr) {
-    String asBuiltIn = expr.asBuiltIn();
+    String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Text");
   }
 
   static boolean isList(Expr expr) {
-    String asBuiltIn = expr.asBuiltIn();
+    String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("List");
   }
 
   static boolean isNatural(Expr expr) {
-    String asBuiltIn = expr.asBuiltIn();
+    String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Natural");
   }
 
   static boolean isOptional(Expr expr) {
-    String asBuiltIn = expr.asBuiltIn();
+    String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Optional");
   }
 
   static boolean isType(Expr expr) {
-    String asBuiltIn = expr.asBuiltIn();
+    String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Type");
   }
 

@@ -44,37 +44,53 @@ public abstract class Expr {
     this.tag = tag;
   }
 
+  /** Run the given external visitor on this expression. */
   public abstract <A> A acceptExternal(Visitor<Expr, A> visitor);
 
-  public final Expr increment(String name) {
-    return this.acceptVis(new Shift(true, name));
-  }
-
-  public final Expr decrement(String name) {
-    return this.acceptVis(new Shift(false, name));
-  }
-
-  public final Expr substitute(String name, Expr replacement) {
-    return this.acceptVis(new Substitute(name, replacement));
-  }
-
-  public final Expr alphaNormalize() {
-    return this.acceptVis(new AlphaNormalize());
-  }
-
+  /**
+   * Beta-normalize this expression.
+   *
+   * <p>This operation "evaluates" the expression.
+   */
   public final Expr normalize() {
     return this.acceptVis(BetaNormalize.instance);
   }
 
+  /**
+   * Alpha-normalize this expression.
+   *
+   * <p>This operation replaces all variable names with De-Bruijn-indexed underscores.
+   */
+  public final Expr alphaNormalize() {
+    return this.acceptVis(new AlphaNormalize());
+  }
+
+  /** Type-check this expression and return the inferred type. */
   public final Expr typeCheck() {
     return this.acceptExternal(new TypeCheck());
   }
 
-  public final void encode(OutputStream stream) throws IOException {
-    this.acceptVis(Encode.instance).writeToStream(stream);
+  /** Increment a variable name in this expression. */
+  public final Expr increment(String name) {
+    return this.acceptVis(new Shift(true, name));
   }
 
-  public final byte[] encodeToByteArray() {
+  /** Increment a variable name in this expression. */
+  public final Expr decrement(String name) {
+    return this.acceptVis(new Shift(false, name));
+  }
+
+  /** Substitute the given expression for the given variable name in this expression. */
+  public final Expr substitute(String name, Expr replacement) {
+    return this.acceptVis(new Substitute(name, replacement));
+  }
+
+  /**
+   * Encode this expression as a CBOR byte array.
+   *
+   * <p>Note that this method does not normalize the expression.
+   */
+  public final byte[] getEncodedBytes() {
     try {
       return this.acceptVis(Encode.instance).getBytes();
     } catch (IOException e) {
@@ -82,11 +98,16 @@ public abstract class Expr {
     }
   }
 
-  public final byte[] hashBytes() {
+  /**
+   * Encode this expression as a CBOR byte array and return the SHA-256 hash of the result.
+   *
+   * <p>Note that this method does not normalize the expression.
+   */
+  public final byte[] getHashBytes() {
     byte[] result = this.cachedHashBytes.get();
 
     if (result == null) {
-      byte[] valueEncodedBytes = this.encodeToByteArray();
+      byte[] valueEncodedBytes = this.getEncodedBytes();
 
       MessageDigest digest = null;
       try {
@@ -102,186 +123,49 @@ public abstract class Expr {
     return result;
   }
 
-  public final String hash() {
-    return Util.encodeBytes(this.hashBytes());
-  }
-
-  public final boolean isType() {
-    return this.typeCheck().equivalent(Constants.TYPE);
-  }
-
-  public final boolean isKind() {
-    return this.typeCheck().equivalent(Constants.KIND);
-  }
-
-  public final boolean isSort() {
-    return this.typeCheck().equivalent(Constants.SORT);
-  }
-
-  public final Boolean asBoolLiteral() {
-    String asBuiltIn = this.asBuiltIn();
-
-    if (asBuiltIn != null) {
-      if (asBuiltIn.equals("True")) {
-        return true;
-      } else if (asBuiltIn.equals("False")) {
-        return false;
-      }
-    }
-    return null;
-  }
-
-  public final BigInteger asNaturalLiteral() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.NATURAL) {
-      return ((Constructors.NaturalLiteral) value).value;
-    } else {
-      return null;
-    }
-  }
-
-  public final BigInteger asIntegerLiteral() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.INTEGER) {
-      return ((Constructors.IntegerLiteral) value).value;
-    } else {
-      return null;
-    }
-  }
-
-  public final Double asDoubleLiteral() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.DOUBLE) {
-      return ((Constructors.DoubleLiteral) value).value;
-    } else {
-      return null;
-    }
-  }
-
-  public final String asSimpleTextLiteral() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.TEXT) {
-      Constructors.TextLiteral text = (Constructors.TextLiteral) value;
-
-      if (text.parts.length == 1) {
-        return text.parts[0];
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
-  }
-
-  public final String asBuiltIn() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.BUILT_IN) {
-      return ((Constructors.BuiltIn) value).name;
-    } else {
-      return null;
-    }
-  }
-
-  public final List<Expr> asListLiteral() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.NON_EMPTY_LIST) {
-      return Arrays.asList(((Constructors.NonEmptyListLiteral) value).values);
-    } else if (value.tag == Tags.EMPTY_LIST) {
-      return new ArrayList<Expr>(0);
-    } else {
-      return null;
-    }
-  }
-
-  public final List<Entry<String, Expr>> asRecordLiteral() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.RECORD) {
-      return Arrays.asList(((Constructors.RecordLiteral) value).fields);
-    } else {
-      return null;
-    }
-  }
-
-  public final List<Entry<String, Expr>> asRecordType() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.RECORD_TYPE) {
-      return Arrays.asList(((Constructors.RecordType) value).fields);
-    } else {
-      return null;
-    }
-  }
-
-  public final List<Entry<String, Expr>> asUnionType() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.UNION_TYPE) {
-      return Arrays.asList(((Constructors.UnionType) value).fields);
-    } else {
-      return null;
-    }
-  }
-
-  public final Entry<Expr, String> asFieldAccess() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.FIELD_ACCESS) {
-      Constructors.FieldAccess fieldAccess = (Constructors.FieldAccess) value;
-      return new SimpleImmutableEntry(fieldAccess.base, fieldAccess.fieldName);
-    } else {
-      return null;
-    }
-  }
-
-  public final long asUnderscore() {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.IDENTIFIER) {
-      Constructors.Identifier identifier = (Constructors.Identifier) value;
-      if (identifier.name.equals("_")) {
-        return identifier.index;
-      }
-    }
-    return -1;
-  }
-
   /**
-   * If this is expression is a lambda, apply it to the given argument.
+   * Encode this expression as a CBOR byte array and return the SHA-256 hash of the result as a
+   * string.
    *
-   * <p>Returns null if the expression is not a lambda.
+   * <p>Note that this method does not normalize the expression.
    */
-  public final Expr applyAsLambda(Expr arg) {
-    Expr value = this.getNonNote();
-
-    if (value.tag == Tags.LAMBDA) {
-      Constructors.Lambda lambda = ((Constructors.Lambda) value);
-      return lambda.result.substitute(lambda.name, arg);
-    } else {
-      return null;
-    }
+  public final String hash() {
+    return Util.encodeBytes(this.getHashBytes());
   }
 
+  /** Check whether all imports in this expression have been resolved. */
   public final boolean isResolved() {
     return this.acceptVis(IsResolved.instance);
   }
 
+  /**
+   * Check whether this expression has the same structure as another.
+   *
+   * <p>This method is a stricter than {@code equivalent} in that it doesn't normalize its
+   * arguments.
+   */
   public final boolean sameStructure(Expr other) {
-    return firstDiff(other) == null;
+    return this.getFirstDiff(other) == null;
   }
 
+  /**
+   * Check whether this expression is equivalent to another.
+   *
+   * <p>Note that this method normalizes both expressions before comparing.
+   */
   public final boolean equivalent(Expr other) {
     return Arrays.equals(
-        this.normalize().alphaNormalize().hashBytes(),
-        other.normalize().alphaNormalize().hashBytes());
+        this.normalize().alphaNormalize().getEncodedBytes(),
+        other.normalize().alphaNormalize().getEncodedBytes());
   }
 
+  /**
+   * Check whether this expression is equivalent to another value.
+   *
+   * <p>Note that this method normalizes both expressions before comparing. Also note that in future
+   * releases this method may compare the hashes of the encoded bytes, but currently it is identical
+   * to equivalent (but with an {@code Object} argument because Java).
+   */
   public final boolean equals(Object obj) {
     if (obj instanceof Expr) {
       return this.equivalent((Expr) obj);
@@ -290,16 +174,13 @@ public abstract class Expr {
     }
   }
 
+  /** Hashes the CBOR encoding of this expression. */
   public final int hashCode() {
-    return Arrays.hashCode(this.normalize().alphaNormalize().hashBytes());
-  }
-
-  public final String show() {
-    return this.acceptVis(ToStringVisitor.instance).toString();
+    return Arrays.hashCode(this.normalize().alphaNormalize().getEncodedBytes());
   }
 
   public final String toString() {
-    return this.show();
+    return this.acceptVis(ToStringVisitor.instance).toString();
   }
 
   private Expr getNonNote() {
@@ -312,16 +193,26 @@ public abstract class Expr {
     return current;
   }
 
-  public static final class Sugar {
-    public static final Expr desugarComplete(Expr lhs, Expr rhs) {
-
-      return Expr.makeAnnotated(
-          Expr.makeOperatorApplication(Operator.PREFER, Expr.makeFieldAccess(lhs, "default"), rhs),
-          Expr.makeFieldAccess(lhs, "Type"));
-    }
-  }
-
+  /**
+   * Convenience methods for working with expressions.
+   *
+   * <p>Note that many of these operations represent "down-casts", and return {@code null} in cases
+   * where the expression doesn't have the requested constructor.
+   */
   public static final class Util {
+    private Util() {}
+
+    /** Return the first difference between the structure of two expressions as a pair. */
+    public final Entry<Expr, Expr> getFirstDiff(Expr first, Expr second) {
+      return first.getFirstDiff(second);
+    }
+
+    /** Write an encoded expression to a stream. */
+    public static final void encodeToStream(Expr expr, OutputStream stream) throws IOException {
+      expr.acceptVis(Encode.instance).writeToStream(stream);
+    }
+
+    /** Encode an array of bytes as a hex string. */
     public static String encodeBytes(byte[] hash) {
       StringBuilder hexString = new StringBuilder();
       for (int i = 0; i < hash.length; i++) {
@@ -332,22 +223,163 @@ public abstract class Expr {
       return hexString.toString();
     }
 
+    /** If the expression is an application of {@code List}, return the element type. */
     public static Expr getListArg(Expr expr) {
       return getElementType(expr, "List");
     }
 
+    /** If the expression is an application of {@code Optional}, return the element type. */
     public static Expr getOptionalArg(Expr expr) {
       return getElementType(expr, "Optional");
     }
 
+    /** If the expression is an application of {@code Some}, return the element type. */
     public static Expr getSomeArg(Expr expr) {
       return getElementType(expr, "Some");
     }
 
+    /** If the expression is an application of {@code None}, return the element type. */
     public static Expr getNoneArg(Expr expr) {
       return getElementType(expr, "None");
     }
 
+    /** If the expression is a {@code Bool} literal, return its value. */
+    public static final Boolean asBoolLiteral(Expr expr) {
+      String asBuiltIn = Util.asBuiltIn(expr);
+
+      if (asBuiltIn != null) {
+        if (asBuiltIn.equals("True")) {
+          return true;
+        } else if (asBuiltIn.equals("False")) {
+          return false;
+        }
+      }
+      return null;
+    }
+
+    /** If the expression is a {@code Natural} literal, return its value. */
+    public static final BigInteger asNaturalLiteral(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.NATURAL) {
+        return ((Constructors.NaturalLiteral) value).value;
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is an {@code Integer} literal, return its value. */
+    public static final BigInteger asIntegerLiteral(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.INTEGER) {
+        return ((Constructors.IntegerLiteral) value).value;
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a {@code Double} literal, return its value. */
+    public static final Double asDoubleLiteral(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.DOUBLE) {
+        return ((Constructors.DoubleLiteral) value).value;
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a {@code Text} literal with no interpolations, return its value. */
+    public static final String asSimpleTextLiteral(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.TEXT) {
+        Constructors.TextLiteral text = (Constructors.TextLiteral) value;
+
+        if (text.parts.length == 1) {
+          return text.parts[0];
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a Dhall built-in, return its name. */
+    public static final String asBuiltIn(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.BUILT_IN) {
+        return ((Constructors.BuiltIn) value).name;
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a {@code List} literal, return its contents. */
+    public static final List<Expr> asListLiteral(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.NON_EMPTY_LIST) {
+        return Arrays.asList(((Constructors.NonEmptyListLiteral) value).values);
+      } else if (value.tag == Tags.EMPTY_LIST) {
+        return new ArrayList<Expr>(0);
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a record literal, return its fields. */
+    public static final List<Entry<String, Expr>> asRecordLiteral(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.RECORD) {
+        return Arrays.asList(((Constructors.RecordLiteral) value).fields);
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a record type, return its fields. */
+    public static final List<Entry<String, Expr>> asRecordType(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.RECORD_TYPE) {
+        return Arrays.asList(((Constructors.RecordType) value).fields);
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a union type, return its fields. */
+    public static final List<Entry<String, Expr>> asUnionType(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.UNION_TYPE) {
+        return Arrays.asList(((Constructors.UnionType) value).fields);
+      } else {
+        return null;
+      }
+    }
+
+    /** If the expression is a field access, return the base and field name. */
+    public static final Entry<Expr, String> asFieldAccess(Expr expr) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.FIELD_ACCESS) {
+        Constructors.FieldAccess fieldAccess = (Constructors.FieldAccess) value;
+        return new SimpleImmutableEntry(fieldAccess.base, fieldAccess.fieldName);
+      } else {
+        return null;
+      }
+    }
+
+    /**
+     * If the expression is an application of the specified type constructor, return the element
+     * type.
+     */
     private static Expr getElementType(Expr expr, String typeConstructor) {
       Expr value = expr.getNonNote();
 
@@ -364,8 +396,33 @@ public abstract class Expr {
 
       return null;
     }
+
+    /** Desugar the complete operator ({@code ::}). */
+    public static final Expr desugarComplete(Expr lhs, Expr rhs) {
+
+      return Expr.makeAnnotated(
+          Expr.makeOperatorApplication(Operator.PREFER, Expr.makeFieldAccess(lhs, "default"), rhs),
+          Expr.makeFieldAccess(lhs, "Type"));
+    }
+
+    /**
+     * If the expression is a lambda, apply it to the given argument.
+     *
+     * <p>Returns null if the expression is not a lambda.
+     */
+    public static final Expr applyAsLambda(Expr expr, Expr arg) {
+      Expr value = expr.getNonNote();
+
+      if (value.tag == Tags.LAMBDA) {
+        Constructors.Lambda lambda = ((Constructors.Lambda) value);
+        return lambda.result.substitute(lambda.name, arg);
+      } else {
+        return null;
+      }
+    }
   }
 
+  /** Definitions of Dhall built-ins and other frequently-used expressions. */
   public static final class Constants {
     private static Entry[] emptyFields = {};
 
@@ -474,6 +531,7 @@ public abstract class Expr {
     }
   }
 
+  /** Represents a Dhall expression that's been parsed and has associated source information. */
   public static final class Parsed extends Expr {
     final Expr base;
     final Source source;
@@ -712,6 +770,7 @@ public abstract class Expr {
     }
   }
 
+  /** Run the given internal visitor on this expression. */
   public final <A> A acceptVis(Vis<A> vis) {
     State current = new State(this, 0);
     Deque<State> stack = new ArrayDeque<State>();
@@ -1293,7 +1352,7 @@ public abstract class Expr {
     return current;
   }
 
-  public final Entry<Expr, Expr> firstDiff(Expr other) {
+  private final Entry<Expr, Expr> getFirstDiff(Expr other) {
     Deque<Expr> stackA = new ArrayDeque<Expr>();
     Deque<Expr> stackB = new ArrayDeque<Expr>();
 
@@ -1334,7 +1393,7 @@ public abstract class Expr {
         }
       } else if (currentA.tag == Tags.DOUBLE) {
         // We must compare double literals using the binary encoding.
-        if (Arrays.equals(currentA.encodeToByteArray(), currentB.encodeToByteArray())) {
+        if (Arrays.equals(currentA.getEncodedBytes(), currentB.getEncodedBytes())) {
           continue;
         } else {
           break;

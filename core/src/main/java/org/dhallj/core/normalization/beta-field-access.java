@@ -26,7 +26,7 @@ final class BetaNormalizeFieldAccess {
               @Override
               public Expr onOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
                 if (operator.equals(Operator.PREFER)) {
-                  Iterable<Entry<String, Expr>> lhsFields = lhs.asRecordLiteral();
+                  Iterable<Entry<String, Expr>> lhsFields = Expr.Util.asRecordLiteral(lhs);
                   if (lhsFields != null) {
                     Entry<String, Expr> lhsFound = FieldUtilities.lookupEntry(lhsFields, fieldName);
 
@@ -42,7 +42,7 @@ final class BetaNormalizeFieldAccess {
                       return Expr.makeFieldAccess(rhs, fieldName);
                     }
                   } else {
-                    Iterable<Entry<String, Expr>> rhsFields = rhs.asRecordLiteral();
+                    Iterable<Entry<String, Expr>> rhsFields = Expr.Util.asRecordLiteral(rhs);
                     if (rhsFields != null) {
                       Expr rhsFound = FieldUtilities.lookup(rhsFields, fieldName);
 
@@ -55,7 +55,7 @@ final class BetaNormalizeFieldAccess {
                     }
                   }
                 } else if (operator.equals(Operator.COMBINE)) {
-                  Iterable<Entry<String, Expr>> lhsFields = lhs.asRecordLiteral();
+                  Iterable<Entry<String, Expr>> lhsFields = Expr.Util.asRecordLiteral(lhs);
                   if (lhsFields != null) {
                     Entry<String, Expr> lhsFound = FieldUtilities.lookupEntry(lhsFields, fieldName);
 
@@ -71,7 +71,7 @@ final class BetaNormalizeFieldAccess {
                       return Expr.makeFieldAccess(rhs, fieldName);
                     }
                   } else {
-                    Iterable<Entry<String, Expr>> rhsFields = rhs.asRecordLiteral();
+                    Iterable<Entry<String, Expr>> rhsFields = Expr.Util.asRecordLiteral(rhs);
                     if (rhsFields != null) {
                       Entry<String, Expr> rhsFound =
                           FieldUtilities.lookupEntry(rhsFields, fieldName);

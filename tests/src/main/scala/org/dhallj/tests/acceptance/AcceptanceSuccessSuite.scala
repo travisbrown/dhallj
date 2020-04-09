@@ -66,7 +66,7 @@ class HashingSuite(val base: String) extends ResolvingExprAcceptanceSuite[String
 class ParsingSuite(val base: String) extends ExprAcceptanceSuite[Array[Byte]] {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhallb"
 
-  def transform(input: Expr): Array[Byte] = input.encodeToByteArray
+  def transform(input: Expr): Array[Byte] = input.getEncodedBytes
   def loadExpected(input: Array[Byte]): Array[Byte] = input
   def compare(result: Array[Byte], expected: Array[Byte]): Boolean = result.sameElements(expected)
 }

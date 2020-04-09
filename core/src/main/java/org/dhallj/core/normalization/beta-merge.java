@@ -1,5 +1,6 @@
 package org.dhallj.core.normalization;
 
+import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
@@ -8,7 +9,7 @@ import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeMerge {
   static final Expr apply(Expr left, Expr right, Expr type) {
-    final Iterable<Entry<String, Expr>> leftAsRecord = left.asRecordLiteral();
+    final List<Entry<String, Expr>> leftAsRecord = Expr.Util.asRecordLiteral(left);
 
     if (leftAsRecord != null) {
       Expr result =
@@ -16,7 +17,7 @@ final class BetaNormalizeMerge {
               new ConstantVisitor.External<Expr>(null) {
                 @Override
                 public Expr onFieldAccess(Expr base, String fieldName) {
-                  Iterable<Entry<String, Expr>> baseAsUnion = base.asUnionType();
+                  List<Entry<String, Expr>> baseAsUnion = Expr.Util.asUnionType(base);
 
                   if (baseAsUnion != null) {
                     return merge(leftAsRecord, fieldName);
@@ -27,10 +28,10 @@ final class BetaNormalizeMerge {
 
                 @Override
                 public Expr onApplication(Expr base, Expr arg) {
-                  Entry<Expr, String> baseAsFieldAccess = base.asFieldAccess();
+                  Entry<Expr, String> baseAsFieldAccess = Expr.Util.asFieldAccess(base);
                   if (baseAsFieldAccess != null) {
-                    Iterable<Entry<String, Expr>> accessedAsUnion =
-                        baseAsFieldAccess.getKey().asUnionType();
+                    List<Entry<String, Expr>> accessedAsUnion =
+                        Expr.Util.asUnionType(baseAsFieldAccess.getKey());
 
                     if (accessedAsUnion != null) {
                       return merge(leftAsRecord, baseAsFieldAccess.getValue(), arg);
@@ -39,7 +40,7 @@ final class BetaNormalizeMerge {
                     }
 
                   } else {
-                    String baseAsBuiltIn = base.asBuiltIn();
+                    String baseAsBuiltIn = Expr.Util.asBuiltIn(base);
 
                     if (baseAsBuiltIn != null) {
                       if (baseAsBuiltIn.equals("Some")) {
@@ -60,11 +61,11 @@ final class BetaNormalizeMerge {
     return Expr.makeMerge(left, right, type);
   }
 
-  private static Expr merge(Iterable<Entry<String, Expr>> handlers, String fieldName) {
+  private static Expr merge(List<Entry<String, Expr>> handlers, String fieldName) {
     return FieldUtilities.lookup(handlers, fieldName);
   }
 
-  private static Expr merge(Iterable<Entry<String, Expr>> handlers, String fieldName, Expr arg) {
+  private static Expr merge(List<Entry<String, Expr>> handlers, String fieldName, Expr arg) {
     Expr handler = FieldUtilities.lookup(handlers, fieldName);
     if (handler != null) {
       return Expr.makeApplication(handler, arg);

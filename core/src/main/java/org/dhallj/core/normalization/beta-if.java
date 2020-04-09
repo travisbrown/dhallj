@@ -3,21 +3,21 @@ package org.dhallj.core.normalization;
 import org.dhallj.core.Expr;
 
 final class BetaNormalizeIf {
-  static final Expr apply(Expr cond, Expr thenValue, Expr elseValue) {
-    Boolean condAsBool = cond.asBoolLiteral();
+  static final Expr apply(Expr predicate, Expr thenValue, Expr elseValue) {
+    Boolean predicateAsBool = Expr.Util.asBoolLiteral(predicate);
 
-    if (condAsBool != null) {
-      return (condAsBool) ? thenValue : elseValue;
+    if (predicateAsBool != null) {
+      return (predicateAsBool) ? thenValue : elseValue;
     } else {
-      Boolean thenAsBool = thenValue.asBoolLiteral();
-      Boolean elseAsBool = elseValue.asBoolLiteral();
+      Boolean thenAsBool = Expr.Util.asBoolLiteral(thenValue);
+      Boolean elseAsBool = Expr.Util.asBoolLiteral(elseValue);
 
       if (thenAsBool != null && elseAsBool != null && thenAsBool && !elseAsBool) {
-        return cond;
+        return predicate;
       } else if (thenValue.equivalent(elseValue)) {
         return thenValue;
       } else {
-        return Expr.makeIf(cond, thenValue, elseValue);
+        return Expr.makeIf(predicate, thenValue, elseValue);
       }
     }
   }

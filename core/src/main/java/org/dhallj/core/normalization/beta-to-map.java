@@ -8,7 +8,7 @@ import org.dhallj.core.Expr;
 
 final class BetaNormalizeToMap {
   static final Expr apply(Expr base, Expr type) {
-    Iterable<Entry<String, Expr>> baseAsRecordLiteral = base.asRecordLiteral();
+    Iterable<Entry<String, Expr>> baseAsRecordLiteral = Expr.Util.asRecordLiteral(base);
 
     if (baseAsRecordLiteral != null) {
 

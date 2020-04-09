@@ -426,7 +426,7 @@ public final class Encode implements Vis<Writer> {
   public Writer onApplication(Expr baseExpr, Writer base, final List<Writer> args) {
     List<Writer> writers = new ArrayList<Writer>(args.size() + 1);
 
-    String asBuiltIn = baseExpr.asBuiltIn();
+    String asBuiltIn = Expr.Util.asBuiltIn(baseExpr);
 
     if (asBuiltIn != null && asBuiltIn.equals("Some")) {
       writers.add(

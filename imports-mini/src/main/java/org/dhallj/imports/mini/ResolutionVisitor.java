@@ -132,7 +132,7 @@ abstract class ResolutionVisitor extends IdentityVis {
 
   private final Expr checkHash(Expr result, byte[] expected) {
     if (expected != null && this.integrityChecks) {
-      byte[] received = result.normalize().alphaNormalize().hashBytes();
+      byte[] received = result.normalize().alphaNormalize().getHashBytes();
       if (!Arrays.equals(received, expected)) {
         throw new IntegrityCheckException(expected, received);
       }

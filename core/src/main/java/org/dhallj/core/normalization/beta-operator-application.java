@@ -12,8 +12,8 @@ import org.dhallj.core.Operator;
 final class BetaNormalizeOperatorApplication {
   static final Expr apply(Operator operator, Expr lhs, Expr rhs) {
     if (operator.isBoolOperator()) {
-      Boolean lhsAsBool = lhs.asBoolLiteral();
-      Boolean rhsAsBool = rhs.asBoolLiteral();
+      Boolean lhsAsBool = Expr.Util.asBoolLiteral(lhs);
+      Boolean rhsAsBool = Expr.Util.asBoolLiteral(rhs);
 
       if (operator.equals(Operator.OR)) {
         if (lhsAsBool != null) {
@@ -49,8 +49,8 @@ final class BetaNormalizeOperatorApplication {
         }
       }
     } else if (operator.equals(Operator.PLUS)) {
-      BigInteger lhsAsNaturalLiteral = lhs.asNaturalLiteral();
-      BigInteger rhsAsNaturalLiteral = rhs.asNaturalLiteral();
+      BigInteger lhsAsNaturalLiteral = Expr.Util.asNaturalLiteral(lhs);
+      BigInteger rhsAsNaturalLiteral = Expr.Util.asNaturalLiteral(rhs);
 
       if (lhsAsNaturalLiteral != null) {
         if (rhsAsNaturalLiteral != null) {
@@ -62,8 +62,8 @@ final class BetaNormalizeOperatorApplication {
         return lhs;
       }
     } else if (operator.equals(Operator.TIMES)) {
-      BigInteger lhsAsNaturalLiteral = lhs.asNaturalLiteral();
-      BigInteger rhsAsNaturalLiteral = rhs.asNaturalLiteral();
+      BigInteger lhsAsNaturalLiteral = Expr.Util.asNaturalLiteral(lhs);
+      BigInteger rhsAsNaturalLiteral = Expr.Util.asNaturalLiteral(rhs);
 
       if (lhsAsNaturalLiteral != null) {
         if (rhsAsNaturalLiteral != null) {
@@ -88,8 +88,8 @@ final class BetaNormalizeOperatorApplication {
 
       return Expr.makeTextLiteral(parts, interpolated).acceptVis(BetaNormalize.instance);
     } else if (operator.equals(Operator.LIST_APPEND)) {
-      List<Expr> lhsAsListLiteral = lhs.asListLiteral();
-      List<Expr> rhsAsListLiteral = rhs.asListLiteral();
+      List<Expr> lhsAsListLiteral = Expr.Util.asListLiteral(lhs);
+      List<Expr> rhsAsListLiteral = Expr.Util.asListLiteral(rhs);
 
       if (lhsAsListLiteral != null) {
         if (lhsAsListLiteral.isEmpty()) {
@@ -104,8 +104,8 @@ final class BetaNormalizeOperatorApplication {
         return lhs;
       }
     } else if (operator.equals(Operator.PREFER)) {
-      Iterable<Entry<String, Expr>> lhsAsRecordLiteral = lhs.asRecordLiteral();
-      Iterable<Entry<String, Expr>> rhsAsRecordLiteral = rhs.asRecordLiteral();
+      Iterable<Entry<String, Expr>> lhsAsRecordLiteral = Expr.Util.asRecordLiteral(lhs);
+      Iterable<Entry<String, Expr>> rhsAsRecordLiteral = Expr.Util.asRecordLiteral(rhs);
 
       if (lhsAsRecordLiteral != null) {
         if (rhsAsRecordLiteral != null) {
@@ -130,10 +130,10 @@ final class BetaNormalizeOperatorApplication {
         return rhs;
       }
     } else if (operator.equals(Operator.COMPLETE)) {
-      return Expr.Sugar.desugarComplete(lhs, rhs).acceptVis(BetaNormalize.instance);
+      return Expr.Util.desugarComplete(lhs, rhs).acceptVis(BetaNormalize.instance);
     } else if (operator.equals(Operator.COMBINE)) {
-      Iterable<Entry<String, Expr>> firstAsRecordLiteral = lhs.asRecordLiteral();
-      Iterable<Entry<String, Expr>> secondAsRecordLiteral = rhs.asRecordLiteral();
+      Iterable<Entry<String, Expr>> firstAsRecordLiteral = Expr.Util.asRecordLiteral(lhs);
+      Iterable<Entry<String, Expr>> secondAsRecordLiteral = Expr.Util.asRecordLiteral(rhs);
 
       if (firstAsRecordLiteral != null) {
         if (secondAsRecordLiteral != null) {
@@ -151,8 +151,8 @@ final class BetaNormalizeOperatorApplication {
       }
 
     } else if (operator.equals(Operator.COMBINE_TYPES)) {
-      Iterable<Entry<String, Expr>> firstAsRecordType = lhs.asRecordType();
-      Iterable<Entry<String, Expr>> secondAsRecordType = rhs.asRecordType();
+      Iterable<Entry<String, Expr>> firstAsRecordType = Expr.Util.asRecordType(lhs);
+      Iterable<Entry<String, Expr>> secondAsRecordType = Expr.Util.asRecordType(rhs);
 
       if (firstAsRecordType != null) {
         if (secondAsRecordType != null) {
@@ -197,7 +197,10 @@ final class BetaNormalizeOperatorApplication {
           asMap.put(
               key,
               mergeRecursive(
-                  currentValue, value, currentValue.asRecordLiteral(), value.asRecordLiteral()));
+                  currentValue,
+                  value,
+                  Expr.Util.asRecordType(currentValue),
+                  Expr.Util.asRecordType(value)));
         }
       }
       return Expr.makeRecordLiteral(asMap.entrySet());
@@ -230,7 +233,10 @@ final class BetaNormalizeOperatorApplication {
           asMap.put(
               key,
               mergeTypesRecursive(
-                  currentValue, value, currentValue.asRecordType(), value.asRecordType()));
+                  currentValue,
+                  value,
+                  Expr.Util.asRecordType(currentValue),
+                  Expr.Util.asRecordType(value)));
         }
       }
       return Expr.makeRecordType(asMap.entrySet());

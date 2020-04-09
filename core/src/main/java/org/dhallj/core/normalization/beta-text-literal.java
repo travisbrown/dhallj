@@ -23,7 +23,7 @@ final class BetaNormalizeTextLiteral {
 
         while (it.hasNext() && !tooMany) {
           Expr next = it.next();
-          String nextAsSimpleTextLiteral = next.asSimpleTextLiteral();
+          String nextAsSimpleTextLiteral = Expr.Util.asSimpleTextLiteral(next);
 
           if (nextAsSimpleTextLiteral == null || nextAsSimpleTextLiteral.length() != 0) {
             if (notEmptyString == null) {

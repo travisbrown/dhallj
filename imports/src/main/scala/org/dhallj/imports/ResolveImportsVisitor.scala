@@ -222,7 +222,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
             result <- bytesO.fold(resolve(i))(bs =>
               for {
                 _ <- checkHashesMatch(bs, hash)
-                r <- F.delay(Decode.decode(bs).show() -> Headers.empty)
+                r <- F.delay(Decode.decode(bs).toString() -> Headers.empty)
               } yield r
             )
           } yield result
@@ -264,7 +264,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       if (expected == null) F.unit
       else
         for {
-          bytes <- F.pure(e.normalize().encodeToByteArray())
+          bytes <- F.pure(e.normalize().getEncodedBytes())
           encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
           _ <- if (encoded.sameElements(expected)) F.unit
           else F.raiseError(new RuntimeException(s"SHA256 validation exception for ${imp}"))

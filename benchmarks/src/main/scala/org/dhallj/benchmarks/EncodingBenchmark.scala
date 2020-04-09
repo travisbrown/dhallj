@@ -22,8 +22,8 @@ class EncodingBenchmark {
   }
 
   @Benchmark
-  def encodePreludeToBytes: Array[Byte] = prelude.encodeToByteArray
+  def encodePreludeToBytes: Array[Byte] = prelude.getEncodedBytes
 
   @Benchmark
-  def encodeDeepToBytes: Array[Byte] = deep.encodeToByteArray
+  def encodeDeepToBytes: Array[Byte] = deep.getEncodedBytes
 }

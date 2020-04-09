@@ -151,7 +151,7 @@ class ImportResolutionSuite extends FunSuite {
     val cache = InMemoryCache()
 
     val expected = parse("let x = 2 in x")
-    val encoded = expected.normalize.encodeToByteArray
+    val encoded = expected.normalize.getEncodedBytes
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
     val expr =
@@ -165,8 +165,8 @@ class ImportResolutionSuite extends FunSuite {
 
     val cached = parse("let x = 1 in x")
     val expected = parse("let x = 2 in x")
-    val encoded = cached.normalize.encodeToByteArray
-    val hash = MessageDigest.getInstance("SHA-256").digest(expected.normalize.encodeToByteArray) //Hash doesn't match what is stored
+    val encoded = cached.normalize.getEncodedBytes
+    val hash = MessageDigest.getInstance("SHA-256").digest(expected.normalize.getEncodedBytes) //Hash doesn't match what is stored
 
     val expr =
       parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
@@ -178,7 +178,7 @@ class ImportResolutionSuite extends FunSuite {
     val cache = InMemoryCache()
 
     val expected = parse("let x = 2 in x")
-    val encoded = expected.normalize.encodeToByteArray
+    val encoded = expected.normalize.getEncodedBytes
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
     val expr = parse(

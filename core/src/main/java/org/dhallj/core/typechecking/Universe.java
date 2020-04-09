@@ -35,7 +35,7 @@ public enum Universe {
   }
 
   public static final Universe fromExpr(Expr expr) {
-    String name = expr.asBuiltIn();
+    String name = Expr.Util.asBuiltIn(expr);
 
     if (name != null) {
       if (name.equals("Type")) {
@@ -47,5 +47,13 @@ public enum Universe {
       }
     }
     return null;
+  }
+
+  public static Universe functionCheck(Universe input, Universe output) {
+    if (output.equals(Universe.TYPE)) {
+      return Universe.TYPE;
+    } else {
+      return input.max(output);
+    }
   }
 }

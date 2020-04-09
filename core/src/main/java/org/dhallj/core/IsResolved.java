@@ -6,7 +6,7 @@ import org.dhallj.core.Import;
 import org.dhallj.core.Vis;
 import org.dhallj.core.visitor.PropertyVis;
 
-public final class IsResolved extends PropertyVis {
+final class IsResolved extends PropertyVis {
   public static final Vis<Boolean> instance = new IsResolved();
 
   @Override
