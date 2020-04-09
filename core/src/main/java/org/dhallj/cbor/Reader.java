@@ -7,11 +7,11 @@ import java.util.Map;
 
 /**
  * An implementation of enough of the CBOR spec to cope with decoding the CBOR values we need for
- * Dhall
+ * Dhall.
  */
 public abstract class Reader {
 
-  /** Only allow symbols that correspond to entire encoded Dhall expressions */
+  /** Only allow symbols that correspond to entire encoded Dhall expressions. */
   public <R> R nextSymbol(Visitor<R> visitor) {
     skip55799();
     byte b = this.read();

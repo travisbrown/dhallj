@@ -2,8 +2,6 @@ package org.dhallj.tests.acceptance
 
 import java.nio.file.{Files, Paths}
 import munit.{FunSuite, Ignore, Slow}
-import org.dhallj.core.Expr
-import org.dhallj.parser.{Dhall, ParseException}
 import scala.io.Source
 
 trait AcceptanceSuite extends FunSuite {

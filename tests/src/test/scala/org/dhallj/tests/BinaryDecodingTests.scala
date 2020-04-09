@@ -4,7 +4,7 @@ import java.nio.file.{Files, Paths}
 
 import munit.FunSuite
 import org.dhallj.core.binary.Decode.decode
-import org.dhallj.parser.Dhall.parse
+import org.dhallj.parser.DhallParser.parse
 
 class BinaryDecodingTests extends FunSuite {
 

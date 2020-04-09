@@ -1,4 +1,4 @@
-package org.dhallj.parser;
+package org.dhallj.parser.support;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;

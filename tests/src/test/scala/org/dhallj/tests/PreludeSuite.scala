@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import munit.{FunSuite, Ignore, Slow, TestOptions}
 import org.dhallj.imports.mini.Resolver
 import org.dhallj.core.Expr
-import org.dhallj.parser.Dhall
+import org.dhallj.parser.DhallParser
 import scala.io.Source
 
 class PreludeSuite extends FunSuite() {
@@ -30,7 +30,7 @@ class PreludeSuite extends FunSuite() {
 
   def checkHash(path: String)(implicit loc: munit.Location): Unit = {
     val content = Source.fromResource(path).getLines.mkString("\n")
-    val parsed = Dhall.parse(content)
+    val parsed = DhallParser.parse(content)
 
     val resolved = Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
 

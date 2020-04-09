@@ -2,7 +2,7 @@ package org.dhallj.cbor;
 
 import java.math.BigInteger;
 
-/** To read a CBOR primitive and ensure it is null */
+/** To read a CBOR primitive and ensure it is null. */
 final class NullVisitor<R> implements Visitor<R> {
   static final Visitor<String> instanceForString = new NullVisitor<String>();
   static final Visitor<byte[]> instanceForByteArray = new NullVisitor<byte[]>();

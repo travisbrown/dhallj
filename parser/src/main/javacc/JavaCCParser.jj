@@ -4,14 +4,11 @@ options {
   SUPPORT_CLASS_VISIBILITY_PUBLIC = false;
   UNICODE_INPUT = true;
   JAVA_UNICODE_ESCAPE = false;
-  //DEBUG_TOKEN_MANAGER=true;
-  //DEBUG_PARSER=true;
-  //DEBUG_LOOKAHEAD=true;
 }
 
-PARSER_BEGIN(DhallParser)
+PARSER_BEGIN(JavaCCParser)
 
-package org.dhallj.parser;
+package org.dhallj.parser.support;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
@@ -22,23 +19,15 @@ import java.util.Map;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
-import org.dhallj.parser.Positioned.Wrapped;
+import org.dhallj.parser.support.Positioned.Wrapped;
 
-class DhallParser {
-  static Expr.Parsed parse(String input) throws ParseException {
-    return new DhallParser(new StringProvider(input)).TOP_LEVEL();
-  }
-
-  static Expr.Parsed parse(java.io.InputStream input) throws java.io.IOException, ParseException {
-    return new DhallParser(new StreamProvider(input)).TOP_LEVEL();
-  }
-
+final class JavaCCParser {
   private static String trimLabel(String input) {
     return (input.charAt(0) != '`') ? input : input.substring(1, input.length() - 1);
   }
 }
 
-PARSER_END(DhallParser)
+PARSER_END(JavaCCParser)
 
 TOKEN_MGR_DECLS : {
   Deque<Boolean> interpolationState = new LinkedList();

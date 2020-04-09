@@ -6,7 +6,7 @@ import java.nio.file.Path
 import cats.effect.{ExitCode, IO, IOApp}
 import org.dhallj.core.{Expr, Import}
 import org.dhallj.imports.ResolveImportsVisitor.ResolutionConfig
-import org.dhallj.parser.Dhall.parse
+import org.dhallj.parser.DhallParser.parse
 import org.http4s.client._
 import org.http4s.client.blaze._
 

@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
 import org.dhallj.imports.mini.Resolver
-import org.dhallj.parser.Dhall
+import org.dhallj.parser.DhallParser
 
 trait SuccessSuite[A, B] extends AcceptanceSuite {
   def makeExpectedPath(inputPath: String): String
@@ -29,12 +29,12 @@ trait SuccessSuite[A, B] extends AcceptanceSuite {
 }
 
 trait ExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
-  def parseInput(path: String, input: String): Expr = Dhall.parse(input)
+  def parseInput(path: String, input: String): Expr = DhallParser.parse(input)
 }
 
 trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
   def parseInput(path: String, input: String): Expr = {
-    val parsed = Dhall.parse(input)
+    val parsed = DhallParser.parse(input)
 
     if (parsed.isResolved) parsed
     else {
@@ -47,7 +47,7 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
 
   def transform(input: Expr): Expr = transformation(input)
-  def loadExpected(input: Array[Byte]): Expr = Dhall.parse(new String(input))
+  def loadExpected(input: Array[Byte]): Expr = DhallParser.parse(new String(input))
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
@@ -80,7 +80,7 @@ abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends
     decode(readBytes(path))
 
   def transform(input: Expr): Expr = transformation(input)
-  def loadExpected(input: Array[Byte]): Expr = Dhall.parse(new String(input))
+  def loadExpected(input: Array[Byte]): Expr = DhallParser.parse(new String(input))
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 

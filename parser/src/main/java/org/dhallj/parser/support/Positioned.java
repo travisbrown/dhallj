@@ -1,6 +1,6 @@
-package org.dhallj.parser;
+package org.dhallj.parser.support;
 
-public class Positioned {
+class Positioned {
   final int beginLine;
   final int beginColumn;
   final int endLine;

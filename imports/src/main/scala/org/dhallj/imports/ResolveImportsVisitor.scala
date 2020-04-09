@@ -14,7 +14,7 @@ import org.dhallj.core.visitor.PureVis
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
 import org.dhallj.imports.ResolveImportsVisitor._
-import org.dhallj.parser.Dhall
+import org.dhallj.parser.DhallParser
 import org.http4s.Status.Successful
 import org.http4s.client.Client
 import org.http4s.{EntityDecoder, Headers}
@@ -233,7 +233,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
           for {
             v <- resolve(i, hash)
             (s, headers) = v
-            e <- F.delay(Dhall.parse(s))
+            e <- F.delay(DhallParser.parse(s))
           } yield e -> headers
         //TODO check if this can be interpolated? The spec isn't very clear
         case Import.Mode.RAW_TEXT =>

@@ -1,8 +1,10 @@
 package org.dhallj.imports.mini;
 
-public class ResolutionException extends Exception {
-  ResolutionException(String message, Exception underlying) {
-    super(message, underlying);
+import org.dhallj.core.DhallException;
+
+public final class ResolutionException extends DhallException {
+  ResolutionException(String message, Throwable cause) {
+    super(message, cause);
   }
 
   ResolutionException(String message) {

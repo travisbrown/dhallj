@@ -1,4 +1,4 @@
-package org.dhallj.parser;
+package org.dhallj.parser.support;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,11 +12,9 @@ import java.util.List;
  *
  * <p>This is roughly working, except for the sources, but desperately needs clean-up.
  */
-class WhitespaceManager {
+final class WhitespaceManager {
   private final List<Comment> comments = new ArrayList();
   private char curr = 0;
-
-  WhitespaceManager() {}
 
   private boolean advance(SimpleCharStream stream) {
     try {

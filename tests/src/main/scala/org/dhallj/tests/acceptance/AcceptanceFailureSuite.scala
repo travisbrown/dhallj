@@ -2,7 +2,7 @@ package org.dhallj.tests.acceptance
 
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
-import org.dhallj.parser.Dhall
+import org.dhallj.parser.DhallParser
 import scala.reflect.ClassTag
 
 abstract class AcceptanceFailureSuite[A, E <: Throwable: ClassTag] extends AcceptanceSuite {
@@ -21,11 +21,11 @@ abstract class AcceptanceFailureSuite[A, E <: Throwable: ClassTag] extends Accep
 }
 
 class ParsingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, Exception] {
-  def loadInput(input: Array[Byte]): Expr = Dhall.parse(new String(input))
+  def loadInput(input: Array[Byte]): Expr = DhallParser.parse(new String(input))
 }
 
 class TypeCheckingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, RuntimeException] {
-  def loadInput(input: Array[Byte]): Expr = Dhall.parse(new String(input)).typeCheck
+  def loadInput(input: Array[Byte]): Expr = DhallParser.parse(new String(input)).typeCheck
 }
 
 class BinaryDecodingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, RuntimeException] {

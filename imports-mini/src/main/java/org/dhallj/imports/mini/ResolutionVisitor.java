@@ -7,12 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import org.dhallj.core.DhallException.ParsingFailure;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.visitor.IdentityVis;
-import org.dhallj.parser.Dhall;
-import org.dhallj.parser.ParseException;
+import org.dhallj.parser.DhallParser;
 
 abstract class ResolutionVisitor extends IdentityVis {
   private final Path currentPath;
@@ -66,9 +66,9 @@ abstract class ResolutionVisitor extends IdentityVis {
           result = Expr.makeTextLiteral(value);
         } else {
           try {
-            result = Dhall.parse(value).acceptVis(this);
-          } catch (ParseException underlying) {
-            throw new WrappedParseException(name, underlying);
+            result = DhallParser.parse(value).acceptVis(this);
+          } catch (ParsingFailure underlying) {
+            throw new WrappedParsingFailure(name, underlying);
           }
         }
       } else {
@@ -104,9 +104,9 @@ abstract class ResolutionVisitor extends IdentityVis {
         result = Expr.makeTextLiteral(contents);
       } else {
         try {
-          result = Dhall.parse(contents).acceptVis(this.withCurrentPath(resolvedPath));
-        } catch (ParseException underlying) {
-          throw new WrappedParseException(path.toString(), underlying);
+          result = DhallParser.parse(contents).acceptVis(this.withCurrentPath(resolvedPath));
+        } catch (ParsingFailure underlying) {
+          throw new WrappedParsingFailure(path.toString(), underlying);
         }
       }
     }
@@ -172,11 +172,11 @@ abstract class ResolutionVisitor extends IdentityVis {
     }
   }
 
-  static final class WrappedParseException extends RuntimeException {
+  static final class WrappedParsingFailure extends RuntimeException {
     String location;
-    ParseException underlying;
+    ParsingFailure underlying;
 
-    WrappedParseException(String location, ParseException underlying) {
+    WrappedParsingFailure(String location, ParsingFailure underlying) {
       super(String.format("Can't parse import: %s", location), underlying);
       this.location = location;
     }

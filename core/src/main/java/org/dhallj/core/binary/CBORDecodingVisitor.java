@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Decodes CBOR expressions corresponding to encoded entire Dhall expressions (hence eg a negative
- * integer by itself is an error but a single float by itself is allowed)
+ * Decodes CBOR expressions corresponding to encoded Dhall expressions.
+ *
+ * <p>Note that e.g. a negative integer by itself is an error, but a single float by itself is
+ * allowed.
  */
 final class CBORDecodingVisitor implements Visitor<Expr> {
 

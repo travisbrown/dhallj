@@ -1,9 +1,6 @@
-package org.dhallj.parser;
+package org.dhallj.parser.support;
 
-import java.math.BigInteger;
-import java.util.List;
-
-public final class Label extends Positioned.Wrapped<String> {
+final class Label extends Positioned.Wrapped<String> {
   Label(Token token) {
     super(
         (token.image.charAt(0) != '`')

@@ -1,7 +1,6 @@
 package org.dhallj.scala
 
 import org.dhallj.core.Expr
-import org.dhallj.parser.Dhall
 import org.dhallj.s.ast._
 
 trait Codec[A] {

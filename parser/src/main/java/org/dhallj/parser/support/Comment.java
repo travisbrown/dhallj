@@ -1,6 +1,6 @@
-package org.dhallj.parser;
+package org.dhallj.parser.support;
 
-public final class Comment extends Positioned {
+final class Comment extends Positioned {
   private final String content;
 
   Comment(String content, int beginLine, int beginColumn, int endLine, int endColumn) {

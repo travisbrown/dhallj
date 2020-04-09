@@ -30,7 +30,7 @@ val root = project
   .in(file("."))
   .settings(
     scalaVersion := "2.13.1",
-    initialCommands in console := "import org.dhallj.parser.Dhall.parse"
+    initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
   )
   .aggregate(core, parser, javagen, prelude, demo, scala, imports, importsMini, tests, benchmarks)
   .dependsOn(importsMini, scala, javagen, prelude)
@@ -48,7 +48,7 @@ lazy val parser = project
   .settings(
     moduleName := "dhall-parser",
     // Temporarily necessary because JavaCC produces invalid Javadocs.
-    sources in (Compile, doc) := Nil
+    javacOptions in Compile ++= Seq("-Xdoclint:none")
   )
   .enablePlugins(JavaCCPlugin)
   .dependsOn(core)
