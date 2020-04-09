@@ -1,9 +1,13 @@
 package org.dhallj.imports
 
-import cats.effect.concurrent.{MVar, Ref}
+import java.security.MessageDigest
+
+import cats.effect.concurrent.Ref
 import cats.effect.{ContextShift, IO, Resource}
+import cats.implicits._
 import munit.FunSuite
 import org.dhallj.core.Expr
+import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.Dhall.parse
@@ -136,6 +140,35 @@ class ImportResolutionSuite extends FunSuite {
     assert(resolve(expr) == expected)
   }
 
+  test("Read from cache, cached value present") {
+    val cache = InMemoryCache()
+
+    val expected = parse("let x = 2 in x")
+    val encoded = expected.normalize.encodeToByteArray
+    val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
+
+    val expr = parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+
+    assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
+  }
+
+  test("Write to cache") {
+    val cache = InMemoryCache()
+
+    val expected = parse("let x = 2 in x")
+    val encoded = expected.normalize.encodeToByteArray
+    val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
+
+    val expr = parse("let x = /cache-write/package.dhall sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+
+    val prog = resolveWithCustomCache(cache, expr) >> cache.get(hash)
+
+    assert(prog.unsafeRunSync match {
+      case None => false
+      case Some(bs) => Decode.decode(bs) == expected
+    })
+  }
+
   private def resolve(e: Expr): Expr =
     client.use { c =>
       implicit val http: Client[IO] = c
@@ -143,15 +176,20 @@ class ImportResolutionSuite extends FunSuite {
       e.resolveImports[IO](ResolutionConfig(FromResources)).map(_.normalize)
     }.unsafeRunSync
 
-  //TODO just don't use the implicit class and then we don't have to rework it just to
-  //support injecting a different cache for testing
-  private class InMemoryCache extends ImportsCache[IO] {
+  private def resolveWithCustomCache(cache: ImportsCache[IO], e: Expr): IO[Expr] =
+    client.use { c =>
+      implicit val http: Client[IO] = c
 
-    private val store: Ref[IO, Map[Array[Byte], Array[Byte]]] = Ref.unsafe(Map.empty)
+      e.acceptVis(ResolveImportsVisitor[IO](ResolutionConfig(FromResources), cache, Nil))
+    }
 
-    override def get(key: Array[Byte]): IO[Option[Array[Byte]]] = store.get.map(_.get(key))
+  private case class InMemoryCache() extends ImportsCache[IO] {
 
-    override def put(key: Array[Byte], value: Array[Byte]): IO[Unit] = store.update(_ + (key -> value))
+    private val store: Ref[IO, Map[List[Byte], Array[Byte]]] = Ref.unsafe(Map.empty)
+
+    override def get(key: Array[Byte]): IO[Option[Array[Byte]]] = store.get.map(_.get(key.toList))
+
+    override def put(key: Array[Byte], value: Array[Byte]): IO[Unit] = store.update(_ + (key.toList -> value))
   }
 
 }

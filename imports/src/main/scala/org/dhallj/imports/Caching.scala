@@ -50,7 +50,7 @@ private[imports] object Caching {
 
   def mkImportsCache[F[_]](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportsCache[F]]] =
     for {
-      _ <- if (!Files.exists(rootDir)) F.delay(Files.createDirectory(rootDir)) else F.unit
+      _ <- if (!Files.exists(rootDir)) F.delay(Files.createDirectories(rootDir)) else F.unit
       perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
     } yield (if (perms) Some(new ImportsCacheImpl[F](rootDir)) else None)
 
