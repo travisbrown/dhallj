@@ -152,6 +152,19 @@ class ImportResolutionSuite extends FunSuite {
     assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
   }
 
+  test("Read from cache, incorrect hash".fail) {
+    val cache = InMemoryCache()
+
+    val cached = parse("let x = 1 in x")
+    val expected = parse("let x = 2 in x")
+    val encoded = cached.normalize.encodeToByteArray
+    val hash = MessageDigest.getInstance("SHA-256").digest(expected.normalize.encodeToByteArray) //Hash doesn't match what is stored
+
+    val expr = parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+
+    assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
+  }
+
   test("Write to cache") {
     val cache = InMemoryCache()
 
