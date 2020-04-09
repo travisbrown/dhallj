@@ -84,7 +84,7 @@ private[imports] object Caching {
       )
 
     for {
-      xdgCache <- makeCacheFromEnvVar("XDG_HOME", "")
+      xdgCache <- makeCacheFromEnvVar("XDG_CACHE_HOME", "")
       cache <- xdgCache.fold(backupCache)(F.pure)
     } yield cache
 
