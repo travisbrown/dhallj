@@ -5,7 +5,6 @@ import org.dhallj.cbor.Visitor;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
-import org.dhallj.core.error.DecodingException;
 
 import java.math.BigInteger;
 import java.net.URI;

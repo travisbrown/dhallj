@@ -1,4 +1,6 @@
-package org.dhallj.core.error;
+package org.dhallj.core.binary;
+
+import org.dhallj.core.DhallException;
 
 public class DecodingException extends DhallException {
   public DecodingException(String message) {
