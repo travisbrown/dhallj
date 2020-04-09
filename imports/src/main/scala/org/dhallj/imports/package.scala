@@ -11,7 +11,8 @@ package object imports {
   implicit class ResolveImports(e: Expr) {
     def resolveImports[F[_]](
       resolutionConfig: ResolutionConfig = ResolutionConfig(FromFileSystem)
-    )(implicit Client: Client[F], F: Sync[F]): F[Expr] = ResolveImportsVisitor.mkVisitor(resolutionConfig) >>= (v => e.acceptVis(v))
+    )(implicit Client: Client[F], F: Sync[F]): F[Expr] =
+      ResolveImportsVisitor.mkVisitor(resolutionConfig) >>= (v => e.acceptVis(v))
   }
 
 }

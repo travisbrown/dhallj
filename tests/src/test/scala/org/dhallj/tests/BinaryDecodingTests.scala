@@ -291,7 +291,9 @@ class BinaryDecodingTests extends FunSuite {
     val bytes = load("remote_import.bin")
 
     val decoded = decode(bytes)
-    val expected = parse("https://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/package.dhall?foo=bar using { pwd = \"secret\"}")
+    val expected = parse(
+      "https://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/package.dhall?foo=bar using { pwd = \"secret\"}"
+    )
 
     assert(decoded.equivalent(expected))
   }

@@ -56,7 +56,7 @@ class ImportResolutionSuite extends FunSuite {
     )
     val expected = parse("True").normalize
 
-    assert(resolve(expr) ==  expected)
+    assert(resolve(expr) == expected)
   }
 
   test("Multiple imports") {
@@ -75,21 +75,25 @@ class ImportResolutionSuite extends FunSuite {
 
   test("Import as local location") {
     val expr = parse("let x = /foo/bar.dhall as Location in x")
-    val expected = parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Local \"/foo/bar.dhall\"").normalize
+    val expected =
+      parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Local \"/foo/bar.dhall\"").normalize
 
     assert(resolve(expr) == expected)
   }
 
   test("Import as remote location") {
     val expr = parse("let x = http://example.com/foo.dhall as Location in x")
-    val expected = parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Remote \"http://example.com/foo.dhall\"").normalize
+    val expected = parse(
+      "< Local : Text | Remote : Text | Environment : Text | Missing >.Remote \"http://example.com/foo.dhall\""
+    ).normalize
 
     assert(resolve(expr) == expected)
   }
 
   test("Import as env location") {
     val expr = parse("let x = env:foo as Location in x")
-    val expected = parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Environment \"foo\"").normalize
+    val expected =
+      parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Environment \"foo\"").normalize
 
     assert(resolve(expr) == expected)
   }
@@ -120,13 +124,14 @@ class ImportResolutionSuite extends FunSuite {
     val expr = parse("let x = /alternate/not_present.dhall ? /alternate/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
-
     assert(resolve(expr) == expected)
   }
 
   test("Valid hash") {
 
-    val expr = parse("let x = /hashed/package.dhall sha256:d60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x")
+    val expr = parse(
+      "let x = /hashed/package.dhall sha256:d60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
+    )
     val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
@@ -134,7 +139,9 @@ class ImportResolutionSuite extends FunSuite {
 
   test("Invalid hash".fail) {
 
-    val expr = parse("let x = /hashed/package.dhall sha256:e60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x")
+    val expr = parse(
+      "let x = /hashed/package.dhall sha256:e60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
+    )
     val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
@@ -147,7 +154,8 @@ class ImportResolutionSuite extends FunSuite {
     val encoded = expected.normalize.encodeToByteArray
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
-    val expr = parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+    val expr =
+      parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
 
     assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
   }
@@ -160,7 +168,8 @@ class ImportResolutionSuite extends FunSuite {
     val encoded = cached.normalize.encodeToByteArray
     val hash = MessageDigest.getInstance("SHA-256").digest(expected.normalize.encodeToByteArray) //Hash doesn't match what is stored
 
-    val expr = parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+    val expr =
+      parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
 
     assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
   }
@@ -172,12 +181,14 @@ class ImportResolutionSuite extends FunSuite {
     val encoded = expected.normalize.encodeToByteArray
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
-    val expr = parse("let x = /cache-write/package.dhall sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+    val expr = parse(
+      "let x = /cache-write/package.dhall sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x"
+    )
 
     val prog = resolveWithCustomCache(cache, expr) >> cache.get(hash)
 
     assert(prog.unsafeRunSync match {
-      case None => false
+      case None     => false
       case Some(bs) => Decode.decode(bs) == expected
     })
   }
