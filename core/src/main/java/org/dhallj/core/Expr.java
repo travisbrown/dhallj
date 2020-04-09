@@ -564,7 +564,7 @@ public abstract class Expr {
 
   public static final Expr makeBuiltIn(String name) {
     if (Constants.getBuiltIn(name) == null) {
-      throw new RuntimeException("Bad name" + name);
+      throw new IllegalArgumentException(String.format("%s is not a built-in", name));
     }
     return Constants.getBuiltIn(name);
   }
