@@ -18,54 +18,54 @@ class CORSComplianceCheckSuite extends FunSuite {
   val localPath = Paths.get("/foo/bar.dhall")
 
   test("Remote - same origin") {
-    CORSComplianceCheck[IO](Remote(fooOrigin), Remote(fooOrigin2), Headers.empty).unsafeRunSync()
+    CORSComplianceCheck[IO](Remote(fooOrigin, null), Remote(fooOrigin2, null), Headers.empty).unsafeRunSync()
   }
 
   test("Remote - different origin, allow *") {
-    CORSComplianceCheck[IO](Remote(fooOrigin),
-                            Remote(barOrigin),
+    CORSComplianceCheck[IO](Remote(fooOrigin, null),
+                            Remote(barOrigin, null),
                             Headers.of(Header("Access-Control-Allow-Origin", "*"))).unsafeRunSync()
   }
 
   test("Remote - different origin, allow parent authority") {
-    CORSComplianceCheck[IO](Remote(fooOrigin),
-                            Remote(barOrigin),
+    CORSComplianceCheck[IO](Remote(fooOrigin, null),
+                            Remote(barOrigin, null),
                             Headers.of(Header("Access-Control-Allow-Origin", "http://foo.org"))).unsafeRunSync()
   }
 
   test("Remote - different origin".fail) {
-    CORSComplianceCheck[IO](Remote(fooOrigin), Remote(barOrigin), Headers.empty).unsafeRunSync()
+    CORSComplianceCheck[IO](Remote(fooOrigin, null), Remote(barOrigin, null), Headers.empty).unsafeRunSync()
   }
 
   test("Remote - different origin, cors parent different authority".fail) {
-    CORSComplianceCheck[IO](Remote(fooOrigin),
-                            Remote(barOrigin),
+    CORSComplianceCheck[IO](Remote(fooOrigin, null),
+                            Remote(barOrigin, null),
                             Headers.of(Header("Access-Control-Allow-Origin", "http://bar.org"))).unsafeRunSync()
   }
 
   test("Remote - different origin, cors parent different scheme".fail) {
-    CORSComplianceCheck[IO](Remote(fooOrigin),
-                            Remote(barOrigin),
+    CORSComplianceCheck[IO](Remote(fooOrigin, null),
+                            Remote(barOrigin, null),
                             Headers.of(Header("Access-Control-Allow-Origin", "https://foo.org"))).unsafeRunSync()
   }
 
   test("Remote - different origin, cors parent different port".fail) {
-    CORSComplianceCheck[IO](Remote(fooOrigin),
-                            Remote(barOrigin),
+    CORSComplianceCheck[IO](Remote(fooOrigin, null),
+                            Remote(barOrigin, null),
                             Headers.of(Header("Access-Control-Allow-Origin", "http://foo.org:8080"))).unsafeRunSync()
   }
 
   test("Remote - different origin, cors parent different port 2".fail) {
-    CORSComplianceCheck[IO](Remote(fooOrigin8080),
-                            Remote(barOrigin),
+    CORSComplianceCheck[IO](Remote(fooOrigin8080, null),
+                            Remote(barOrigin, null),
                             Headers.of(Header("Access-Control-Allow-Origin", "http://foo.org"))).unsafeRunSync()
   }
 
   test("Local") {
-    CORSComplianceCheck[IO](Local(localPath), Remote(fooOrigin2), Headers.empty).unsafeRunSync()
+    CORSComplianceCheck[IO](Local(localPath), Remote(fooOrigin2, null), Headers.empty).unsafeRunSync()
   }
 
   test("Env") {
-    CORSComplianceCheck[IO](Env("foo"), Remote(fooOrigin2), Headers.empty).unsafeRunSync()
+    CORSComplianceCheck[IO](Env("foo"), Remote(fooOrigin2, null), Headers.empty).unsafeRunSync()
   }
 }

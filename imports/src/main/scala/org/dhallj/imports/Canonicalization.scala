@@ -15,7 +15,7 @@ object Canonicalization {
 
   def canonicalize[F[_]](resolutionConfig: ResolutionConfig,
                          imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
-    case Remote(uri) => F.delay(Remote(uri.normalize))
+    case Remote(uri, headers) => F.delay(Remote(uri.normalize, headers))
     case Local(path) =>
       resolutionConfig.localMode match {
         case FromFileSystem => F.delay(Local(path.toAbsolutePath.normalize))
@@ -28,7 +28,7 @@ object Canonicalization {
     implicit F: Sync[F]
   ): F[ImportContext] =
     parent match {
-      case Remote(uri) =>
+      case Remote(uri, headers) =>
         child match {
           //A transitive relative import is parsed as local but is resolved as a remote import
           // eg https://github.com/dhall-lang/dhall-lang/blob/master/Prelude/Integer/add has a local import but we still
@@ -36,7 +36,7 @@ object Canonicalization {
           //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
           case Local(path) =>
             if (path.isAbsolute) canonicalize(resolutionConfig, child)
-            else canonicalize(resolutionConfig, Remote(uri.resolve(path.toString)))
+            else canonicalize(resolutionConfig, Remote(uri.resolve(path.toString), headers))
           case _ => canonicalize(resolutionConfig, child)
         }
       case Local(path) =>

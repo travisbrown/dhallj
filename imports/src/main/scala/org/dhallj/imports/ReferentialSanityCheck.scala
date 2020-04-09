@@ -6,9 +6,9 @@ import org.dhallj.imports.ResolveImportsVisitor._
 object ReferentialSanityCheck {
 
   def apply[F[_]](parent: ImportContext, child: ImportContext)(implicit F: Sync[F]): F[Unit] = parent match {
-    case Remote(uri) =>
+    case Remote(uri, _) =>
       child match {
-        case Remote(_) => F.unit
+        case Remote(_, _) => F.unit
         case Missing   => F.unit
         case Local(path) =>
           F.raiseError(

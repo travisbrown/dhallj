@@ -13,19 +13,19 @@ class ReferentialSanityCheckSuite extends FunSuite {
   private val somePath = Paths.get("/foo.dhall")
 
   test("Remote imports local".fail) {
-    ReferentialSanityCheck[IO](Remote(someUri), Local(somePath)).unsafeRunSync
+    ReferentialSanityCheck[IO](Remote(someUri, null), Local(somePath)).unsafeRunSync
   }
 
   test("Remote imports env".fail) {
-    ReferentialSanityCheck[IO](Remote(someUri), Env("foo")).unsafeRunSync
+    ReferentialSanityCheck[IO](Remote(someUri, null), Env("foo")).unsafeRunSync
   }
 
   test("Remote imports remote") {
-    ReferentialSanityCheck[IO](Remote(someUri), Remote(someUri)).unsafeRunSync
+    ReferentialSanityCheck[IO](Remote(someUri, null), Remote(someUri, null)).unsafeRunSync
   }
 
   test("Remote imports missing") {
-    ReferentialSanityCheck[IO](Remote(someUri), Missing).unsafeRunSync
+    ReferentialSanityCheck[IO](Remote(someUri, null), Missing).unsafeRunSync
   }
 
   test("Local imports local") {
@@ -37,7 +37,7 @@ class ReferentialSanityCheckSuite extends FunSuite {
   }
 
   test("Local imports remote") {
-    ReferentialSanityCheck[IO](Local(somePath), Remote(someUri)).unsafeRunSync
+    ReferentialSanityCheck[IO](Local(somePath), Remote(someUri, null)).unsafeRunSync
   }
 
   test("Local imports missing") {
@@ -53,7 +53,7 @@ class ReferentialSanityCheckSuite extends FunSuite {
   }
 
   test("Env imports remote") {
-    ReferentialSanityCheck[IO](Env("foo"), Remote(someUri)).unsafeRunSync
+    ReferentialSanityCheck[IO](Env("foo"), Remote(someUri, null)).unsafeRunSync
   }
 
   test("Env imports missing") {
