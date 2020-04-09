@@ -167,7 +167,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     onImport(Local(path), mode, hash)
 
   override def onRemoteImport(url: URI, using: F[Expr], mode: Import.Mode, hash: Array[Byte]): F[Expr] =
-    using >>= (u => onImport(Remote(url, u), mode, hash))
+    if (using != null) using >>= (u => onImport(Remote(url, u), mode, hash)) else onImport(Remote(url, null), mode, hash)
 
   override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
     onImport(Env(value), mode, hash)
@@ -220,7 +220,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
           else F.raiseError(new RuntimeException("Cached expression does not match its hash"))
         }
 
-        if (hash == null) resolve(i)
+        if (hash eq null) resolve(i)
         else
           for {
             bytesO <- cache.get(hash)
@@ -266,7 +266,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       else F.unit
 
     def validateHash(imp: ImportContext, e: Expr, expected: Array[Byte]): F[Unit] =
-      if (expected == null) F.unit
+      if (expected eq null) F.unit
       else
         for {
           bytes <- F.pure(e.normalize().getEncodedBytes())
