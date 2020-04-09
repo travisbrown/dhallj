@@ -97,13 +97,21 @@ lazy val importsMini = project
   .settings(moduleName := "dhall-imports-mini")
   .dependsOn(parser, core)
 
+
+lazy val Slow = config("slow").extend(Test)
+
 lazy val tests = project
   .in(file("tests"))
+  .configs(Slow)
   .settings(baseSettings ++ scalaSettings)
   .settings(
     libraryDependencies ++= testDependencies,
     skip in publish := true,
-    Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "dhall-lang"
+    unmanagedResourceDirectories.in(Test) += (ThisBuild / baseDirectory).value / "dhall-lang",
+    testOptions.in(Test) += Tests.Argument("--exclude-tags=Slow"),
+    inConfig(Slow)(Defaults.testTasks),
+    testOptions.in(Slow) -= Tests.Argument("--exclude-tags=Slow"),
+    testOptions.in(Slow) += Tests.Argument("--include-tags=Slow")
   )
   .dependsOn(scala, importsMini)
 

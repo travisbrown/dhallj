@@ -1,7 +1,7 @@
 package org.dhallj.tests.acceptance
 
 import java.nio.file.{Files, Paths}
-import munit.{FunSuite, Ignore}
+import munit.{FunSuite, Ignore, Slow}
 import org.dhallj.core.Expr
 import org.dhallj.parser.{Dhall, ParseException}
 import scala.io.Source
@@ -19,6 +19,11 @@ trait AcceptanceSuite extends FunSuite {
   def ignored: Set[String] = Set.empty
 
   /**
+   * Names of tests that are slow.
+   */
+  def slow: Set[String] = Set.empty
+
+  /**
    * Returns a list of name-path pairs.
    */
   def testInputs: List[(String, String)] =
@@ -33,7 +38,9 @@ trait AcceptanceSuite extends FunSuite {
       .sortBy(_._1)
 
   final override def munitTests(): Seq[Test] =
-    super.munitTests().map(test => if (ignored(test.name)) test.tag(Ignore) else test)
+    super
+      .munitTests()
+      .map(test => if (ignored(test.name)) test.tag(Ignore) else if (slow(test.name)) test.tag(Slow) else test)
 
   final protected def readString(path: String): String =
     new String(readBytes(path))
