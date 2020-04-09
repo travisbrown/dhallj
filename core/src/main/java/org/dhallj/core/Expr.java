@@ -424,30 +424,30 @@ public abstract class Expr {
 
   /** Definitions of Dhall built-ins and other frequently-used expressions. */
   public static final class Constants {
-    private static Entry[] emptyFields = {};
+    private static final Entry[] emptyFields = {};
 
-    public static Expr UNDERSCORE = makeIdentifier("_");
-    public static Expr SORT = new Constructors.BuiltIn("Sort");
-    public static Expr KIND = new Constructors.BuiltIn("Kind");
-    public static Expr TYPE = new Constructors.BuiltIn("Type");
-    public static Expr BOOL = new Constructors.BuiltIn("Bool");
-    public static Expr TRUE = new Constructors.BuiltIn("True");
-    public static Expr FALSE = new Constructors.BuiltIn("False");
-    public static Expr LIST = new Constructors.BuiltIn("List");
-    public static Expr OPTIONAL = new Constructors.BuiltIn("Optional");
-    public static Expr DOUBLE = new Constructors.BuiltIn("Double");
-    public static Expr NATURAL = new Constructors.BuiltIn("Natural");
-    public static Expr INTEGER = new Constructors.BuiltIn("Integer");
-    public static Expr TEXT = new Constructors.BuiltIn("Text");
-    public static Expr NONE = new Constructors.BuiltIn("None");
-    public static Expr SOME = new Constructors.BuiltIn("Some");
-    public static Expr NATURAL_FOLD = new Constructors.BuiltIn("Natural/fold");
-    public static Expr LIST_FOLD = new Constructors.BuiltIn("List/fold");
-    public static Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
-    public static Expr EMPTY_RECORD_LITERAL = makeRecordLiteral(emptyFields);
-    public static Expr EMPTY_RECORD_TYPE = makeRecordType(emptyFields);
-    public static Expr EMPTY_UNION_TYPE = makeUnionType(emptyFields);
-    public static Expr LOCATION_TYPE =
+    public static final Expr UNDERSCORE = makeIdentifier("_");
+    public static final Expr SORT = new Constructors.BuiltIn("Sort");
+    public static final Expr KIND = new Constructors.BuiltIn("Kind");
+    public static final Expr TYPE = new Constructors.BuiltIn("Type");
+    public static final Expr BOOL = new Constructors.BuiltIn("Bool");
+    public static final Expr TRUE = new Constructors.BuiltIn("True");
+    public static final Expr FALSE = new Constructors.BuiltIn("False");
+    public static final Expr LIST = new Constructors.BuiltIn("List");
+    public static final Expr OPTIONAL = new Constructors.BuiltIn("Optional");
+    public static final Expr DOUBLE = new Constructors.BuiltIn("Double");
+    public static final Expr NATURAL = new Constructors.BuiltIn("Natural");
+    public static final Expr INTEGER = new Constructors.BuiltIn("Integer");
+    public static final Expr TEXT = new Constructors.BuiltIn("Text");
+    public static final Expr NONE = new Constructors.BuiltIn("None");
+    public static final Expr SOME = new Constructors.BuiltIn("Some");
+    public static final Expr NATURAL_FOLD = new Constructors.BuiltIn("Natural/fold");
+    public static final Expr LIST_FOLD = new Constructors.BuiltIn("List/fold");
+    public static final Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
+    public static final Expr EMPTY_RECORD_LITERAL = makeRecordLiteral(emptyFields);
+    public static final Expr EMPTY_RECORD_TYPE = makeRecordType(emptyFields);
+    public static final Expr EMPTY_UNION_TYPE = makeUnionType(emptyFields);
+    public static final Expr LOCATION_TYPE =
         makeUnionType(
             new Entry[] {
               new SimpleImmutableEntry("Local", TEXT),
@@ -455,11 +455,11 @@ public abstract class Expr {
               new SimpleImmutableEntry("Environment", TEXT),
               new SimpleImmutableEntry("Missing", null)
             });
-    public static String MAP_KEY_FIELD_NAME = "mapKey";
-    public static String MAP_VALUE_FIELD_NAME = "mapValue";
+    public static final String MAP_KEY_FIELD_NAME = "mapKey";
+    public static final String MAP_VALUE_FIELD_NAME = "mapValue";
 
-    private static Map<String, Expr> builtIns = new HashMap<String, Expr>(36);
-    private static Set<String> keywords = new HashSet<String>(16);
+    private static final Map<String, Expr> builtIns = new HashMap<String, Expr>(36);
+    private static final Set<String> keywords = new HashSet<String>(16);
 
     static {
       builtIns.put("Bool", BOOL);
@@ -750,7 +750,7 @@ public abstract class Expr {
     return new Constructors.MissingImport(mode, hash);
   }
 
-  private final class State {
+  private static final class State {
     final Expr expr;
     int state;
     int size;

@@ -1,6 +1,7 @@
 package org.dhallj.core.util;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public final class ArrayIterator<A> implements Iterable<A> {
   private final A[] values;
@@ -18,7 +19,11 @@ public final class ArrayIterator<A> implements Iterable<A> {
       }
 
       public final A next() {
-        return ArrayIterator.this.values[this.i++];
+        try {
+          return ArrayIterator.this.values[this.i++];
+        } catch (ArrayIndexOutOfBoundsException e) {
+          throw new NoSuchElementException();
+        }
       }
     };
   }

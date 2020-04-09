@@ -11,14 +11,13 @@ public interface Import {
 
     public String toString() {
       switch (this) {
-        case CODE:
-          return "Code";
         case RAW_TEXT:
           return "Text";
         case LOCATION:
           return "Location";
+        default:
+          return "Code";
       }
-      return null;
     }
   }
 }

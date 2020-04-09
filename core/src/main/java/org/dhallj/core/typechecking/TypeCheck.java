@@ -381,7 +381,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
           fieldMap.put(field.getKey(), field.getValue());
         }
 
-        List<Entry<String, Expr>> newFields = new ArrayList();
+        List<Entry<String, Expr>> newFields = new ArrayList<>();
         List<String> missing = null;
 
         for (Entry<String, Expr> projectedEntry : projected) {

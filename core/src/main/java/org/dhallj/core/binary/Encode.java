@@ -20,38 +20,50 @@ import org.dhallj.core.Source;
 import org.dhallj.core.Vis;
 
 public final class Encode implements Vis<Writer> {
-  public static Vis<Writer> instance = new Encode();
+  public static final Vis<Writer> instance = new Encode();
 
   public Writer onNote(Writer base, Source source) {
     return base;
   }
 
-  public Writer onNatural(Expr self, final BigInteger value) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-        this.writeArrayStart(stream, 2);
-        this.writeLong(stream, Label.NATURAL);
-        this.writeBigInteger(stream, value);
-      }
-    };
+  private static final class BigIntegerWriter extends Writer {
+    private final BigInteger value;
+    private final boolean isNatural;
+
+    BigIntegerWriter(BigInteger value, boolean isNatural) {
+      this.value = value;
+      this.isNatural = isNatural;
+    }
+
+    public void writeToStream(OutputStream stream) throws IOException {
+      this.writeArrayStart(stream, 2);
+      this.writeLong(stream, this.isNatural ? Label.NATURAL : Label.INTEGER);
+      this.writeBigInteger(stream, this.value);
+    }
   }
 
-  public Writer onInteger(Expr self, final BigInteger value) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-        this.writeArrayStart(stream, 2);
-        this.writeLong(stream, Label.INTEGER);
-        this.writeBigInteger(stream, value);
-      }
-    };
+  public Writer onNatural(Expr self, BigInteger value) {
+    return new BigIntegerWriter(value, true);
   }
 
-  public Writer onDouble(Expr self, final double value) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-        this.writeDouble(stream, value);
-      }
-    };
+  public Writer onInteger(Expr self, BigInteger value) {
+    return new BigIntegerWriter(value, false);
+  }
+
+  private static final class DoubleWriter extends Writer {
+    private final double value;
+
+    DoubleWriter(double value) {
+      this.value = value;
+    }
+
+    public void writeToStream(OutputStream stream) throws IOException {
+      this.writeDouble(stream, value);
+    }
+  }
+
+  public Writer onDouble(Expr self, double value) {
+    return new DoubleWriter(value);
   }
 
   public Writer onBuiltIn(Expr self, final String name) {
@@ -582,7 +594,7 @@ public final class Encode implements Vis<Writer> {
         if (hash == null) {
           this.writeNull(stream);
         } else {
-          this.writeByteString(stream, hash);
+          this.writeByteString(stream, multihash(hash));
         }
         this.writeLong(stream, modeLabel(mode));
         this.writeLong(stream, Label.IMPORT_TYPE_MISSING);
@@ -598,7 +610,7 @@ public final class Encode implements Vis<Writer> {
         if (hash == null) {
           this.writeNull(stream);
         } else {
-          this.writeByteString(stream, hash);
+          this.writeByteString(stream, multihash(hash));
         }
         this.writeLong(stream, modeLabel(mode));
         this.writeLong(stream, Label.IMPORT_TYPE_ENV);
@@ -632,7 +644,7 @@ public final class Encode implements Vis<Writer> {
         if (hash == null) {
           this.writeNull(stream);
         } else {
-          this.writeByteString(stream, hash);
+          this.writeByteString(stream, multihash(hash));
         }
         this.writeLong(stream, modeLabel(mode));
         this.writeLong(stream, pathLabel(path));
@@ -684,7 +696,7 @@ public final class Encode implements Vis<Writer> {
             if (hash == null) {
               this.writeNull(stream);
             } else {
-              this.writeByteString(stream, hash);
+              this.writeByteString(stream, multihash(hash));
             }
             this.writeLong(stream, modeLabel(mode));
             this.writeLong(stream, urlLabel(url));

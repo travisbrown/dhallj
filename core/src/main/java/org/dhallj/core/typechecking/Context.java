@@ -53,5 +53,5 @@ public final class Context {
     }
   }
 
-  public static Context EMPTY = new Context(null, null, null);
+  public static final Context EMPTY = new Context(null, null, null);
 }

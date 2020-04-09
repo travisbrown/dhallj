@@ -23,7 +23,7 @@ import org.dhallj.core.visitor.PureVis;
  * <p>This is a stateless visitor intended for use as a singleton.
  */
 public final class BetaNormalize extends PureVis<Expr> {
-  public static Vis<Expr> instance = new BetaNormalize();
+  public static final Vis<Expr> instance = new BetaNormalize();
 
   public Expr onNote(Expr base, Source source) {
     return base;

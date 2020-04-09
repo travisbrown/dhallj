@@ -465,17 +465,19 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
 
   private Expr readRemoteImport(
       BigInteger length, Import.Mode mode, byte[] hash, String prefix, Expr using) {
-    String url = prefix;
+    StringBuilder builder = new StringBuilder(prefix);
     int len = length.intValue();
     for (int i = 5; i < len - 1; i++) {
-      url = url + "/" + this.reader.readNullableTextString();
+      builder.append("/");
+      builder.append(this.reader.readNullableTextString());
     }
     String query = this.reader.readNullableTextString();
     if (query != null) {
-      url = url + "?" + query;
+      builder.append("?");
+      builder.append(query);
     }
     try {
-      return Expr.makeRemoteImport(new URI(url), using, mode, hash);
+      return Expr.makeRemoteImport(new URI(builder.toString()), using, mode, hash);
     } catch (URISyntaxException cause) {
       throw new DecodingException("Invalid URL in remote import", cause);
     }
