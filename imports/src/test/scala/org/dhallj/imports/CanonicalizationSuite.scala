@@ -5,8 +5,8 @@ import java.nio.file.Paths
 
 import cats.effect.IO
 import munit.FunSuite
-import org.dhallj.core.Expr
 import org.dhallj.imports.Canonicalization._
+import org.dhallj.imports.ResolutionConfig._
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.DhallParser.parse
 
