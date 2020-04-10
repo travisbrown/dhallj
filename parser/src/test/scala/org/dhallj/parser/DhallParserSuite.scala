@@ -1,5 +1,6 @@
 package org.dhallj.parser
 
+import java.net.URI
 import munit.{FunSuite, Ignore}
 import org.dhallj.core.Expr
 
@@ -10,5 +11,11 @@ class DhallParserSuite extends FunSuite() {
     )
 
     assert(DhallParser.parse("[]: List Natural: Type") == expected)
+  }
+
+  test("parse IPv6 address".tag(Ignore)) {
+    val expected = Expr.makeRemoteImport(new URI("https://[0:0:0:0:0:0:0:1]/"), null, Expr.ImportMode.CODE, null)
+
+    assert(DhallParser.parse("https://[0:0:0:0:0:0:0:1]/") == expected)
   }
 }
