@@ -451,6 +451,7 @@ public abstract class Expr {
     }
   }
 
+  /** Modifier specifying how an import should be parsed into a Dhall expression. */
   public static enum ImportMode {
     CODE,
     RAW_TEXT,
