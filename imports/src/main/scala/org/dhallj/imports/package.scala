@@ -12,7 +12,7 @@ package object imports {
     def resolveImports[F[_]](
       resolutionConfig: ResolutionConfig = ResolutionConfig(FromFileSystem)
     )(implicit Client: Client[F], F: Sync[F]): F[Expr] =
-      ResolveImportsVisitor.mkVisitor(resolutionConfig) >>= (v => e.acceptVis(v))
+      ResolveImportsVisitor.mkVisitor(resolutionConfig) >>= (v => e.accept(v))
   }
 
 }

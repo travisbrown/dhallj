@@ -3,11 +3,9 @@ package org.dhallj.core;
 import java.net.URI;
 import java.nio.file.Path;
 import org.dhallj.core.Import;
-import org.dhallj.core.Vis;
-import org.dhallj.core.visitor.PropertyVis;
 
-final class IsResolved extends PropertyVis {
-  public static final Vis<Boolean> instance = new IsResolved();
+final class IsResolved extends Visitor.Property {
+  public static final Visitor<Boolean> instance = new IsResolved();
 
   @Override
   public Boolean onLocalImport(Path path, Import.Mode mode, byte[] hash) {

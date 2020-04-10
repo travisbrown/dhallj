@@ -20,7 +20,7 @@ final class BetaNormalizeApplication {
       if (current == null) {
         break;
       } else {
-        currentLambda = current.acceptVis(BetaNormalize.instance);
+        currentLambda = current.accept(BetaNormalize.instance);
         i += 1;
       }
     }
@@ -206,7 +206,7 @@ final class BetaNormalizeApplication {
                           Expr.makeIdentifier("x"),
                           Expr.makeNaturalLiteral(BigInteger.ONE)))),
               Expr.makeNaturalLiteral(BigInteger.ZERO))
-          .acceptVis(BetaNormalize.instance);
+          .accept(BetaNormalize.instance);
     }
     // None matched, so we can't simplify.
     return null;
@@ -228,7 +228,7 @@ final class BetaNormalizeApplication {
                           Expr.makeApplication(Expr.Constants.LIST, arg1.increment("a")),
                           NormalizationUtilities.prependExpr))),
               Expr.makeEmptyListLiteral(listA))
-          .acceptVis(BetaNormalize.instance);
+          .accept(BetaNormalize.instance);
     } else if (identifier.equals("Optional/build")) {
       return Expr.makeApplication(
               Expr.makeApplication(
@@ -238,7 +238,7 @@ final class BetaNormalizeApplication {
                       arg1,
                       Expr.makeApplication(Expr.Constants.SOME, Expr.makeIdentifier("a")))),
               Expr.makeApplication(Expr.Constants.NONE, arg1))
-          .acceptVis(BetaNormalize.instance);
+          .accept(BetaNormalize.instance);
     }
     if (identifier.equals("Natural/subtract")) {
       BigInteger firstAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg1);
@@ -382,7 +382,7 @@ final class BetaNormalizeApplication {
                                 newArgs.get(1)),
                             newArgs.get(2)),
                         newArgs.get(3)))
-                .acceptVis(BetaNormalize.instance);
+                .accept(BetaNormalize.instance);
       }
 
       if (applied == null) {
@@ -407,7 +407,7 @@ final class BetaNormalizeApplication {
       } else if (args.size() == 4) {
         return applied;
       } else {
-        return Expr.makeApplication(applied, drop(newArgs, 4)).acceptVis(BetaNormalize.instance);
+        return Expr.makeApplication(applied, drop(newArgs, 4)).accept(BetaNormalize.instance);
       }
     }
     return null;
@@ -468,7 +468,7 @@ final class BetaNormalizeApplication {
                                 newArgs.get(2)),
                             newArgs.get(3)),
                         newArgs.get(4)))
-                .acceptVis(BetaNormalize.instance);
+                .accept(BetaNormalize.instance);
       } else {
         applied = newArgs.get(4);
       }
@@ -493,7 +493,7 @@ final class BetaNormalizeApplication {
       } else if (args.size() == 5) {
         return applied;
       } else {
-        return Expr.makeApplication(applied, drop(newArgs, 5)).acceptVis(BetaNormalize.instance);
+        return Expr.makeApplication(applied, drop(newArgs, 5)).accept(BetaNormalize.instance);
       }
     }
     return null;
@@ -530,7 +530,7 @@ final class BetaNormalizeApplication {
     if (someArg != null || noneArg != null) {
       Expr applied =
           (someArg != null)
-              ? (Expr.makeApplication(newArgs.get(3), someArg).acceptVis(BetaNormalize.instance))
+              ? (Expr.makeApplication(newArgs.get(3), someArg).accept(BetaNormalize.instance))
               : newArgs.get(4);
 
       if (args.size() == 2) {
@@ -551,7 +551,7 @@ final class BetaNormalizeApplication {
       } else if (newArgs.size() == 5) {
         return applied;
       } else {
-        return Expr.makeApplication(applied, drop(newArgs, 5)).acceptVis(BetaNormalize.instance);
+        return Expr.makeApplication(applied, drop(newArgs, 5)).accept(BetaNormalize.instance);
       }
     }
     return null;

@@ -11,10 +11,10 @@ import org.dhallj.core.DhallException.ParsingFailure;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
-import org.dhallj.core.visitor.IdentityVis;
+import org.dhallj.core.Visitor;
 import org.dhallj.parser.DhallParser;
 
-abstract class ResolutionVisitor extends IdentityVis {
+abstract class ResolutionVisitor extends Visitor.Identity {
   private final Path currentPath;
   protected final boolean integrityChecks;
 
@@ -26,6 +26,8 @@ abstract class ResolutionVisitor extends IdentityVis {
   protected abstract String readContents(Path path) throws IOException, URISyntaxException;
 
   protected abstract ResolutionVisitor withCurrentPath(Path newCurrentPath);
+
+  public void bind(String name, Expr type) {}
 
   @Override
   public Expr onOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
@@ -66,7 +68,7 @@ abstract class ResolutionVisitor extends IdentityVis {
           result = Expr.makeTextLiteral(value);
         } else {
           try {
-            result = DhallParser.parse(value).acceptVis(this);
+            result = DhallParser.parse(value).accept(this);
           } catch (ParsingFailure underlying) {
             throw new WrappedParsingFailure(name, underlying);
           }
@@ -104,7 +106,7 @@ abstract class ResolutionVisitor extends IdentityVis {
         result = Expr.makeTextLiteral(contents);
       } else {
         try {
-          result = DhallParser.parse(contents).acceptVis(this.withCurrentPath(resolvedPath));
+          result = DhallParser.parse(contents).accept(this.withCurrentPath(resolvedPath));
         } catch (ParsingFailure underlying) {
           throw new WrappedParsingFailure(path.toString(), underlying);
         }

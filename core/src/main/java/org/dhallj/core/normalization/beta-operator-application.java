@@ -86,7 +86,7 @@ final class BetaNormalizeOperatorApplication {
       interpolated.add(lhs);
       interpolated.add(rhs);
 
-      return Expr.makeTextLiteral(parts, interpolated).acceptVis(BetaNormalize.instance);
+      return Expr.makeTextLiteral(parts, interpolated).accept(BetaNormalize.instance);
     } else if (operator.equals(Operator.LIST_APPEND)) {
       List<Expr> lhsAsListLiteral = Expr.Util.asListLiteral(lhs);
       List<Expr> rhsAsListLiteral = Expr.Util.asListLiteral(rhs);
@@ -130,7 +130,7 @@ final class BetaNormalizeOperatorApplication {
         return rhs;
       }
     } else if (operator.equals(Operator.COMPLETE)) {
-      return Expr.Util.desugarComplete(lhs, rhs).acceptVis(BetaNormalize.instance);
+      return Expr.Util.desugarComplete(lhs, rhs).accept(BetaNormalize.instance);
     } else if (operator.equals(Operator.COMBINE)) {
       Iterable<Entry<String, Expr>> firstAsRecordLiteral = Expr.Util.asRecordLiteral(lhs);
       Iterable<Entry<String, Expr>> secondAsRecordLiteral = Expr.Util.asRecordLiteral(rhs);
@@ -138,7 +138,7 @@ final class BetaNormalizeOperatorApplication {
       if (firstAsRecordLiteral != null) {
         if (secondAsRecordLiteral != null) {
           return mergeRecursive(lhs, rhs, firstAsRecordLiteral, secondAsRecordLiteral)
-              .acceptVis(BetaNormalize.instance);
+              .accept(BetaNormalize.instance);
         } else {
           if (!firstAsRecordLiteral.iterator().hasNext()) {
             return rhs;
@@ -157,7 +157,7 @@ final class BetaNormalizeOperatorApplication {
       if (firstAsRecordType != null) {
         if (secondAsRecordType != null) {
           return mergeTypesRecursive(lhs, rhs, firstAsRecordType, secondAsRecordType)
-              .acceptVis(BetaNormalize.instance);
+              .accept(BetaNormalize.instance);
         } else {
           if (!firstAsRecordType.iterator().hasNext()) {
             return rhs;

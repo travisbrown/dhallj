@@ -13,16 +13,17 @@ import org.dhallj.core.Import;
 import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
-import org.dhallj.core.Vis;
-import org.dhallj.core.visitor.PureVis;
+import org.dhallj.core.Visitor;
 
 /**
  * Performs beta normalization.
  *
  * <p>This is a stateless visitor intended for use as a singleton.
  */
-public final class BetaNormalize extends PureVis<Expr> {
-  public static final Vis<Expr> instance = new BetaNormalize();
+public final class BetaNormalize implements Visitor<Expr> {
+  public static final Visitor<Expr> instance = new BetaNormalize();
+
+  public void bind(String name, Expr type) {}
 
   public Expr onNote(Expr base, Source source) {
     return base;
@@ -66,7 +67,7 @@ public final class BetaNormalize extends PureVis<Expr> {
       result = result.substitute(name, binding.getValue());
     }
 
-    return result.acceptVis(this);
+    return result.accept(this);
   }
 
   public Expr onText(String[] parts, List<Expr> interpolated) {
@@ -111,7 +112,7 @@ public final class BetaNormalize extends PureVis<Expr> {
       keys.add(entry.getKey());
     }
 
-    return Expr.makeProjection(base, keys.toArray(new String[keys.size()])).acceptVis(this);
+    return Expr.makeProjection(base, keys.toArray(new String[keys.size()])).accept(this);
   }
 
   public Expr onApplication(Expr baseExpr, Expr base, List<Expr> args) {

@@ -10,19 +10,20 @@ import org.dhallj.core.Import
 import org.dhallj.core.LetBinding
 import org.dhallj.core.Operator
 import org.dhallj.core.Source
-import org.dhallj.core.Vis
-import org.dhallj.core.visitor.PureVis
+import org.dhallj.core.Visitor
 import scala.collection.JavaConverters._
 
 object ToCodeVisitor {
-  val instance: Vis[Code] = new ToCodeVisitor
+  val instance: Visitor[Code] = new ToCodeVisitor
 }
 
-final class ToCodeVisitor extends PureVis[Code] {
+final class ToCodeVisitor extends Visitor[Code] {
   private val constants = Set("Natural", "Integer", "Double", "True", "False", "Type", "List", "Text")
 
   private def unsupported: Nothing =
     throw new RuntimeException("Java generation only supported for fully-interpreted expressions")
+
+  def bind(name: String, tpe: Expr): Unit = ()
 
   def onNote(base: Code, source: Source): Code = base
 

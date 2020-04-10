@@ -5,14 +5,14 @@ import java.util.Deque;
 import java.util.List;
 import org.dhallj.core.Expr;
 import org.dhallj.core.LetBinding;
-import org.dhallj.core.visitor.IdentityVis;
+import org.dhallj.core.Visitor;
 
 /**
  * Substitutes an expression for all instances of a variable in another expression.
  *
  * <p>Note that this visitor maintains internal state and instances should not be reused.
  */
-public final class Substitute extends IdentityVis {
+public final class Substitute extends Visitor.Identity {
   private final String name;
   private int index = 0;
   private final Deque<Expr> replacementStack = new ArrayDeque<>();

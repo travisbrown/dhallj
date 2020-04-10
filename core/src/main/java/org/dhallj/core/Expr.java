@@ -53,7 +53,7 @@ public abstract class Expr {
    * <p>This operation "evaluates" the expression.
    */
   public final Expr normalize() {
-    return this.acceptVis(BetaNormalize.instance);
+    return this.accept(BetaNormalize.instance);
   }
 
   /**
@@ -62,7 +62,7 @@ public abstract class Expr {
    * <p>This operation replaces all variable names with De-Bruijn-indexed underscores.
    */
   public final Expr alphaNormalize() {
-    return this.acceptVis(new AlphaNormalize());
+    return this.accept(new AlphaNormalize());
   }
 
   /** Type-check this expression and return the inferred type. */
@@ -72,17 +72,17 @@ public abstract class Expr {
 
   /** Increment a variable name in this expression. */
   public final Expr increment(String name) {
-    return this.acceptVis(new Shift(true, name));
+    return this.accept(new Shift(true, name));
   }
 
   /** Increment a variable name in this expression. */
   public final Expr decrement(String name) {
-    return this.acceptVis(new Shift(false, name));
+    return this.accept(new Shift(false, name));
   }
 
   /** Substitute the given expression for the given variable name in this expression. */
   public final Expr substitute(String name, Expr replacement) {
-    return this.acceptVis(new Substitute(name, replacement));
+    return this.accept(new Substitute(name, replacement));
   }
 
   /**
@@ -92,7 +92,7 @@ public abstract class Expr {
    */
   public final byte[] getEncodedBytes() {
     try {
-      return this.acceptVis(Encode.instance).getBytes();
+      return this.accept(Encode.instance).getBytes();
     } catch (IOException e) {
       return null;
     }
@@ -135,7 +135,7 @@ public abstract class Expr {
 
   /** Check whether all imports in this expression have been resolved. */
   public final boolean isResolved() {
-    return this.acceptVis(IsResolved.instance);
+    return this.accept(IsResolved.instance);
   }
 
   /**
@@ -180,7 +180,7 @@ public abstract class Expr {
   }
 
   public final String toString() {
-    return this.acceptVis(ToStringVisitor.instance).toString();
+    return this.accept(ToStringVisitor.instance).toString();
   }
 
   private Expr getNonNote() {
@@ -209,7 +209,7 @@ public abstract class Expr {
 
     /** Write an encoded expression to a stream. */
     public static final void encodeToStream(Expr expr, OutputStream stream) throws IOException {
-      expr.acceptVis(Encode.instance).writeToStream(stream);
+      expr.accept(Encode.instance).writeToStream(stream);
     }
 
     /** Encode an array of bytes as a hex string. */
@@ -771,7 +771,7 @@ public abstract class Expr {
   }
 
   /** Run the given internal visitor on this expression. */
-  public final <A> A acceptVis(Vis<A> vis) {
+  public final <A> A accept(Visitor<A> visitor) {
     State current = new State(this, 0);
     Deque<State> stack = new ArrayDeque<State>();
     // Note that we have to use a linked list here because we store null values on the stack.
@@ -797,29 +797,30 @@ public abstract class Expr {
               break;
             case 1:
               v0 = valueStack.poll();
-              valueStack.push(vis.onNote(v0, tmpNote.source));
+              valueStack.push(visitor.onNote(v0, tmpNote.source));
               break;
           }
           break;
         case Tags.NATURAL:
           valueStack.push(
-              vis.onNatural(current.expr, ((Constructors.NaturalLiteral) current.expr).value));
+              visitor.onNatural(current.expr, ((Constructors.NaturalLiteral) current.expr).value));
           break;
         case Tags.INTEGER:
           valueStack.push(
-              vis.onInteger(current.expr, ((Constructors.IntegerLiteral) current.expr).value));
+              visitor.onInteger(current.expr, ((Constructors.IntegerLiteral) current.expr).value));
           break;
         case Tags.DOUBLE:
           valueStack.push(
-              vis.onDouble(current.expr, ((Constructors.DoubleLiteral) current.expr).value));
+              visitor.onDouble(current.expr, ((Constructors.DoubleLiteral) current.expr).value));
           break;
         case Tags.BUILT_IN:
           Constructors.BuiltIn tmpBuiltIn = (Constructors.BuiltIn) current.expr;
-          valueStack.push(vis.onBuiltIn(current.expr, tmpBuiltIn.name));
+          valueStack.push(visitor.onBuiltIn(current.expr, tmpBuiltIn.name));
           break;
         case Tags.IDENTIFIER:
           Constructors.Identifier tmpIdentifier = (Constructors.Identifier) current.expr;
-          valueStack.push(vis.onIdentifier(current.expr, tmpIdentifier.name, tmpIdentifier.index));
+          valueStack.push(
+              visitor.onIdentifier(current.expr, tmpIdentifier.name, tmpIdentifier.index));
           break;
         case Tags.LAMBDA:
           Constructors.Lambda tmpLambda = (Constructors.Lambda) current.expr;
@@ -830,7 +831,7 @@ public abstract class Expr {
               stack.push(new State(tmpLambda.type, 0));
               break;
             case 1:
-              vis.bind(tmpLambda.name, tmpLambda.type);
+              visitor.bind(tmpLambda.name, tmpLambda.type);
               current.state = 2;
               stack.push(current);
               stack.push(new State(tmpLambda.result, 0));
@@ -838,7 +839,7 @@ public abstract class Expr {
             case 2:
               v1 = valueStack.poll();
               v0 = valueStack.poll();
-              valueStack.push(vis.onLambda(tmpLambda.name, v0, v1));
+              valueStack.push(visitor.onLambda(tmpLambda.name, v0, v1));
           }
           break;
         case Tags.PI:
@@ -850,7 +851,7 @@ public abstract class Expr {
               stack.push(new State(tmpPi.type, 0));
               break;
             case 1:
-              vis.bind(tmpPi.name, tmpPi.type);
+              visitor.bind(tmpPi.name, tmpPi.type);
               current.state = 2;
               stack.push(current);
               stack.push(new State(tmpPi.result, 0));
@@ -858,7 +859,7 @@ public abstract class Expr {
             case 2:
               v1 = valueStack.poll();
               v0 = valueStack.poll();
-              valueStack.push(vis.onPi(tmpPi.name, v0, v1));
+              valueStack.push(visitor.onPi(tmpPi.name, v0, v1));
           }
           break;
         case Tags.LET:
@@ -906,7 +907,7 @@ public abstract class Expr {
                     new LetBinding(letBindingNames.get(current.size - i - 1), v0, v1));
               }
 
-              valueStack.push(vis.onLet(valueBindings, body));
+              valueStack.push(visitor.onLet(valueBindings, body));
             }
           } else {
             LetBinding<Expr> letBinding = letBindings.poll();
@@ -925,7 +926,7 @@ public abstract class Expr {
                 }
               case 2:
                 current.state = 1;
-                vis.bind(letBinding.getName(), letBinding.getType());
+                visitor.bind(letBinding.getName(), letBinding.getType());
                 stack.push(current);
                 stack.push(new State(letBinding.getValue(), 0));
                 letBindingsStack.push(letBindings);
@@ -938,7 +939,7 @@ public abstract class Expr {
           Constructors.TextLiteral tmpText = (Constructors.TextLiteral) current.expr;
           if (current.state == 0) {
             if (tmpText.interpolated.length == 0) {
-              valueStack.push(vis.onText(tmpText.parts, new ArrayList<A>()));
+              valueStack.push(visitor.onText(tmpText.parts, new ArrayList<A>()));
 
             } else {
               current.state = 1;
@@ -951,7 +952,7 @@ public abstract class Expr {
               results.add(valueStack.poll());
             }
             Collections.reverse(results);
-            valueStack.push(vis.onText(tmpText.parts, results));
+            valueStack.push(visitor.onText(tmpText.parts, results));
           } else {
             current.state += 1;
             stack.push(current);
@@ -971,7 +972,7 @@ public abstract class Expr {
               results.add(valueStack.poll());
             }
             Collections.reverse(results);
-            valueStack.push(vis.onNonEmptyList(results));
+            valueStack.push(visitor.onNonEmptyList(results));
           } else {
             current.state += 1;
             stack.push(current);
@@ -985,7 +986,7 @@ public abstract class Expr {
             stack.push(current);
             stack.push(new State(tmpEmptyList.type, 0));
           } else {
-            valueStack.push(vis.onEmptyList(tmpEmptyList.type, valueStack.poll()));
+            valueStack.push(visitor.onEmptyList(tmpEmptyList.type, valueStack.poll()));
           }
           break;
 
@@ -993,7 +994,7 @@ public abstract class Expr {
           Constructors.RecordLiteral tmpRecord = (Constructors.RecordLiteral) current.expr;
           if (current.state == 0) {
             if (tmpRecord.fields.length == 0) {
-              valueStack.push(vis.onRecord(new ArrayList<Entry<String, A>>()));
+              valueStack.push(visitor.onRecord(new ArrayList<Entry<String, A>>()));
             } else {
               current.state = 1;
               stack.push(current);
@@ -1006,7 +1007,7 @@ public abstract class Expr {
                   new SimpleImmutableEntry(tmpRecord.fields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
-            valueStack.push(vis.onRecord(results));
+            valueStack.push(visitor.onRecord(results));
           } else {
             current.state += 1;
             stack.push(current);
@@ -1018,7 +1019,7 @@ public abstract class Expr {
           Constructors.RecordType tmpRecordType = (Constructors.RecordType) current.expr;
           if (current.state == 0) {
             if (tmpRecordType.fields.length == 0) {
-              valueStack.push(vis.onRecordType(new ArrayList<Entry<String, A>>()));
+              valueStack.push(visitor.onRecordType(new ArrayList<Entry<String, A>>()));
             } else {
               current.state = 1;
               stack.push(current);
@@ -1031,7 +1032,7 @@ public abstract class Expr {
                   new SimpleImmutableEntry(tmpRecordType.fields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
-            valueStack.push(vis.onRecordType(results));
+            valueStack.push(visitor.onRecordType(results));
           } else {
             current.state += 1;
             stack.push(current);
@@ -1043,7 +1044,7 @@ public abstract class Expr {
           Constructors.UnionType tmpUnionType = (Constructors.UnionType) current.expr;
           if (current.state == 0) {
             if (tmpUnionType.fields.length == 0) {
-              valueStack.push(vis.onUnionType(new ArrayList<Entry<String, A>>()));
+              valueStack.push(visitor.onUnionType(new ArrayList<Entry<String, A>>()));
             } else {
               current.state = 1;
               stack.push(current);
@@ -1061,7 +1062,7 @@ public abstract class Expr {
                   new SimpleImmutableEntry(tmpUnionType.fields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
-            valueStack.push(vis.onUnionType(results));
+            valueStack.push(visitor.onUnionType(results));
           } else {
             current.state += 1;
             stack.push(current);
@@ -1081,7 +1082,7 @@ public abstract class Expr {
             stack.push(current);
             stack.push(new State(tmpFieldAccess.base, 0));
           } else {
-            valueStack.push(vis.onFieldAccess(valueStack.poll(), tmpFieldAccess.fieldName));
+            valueStack.push(visitor.onFieldAccess(valueStack.poll(), tmpFieldAccess.fieldName));
           }
           break;
 
@@ -1092,7 +1093,7 @@ public abstract class Expr {
             stack.push(current);
             stack.push(new State(tmpProjection.base, 0));
           } else {
-            valueStack.push(vis.onProjection(valueStack.poll(), tmpProjection.fieldNames));
+            valueStack.push(visitor.onProjection(valueStack.poll(), tmpProjection.fieldNames));
           }
           break;
 
@@ -1110,7 +1111,7 @@ public abstract class Expr {
           } else {
             v1 = valueStack.poll();
             v0 = valueStack.poll();
-            valueStack.push(vis.onProjectionByType(v0, v1));
+            valueStack.push(visitor.onProjectionByType(v0, v1));
           }
           break;
 
@@ -1142,7 +1143,8 @@ public abstract class Expr {
             A base = valueStack.poll();
 
             valueStack.push(
-                vis.onApplication(gatherApplicationArgs(tmpApplication.base, null), base, args));
+                visitor.onApplication(
+                    gatherApplicationArgs(tmpApplication.base, null), base, args));
           } else {
             stack.push(current);
             stack.push(new State(application.poll(), 0));
@@ -1164,7 +1166,7 @@ public abstract class Expr {
           } else {
             v1 = valueStack.poll();
             v0 = valueStack.poll();
-            valueStack.push(vis.onOperatorApplication(tmpOperatorApplication.operator, v0, v1));
+            valueStack.push(visitor.onOperatorApplication(tmpOperatorApplication.operator, v0, v1));
           }
           break;
         case Tags.IF:
@@ -1185,7 +1187,7 @@ public abstract class Expr {
             v2 = valueStack.poll();
             v1 = valueStack.poll();
             v0 = valueStack.poll();
-            valueStack.push(vis.onIf(v0, v1, v2));
+            valueStack.push(visitor.onIf(v0, v1, v2));
           }
           break;
         case Tags.ANNOTATED:
@@ -1201,7 +1203,7 @@ public abstract class Expr {
           } else {
             v1 = valueStack.poll();
             v0 = valueStack.poll();
-            valueStack.push(vis.onAnnotated(v0, v1));
+            valueStack.push(visitor.onAnnotated(v0, v1));
           }
           break;
         case Tags.ASSERT:
@@ -1211,7 +1213,7 @@ public abstract class Expr {
             stack.push(current);
             stack.push(new State(tmpAssert.base, 0));
           } else {
-            valueStack.push(vis.onAssert(valueStack.poll()));
+            valueStack.push(visitor.onAssert(valueStack.poll()));
           }
           break;
         case Tags.MERGE:
@@ -1241,7 +1243,7 @@ public abstract class Expr {
               v2 = valueStack.poll();
               v1 = valueStack.poll();
               v0 = valueStack.poll();
-              valueStack.push(vis.onMerge(v0, v1, v2));
+              valueStack.push(visitor.onMerge(v0, v1, v2));
 
               break;
           }
@@ -1267,7 +1269,7 @@ public abstract class Expr {
             case 2:
               v1 = valueStack.poll();
               v0 = valueStack.poll();
-              valueStack.push(vis.onToMap(v0, v1));
+              valueStack.push(visitor.onToMap(v0, v1));
 
               break;
           }
@@ -1276,19 +1278,20 @@ public abstract class Expr {
         case Tags.MISSING_IMPORT:
           Constructors.MissingImport tmpMissingImport = (Constructors.MissingImport) current.expr;
 
-          valueStack.push(vis.onMissingImport(tmpMissingImport.mode, tmpMissingImport.hash));
+          valueStack.push(visitor.onMissingImport(tmpMissingImport.mode, tmpMissingImport.hash));
           break;
 
         case Tags.ENV_IMPORT:
           Constructors.EnvImport tmpEnvImport = (Constructors.EnvImport) current.expr;
 
-          valueStack.push(vis.onEnvImport(tmpEnvImport.name, tmpEnvImport.mode, tmpEnvImport.hash));
+          valueStack.push(
+              visitor.onEnvImport(tmpEnvImport.name, tmpEnvImport.mode, tmpEnvImport.hash));
           break;
         case Tags.LOCAL_IMPORT:
           Constructors.LocalImport tmpLocalImport = (Constructors.LocalImport) current.expr;
 
           valueStack.push(
-              vis.onLocalImport(tmpLocalImport.path, tmpLocalImport.mode, tmpLocalImport.hash));
+              visitor.onLocalImport(tmpLocalImport.path, tmpLocalImport.mode, tmpLocalImport.hash));
           break;
         case Tags.REMOTE_IMPORT:
           Constructors.RemoteImport tmpRemoteImport = (Constructors.RemoteImport) current.expr;
@@ -1306,7 +1309,7 @@ public abstract class Expr {
               }
             case 1:
               valueStack.push(
-                  vis.onRemoteImport(
+                  visitor.onRemoteImport(
                       tmpRemoteImport.url,
                       valueStack.poll(),
                       tmpRemoteImport.mode,

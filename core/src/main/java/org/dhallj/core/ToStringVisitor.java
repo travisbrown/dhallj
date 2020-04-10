@@ -7,12 +7,6 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
-import org.dhallj.core.Operator;
-import org.dhallj.core.Source;
-import org.dhallj.core.Vis;
-import org.dhallj.core.visitor.PureVis;
 
 final class ToStringState {
   static final int BASE = 0;
@@ -99,8 +93,10 @@ final class ToStringState {
   }
 }
 
-final class ToStringVisitor extends PureVis<ToStringState> {
-  public static Vis<ToStringState> instance = new ToStringVisitor();
+final class ToStringVisitor implements Visitor<ToStringState> {
+  public static Visitor<ToStringState> instance = new ToStringVisitor();
+
+  public void bind(String name, Expr type) {}
 
   public ToStringState onNote(ToStringState base, Source source) {
     return base;

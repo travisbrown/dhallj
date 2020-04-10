@@ -13,14 +13,14 @@ import org.dhallj.core.Import;
 import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
-import org.dhallj.core.visitor.IdentityVis;
+import org.dhallj.core.Visitor;
 
 /**
  * Shifts all instances of a variable.
  *
  * <p>Note that this visitor maintains internal state and instances should not be reused.
  */
-public final class Shift extends IdentityVis {
+public final class Shift extends Visitor.Identity {
   private final int change;
   private final String name;
   private int cutoff = 0;

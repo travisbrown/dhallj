@@ -54,7 +54,7 @@ final class BetaNormalizeMerge {
               });
 
       if (result != null) {
-        return result.acceptVis(BetaNormalize.instance);
+        return result.accept(BetaNormalize.instance);
       }
     }
     return Expr.makeMerge(left, right, type);

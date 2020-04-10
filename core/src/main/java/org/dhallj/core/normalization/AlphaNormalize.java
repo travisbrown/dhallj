@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Map;
 import org.dhallj.core.Expr;
 import org.dhallj.core.LetBinding;
-import org.dhallj.core.Vis;
-import org.dhallj.core.visitor.IdentityVis;
+import org.dhallj.core.Visitor;
 
 /**
  * Performs alpha normalization.
@@ -23,7 +22,7 @@ import org.dhallj.core.visitor.IdentityVis;
  *
  * <p>Note that this visitor maintains internal state and instances should not be reused.
  */
-public final class AlphaNormalize extends IdentityVis {
+public final class AlphaNormalize extends Visitor.Identity {
   // We interpret any underscores as implicitly having this index added to their own.
   private int newUnderscoreDepth = 0;
 

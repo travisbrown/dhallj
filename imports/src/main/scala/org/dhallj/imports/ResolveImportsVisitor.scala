@@ -10,7 +10,6 @@ import cats.effect.Sync
 import cats.implicits._
 import org.dhallj.core._
 import org.dhallj.core.binary.Decode
-import org.dhallj.core.visitor.PureVis
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
 import org.dhallj.imports.ResolutionConfig
@@ -32,7 +31,9 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
                                                         parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
-) extends PureVis[F[Expr]] {
+) extends Visitor[F[Expr]] {
+  def bind(name: String, tpe: Expr): Unit = ()
+
   override def onDouble(self: Expr, value: Double): F[Expr] = F.pure(self)
 
   override def onNatural(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
@@ -287,7 +288,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
       //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
       _ <- rejectCyclicImports(imp, parents)
-      result <- e.acceptVis(ResolveImportsVisitor[F](resolutionConfig, cache, imp :: parents))
+      result <- e.accept(ResolveImportsVisitor[F](resolutionConfig, cache, imp :: parents))
       _ <- validateHash(imp, result, hash)
     } yield result
   }

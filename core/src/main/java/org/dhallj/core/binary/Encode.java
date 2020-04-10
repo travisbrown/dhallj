@@ -17,10 +17,10 @@ import org.dhallj.core.Import;
 import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
-import org.dhallj.core.Vis;
+import org.dhallj.core.Visitor;
 
-public final class Encode implements Vis<Writer> {
-  public static final Vis<Writer> instance = new Encode();
+public final class Encode implements Visitor<Writer> {
+  public static final Visitor<Writer> instance = new Encode();
 
   public Writer onNote(Writer base, Source source) {
     return base;
@@ -298,7 +298,7 @@ public final class Encode implements Vis<Writer> {
 
     if (listElementType != null) {
       // We have to recurse explicitly.
-      writers.add(listElementType.acceptVis(Encode.instance));
+      writers.add(listElementType.accept(Encode.instance));
     } else {
       writers.add(type);
     }

@@ -19,7 +19,7 @@ final class BetaNormalizeFieldAccess {
 
               @Override
               public Expr onProjection(Expr base0, String[] fieldNames0) {
-                return Expr.makeFieldAccess(base0, fieldName).acceptVis(BetaNormalize.instance);
+                return Expr.makeFieldAccess(base0, fieldName).accept(BetaNormalize.instance);
               }
 
               @Override
@@ -48,8 +48,7 @@ final class BetaNormalizeFieldAccess {
                       if (rhsFound != null) {
                         return rhsFound;
                       } else {
-                        return Expr.makeFieldAccess(lhs, fieldName)
-                            .acceptVis(BetaNormalize.instance);
+                        return Expr.makeFieldAccess(lhs, fieldName).accept(BetaNormalize.instance);
                       }
                     }
                   }
@@ -84,8 +83,7 @@ final class BetaNormalizeFieldAccess {
                                 Operator.COMBINE, lhs, Expr.makeRecordLiteral(singleton)),
                             fieldName);
                       } else {
-                        return Expr.makeFieldAccess(lhs, fieldName)
-                            .acceptVis(BetaNormalize.instance);
+                        return Expr.makeFieldAccess(lhs, fieldName).accept(BetaNormalize.instance);
                       }
                     }
                   }

@@ -35,7 +35,7 @@ public final class Resolver {
       throws ResolutionException {
     Expr result;
     try {
-      result = expr.acceptVis(visitor);
+      result = expr.accept(visitor);
     } catch (ResolutionVisitor.WrappedParsingFailure e) {
       throw new ResolutionException(e.getMessage(), e.underlying);
     } catch (ResolutionVisitor.WrappedIOException e) {
