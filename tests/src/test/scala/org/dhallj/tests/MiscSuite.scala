@@ -22,7 +22,7 @@ class MiscSuite extends CheckersFunSuite() {
 
   testAll1("doubles")((value: Double) => parsesTo(value.toString, DoubleLiteral(value)))
   testAll1("naturals")((value: BigInt) => parsesTo(value.abs.toString, NaturalLiteral(value.abs)))
-  testAll1("strings")((value: AsciiPrintableString) => parsesTo(s""""${value.value}"""", Text(value.value)))
+  testAll1("strings")((value: AsciiPrintableString) => parsesTo(s""""${value.value}"""", TextLiteral(value.value)))
 
   // Temporarily matching bug in Haskell implementation.
   checkBetaNormalization(

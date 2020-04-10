@@ -96,7 +96,7 @@ object Let extends Constructor[(String, Option[Expr], Expr, Expr)] {
     }
 }
 
-object Text extends Constructor[(String, Vector[(Expr, String)])] {
+object TextLiteral extends Constructor[(String, Vector[(Expr, String)])] {
   def apply(value: String): Expr = Expr.makeTextLiteral(value)
   def apply(first: String, rest: Vector[(Expr, String)]) = {
     val parts = first +: rest.map(_._2).toArray
