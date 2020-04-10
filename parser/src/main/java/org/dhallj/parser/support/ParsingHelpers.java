@@ -643,22 +643,12 @@ final class ParsingHelpers {
     return new Expr.Parsed(value, source);
   }
 
-  private static final byte[] decodeToBytes(String input) {
-    byte[] bytes = new byte[input.length() / 2];
-    for (int i = 0; i < input.length(); i += 2) {
-
-      int d1 = Character.digit(input.charAt(i), 16);
-      int d2 = Character.digit(input.charAt(i + 1), 16);
-      bytes[i / 2] = (byte) ((d1 << 4) + d2);
-    }
-    return bytes;
-  }
-
   static final Expr.Parsed makeImport(
       Token type, Token hashToken, Token modeToken, Expr.Parsed using) {
     // TODO: fix.
     Source source = sourceFromToken(type);
-    byte[] hash = (hashToken == null) ? null : decodeToBytes(hashToken.image.substring(7));
+    byte[] hash =
+        (hashToken == null) ? null : Expr.Util.decodeHashBytes(hashToken.image.substring(7));
     Expr value = null;
     Expr.ImportMode mode =
         (modeToken == null)

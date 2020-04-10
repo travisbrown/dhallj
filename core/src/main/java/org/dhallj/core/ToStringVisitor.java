@@ -417,7 +417,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
 
     if (hash != null) {
       builder.append(" ");
-      builder.append(Expr.Util.encodeBytes(hash));
+      builder.append(Expr.Util.encodeHashBytes(hash));
     }
 
     if (mode != Expr.ImportMode.CODE) {
@@ -434,7 +434,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
 
     if (hash != null) {
       builder.append(" ");
-      builder.append(Expr.Util.encodeBytes(hash));
+      builder.append(Expr.Util.encodeHashBytes(hash));
     }
 
     if (mode != Expr.ImportMode.CODE) {
@@ -450,7 +450,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
 
     if (hash != null) {
       builder.append(" ");
-      builder.append(Expr.Util.encodeBytes(hash));
+      builder.append(Expr.Util.encodeHashBytes(hash));
     }
 
     if (mode != Expr.ImportMode.CODE) {
@@ -472,7 +472,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
 
     if (hash != null) {
       builder.append(" ");
-      builder.append(Expr.Util.encodeBytes(hash));
+      builder.append(Expr.Util.encodeHashBytes(hash));
     }
 
     if (mode != Expr.ImportMode.CODE) {

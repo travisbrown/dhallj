@@ -131,7 +131,7 @@ public abstract class Expr {
    * <p>Note that this method does not normalize the expression.
    */
   public final String hash() {
-    return Util.encodeBytes(this.getHashBytes());
+    return Util.encodeHashBytes(this.getHashBytes());
   }
 
   /** Check whether all imports in this expression have been resolved. */
@@ -214,7 +214,7 @@ public abstract class Expr {
     }
 
     /** Encode an array of bytes as a hex string. */
-    public static String encodeBytes(byte[] hash) {
+    public static String encodeHashBytes(byte[] hash) {
       StringBuilder hexString = new StringBuilder();
       for (int i = 0; i < hash.length; i++) {
         String hex = Integer.toHexString(0xff & hash[i]);
@@ -222,6 +222,17 @@ public abstract class Expr {
         hexString.append(hex);
       }
       return hexString.toString();
+    }
+
+    public static final byte[] decodeHashBytes(String input) {
+      byte[] bytes = new byte[input.length() / 2];
+      for (int i = 0; i < input.length(); i += 2) {
+
+        int d1 = Character.digit(input.charAt(i), 16);
+        int d2 = Character.digit(input.charAt(i + 1), 16);
+        bytes[i / 2] = (byte) ((d1 << 4) + d2);
+      }
+      return bytes;
     }
 
     /** If the expression is an application of {@code List}, return the element type. */

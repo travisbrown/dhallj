@@ -217,7 +217,7 @@ abstract class ResolutionVisitor extends Visitor.Identity {
     IntegrityCheckException(byte[] expected, byte[] received) {
       super(
           String.format(
-              "Import integrity check failed (received: %s)", Expr.Util.encodeBytes(received)));
+              "Import integrity check failed (received: %s)", Expr.Util.encodeHashBytes(received)));
       this.expected = expected;
       this.received = received;
     }
