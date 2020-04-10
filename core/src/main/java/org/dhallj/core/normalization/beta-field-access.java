@@ -14,7 +14,7 @@ final class BetaNormalizeFieldAccess {
         base.acceptExternal(
             new ConstantVisitor.External<Expr>(null) {
               @Override
-              public Expr onRecordLiteral(Iterable<Entry<String, Expr>> fields, int size) {
+              public Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
                 return FieldUtilities.lookup(fields, fieldName);
               }
 

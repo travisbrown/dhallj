@@ -13,25 +13,35 @@ import org.dhallj.core.Import.Mode;
  * @param A The final result type
  */
 public interface Visitor<I, A> {
-  A onDoubleLiteral(double value);
+  A onNote(I base, Source source);
 
-  A onNaturalLiteral(BigInteger value);
+  A onNatural(BigInteger value);
 
-  A onIntegerLiteral(BigInteger value);
+  A onInteger(BigInteger value);
 
-  A onTextLiteral(String[] parts, Iterable<I> interpolated);
+  A onDouble(double value);
 
-  A onApplication(I base, I arg);
+  A onBuiltIn(String name);
 
-  A onOperatorApplication(Operator operator, I lhs, I rhs);
+  A onIdentifier(String value, long index);
 
-  A onIf(I cond, I thenValue, I elseValue);
+  A onLambda(String name, I type, I result);
 
-  A onLambda(String param, I input, I result);
+  A onPi(String name, I type, I result);
 
-  A onPi(String param, I input, I result);
+  A onLet(String name, I type, I value, I body);
 
-  A onAssert(I base);
+  A onText(String[] parts, Iterable<I> interpolated);
+
+  A onNonEmptyList(Iterable<I> values, int size);
+
+  A onEmptyList(I tpe);
+
+  A onRecord(Iterable<Entry<String, I>> fields, int size);
+
+  A onRecordType(Iterable<Entry<String, I>> fields, int size);
+
+  A onUnionType(Iterable<Entry<String, I>> fields, int size);
 
   A onFieldAccess(I base, String fieldName);
 
@@ -39,35 +49,25 @@ public interface Visitor<I, A> {
 
   A onProjectionByType(I base, I tpe);
 
-  A onBuiltIn(String name);
+  A onApplication(I base, I arg);
 
-  A onIdentifier(String value, long index);
+  A onOperatorApplication(Operator operator, I lhs, I rhs);
 
-  A onRecordLiteral(Iterable<Entry<String, I>> fields, int size);
-
-  A onRecordType(Iterable<Entry<String, I>> fields, int size);
-
-  A onUnionType(Iterable<Entry<String, I>> fields, int size);
-
-  A onNonEmptyListLiteral(Iterable<I> values, int size);
-
-  A onEmptyListLiteral(I tpe);
-
-  A onNote(I base, Source source);
-
-  A onLet(String name, I type, I value, I body);
+  A onIf(I cond, I thenValue, I elseValue);
 
   A onAnnotated(I base, I tpe);
 
-  A onToMap(I base, I tpe);
+  A onAssert(I base);
 
-  A onMerge(I left, I right, I tpe);
+  A onMerge(I handlers, I union, I type);
+
+  A onToMap(I base, I type);
+
+  A onMissingImport(Mode mode, byte[] hash);
+
+  A onEnvImport(String value, Mode mode, byte[] hash);
 
   A onLocalImport(Path path, Mode mode, byte[] hash);
 
   A onRemoteImport(URI url, I using, Mode mode, byte[] hash);
-
-  A onEnvImport(String value, Mode mode, byte[] hash);
-
-  A onMissingImport(Mode mode, byte[] hash);
 }

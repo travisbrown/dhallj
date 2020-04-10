@@ -44,19 +44,19 @@ public class ConstantVisitor<I, A> implements Visitor<I, A> {
     }
   }
 
-  public A onDoubleLiteral(double value) {
+  public A onDouble(double value) {
     return this.getReturnValue();
   }
 
-  public A onNaturalLiteral(BigInteger value) {
+  public A onNatural(BigInteger value) {
     return this.getReturnValue();
   }
 
-  public A onIntegerLiteral(BigInteger value) {
+  public A onInteger(BigInteger value) {
     return this.getReturnValue();
   }
 
-  public A onTextLiteral(String[] parts, Iterable<I> interpolated) {
+  public A onText(String[] parts, Iterable<I> interpolated) {
     return this.getReturnValue();
   }
 
@@ -104,7 +104,7 @@ public class ConstantVisitor<I, A> implements Visitor<I, A> {
     return this.getReturnValue();
   }
 
-  public A onRecordLiteral(Iterable<Entry<String, I>> fields, int size) {
+  public A onRecord(Iterable<Entry<String, I>> fields, int size) {
     return this.getReturnValue();
   }
 
@@ -116,11 +116,11 @@ public class ConstantVisitor<I, A> implements Visitor<I, A> {
     return this.getReturnValue();
   }
 
-  public A onNonEmptyListLiteral(Iterable<I> values, int size) {
+  public A onNonEmptyList(Iterable<I> values, int size) {
     return this.getReturnValue();
   }
 
-  public A onEmptyListLiteral(I tpe) {
+  public A onEmptyList(I tpe) {
     return this.getReturnValue();
   }
 

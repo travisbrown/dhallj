@@ -24,7 +24,7 @@ final class BetaNormalizeProjection {
         base.acceptExternal(
             new ConstantVisitor.External<Expr>(null) {
               @Override
-              public Expr onRecordLiteral(Iterable<Entry<String, Expr>> fields, int size) {
+              public Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
                 Set<String> fieldNameSet = new HashSet(fieldNames.length);
 
                 for (String fieldName : fieldNames) {

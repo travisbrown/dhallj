@@ -24,7 +24,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onNaturalLiteral(this.value);
+      return visitor.onNatural(this.value);
     }
   }
 
@@ -37,7 +37,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onIntegerLiteral(this.value);
+      return visitor.onInteger(this.value);
     }
   }
 
@@ -50,7 +50,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onDoubleLiteral(this.value);
+      return visitor.onDouble(this.value);
     }
   }
 
@@ -65,7 +65,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onTextLiteral(this.parts, new ArrayIterator<Expr>(interpolated));
+      return visitor.onText(this.parts, new ArrayIterator<Expr>(interpolated));
     }
   }
 
@@ -247,7 +247,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onRecordLiteral(new ArrayIterator<Entry<String, Expr>>(fields), fields.length);
+      return visitor.onRecord(new ArrayIterator<Entry<String, Expr>>(fields), fields.length);
     }
   }
 
@@ -286,7 +286,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onNonEmptyListLiteral(new ArrayIterator<Expr>(values), this.values.length);
+      return visitor.onNonEmptyList(new ArrayIterator<Expr>(values), this.values.length);
     }
   }
 
@@ -299,7 +299,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onEmptyListLiteral(type);
+      return visitor.onEmptyList(type);
     }
   }
 

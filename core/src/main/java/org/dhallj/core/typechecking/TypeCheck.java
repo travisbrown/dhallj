@@ -173,19 +173,19 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
-  public final Expr onDoubleLiteral(double value) {
+  public final Expr onDouble(double value) {
     return Constants.DOUBLE;
   }
 
-  public final Expr onNaturalLiteral(BigInteger value) {
+  public final Expr onNatural(BigInteger value) {
     return Constants.NATURAL;
   }
 
-  public final Expr onIntegerLiteral(BigInteger value) {
+  public final Expr onInteger(BigInteger value) {
     return Constants.INTEGER;
   }
 
-  public final Expr onTextLiteral(String[] parts, Iterable<Expr> interpolated) {
+  public final Expr onText(String[] parts, Iterable<Expr> interpolated) {
     for (Expr expr : interpolated) {
       Expr exprType = expr.acceptExternal(this);
       if (!isText(exprType)) {
@@ -400,7 +400,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
-  public final Expr onRecordLiteral(Iterable<Entry<String, Expr>> fields, int size) {
+  public final Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
     if (size == 0) {
       return Constants.EMPTY_RECORD_TYPE;
     } else {
@@ -479,7 +479,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
-  public final Expr onNonEmptyListLiteral(Iterable<Expr> values, int size) {
+  public final Expr onNonEmptyList(Iterable<Expr> values, int size) {
     Iterator<Expr> it = values.iterator();
     Expr firstType = it.next().acceptExternal(this);
 
@@ -497,7 +497,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
-  public final Expr onEmptyListLiteral(Expr type) {
+  public final Expr onEmptyList(Expr type) {
     // We verify that the type is well-typed.
     type.acceptExternal(this);
 

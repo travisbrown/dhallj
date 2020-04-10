@@ -16,7 +16,7 @@ object DoubleLiteral extends Constructor[Double] {
   def apply(value: Double): Expr = Expr.makeDoubleLiteral(value)
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] = new ConstantVisitor.Optional[Result] {
-    override def onDoubleLiteral(value: Double): Option[Double] = Some(value)
+    override def onDouble(value: Double): Option[Double] = Some(value)
   }
 
 }
@@ -26,7 +26,7 @@ object NaturalLiteral extends Constructor[BigInt] {
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] =
     new ConstantVisitor.Optional[Result] {
-      override def onNaturalLiteral(value: BigInt): Option[BigInt] = Some(value)
+      override def onNatural(value: BigInt): Option[BigInt] = Some(value)
     }
 }
 
@@ -35,7 +35,7 @@ object IntegerLiteral extends Constructor[BigInt] {
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] =
     new ConstantVisitor.Optional[Result] {
-      override def onIntegerLiteral(value: BigInt): Option[BigInt] = Some(value)
+      override def onInteger(value: BigInt): Option[BigInt] = Some(value)
     }
 }
 
@@ -44,7 +44,7 @@ object TextLiteral extends Constructor[(Iterable[String], Iterable[Expr])] {
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] =
     new ConstantVisitor.Optional[Result] {
-      override def onTextLiteral(parts: Iterable[String],
+      override def onText(parts: Iterable[String],
                                  interpolated: Iterable[Expr]): Option[(Iterable[String], Iterable[Expr])] =
         Some((parts, interpolated))
     }
@@ -164,7 +164,7 @@ object RecordLiteral extends Constructor[Iterable[(String, Expr)]] {
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] =
     new ConstantVisitor.Optional[Result] {
-      override def onRecordLiteral(fields: Iterable[(String, Expr)], size: Int): Option[Iterable[(String, Expr)]] =
+      override def onRecord(fields: Iterable[(String, Expr)], size: Int): Option[Iterable[(String, Expr)]] =
         Some(fields)
     }
 }
@@ -196,7 +196,7 @@ object NonEmptyListLiteral extends Constructor[Iterable[Expr]] {
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] =
     new ConstantVisitor.Optional[Result] {
-      override def onNonEmptyListLiteral(values: Iterable[Expr], size: Int): Option[Iterable[Expr]] =
+      override def onNonEmptyList(values: Iterable[Expr], size: Int): Option[Iterable[Expr]] =
         Some(values)
     }
 }
@@ -206,7 +206,7 @@ object EmptyListLiteral extends Constructor[Expr] {
 
   protected[this] val extractor: Visitor[Expr, Option[Result]] =
     new ConstantVisitor.Optional[Result] {
-      override def onEmptyListLiteral(tpe: Expr): Option[Expr] = Some(tpe)
+      override def onEmptyList(tpe: Expr): Option[Expr] = Some(tpe)
     }
 }
 

@@ -11,10 +11,10 @@ import org.dhallj.core.visitor.{ConstantVisitor => CoreConstantVisitor}
 import scala.jdk.CollectionConverters._
 
 trait Visitor[I, A] extends CoreVisitor[I, A] {
-  //def onDoubleLiteral(value: Double): A
-  def onNaturalLiteral(value: BigInt): A
-  def onIntegerLiteral(value: BigInt): A
-  def onTextLiteral(parts: Iterable[String], interpolated: Iterable[I]): A
+  //def onDouble(value: Double): A
+  def onNatural(value: BigInt): A
+  def onInteger(value: BigInt): A
+  def onText(parts: Iterable[String], interpolated: Iterable[I]): A
   //def onApplication(base: I, arg: I): A
   //def onOperatorApplication(operator: Operator, lhs: I, rhs: I): A
   //def onIf(cond: I, thenValue: I, elseValue: I): A
@@ -25,11 +25,11 @@ trait Visitor[I, A] extends CoreVisitor[I, A] {
   def onProjection(base: I, fieldNames: Iterable[String]): A
   //def onProjectionByType(base: I, tpe: I): A
   def onIdentifier(value: String, index: Option[Long]): A
-  def onRecordLiteral(fields: Iterable[(String, I)], size: Int): A
+  def onRecord(fields: Iterable[(String, I)], size: Int): A
   def onRecordType(fields: Iterable[(String, I)], size: Int): A
   def onUnionType(fields: Iterable[(String, Option[I])], size: Int): A
-  def onNonEmptyListLiteral(values: Iterable[I], size: Int): A
-  //def onEmptyListLiteral(tpe: I): A
+  def onNonEmptyList(values: Iterable[I], size: Int): A
+  //def onEmptyList(tpe: I): A
   //def onNote(base: I, source: Source): A
   def onLet(name: String, tpe: Option[I], value: I, body: I): A
   //def onAnnotated(base: I, tpe: I): A
@@ -40,20 +40,20 @@ trait Visitor[I, A] extends CoreVisitor[I, A] {
   def onLocalImport(path: Path, mode: Import.Mode, hash: Option[Array[Byte]]): A
   def onRemoteImport(url: URI, using: Option[I], mode: Import.Mode, hash: Option[Array[Byte]]): A
 
-  final def onNaturalLiteral(value: BigInteger): A = onNaturalLiteral(new BigInt(value))
-  final def onIntegerLiteral(value: BigInteger): A = onIntegerLiteral(new BigInt(value))
-  final def onTextLiteral(parts: Array[String], interpolated: JIterable[I]): A =
-    onTextLiteral(parts.toIterable, interpolated.asScala)
+  final def onNatural(value: BigInteger): A = onNatural(new BigInt(value))
+  final def onInteger(value: BigInteger): A = onInteger(new BigInt(value))
+  final def onText(parts: Array[String], interpolated: JIterable[I]): A =
+    onText(parts.toIterable, interpolated.asScala)
   final def onPi(param: String, input: I, result: I): A = onPi(Option(param), input, result)
   final def onProjection(base: I, fieldNames: Array[String]): A = onProjection(base, fieldNames.toIterable)
   final def onIdentifier(value: String, index: Long): A = onIdentifier(value, if (index == 0) None else Some(index))
-  final def onRecordLiteral(fields: JIterable[JMap.Entry[String, I]], size: Int): A =
-    onRecordLiteral(fields.asScala.map(Visitor.entryToTuple), size)
+  final def onRecord(fields: JIterable[JMap.Entry[String, I]], size: Int): A =
+    onRecord(fields.asScala.map(Visitor.entryToTuple), size)
   final def onRecordType(fields: JIterable[JMap.Entry[String, I]], size: Int): A =
     onRecordType(fields.asScala.map(Visitor.entryToTuple), size)
   final def onUnionType(fields: JIterable[JMap.Entry[String, I]], size: Int): A =
     onUnionType(fields.asScala.map(Visitor.entryToOptionTuple), size)
-  final def onNonEmptyListLiteral(values: JIterable[I], size: Int): A = onNonEmptyListLiteral(values.asScala, size)
+  final def onNonEmptyList(values: JIterable[I], size: Int): A = onNonEmptyList(values.asScala, size)
   final def onLet(name: String, tpe: I, value: I, body: I): A = onLet(name, Option(tpe), value, body)
   final def onToMap(base: I, tpe: I): A = onToMap(base, Option(tpe))
   final def onMerge(left: I, right: I, tpe: I): A = onMerge(left, right, Option(tpe))

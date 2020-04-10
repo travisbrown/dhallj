@@ -7,12 +7,12 @@ import org.dhallj.s.Visitor
 
 trait ConstantVisitor[I, A] extends Visitor[I, A] {
   def constantValue: A
-  def onDoubleLiteral(value: Double): A = constantValue
-  def onNaturalLiteral(value: BigInt): A = constantValue
-  def onIntegerLiteral(value: BigInt): A = constantValue
+  def onDouble(value: Double): A = constantValue
+  def onNatural(value: BigInt): A = constantValue
+  def onInteger(value: BigInt): A = constantValue
   def onBuiltIn(namee: String): A = constantValue
   def onIdentifier(name: String, index: Option[Long]): A = constantValue
-  def onTextLiteral(parts: Iterable[String], interpolated: Iterable[I]): A = constantValue
+  def onText(parts: Iterable[String], interpolated: Iterable[I]): A = constantValue
   def onApplication(base: I, arg: I): A = constantValue
   def onOperatorApplication(operator: Operator, lhs: I, rhs: I): A = constantValue
   def onIf(cond: I, thenValue: I, elseValue: I): A = constantValue
@@ -22,11 +22,11 @@ trait ConstantVisitor[I, A] extends Visitor[I, A] {
   def onFieldAccess(base: I, fieldName: String): A = constantValue
   def onProjection(base: I, fieldNames: Iterable[String]): A = constantValue
   def onProjectionByType(base: I, tpe: I): A = constantValue
-  def onRecordLiteral(fields: Iterable[(String, I)], size: Int): A = constantValue
+  def onRecord(fields: Iterable[(String, I)], size: Int): A = constantValue
   def onRecordType(fields: Iterable[(String, I)], size: Int): A = constantValue
   def onUnionType(fields: Iterable[(String, Option[I])], size: Int): A = constantValue
-  def onNonEmptyListLiteral(values: Iterable[I], size: Int): A = constantValue
-  def onEmptyListLiteral(tpe: I): A = constantValue
+  def onNonEmptyList(values: Iterable[I], size: Int): A = constantValue
+  def onEmptyList(tpe: I): A = constantValue
   def onLet(name: String, tpe: Option[I], value: I, body: I): A = constantValue
   def onAnnotated(base: I, tpe: I): A = constantValue
   def onToMap(base: I, tpe: Option[I]): A = constantValue

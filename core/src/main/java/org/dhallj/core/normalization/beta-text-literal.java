@@ -76,7 +76,7 @@ final class BetaNormalizeTextLiteral {
     }
 
     @Override
-    public Boolean onTextLiteral(String[] parts, Iterable<Expr> interpolated) {
+    public Boolean onText(String[] parts, Iterable<Expr> interpolated) {
       int lastIndex = newParts.size() - 1;
       String lastPart = newParts.get(lastIndex);
       newParts.set(lastIndex, lastPart + parts[0]);
