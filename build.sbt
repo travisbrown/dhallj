@@ -28,6 +28,7 @@ val scalaSettings = Seq()
 
 val root = project
   .in(file("."))
+  .enablePlugins(ScalaUnidocPlugin)
   .settings(
     scalaVersion := "2.13.1",
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
