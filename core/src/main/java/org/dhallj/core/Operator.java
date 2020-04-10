@@ -1,5 +1,6 @@
 package org.dhallj.core;
 
+/** Represents a Dhall operator. */
 public enum Operator {
   OR("||", true),
   AND("&&", true),

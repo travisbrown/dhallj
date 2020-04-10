@@ -3,7 +3,6 @@ package org.dhallj.core.binary;
 import org.dhallj.cbor.Reader;
 import org.dhallj.cbor.Visitor;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 
 import java.math.BigInteger;
@@ -416,7 +415,7 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
 
   private Expr readImport(BigInteger length) {
     byte[] hash = this.reader.readNullableByteString();
-    Import.Mode mode = readMode();
+    Expr.ImportMode mode = readMode();
     int tag = this.reader.readUnsignedInteger().intValue();
 
     switch (tag) {
@@ -443,20 +442,21 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
     }
   }
 
-  private Import.Mode readMode() {
+  private Expr.ImportMode readMode() {
     int m = this.reader.readUnsignedInteger().intValue();
     if (m == 0) {
-      return Import.Mode.CODE;
+      return Expr.ImportMode.CODE;
     } else if (m == 1) {
-      return Import.Mode.RAW_TEXT;
+      return Expr.ImportMode.RAW_TEXT;
     } else if (m == 2) {
-      return Import.Mode.LOCATION;
+      return Expr.ImportMode.LOCATION;
     } else {
       throw new DecodingException(String.format("Import mode %d is undefined", m));
     }
   }
 
-  private Expr readLocalImport(BigInteger length, Import.Mode mode, byte[] hash, String prefix) {
+  private Expr readLocalImport(
+      BigInteger length, Expr.ImportMode mode, byte[] hash, String prefix) {
     Path path = Paths.get(prefix);
     int len = length.intValue();
     for (int i = 4; i < len; i++) {
@@ -466,7 +466,7 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
   }
 
   private Expr readRemoteImport(
-      BigInteger length, Import.Mode mode, byte[] hash, String prefix, Expr using) {
+      BigInteger length, Expr.ImportMode mode, byte[] hash, String prefix, Expr using) {
     StringBuilder builder = new StringBuilder(prefix);
     int len = length.intValue();
     for (int i = 5; i < len - 1; i++) {
@@ -485,7 +485,7 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
     }
   }
 
-  private Expr readEnvImport(BigInteger length, Import.Mode mode, byte[] hash) {
+  private Expr readEnvImport(BigInteger length, Expr.ImportMode mode, byte[] hash) {
     String value = this.reader.readNullableTextString();
     return Expr.makeEnvImport(value, mode, hash);
   }

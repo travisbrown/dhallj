@@ -134,13 +134,13 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       b <- base
     } yield Expr.makeNote(b, source)
 
-  override def onLet(bindings: JList[LetBinding[F[Expr]]], body: F[Expr]): F[Expr] =
+  override def onLet(bindings: JList[Expr.LetBinding[F[Expr]]], body: F[Expr]): F[Expr] =
     for {
       bindings <- bindings.asScala.toList.traverse { binding =>
         for {
           t <- liftNull(binding.getType)
           v <- binding.getValue
-        } yield new LetBinding(binding.getName, t, v)
+        } yield new Expr.LetBinding(binding.getName, t, v)
       }
       b <- body
     } yield Expr.makeLet(bindings.asJava, b)
@@ -164,21 +164,21 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       t <- liftNull(tpe)
     } yield Expr.makeMerge(l, r, t)
 
-  override def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+  override def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     onImport(Local(path), mode, hash)
 
-  override def onRemoteImport(url: URI, using: F[Expr], mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+  override def onRemoteImport(url: URI, using: F[Expr], mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     if (using != null) using >>= (u => onImport(Remote(url, u), mode, hash))
     else onImport(Remote(url, null), mode, hash)
 
-  override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+  override def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     onImport(Env(value), mode, hash)
 
-  override def onMissingImport(mode: Import.Mode, hash: Array[Byte]): F[Expr] =
+  override def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     onImport(Missing, mode, hash)
 
-  private def onImport(i: ImportContext, mode: Import.Mode, hash: Array[Byte]): F[Expr] = {
-    def resolve(i: ImportContext, mode: Import.Mode, hash: Array[Byte]): F[(Expr, Headers)] = {
+  private def onImport(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] = {
+    def resolve(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[(Expr, Headers)] = {
       def makeLocation(field: String, value: String): F[Expr] =
         F.pure(
           Expr.makeApplication(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, field), Expr.makeTextLiteral(value))
@@ -237,20 +237,20 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       }
 
       mode match {
-        case Import.Mode.CODE =>
+        case Expr.ImportMode.CODE =>
           for {
             v <- resolve(i, hash)
             (s, headers) = v
             e <- F.delay(DhallParser.parse(s))
           } yield e -> headers
         //TODO check if this can be interpolated? The spec isn't very clear
-        case Import.Mode.RAW_TEXT =>
+        case Expr.ImportMode.RAW_TEXT =>
           for {
             v <- resolve(i, hash)
             (s, headers) = v
             e <- F.pure(Expr.makeTextLiteral(s))
           } yield e -> headers
-        case Import.Mode.LOCATION =>
+        case Expr.ImportMode.LOCATION =>
           for {
             expr <- i match {
               case Local(path)    => makeLocation("Local", path.toString)

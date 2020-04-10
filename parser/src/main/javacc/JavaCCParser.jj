@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
 import org.dhallj.parser.support.Positioned.Wrapped;
 
 final class JavaCCParser {

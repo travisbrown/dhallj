@@ -191,11 +191,11 @@ final class ToStringVisitor implements Visitor<ToStringState> {
         ToStringState.LET);
   }
 
-  public ToStringState onLet(List<LetBinding<ToStringState>> bindings, ToStringState body) {
+  public ToStringState onLet(List<Expr.LetBinding<ToStringState>> bindings, ToStringState body) {
     String result = body.toString(ToStringState.LET);
 
     for (int i = bindings.size() - 1; i >= 0; i--) {
-      LetBinding<ToStringState> binding = bindings.get(i);
+      Expr.LetBinding<ToStringState> binding = bindings.get(i);
 
       String typeString =
           binding.hasType()
@@ -412,7 +412,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
     return new ToStringState(builder.toString(), ToStringState.TO_MAP);
   }
 
-  public ToStringState onMissingImport(Import.Mode mode, byte[] hash) {
+  public ToStringState onMissingImport(Expr.ImportMode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder("missing");
 
     if (hash != null) {
@@ -420,7 +420,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
       builder.append(Expr.Util.encodeBytes(hash));
     }
 
-    if (mode != Import.Mode.CODE) {
+    if (mode != Expr.ImportMode.CODE) {
       builder.append(" as ");
       builder.append(mode);
     }
@@ -428,7 +428,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
     return new ToStringState(builder.toString(), ToStringState.BASE);
   }
 
-  public ToStringState onEnvImport(String value, Import.Mode mode, byte[] hash) {
+  public ToStringState onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder("env:");
     builder.append(value);
 
@@ -437,7 +437,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
       builder.append(Expr.Util.encodeBytes(hash));
     }
 
-    if (mode != Import.Mode.CODE) {
+    if (mode != Expr.ImportMode.CODE) {
       builder.append(" as ");
       builder.append(mode);
     }
@@ -445,7 +445,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
     return new ToStringState(builder.toString(), ToStringState.BASE);
   }
 
-  public ToStringState onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+  public ToStringState onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder(path.toString());
 
     if (hash != null) {
@@ -453,7 +453,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
       builder.append(Expr.Util.encodeBytes(hash));
     }
 
-    if (mode != Import.Mode.CODE) {
+    if (mode != Expr.ImportMode.CODE) {
       builder.append(" as ");
       builder.append(mode);
     }
@@ -461,7 +461,8 @@ final class ToStringVisitor implements Visitor<ToStringState> {
     return new ToStringState(builder.toString(), ToStringState.BASE);
   }
 
-  public ToStringState onRemoteImport(URI url, ToStringState using, Import.Mode mode, byte[] hash) {
+  public ToStringState onRemoteImport(
+      URI url, ToStringState using, Expr.ImportMode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder(url.toString());
 
     if (using != null) {
@@ -474,7 +475,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
       builder.append(Expr.Util.encodeBytes(hash));
     }
 
-    if (mode != Import.Mode.CODE) {
+    if (mode != Expr.ImportMode.CODE) {
       builder.append(" as ");
       builder.append(mode);
     }

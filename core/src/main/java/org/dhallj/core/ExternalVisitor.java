@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map.Entry;
-import org.dhallj.core.Import.Mode;
 
 /**
  * Represents a function from a Dhall expression to a value.
@@ -62,13 +61,13 @@ public interface ExternalVisitor<A> {
 
   A onToMap(Expr base, Expr type);
 
-  A onMissingImport(Mode mode, byte[] hash);
+  A onMissingImport(Expr.ImportMode mode, byte[] hash);
 
-  A onEnvImport(String value, Mode mode, byte[] hash);
+  A onEnvImport(String value, Expr.ImportMode mode, byte[] hash);
 
-  A onLocalImport(Path path, Mode mode, byte[] hash);
+  A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash);
 
-  A onRemoteImport(URI url, Expr using, Mode mode, byte[] hash);
+  A onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash);
 
   /**
    * Represents a function from a Dhall expression that always returns the same value.
@@ -191,19 +190,19 @@ public interface ExternalVisitor<A> {
       return this.getReturnValue();
     }
 
-    public A onMissingImport(Import.Mode mode, byte[] hash) {
+    public A onMissingImport(Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
-    public A onEnvImport(String value, Import.Mode mode, byte[] hash) {
+    public A onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
-    public A onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
-    public A onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+    public A onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
   }

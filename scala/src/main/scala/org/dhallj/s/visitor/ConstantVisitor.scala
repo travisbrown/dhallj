@@ -2,7 +2,7 @@ package org.dhallj.s.visitor
 
 import java.net.URI
 import java.nio.file.Path
-import org.dhallj.core.{Expr, Import, Operator, Source}
+import org.dhallj.core.{Expr, Operator, Source}
 import org.dhallj.s.Visitor
 
 trait ConstantVisitor[A] extends Visitor[A] {
@@ -31,10 +31,10 @@ trait ConstantVisitor[A] extends Visitor[A] {
   def onAnnotated(base: Expr, tpe: Expr): A = constantValue
   def onMerge(handlers: Expr, union: Expr, tpe: Option[Expr]): A = constantValue
   def onToMap(base: Expr, tpe: Option[Expr]): A = constantValue
-  def onLocalImport(path: Path, mode: Import.Mode, hash: Option[Array[Byte]]): A = constantValue
-  def onEnvImport(value: String, mode: Import.Mode, hash: Option[Array[Byte]]): A = constantValue
-  def onRemoteImport(url: URI, using: Option[Expr], mode: Import.Mode, hash: Option[Array[Byte]]): A = constantValue
-  def onMissingImport(mode: Import.Mode, hash: Option[Array[Byte]]): A = constantValue
+  def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Option[Array[Byte]]): A = constantValue
+  def onEnvImport(value: String, mode: Expr.ImportMode, hash: Option[Array[Byte]]): A = constantValue
+  def onRemoteImport(url: URI, using: Option[Expr], mode: Expr.ImportMode, hash: Option[Array[Byte]]): A = constantValue
+  def onMissingImport(mode: Expr.ImportMode, hash: Option[Array[Byte]]): A = constantValue
 }
 
 object ConstantVisitor {

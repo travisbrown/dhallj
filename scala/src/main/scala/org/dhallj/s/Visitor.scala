@@ -6,7 +6,7 @@ import java.net.URI
 import java.nio.file.Path
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.{Map => JMap}
-import org.dhallj.core.{Expr, Import, Operator, Source, ExternalVisitor => CoreExternalVisitor}
+import org.dhallj.core.{Expr, Operator, Source, ExternalVisitor => CoreExternalVisitor}
 import scala.jdk.CollectionConverters._
 
 trait Visitor[A] extends CoreExternalVisitor[A] {
@@ -34,10 +34,10 @@ trait Visitor[A] extends CoreExternalVisitor[A] {
   //def onAnnotated(base: Expr, tpe: Expr): A
   def onToMap(base: Expr, tpe: Option[Expr]): A
   def onMerge(left: Expr, right: Expr, tpe: Option[Expr]): A
-  def onMissingImport(mode: Import.Mode, hash: Option[Array[Byte]]): A
-  def onEnvImport(value: String, mode: Import.Mode, hash: Option[Array[Byte]]): A
-  def onLocalImport(path: Path, mode: Import.Mode, hash: Option[Array[Byte]]): A
-  def onRemoteImport(url: URI, using: Option[Expr], mode: Import.Mode, hash: Option[Array[Byte]]): A
+  def onMissingImport(mode: Expr.ImportMode, hash: Option[Array[Byte]]): A
+  def onEnvImport(value: String, mode: Expr.ImportMode, hash: Option[Array[Byte]]): A
+  def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Option[Array[Byte]]): A
+  def onRemoteImport(url: URI, using: Option[Expr], mode: Expr.ImportMode, hash: Option[Array[Byte]]): A
 
   final def onNatural(value: BigInteger): A = onNatural(new BigInt(value))
   final def onInteger(value: BigInteger): A = onInteger(new BigInt(value))
@@ -57,10 +57,10 @@ trait Visitor[A] extends CoreExternalVisitor[A] {
   final def onToMap(base: Expr, tpe: Expr): A = onToMap(base, Option(tpe))
   final def onMerge(left: Expr, right: Expr, tpe: Expr): A = onMerge(left, right, Option(tpe))
 
-  final def onMissingImport(mode: Import.Mode, hash: Array[Byte]) = onMissingImport(mode, Option(hash))
-  final def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]) = onEnvImport(value, mode, Option(hash))
-  final def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]) = onLocalImport(path, mode, Option(hash))
-  final def onRemoteImport(url: URI, using: Expr, mode: Import.Mode, hash: Array[Byte]) =
+  final def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]) = onMissingImport(mode, Option(hash))
+  final def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]) = onEnvImport(value, mode, Option(hash))
+  final def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]) = onLocalImport(path, mode, Option(hash))
+  final def onRemoteImport(url: URI, using: Expr, mode: Expr.ImportMode, hash: Array[Byte]) =
     onRemoteImport(url, Option(using), mode, Option(hash))
 }
 

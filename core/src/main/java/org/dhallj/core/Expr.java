@@ -422,6 +422,52 @@ public abstract class Expr {
     }
   }
 
+  /** Represents the first part of a {@code let}-expression. */
+  public static final class LetBinding<A> {
+    private final String name;
+    private final A type;
+    private final A value;
+
+    public LetBinding(String name, A type, A value) {
+      this.name = name;
+      this.type = type;
+      this.value = value;
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public boolean hasType() {
+      return this.type != null;
+    }
+
+    public A getType() {
+      return this.type;
+    }
+
+    public A getValue() {
+      return this.value;
+    }
+  }
+
+  public static enum ImportMode {
+    CODE,
+    RAW_TEXT,
+    LOCATION;
+
+    public String toString() {
+      switch (this) {
+        case RAW_TEXT:
+          return "Text";
+        case LOCATION:
+          return "Location";
+        default:
+          return "Code";
+      }
+    }
+  }
+
   /** Definitions of Dhall built-ins and other frequently-used expressions. */
   public static final class Constants {
     private static final Entry[] emptyFields = {};
@@ -734,19 +780,19 @@ public abstract class Expr {
     return makeMerge(left, right, null);
   }
 
-  public static final Expr makeLocalImport(Path path, Import.Mode mode, byte[] hash) {
+  public static final Expr makeLocalImport(Path path, ImportMode mode, byte[] hash) {
     return new Constructors.LocalImport(path, mode, hash);
   }
 
-  public static final Expr makeRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+  public static final Expr makeRemoteImport(URI url, Expr using, ImportMode mode, byte[] hash) {
     return new Constructors.RemoteImport(url, using, mode, hash);
   }
 
-  public static final Expr makeEnvImport(String value, Import.Mode mode, byte[] hash) {
+  public static final Expr makeEnvImport(String value, ImportMode mode, byte[] hash) {
     return new Constructors.EnvImport(value, mode, hash);
   }
 
-  public static final Expr makeMissingImport(Import.Mode mode, byte[] hash) {
+  public static final Expr makeMissingImport(ImportMode mode, byte[] hash) {
     return new Constructors.MissingImport(mode, hash);
   }
 

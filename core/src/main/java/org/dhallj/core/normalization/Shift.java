@@ -9,8 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
-import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
@@ -65,8 +63,8 @@ public final class Shift extends Visitor.Identity {
   }
 
   @Override
-  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
-    for (LetBinding<Expr> binding : bindings) {
+  public Expr onLet(List<Expr.LetBinding<Expr>> bindings, Expr body) {
+    for (Expr.LetBinding<Expr> binding : bindings) {
       if (binding.getName().equals(this.name)) {
         this.cutoff -= 1;
       }

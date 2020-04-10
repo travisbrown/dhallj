@@ -9,8 +9,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
-import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
@@ -57,11 +55,11 @@ public final class BetaNormalize implements Visitor<Expr> {
     return Expr.makePi(name, type, result);
   }
 
-  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
+  public Expr onLet(List<Expr.LetBinding<Expr>> bindings, Expr body) {
     Expr result = body;
 
     for (int i = bindings.size() - 1; i >= 0; i--) {
-      LetBinding<Expr> binding = bindings.get(i);
+      Expr.LetBinding<Expr> binding = bindings.get(i);
       String name = binding.getName();
 
       result = result.substitute(name, binding.getValue());
@@ -83,17 +81,17 @@ public final class BetaNormalize implements Visitor<Expr> {
   }
 
   public Expr onRecord(List<Entry<String, Expr>> fields) {
-    Collections.sort(fields, FieldUtilities.entryComparator);
+    Collections.sort(fields, NormalizationUtilities.entryComparator);
     return Expr.makeRecordLiteral(fields);
   }
 
   public Expr onRecordType(List<Entry<String, Expr>> fields) {
-    Collections.sort(fields, FieldUtilities.entryComparator);
+    Collections.sort(fields, NormalizationUtilities.entryComparator);
     return Expr.makeRecordType(fields);
   }
 
   public Expr onUnionType(List<Entry<String, Expr>> fields) {
-    Collections.sort(fields, FieldUtilities.entryComparator);
+    Collections.sort(fields, NormalizationUtilities.entryComparator);
     return Expr.makeUnionType(fields);
   }
 
@@ -143,19 +141,19 @@ public final class BetaNormalize implements Visitor<Expr> {
     return BetaNormalizeToMap.apply(base, type);
   }
 
-  public Expr onMissingImport(Import.Mode mode, byte[] hash) {
+  public Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
     return Expr.makeMissingImport(mode, hash);
   }
 
-  public Expr onEnvImport(String value, Import.Mode mode, byte[] hash) {
+  public Expr onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
     return Expr.makeEnvImport(value, mode, hash);
   }
 
-  public Expr onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+  public Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
     return Expr.makeLocalImport(path, mode, hash);
   }
 
-  public Expr onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+  public Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
     return Expr.makeRemoteImport(url, using, mode, hash);
   }
 }

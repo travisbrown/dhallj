@@ -61,11 +61,11 @@ final class BetaNormalizeMerge {
   }
 
   private static Expr merge(List<Entry<String, Expr>> handlers, String fieldName) {
-    return FieldUtilities.lookup(handlers, fieldName);
+    return NormalizationUtilities.lookup(handlers, fieldName);
   }
 
   private static Expr merge(List<Entry<String, Expr>> handlers, String fieldName, Expr arg) {
-    Expr handler = FieldUtilities.lookup(handlers, fieldName);
+    Expr handler = NormalizationUtilities.lookup(handlers, fieldName);
     if (handler != null) {
       return Expr.makeApplication(handler, arg);
     } else {

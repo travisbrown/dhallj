@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import org.dhallj.core.Expr;
-import org.dhallj.core.LetBinding;
 import org.dhallj.core.Visitor;
 
 /**
@@ -69,8 +68,8 @@ public final class Substitute extends Visitor.Identity {
   }
 
   @Override
-  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
-    for (LetBinding<Expr> binding : bindings) {
+  public Expr onLet(List<Expr.LetBinding<Expr>> bindings, Expr body) {
+    for (Expr.LetBinding<Expr> binding : bindings) {
       String name = binding.getName();
 
       this.replacementStack.pop();

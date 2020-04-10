@@ -14,7 +14,7 @@ final class BetaNormalizeFieldAccess {
             new ExternalVisitor.Constant<Expr>(null) {
               @Override
               public Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
-                return FieldUtilities.lookup(fields, fieldName);
+                return NormalizationUtilities.lookup(fields, fieldName);
               }
 
               @Override
@@ -27,7 +27,8 @@ final class BetaNormalizeFieldAccess {
                 if (operator.equals(Operator.PREFER)) {
                   Iterable<Entry<String, Expr>> lhsFields = Expr.Util.asRecordLiteral(lhs);
                   if (lhsFields != null) {
-                    Entry<String, Expr> lhsFound = FieldUtilities.lookupEntry(lhsFields, fieldName);
+                    Entry<String, Expr> lhsFound =
+                        NormalizationUtilities.lookupEntry(lhsFields, fieldName);
 
                     if (lhsFound != null) {
                       List<Entry<String, Expr>> singleton = new ArrayList();
@@ -43,7 +44,7 @@ final class BetaNormalizeFieldAccess {
                   } else {
                     Iterable<Entry<String, Expr>> rhsFields = Expr.Util.asRecordLiteral(rhs);
                     if (rhsFields != null) {
-                      Expr rhsFound = FieldUtilities.lookup(rhsFields, fieldName);
+                      Expr rhsFound = NormalizationUtilities.lookup(rhsFields, fieldName);
 
                       if (rhsFound != null) {
                         return rhsFound;
@@ -55,7 +56,8 @@ final class BetaNormalizeFieldAccess {
                 } else if (operator.equals(Operator.COMBINE)) {
                   Iterable<Entry<String, Expr>> lhsFields = Expr.Util.asRecordLiteral(lhs);
                   if (lhsFields != null) {
-                    Entry<String, Expr> lhsFound = FieldUtilities.lookupEntry(lhsFields, fieldName);
+                    Entry<String, Expr> lhsFound =
+                        NormalizationUtilities.lookupEntry(lhsFields, fieldName);
 
                     if (lhsFound != null) {
                       List<Entry<String, Expr>> singleton = new ArrayList();
@@ -72,7 +74,7 @@ final class BetaNormalizeFieldAccess {
                     Iterable<Entry<String, Expr>> rhsFields = Expr.Util.asRecordLiteral(rhs);
                     if (rhsFields != null) {
                       Entry<String, Expr> rhsFound =
-                          FieldUtilities.lookupEntry(rhsFields, fieldName);
+                          NormalizationUtilities.lookupEntry(rhsFields, fieldName);
 
                       if (rhsFound != null) {
                         List<Entry<String, Expr>> singleton = new ArrayList();

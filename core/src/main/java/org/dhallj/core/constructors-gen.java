@@ -369,10 +369,10 @@ final class Constructors {
   }
 
   static final class MissingImport extends Expr {
-    final Import.Mode mode;
+    final Expr.ImportMode mode;
     final byte[] hash;
 
-    MissingImport(Import.Mode mode, byte[] hash) {
+    MissingImport(Expr.ImportMode mode, byte[] hash) {
       super(Tags.MISSING_IMPORT);
       this.mode = mode;
       this.hash = hash;
@@ -385,10 +385,10 @@ final class Constructors {
 
   static final class EnvImport extends Expr {
     final String name;
-    final Import.Mode mode;
+    final Expr.ImportMode mode;
     final byte[] hash;
 
-    EnvImport(String name, Import.Mode mode, byte[] hash) {
+    EnvImport(String name, Expr.ImportMode mode, byte[] hash) {
       super(Tags.ENV_IMPORT);
       this.name = name;
       this.mode = mode;
@@ -402,10 +402,10 @@ final class Constructors {
 
   static final class LocalImport extends Expr {
     final Path path;
-    final Import.Mode mode;
+    final Expr.ImportMode mode;
     final byte[] hash;
 
-    LocalImport(Path path, Import.Mode mode, byte[] hash) {
+    LocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       super(Tags.LOCAL_IMPORT);
       this.path = path;
       this.mode = mode;
@@ -420,10 +420,10 @@ final class Constructors {
   static final class RemoteImport extends Expr {
     final URI url;
     final Expr using;
-    final Import.Mode mode;
+    final Expr.ImportMode mode;
     final byte[] hash;
 
-    RemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+    RemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
       super(Tags.REMOTE_IMPORT);
       this.url = url;
       this.using = using;

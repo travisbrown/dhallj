@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.cbor.Writer;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
-import org.dhallj.core.LetBinding;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
@@ -191,12 +189,12 @@ public final class Encode implements Visitor<Writer> {
     }
   }
 
-  public Writer onLet(final List<LetBinding<Writer>> bindings, Writer body) {
+  public Writer onLet(final List<Expr.LetBinding<Writer>> bindings, Writer body) {
     List<Writer> writers = new ArrayList<Writer>();
 
     writers.add(new SizeAndLabelWriter(2 + bindings.size() * 3, Label.LET));
 
-    for (final LetBinding<Writer> binding : bindings) {
+    for (final Expr.LetBinding<Writer> binding : bindings) {
       writers.add(
           new Writer() {
             public void writeToStream(OutputStream stream) throws IOException {
@@ -487,10 +485,10 @@ public final class Encode implements Visitor<Writer> {
     return new Writer.Nested(writers);
   }
 
-  private final int modeLabel(Import.Mode mode) {
-    if (mode.equals(Import.Mode.RAW_TEXT)) {
+  private final int modeLabel(Expr.ImportMode mode) {
+    if (mode.equals(Expr.ImportMode.RAW_TEXT)) {
       return 1;
-    } else if (mode.equals(Import.Mode.LOCATION)) {
+    } else if (mode.equals(Expr.ImportMode.LOCATION)) {
       return 2;
     } else {
       return 0;
@@ -507,7 +505,7 @@ public final class Encode implements Visitor<Writer> {
     return bytes;
   }
 
-  public Writer onMissingImport(final Import.Mode mode, final byte[] hash) {
+  public Writer onMissingImport(final Expr.ImportMode mode, final byte[] hash) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
         this.writeArrayStart(stream, 4);
@@ -523,7 +521,7 @@ public final class Encode implements Visitor<Writer> {
     };
   }
 
-  public Writer onEnvImport(final String value, final Import.Mode mode, final byte[] hash) {
+  public Writer onEnvImport(final String value, final Expr.ImportMode mode, final byte[] hash) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
         this.writeArrayStart(stream, 5);
@@ -556,7 +554,7 @@ public final class Encode implements Visitor<Writer> {
     return -1;
   }
 
-  public Writer onLocalImport(final Path path, final Import.Mode mode, final byte[] hash) {
+  public Writer onLocalImport(final Path path, final Expr.ImportMode mode, final byte[] hash) {
     return new Writer() {
       public void writeToStream(OutputStream stream) throws IOException {
         int size = 4 + path.getNameCount() - (path.isAbsolute() ? 0 : 1);
@@ -592,7 +590,7 @@ public final class Encode implements Visitor<Writer> {
   }
 
   public Writer onRemoteImport(
-      final URI url, final Writer using, final Import.Mode mode, final byte[] hash) {
+      final URI url, final Writer using, final Expr.ImportMode mode, final byte[] hash) {
     List<Writer> writers = new ArrayList<Writer>(3);
 
     final List<String> parts = new ArrayList<String>();

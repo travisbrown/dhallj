@@ -6,8 +6,6 @@ import java.nio.file.Path
 import java.util.{List => JList}
 import java.util.Map.Entry
 import org.dhallj.core.Expr
-import org.dhallj.core.Import
-import org.dhallj.core.LetBinding
 import org.dhallj.core.Operator
 import org.dhallj.core.Source
 import org.dhallj.core.Visitor
@@ -52,7 +50,7 @@ final class ToCodeVisitor extends Visitor[Code] {
         s"""Expr.makePi("$name", $tpeContent, $resultContent)"""
     }
 
-  def onLet(bindings: JList[LetBinding[Code]], body: Code): Code = unsupported
+  def onLet(bindings: JList[Expr.LetBinding[Code]], body: Code): Code = unsupported
 
   def onText(parts: Array[String], interpolated: JList[Code]): Code =
     if (parts.length == 1) {
@@ -158,8 +156,8 @@ final class ToCodeVisitor extends Visitor[Code] {
     }
 
   def onToMap(base: Code, tpe: Code): Code = unsupported
-  def onMissingImport(mode: Import.Mode, hash: Array[Byte]): Code = unsupported
-  def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): Code = unsupported
-  def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]): Code = unsupported
-  def onRemoteImport(url: URI, `using`: Code, mode: Import.Mode, hash: Array[Byte]): Code = unsupported
+  def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
+  def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
+  def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
+  def onRemoteImport(url: URI, `using`: Code, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
 }

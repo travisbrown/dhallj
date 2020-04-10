@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.dhallj.core.Expr;
-import org.dhallj.core.LetBinding;
 import org.dhallj.core.Visitor;
 
 /**
@@ -86,10 +85,10 @@ public final class AlphaNormalize extends Visitor.Identity {
   }
 
   @Override
-  public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
-    List<LetBinding<Expr>> newBindings = new ArrayList<>(bindings.size());
+  public Expr onLet(List<Expr.LetBinding<Expr>> bindings, Expr body) {
+    List<Expr.LetBinding<Expr>> newBindings = new ArrayList<>(bindings.size());
 
-    for (LetBinding<Expr> binding : bindings) {
+    for (Expr.LetBinding<Expr> binding : bindings) {
       String name = binding.getName();
 
       this.underscoreDepth -= 1;
@@ -98,7 +97,7 @@ public final class AlphaNormalize extends Visitor.Identity {
         this.nameDepths.get(name).pop();
       }
 
-      newBindings.add(new LetBinding<>("_", binding.getType(), binding.getValue()));
+      newBindings.add(new Expr.LetBinding<>("_", binding.getType(), binding.getValue()));
     }
 
     return Expr.makeLet(newBindings, body);

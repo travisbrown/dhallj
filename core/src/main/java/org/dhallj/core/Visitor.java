@@ -31,7 +31,7 @@ public interface Visitor<A> {
 
   A onPi(String name, A type, A result);
 
-  A onLet(List<LetBinding<A>> bindings, A body);
+  A onLet(List<Expr.LetBinding<A>> bindings, A body);
 
   A onText(String[] parts, List<A> interpolated);
 
@@ -65,13 +65,13 @@ public interface Visitor<A> {
 
   A onToMap(A base, A type);
 
-  A onMissingImport(Import.Mode mode, byte[] hash);
+  A onMissingImport(Expr.ImportMode mode, byte[] hash);
 
-  A onEnvImport(String value, Import.Mode mode, byte[] hash);
+  A onEnvImport(String value, Expr.ImportMode mode, byte[] hash);
 
-  A onLocalImport(Path path, Import.Mode mode, byte[] hash);
+  A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash);
 
-  A onRemoteImport(URI url, A using, Import.Mode mode, byte[] hash);
+  A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash);
 
   /**
    * Represents a function from a Dhall expression that always returns the same value.
@@ -128,7 +128,7 @@ public interface Visitor<A> {
       return this.getReturnValue();
     }
 
-    public A onLet(List<LetBinding<A>> bindings, A body) {
+    public A onLet(List<Expr.LetBinding<A>> bindings, A body) {
       return this.getReturnValue();
     }
 
@@ -196,19 +196,19 @@ public interface Visitor<A> {
       return this.getReturnValue();
     }
 
-    public A onMissingImport(Import.Mode mode, byte[] hash) {
+    public A onMissingImport(Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
-    public A onEnvImport(String value, Import.Mode mode, byte[] hash) {
+    public A onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
-    public A onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
-    public A onRemoteImport(URI url, A using, Import.Mode mode, byte[] hash) {
+    public A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
   }
@@ -232,8 +232,8 @@ public interface Visitor<A> {
       return type && result;
     }
 
-    public Boolean onLet(List<LetBinding<Boolean>> bindings, Boolean body) {
-      for (LetBinding<Boolean> binding : bindings) {
+    public Boolean onLet(List<Expr.LetBinding<Boolean>> bindings, Boolean body) {
+      for (Expr.LetBinding<Boolean> binding : bindings) {
         if (!binding.getValue() || (binding.hasType() && !binding.getType())) {
           return false;
         }
@@ -338,19 +338,19 @@ public interface Visitor<A> {
       return base && (type == null || type);
     }
 
-    public Boolean onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    public Boolean onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return true;
     }
 
-    public Boolean onRemoteImport(URI url, Boolean using, Import.Mode mode, byte[] hash) {
+    public Boolean onRemoteImport(URI url, Boolean using, Expr.ImportMode mode, byte[] hash) {
       return true;
     }
 
-    public Boolean onEnvImport(String value, Import.Mode mode, byte[] hash) {
+    public Boolean onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
       return true;
     }
 
-    public Boolean onMissingImport(Import.Mode mode, byte[] hash) {
+    public Boolean onMissingImport(Expr.ImportMode mode, byte[] hash) {
       return true;
     }
   }
@@ -394,7 +394,7 @@ public interface Visitor<A> {
       return Expr.makePi(name, type, result);
     }
 
-    public Expr onLet(List<LetBinding<Expr>> bindings, Expr body) {
+    public Expr onLet(List<Expr.LetBinding<Expr>> bindings, Expr body) {
       return Expr.makeLet(bindings, body);
     }
 
@@ -462,19 +462,19 @@ public interface Visitor<A> {
       return Expr.makeToMap(base, type);
     }
 
-    public Expr onMissingImport(Import.Mode mode, byte[] hash) {
+    public Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
       return Expr.makeMissingImport(mode, hash);
     }
 
-    public Expr onEnvImport(String value, Import.Mode mode, byte[] hash) {
+    public Expr onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
       return Expr.makeEnvImport(value, mode, hash);
     }
 
-    public Expr onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+    public Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return Expr.makeLocalImport(path, mode, hash);
     }
 
-    public Expr onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+    public Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
       return Expr.makeRemoteImport(url, using, mode, hash);
     }
   }

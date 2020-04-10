@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import org.dhallj.core.Expr;
 import org.dhallj.core.ExternalVisitor;
-import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Expr.Constants;
@@ -679,19 +678,19 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return base.accept(this);
   }
 
-  public final Expr onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+  public final Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
-  public final Expr onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+  public final Expr onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
-  public final Expr onEnvImport(String value, Import.Mode mode, byte[] hash) {
+  public final Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
-  public final Expr onMissingImport(Import.Mode mode, byte[] hash) {
+  public final Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 

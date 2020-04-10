@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import org.dhallj.core.DhallException.ParsingFailure;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Visitor;
 import org.dhallj.parser.DhallParser;
@@ -39,10 +38,10 @@ abstract class ResolutionVisitor extends Visitor.Identity {
   }
 
   @Override
-  public Expr onMissingImport(Import.Mode mode, byte[] hash) {
+  public Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
     Expr result;
 
-    if (mode.equals(Import.Mode.LOCATION)) {
+    if (mode.equals(Expr.ImportMode.LOCATION)) {
       result = Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing");
     } else {
       throw new Missing();
@@ -52,10 +51,10 @@ abstract class ResolutionVisitor extends Visitor.Identity {
   }
 
   @Override
-  public Expr onEnvImport(String name, Import.Mode mode, byte[] hash) {
+  public Expr onEnvImport(String name, Expr.ImportMode mode, byte[] hash) {
     Expr result;
 
-    if (mode.equals(Import.Mode.LOCATION)) {
+    if (mode.equals(Expr.ImportMode.LOCATION)) {
       result =
           Expr.makeApplication(
               Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Environment"),
@@ -64,7 +63,7 @@ abstract class ResolutionVisitor extends Visitor.Identity {
       String value = System.getenv(name);
 
       if (value != null) {
-        if (mode.equals(Import.Mode.RAW_TEXT)) {
+        if (mode.equals(Expr.ImportMode.RAW_TEXT)) {
           result = Expr.makeTextLiteral(value);
         } else {
           try {
@@ -82,10 +81,10 @@ abstract class ResolutionVisitor extends Visitor.Identity {
   }
 
   @Override
-  public Expr onLocalImport(Path path, Import.Mode mode, byte[] hash) {
+  public Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
     Expr result;
 
-    if (mode.equals(Import.Mode.LOCATION)) {
+    if (mode.equals(Expr.ImportMode.LOCATION)) {
       result =
           Expr.makeApplication(
               Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Local"),
@@ -102,7 +101,7 @@ abstract class ResolutionVisitor extends Visitor.Identity {
         throw new WrappedIOException(resolvedPath, underlying);
       }
 
-      if (mode.equals(Import.Mode.RAW_TEXT)) {
+      if (mode.equals(Expr.ImportMode.RAW_TEXT)) {
         result = Expr.makeTextLiteral(contents);
       } else {
         try {
@@ -117,10 +116,10 @@ abstract class ResolutionVisitor extends Visitor.Identity {
   }
 
   @Override
-  public Expr onRemoteImport(URI url, Expr using, Import.Mode mode, byte[] hash) {
+  public Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
     Expr result;
 
-    if (mode.equals(Import.Mode.LOCATION)) {
+    if (mode.equals(Expr.ImportMode.LOCATION)) {
       result =
           Expr.makeApplication(
               Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Remote"),

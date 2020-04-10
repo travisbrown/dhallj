@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Import;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 
@@ -661,10 +660,12 @@ final class ParsingHelpers {
     Source source = sourceFromToken(type);
     byte[] hash = (hashToken == null) ? null : decodeToBytes(hashToken.image.substring(7));
     Expr value = null;
-    Import.Mode mode =
+    Expr.ImportMode mode =
         (modeToken == null)
-            ? Import.Mode.CODE
-            : (modeToken.image.equals("Text") ? Import.Mode.RAW_TEXT : Import.Mode.LOCATION);
+            ? Expr.ImportMode.CODE
+            : (modeToken.image.equals("Text")
+                ? Expr.ImportMode.RAW_TEXT
+                : Expr.ImportMode.LOCATION);
 
     if (type.image.equals("missing")) {
       value = Expr.makeMissingImport(mode, hash);
