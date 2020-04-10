@@ -7,6 +7,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,7 +24,6 @@ import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
 import org.dhallj.core.Expr.Constants;
 import org.dhallj.core.normalization.BetaNormalize;
-import org.dhallj.core.util.FieldUtilities;
 import org.dhallj.core.visitor.ConstantVisitor;
 import org.dhallj.core.visitor.ExternalVisitor;
 
@@ -858,8 +858,16 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
     Entry<String, Expr>[] resultArray = result.toArray((Entry[]) new Entry[result.size()]);
 
-    Arrays.sort(resultArray, FieldUtilities.entryComparator);
+    Arrays.sort(resultArray, entryComparator);
 
     return resultArray;
   }
+
+  /** Java 8 introduce {@code comparingByKey}, but we can roll our own pretty easily. */
+  private static final Comparator<Entry<String, Expr>> entryComparator =
+      new Comparator<Entry<String, Expr>>() {
+        public int compare(Entry<String, Expr> a, Entry<String, Expr> b) {
+          return a.getKey().compareTo(b.getKey());
+        }
+      };
 }

@@ -661,6 +661,7 @@ public final class Encode implements Vis<Writer> {
     return result;
   }
 
+  /** Java 8 introduce {@code comparingByKey}, but we can roll our own pretty easily. */
   private static final Comparator<Entry<String, Writer>> entryComparator =
       new Comparator<Entry<String, Writer>>() {
         public int compare(Entry<String, Writer> a, Entry<String, Writer> b) {

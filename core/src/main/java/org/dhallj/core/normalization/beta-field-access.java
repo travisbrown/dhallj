@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
-import org.dhallj.core.util.FieldUtilities;
 import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeFieldAccess {
