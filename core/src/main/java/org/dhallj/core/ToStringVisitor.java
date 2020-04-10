@@ -260,7 +260,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
       Iterator<Entry<String, ToStringState>> it = fields.iterator();
       while (it.hasNext()) {
         Entry<String, ToStringState> entry = it.next();
-        builder.append(entry.getKey());
+        builder.append(escapeName(entry.getKey()));
         builder.append(" = ");
         builder.append(entry.getValue().toString(ToStringState.NONE));
         if (it.hasNext()) {
@@ -278,7 +278,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
     Iterator<Entry<String, ToStringState>> it = fields.iterator();
     while (it.hasNext()) {
       Entry<String, ToStringState> entry = it.next();
-      builder.append(entry.getKey());
+      builder.append(escapeName(entry.getKey()));
       builder.append(" : ");
       builder.append(entry.getValue().toString(ToStringState.NONE));
       if (it.hasNext()) {
@@ -295,7 +295,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
     Iterator<Entry<String, ToStringState>> it = fields.iterator();
     while (it.hasNext()) {
       Entry<String, ToStringState> entry = it.next();
-      builder.append(entry.getKey());
+      builder.append(escapeName(entry.getKey()));
       ToStringState type = entry.getValue();
       if (type != null) {
         builder.append(" : ");
