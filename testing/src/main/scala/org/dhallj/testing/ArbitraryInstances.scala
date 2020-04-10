@@ -2,7 +2,7 @@ package org.dhallj.testing
 
 import org.dhallj.ast._
 import org.dhallj.core.Expr
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 trait ArbitraryInstances {
   def genNameString: Gen[String]
@@ -11,18 +11,20 @@ trait ArbitraryInstances {
   def defaultMaxInterpolated: Int = 3
   def defaultMaxFields: Int = 5
 
-  def genNonEmptyNameString: Gen[String] = genNameString.map {
+  def genValidNameString: Gen[String] = genNameString.map(_.replace("`", "")).map {
     case "" => "x"
     case other => other
   }
 
+  def isValidName(name: String): Boolean = List('\u0000', '`').forall(name.indexOf(_) == -1) && name.nonEmpty
+
   def genIdentifier: Gen[Expr] = for {
-    name <- genNonEmptyNameString
+    name <- genValidNameString
     index <- Gen.oneOf(Gen.const(0L), Arbitrary.arbitrary[Long].map(_.abs))
   } yield Identifier(name, index)
 
   def genForType(tpe: Expr): Option[Gen[Expr]] = tpe match {
-    case Expr.Constants.NATURAL => Some(Arbitrary.arbitrary[BigInt].map(NaturalLiteral(_)))
+    case Expr.Constants.NATURAL => Some(Arbitrary.arbitrary[BigInt].map(value => NaturalLiteral(value.abs)))
     case Expr.Constants.INTEGER => Some(Arbitrary.arbitrary[BigInt].map(IntegerLiteral(_)))
     case Expr.Constants.DOUBLE => Some(Arbitrary.arbitrary[Double].map(DoubleLiteral(_)))
     case Expr.Constants.BOOL => Some(
@@ -85,11 +87,11 @@ trait ArbitraryInstances {
       genType(maxDepth - 1).map(Application(Expr.Constants.OPTIONAL, _)),
       Gen.buildableOfN[Vector[(String, Expr)], (String, Expr)](
         defaultMaxFields,
-        genNonEmptyNameString.flatMap(name => genType(maxDepth - 1).map((name, _)))
+        genValidNameString.flatMap(name => genType(maxDepth - 1).map((name, _)))
       ).map(fields => RecordType(fields.toMap)),
       Gen.buildableOfN[Vector[(String, Option[Expr])], (String, Option[Expr])](
         defaultMaxFields,
-        genNonEmptyNameString.flatMap(name => Gen.option(genType(maxDepth - 1)).map((name, _)))
+        genValidNameString.flatMap(name => Gen.option(genType(maxDepth - 1)).map((name, _)))
       ).map(fields => UnionType(fields.toMap))
     )
   }
@@ -103,4 +105,36 @@ trait ArbitraryInstances {
       )
     ).map(WellTypedExpr(_))
   )
+
+
+  implicit val shrinkWellTypedExpr: Shrink[WellTypedExpr] = Shrink(expr =>
+    (
+      expr.value match {
+        case NaturalLiteral(value) => Shrink.shrink(value).map(NaturalLiteral(_))
+        case IntegerLiteral(value) => Shrink.shrink(value).map(IntegerLiteral(_))
+        case DoubleLiteral(value) => Shrink.shrink(value).map(DoubleLiteral(_))
+        case RecordLiteral(fields) => safeFieldsShrink.shrink(fields).map(_.filterKeys(isValidName).toMap).map(RecordLiteral(_))
+        case RecordType(fields) => safeFieldsShrink.shrink(fields).map(_.filterKeys(isValidName).toMap).map(RecordType(_))
+        case UnionType(fields) => safeOptionFieldsShrink.shrink(fields).map(_.filterKeys(isValidName).toMap).map(UnionType(_))
+        case other => Stream.empty
+      }
+    ).map(WellTypedExpr(_))
+  )
+
+  val shrinkExprFromWellTypedExpr: Shrink[Expr] = Shrink.xmap[WellTypedExpr, Expr](_.value, WellTypedExpr(_))
+
+  val safeNameShrink: Shrink[String] = Shrink { name => Shrink.shrink(name).filter(isValidName) }
+
+  lazy val safeFieldsShrink: Shrink[Map[String, Expr]] = Shrink.shrinkContainer2[Map, String, Expr](
+    implicitly,
+    Shrink.shrinkTuple2(safeNameShrink, shrinkExprFromWellTypedExpr),
+    implicitly
+  )
+
+  lazy val safeOptionFieldsShrink: Shrink[Map[String, Option[Expr]]] =
+    Shrink.shrinkContainer2[Map, String, Option[Expr]](
+      implicitly,
+      Shrink.shrinkTuple2(safeNameShrink, Shrink.shrinkOption(shrinkExprFromWellTypedExpr)),
+      implicitly
+    )
 }
