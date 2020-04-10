@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.{Map => JMap}
 import org.dhallj.core.{Expr, ExternalVisitor, Operator, Source}
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 abstract private class OptionVisitor[A] extends ExternalVisitor.Constant[Option[A]](None)
 
