@@ -160,7 +160,7 @@ object ProjectionByType extends Constructor[(Expr, Expr)] {
 }
 
 object RecordLiteral extends Constructor[Iterable[(String, Expr)]] {
-  def apply(fields: Iterable[(String, Expr)]): Expr = Expr.makeRecordLiteral(fields.map(Visitor.tupleToEntry).asJava)
+  def apply(fields: Iterable[(String, Expr)]): Expr = Expr.makeRecordLiteral(fields.map(Visitor.tupleToEntry).toSeq.asJava)
 
   protected[this] val extractor: Visitor[Option[Result]] =
     new ConstantVisitor.Optional[Result] {
@@ -170,7 +170,7 @@ object RecordLiteral extends Constructor[Iterable[(String, Expr)]] {
 }
 
 object RecordType extends Constructor[Iterable[(String, Expr)]] {
-  def apply(fields: Iterable[(String, Expr)]): Expr = Expr.makeRecordType(fields.map(Visitor.tupleToEntry).asJava)
+  def apply(fields: Iterable[(String, Expr)]): Expr = Expr.makeRecordType(fields.map(Visitor.tupleToEntry).toSeq.asJava)
 
   protected[this] val extractor: Visitor[Option[Result]] =
     new ConstantVisitor.Optional[Result] {
@@ -181,7 +181,7 @@ object RecordType extends Constructor[Iterable[(String, Expr)]] {
 
 object UnionType extends Constructor[Iterable[(String, Option[Expr])]] {
   def apply(fields: Iterable[(String, Option[Expr])]): Expr =
-    Expr.makeUnionType(fields.map(Visitor.optionTupleToEntry).asJava)
+    Expr.makeUnionType(fields.map(Visitor.optionTupleToEntry).toSeq.asJava)
 
   protected[this] val extractor: Visitor[Option[Result]] =
     new ConstantVisitor.Optional[Result] {
@@ -192,7 +192,7 @@ object UnionType extends Constructor[Iterable[(String, Option[Expr])]] {
 }
 
 object NonEmptyListLiteral extends Constructor[Iterable[Expr]] {
-  def apply(values: Iterable[Expr]): Expr = Expr.makeNonEmptyListLiteral(values.asJava)
+  def apply(values: Iterable[Expr]): Expr = Expr.makeNonEmptyListLiteral(values.toSeq.asJava)
 
   protected[this] val extractor: Visitor[Option[Result]] =
     new ConstantVisitor.Optional[Result] {

@@ -9,6 +9,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
@@ -614,8 +615,8 @@ public abstract class Expr {
     return new Constructors.TextLiteral(parts, interpolated);
   }
 
-  public static final Expr makeTextLiteral(String[] parts, Iterable<Expr> interpolated) {
-    return new Constructors.TextLiteral(parts, exprsToArray(interpolated));
+  public static final Expr makeTextLiteral(String[] parts, Collection<Expr> interpolated) {
+    return new Constructors.TextLiteral(parts, interpolated.toArray(new Expr[interpolated.size()]));
   }
 
   private static final Expr[] emptyExprArray = {};
@@ -700,8 +701,8 @@ public abstract class Expr {
     return new Constructors.RecordLiteral(fields);
   }
 
-  public static final Expr makeRecordLiteral(Iterable<Entry<String, Expr>> fields) {
-    return new Constructors.RecordLiteral(entriesToArray(fields));
+  public static final Expr makeRecordLiteral(Collection<Entry<String, Expr>> fields) {
+    return new Constructors.RecordLiteral(fields.toArray(new Entry[fields.size()]));
   }
 
   public static final Expr makeRecordLiteral(String key, Expr value) {
@@ -713,24 +714,24 @@ public abstract class Expr {
     return new Constructors.RecordType(fields);
   }
 
-  public static final Expr makeRecordType(Iterable<Entry<String, Expr>> fields) {
-    return new Constructors.RecordType(entriesToArray(fields));
+  public static final Expr makeRecordType(Collection<Entry<String, Expr>> fields) {
+    return new Constructors.RecordType(fields.toArray(new Entry[fields.size()]));
   }
 
   public static final Expr makeUnionType(Entry<String, Expr>[] fields) {
     return new Constructors.UnionType(fields);
   }
 
-  public static final Expr makeUnionType(Iterable<Entry<String, Expr>> fields) {
-    return new Constructors.UnionType(entriesToArray(fields));
+  public static final Expr makeUnionType(Collection<Entry<String, Expr>> fields) {
+    return new Constructors.UnionType(fields.toArray(new Entry[fields.size()]));
   }
 
   public static final Expr makeNonEmptyListLiteral(Expr[] values) {
     return new Constructors.NonEmptyListLiteral(values);
   }
 
-  public static final Expr makeNonEmptyListLiteral(Iterable<Expr> values) {
-    return new Constructors.NonEmptyListLiteral(exprsToArray(values));
+  public static final Expr makeNonEmptyListLiteral(Collection<Expr> values) {
+    return new Constructors.NonEmptyListLiteral(values.toArray(new Expr[values.size()]));
   }
 
   public static final Expr makeEmptyListLiteral(Expr tpe) {
@@ -1763,25 +1764,5 @@ public abstract class Expr {
     } else {
       return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
     }
-  }
-
-  private static Expr[] exprsToArray(Iterable<Expr> values) {
-    List<Expr> result = new ArrayList();
-
-    for (Expr value : values) {
-      result.add(value);
-    }
-
-    return result.toArray(new Expr[result.size()]);
-  }
-
-  private static Entry<String, Expr>[] entriesToArray(Iterable<Entry<String, Expr>> entries) {
-    List<Entry<String, Expr>> result = new ArrayList();
-
-    for (Entry<String, Expr> entry : entries) {
-      result.add(entry);
-    }
-
-    return result.toArray(new Entry[result.size()]);
   }
 }
