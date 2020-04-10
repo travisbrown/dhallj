@@ -370,53 +370,33 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   public final Expr onProjectionByType(Expr base, Expr type) {
     List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.acceptExternal(this));
 
-    if (fields != null) {
+    if (fields == null) {
+      throw TypeCheckFailure.makeProjectionError();
+    } else {
       List<Entry<String, Expr>> projected =
           Expr.Util.asRecordType(type.acceptVis(BetaNormalize.instance));
 
-      if (projected != null) {
-        Map<String, Expr> fieldMap = new HashMap();
+      if (projected == null) {
+        throw TypeCheckFailure.makeProjectionError();
+      } else {
+        Map<String, Expr> fieldMap = new HashMap<>();
 
         for (Entry<String, Expr> field : fields) {
           fieldMap.put(field.getKey(), field.getValue());
         }
 
-        List<Entry<String, Expr>> newFields = new ArrayList<>();
-        List<String> missing = null;
-
         for (Entry<String, Expr> projectedEntry : projected) {
           String fieldName = projectedEntry.getKey();
           Expr value = fieldMap.get(fieldName);
+          Expr projectedValue = projectedEntry.getValue();
 
-          if (value == null) {
-            if (missing == null) {
-              missing = new ArrayList();
-            }
-            missing.add(fieldName);
-          } else {
-            Expr projectedValue = projectedEntry.getValue();
-            if (value.equivalent(projectedValue)) {
-              newFields.add(new SimpleImmutableEntry(fieldName, value));
-
-            } else {
-              if (missing == null) {
-                missing = new ArrayList();
-              }
-              missing.add(fieldName);
-            }
+          if (value == null || !value.equivalent(projectedValue)) {
+            throw TypeCheckFailure.makeFieldAccessRecordMissingError(fieldName);
           }
         }
 
-        if (missing == null) {
-          return Expr.makeRecordType(projected);
-        } else {
-          throw TypeCheckFailure.makeFieldAccessRecordMissingError(missing.get(0));
-        }
-      } else {
-        throw TypeCheckFailure.makeProjectionError();
+        return Expr.makeRecordType(projected);
       }
-    } else {
-      throw TypeCheckFailure.makeProjectionError();
     }
   }
 
@@ -462,7 +442,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     } else {
       Set<String> seen = new HashSet();
       Universe firstUniverse = null;
-      Entry<String, Expr> first = null;
 
       for (Entry<String, Expr> field : fields) {
         String fieldName = field.getKey();
@@ -478,7 +457,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
             if (universe != null) {
               if (firstUniverse == null) {
                 firstUniverse = universe;
-                first = field;
               } else {
                 if (universe != firstUniverse) {
                   throw TypeCheckFailure.makeAlternativeTypeMismatchError(alternativeType);
@@ -520,7 +498,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onEmptyListLiteral(Expr type) {
-    Expr typeType = type.acceptExternal(this);
+    // We verify that the type is well-typed.
+    type.acceptExternal(this);
 
     Expr typeNormalized = type.acceptVis(BetaNormalize.instance);
     Expr elementType = Expr.Util.getListArg(typeNormalized);
@@ -561,7 +540,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       throw TypeCheckFailure.makeToMapTypeError(baseType);
     } else {
       Expr firstType = null;
-      Entry<String, Expr> first = null;
 
       for (Entry<String, Expr> entry : baseAsRecord) {
         Expr fieldType = entry.getValue();
@@ -571,7 +549,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         } else {
           if (firstType == null) {
             firstType = fieldType;
-            first = entry;
           } else {
             if (!fieldType.equivalent(firstType)) {
               throw TypeCheckFailure.makeToMapRecordTypeMismatchError(firstType, fieldType);
