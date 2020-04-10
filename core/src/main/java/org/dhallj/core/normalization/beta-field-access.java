@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
+import org.dhallj.core.ExternalVisitor;
 import org.dhallj.core.Operator;
-import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeFieldAccess {
   static final Expr apply(Expr base, final String fieldName) {
     Expr result =
-        base.acceptExternal(
-            new ConstantVisitor.External<Expr>(null) {
+        base.accept(
+            new ExternalVisitor.Constant<Expr>(null) {
               @Override
               public Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
                 return FieldUtilities.lookup(fields, fieldName);

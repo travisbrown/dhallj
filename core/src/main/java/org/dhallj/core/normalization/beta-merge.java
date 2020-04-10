@@ -3,8 +3,8 @@ package org.dhallj.core.normalization;
 import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
+import org.dhallj.core.ExternalVisitor;
 import org.dhallj.core.Operator;
-import org.dhallj.core.visitor.ConstantVisitor;
 
 final class BetaNormalizeMerge {
   static final Expr apply(Expr left, Expr right, Expr type) {
@@ -12,8 +12,8 @@ final class BetaNormalizeMerge {
 
     if (leftAsRecord != null) {
       Expr result =
-          right.acceptExternal(
-              new ConstantVisitor.External<Expr>(null) {
+          right.accept(
+              new ExternalVisitor.Constant<Expr>(null) {
                 @Override
                 public Expr onFieldAccess(Expr base, String fieldName) {
                   List<Entry<String, Expr>> baseAsUnion = Expr.Util.asUnionType(base);

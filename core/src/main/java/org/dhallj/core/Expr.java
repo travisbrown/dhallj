@@ -45,7 +45,7 @@ public abstract class Expr {
   }
 
   /** Run the given external visitor on this expression. */
-  public abstract <A> A acceptExternal(Visitor<Expr, A> visitor);
+  public abstract <A> A accept(ExternalVisitor<A> visitor);
 
   /**
    * Beta-normalize this expression.
@@ -67,7 +67,7 @@ public abstract class Expr {
 
   /** Type-check this expression and return the inferred type. */
   public final Expr typeCheck() {
-    return this.acceptExternal(new TypeCheck());
+    return this.accept(new TypeCheck());
   }
 
   /** Increment a variable name in this expression. */
@@ -546,7 +546,7 @@ public abstract class Expr {
       return this.source;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onNote(base, this.source);
     }
   }

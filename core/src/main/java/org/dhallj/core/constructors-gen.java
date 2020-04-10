@@ -22,7 +22,7 @@ final class Constructors {
       this.value = value;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onNatural(this.value);
     }
   }
@@ -35,7 +35,7 @@ final class Constructors {
       this.value = value;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onInteger(this.value);
     }
   }
@@ -48,7 +48,7 @@ final class Constructors {
       this.value = value;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onDouble(this.value);
     }
   }
@@ -63,7 +63,7 @@ final class Constructors {
       this.interpolated = interpolated;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onText(this.parts, new ArrayIterable<Expr>(interpolated));
     }
   }
@@ -78,7 +78,7 @@ final class Constructors {
       this.arg = arg;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onApplication(base, arg);
     }
   }
@@ -95,7 +95,7 @@ final class Constructors {
       this.rhs = rhs;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onOperatorApplication(this.operator, lhs, rhs);
     }
   }
@@ -112,7 +112,7 @@ final class Constructors {
       this.elseValue = elseValue;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onIf(predicate, thenValue, elseValue);
     }
   }
@@ -129,7 +129,7 @@ final class Constructors {
       this.result = result;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onLambda(this.name, type, result);
     }
   }
@@ -146,7 +146,7 @@ final class Constructors {
       this.result = result;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onPi(this.name, type, result);
     }
   }
@@ -159,7 +159,7 @@ final class Constructors {
       this.base = base;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onAssert(base);
     }
   }
@@ -174,7 +174,7 @@ final class Constructors {
       this.fieldName = fieldName;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onFieldAccess(base, this.fieldName);
     }
   }
@@ -189,7 +189,7 @@ final class Constructors {
       this.fieldNames = fieldNames;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onProjection(base, this.fieldNames);
     }
   }
@@ -204,7 +204,7 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onProjectionByType(base, type);
     }
   }
@@ -217,7 +217,7 @@ final class Constructors {
       this.name = name;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onBuiltIn(this.name);
     }
   }
@@ -232,7 +232,7 @@ final class Constructors {
       this.index = index;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onIdentifier(this.name, this.index);
     }
   }
@@ -245,7 +245,7 @@ final class Constructors {
       this.fields = fields;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onRecord(new ArrayIterable<Entry<String, Expr>>(fields), fields.length);
     }
   }
@@ -258,7 +258,7 @@ final class Constructors {
       this.fields = fields;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onRecordType(new ArrayIterable<Entry<String, Expr>>(fields), fields.length);
     }
   }
@@ -271,7 +271,7 @@ final class Constructors {
       this.fields = fields;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onUnionType(new ArrayIterable<Entry<String, Expr>>(fields), fields.length);
     }
   }
@@ -284,7 +284,7 @@ final class Constructors {
       this.values = values;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onNonEmptyList(new ArrayIterable<Expr>(values), this.values.length);
     }
   }
@@ -297,7 +297,7 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onEmptyList(type);
     }
   }
@@ -316,7 +316,7 @@ final class Constructors {
       this.body = body;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onLet(name, type, value, body);
     }
   }
@@ -331,7 +331,7 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onAnnotated(base, type);
     }
   }
@@ -348,7 +348,7 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onMerge(handlers, union, type);
     }
   }
@@ -363,7 +363,7 @@ final class Constructors {
       this.type = type;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onToMap(base, type);
     }
   }
@@ -378,7 +378,7 @@ final class Constructors {
       this.hash = hash;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onMissingImport(this.mode, this.hash);
     }
   }
@@ -395,7 +395,7 @@ final class Constructors {
       this.hash = hash;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onEnvImport(this.name, this.mode, this.hash);
     }
   }
@@ -412,7 +412,7 @@ final class Constructors {
       this.hash = hash;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onLocalImport(this.path, this.mode, this.hash);
     }
   }
@@ -431,7 +431,7 @@ final class Constructors {
       this.hash = hash;
     }
 
-    public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
+    public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onRemoteImport(this.url, this.using, this.mode, this.hash);
     }
   }

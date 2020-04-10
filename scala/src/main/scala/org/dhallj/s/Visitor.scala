@@ -6,62 +6,61 @@ import java.net.URI
 import java.nio.file.Path
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.{Map => JMap}
-import org.dhallj.core.{Import, Operator, Source, Visitor => CoreVisitor}
-import org.dhallj.core.visitor.{ConstantVisitor => CoreConstantVisitor}
+import org.dhallj.core.{Expr, Import, Operator, Source, ExternalVisitor => CoreExternalVisitor}
 import scala.jdk.CollectionConverters._
 
-trait Visitor[I, A] extends CoreVisitor[I, A] {
+trait Visitor[A] extends CoreExternalVisitor[A] {
   //def onDouble(value: Double): A
   def onNatural(value: BigInt): A
   def onInteger(value: BigInt): A
-  def onText(parts: Iterable[String], interpolated: Iterable[I]): A
-  //def onApplication(base: I, arg: I): A
-  //def onOperatorApplication(operator: Operator, lhs: I, rhs: I): A
-  //def onIf(cond: I, thenValue: I, elseValue: I): A
-  //def onLambda(param: String, input: I, result: I): A
-  def onPi(param: Option[String], input: I, result: I): A
-  //def onAssert(base: I): A
-  //ef onFieldAccess(base: I, fieldName: String): A
-  def onProjection(base: I, fieldNames: Iterable[String]): A
-  //def onProjectionByType(base: I, tpe: I): A
+  def onText(parts: Iterable[String], interpolated: Iterable[Expr]): A
+  //def onApplication(base: Expr, arg: Expr): A
+  //def onOperatorApplication(operator: Operator, lhs: Expr, rhs: Expr): A
+  //def onIf(cond: Expr, thenValue: Expr, elseValue: Expr): A
+  //def onLambda(param: String, input: Expr, result: Expr): A
+  def onPi(param: Option[String], input: Expr, result: Expr): A
+  //def onAssert(base: Expr): A
+  //ef onFieldAccess(base: Expr, fieldName: String): A
+  def onProjection(base: Expr, fieldNames: Iterable[String]): A
+  //def onProjectionByType(base: Expr, tpe: Expr): A
   def onIdentifier(value: String, index: Option[Long]): A
-  def onRecord(fields: Iterable[(String, I)], size: Int): A
-  def onRecordType(fields: Iterable[(String, I)], size: Int): A
-  def onUnionType(fields: Iterable[(String, Option[I])], size: Int): A
-  def onNonEmptyList(values: Iterable[I], size: Int): A
-  //def onEmptyList(tpe: I): A
-  //def onNote(base: I, source: Source): A
-  def onLet(name: String, tpe: Option[I], value: I, body: I): A
-  //def onAnnotated(base: I, tpe: I): A
-  def onToMap(base: I, tpe: Option[I]): A
-  def onMerge(left: I, right: I, tpe: Option[I]): A
+  def onRecord(fields: Iterable[(String, Expr)], size: Int): A
+  def onRecordType(fields: Iterable[(String, Expr)], size: Int): A
+  def onUnionType(fields: Iterable[(String, Option[Expr])], size: Int): A
+  def onNonEmptyList(values: Iterable[Expr], size: Int): A
+  //def onEmptyList(tpe: Expr): A
+  //def onNote(base: Expr, source: Source): A
+  def onLet(name: String, tpe: Option[Expr], value: Expr, body: Expr): A
+  //def onAnnotated(base: Expr, tpe: Expr): A
+  def onToMap(base: Expr, tpe: Option[Expr]): A
+  def onMerge(left: Expr, right: Expr, tpe: Option[Expr]): A
   def onMissingImport(mode: Import.Mode, hash: Option[Array[Byte]]): A
   def onEnvImport(value: String, mode: Import.Mode, hash: Option[Array[Byte]]): A
   def onLocalImport(path: Path, mode: Import.Mode, hash: Option[Array[Byte]]): A
-  def onRemoteImport(url: URI, using: Option[I], mode: Import.Mode, hash: Option[Array[Byte]]): A
+  def onRemoteImport(url: URI, using: Option[Expr], mode: Import.Mode, hash: Option[Array[Byte]]): A
 
   final def onNatural(value: BigInteger): A = onNatural(new BigInt(value))
   final def onInteger(value: BigInteger): A = onInteger(new BigInt(value))
-  final def onText(parts: Array[String], interpolated: JIterable[I]): A =
+  final def onText(parts: Array[String], interpolated: JIterable[Expr]): A =
     onText(parts.toIterable, interpolated.asScala)
-  final def onPi(param: String, input: I, result: I): A = onPi(Option(param), input, result)
-  final def onProjection(base: I, fieldNames: Array[String]): A = onProjection(base, fieldNames.toIterable)
+  final def onPi(param: String, input: Expr, result: Expr): A = onPi(Option(param), input, result)
+  final def onProjection(base: Expr, fieldNames: Array[String]): A = onProjection(base, fieldNames.toIterable)
   final def onIdentifier(value: String, index: Long): A = onIdentifier(value, if (index == 0) None else Some(index))
-  final def onRecord(fields: JIterable[JMap.Entry[String, I]], size: Int): A =
+  final def onRecord(fields: JIterable[JMap.Entry[String, Expr]], size: Int): A =
     onRecord(fields.asScala.map(Visitor.entryToTuple), size)
-  final def onRecordType(fields: JIterable[JMap.Entry[String, I]], size: Int): A =
+  final def onRecordType(fields: JIterable[JMap.Entry[String, Expr]], size: Int): A =
     onRecordType(fields.asScala.map(Visitor.entryToTuple), size)
-  final def onUnionType(fields: JIterable[JMap.Entry[String, I]], size: Int): A =
+  final def onUnionType(fields: JIterable[JMap.Entry[String, Expr]], size: Int): A =
     onUnionType(fields.asScala.map(Visitor.entryToOptionTuple), size)
-  final def onNonEmptyList(values: JIterable[I], size: Int): A = onNonEmptyList(values.asScala, size)
-  final def onLet(name: String, tpe: I, value: I, body: I): A = onLet(name, Option(tpe), value, body)
-  final def onToMap(base: I, tpe: I): A = onToMap(base, Option(tpe))
-  final def onMerge(left: I, right: I, tpe: I): A = onMerge(left, right, Option(tpe))
+  final def onNonEmptyList(values: JIterable[Expr], size: Int): A = onNonEmptyList(values.asScala, size)
+  final def onLet(name: String, tpe: Expr, value: Expr, body: Expr): A = onLet(name, Option(tpe), value, body)
+  final def onToMap(base: Expr, tpe: Expr): A = onToMap(base, Option(tpe))
+  final def onMerge(left: Expr, right: Expr, tpe: Expr): A = onMerge(left, right, Option(tpe))
 
   final def onMissingImport(mode: Import.Mode, hash: Array[Byte]) = onMissingImport(mode, Option(hash))
   final def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]) = onEnvImport(value, mode, Option(hash))
   final def onLocalImport(path: Path, mode: Import.Mode, hash: Array[Byte]) = onLocalImport(path, mode, Option(hash))
-  final def onRemoteImport(url: URI, using: I, mode: Import.Mode, hash: Array[Byte]) =
+  final def onRemoteImport(url: URI, using: Expr, mode: Import.Mode, hash: Array[Byte]) =
     onRemoteImport(url, Option(using), mode, Option(hash))
 }
 

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.dhallj.core.Expr;
-import org.dhallj.core.visitor.ConstantVisitor;
+import org.dhallj.core.ExternalVisitor;
 
 final class BetaNormalizeTextLiteral {
   static final Expr apply(String[] parts, List<Expr> interpolated) {
@@ -47,8 +47,7 @@ final class BetaNormalizeTextLiteral {
       int partIndex = 1;
 
       for (Expr expr : interpolated) {
-        wasInlined =
-            expr.acceptExternal(new InlineInterpolatedTextLiteral(newParts, newInterpolated));
+        wasInlined = expr.accept(new InlineInterpolatedTextLiteral(newParts, newInterpolated));
 
         if (!wasInlined) {
           newInterpolated.add(expr);
@@ -65,7 +64,7 @@ final class BetaNormalizeTextLiteral {
   }
 
   private static final class InlineInterpolatedTextLiteral
-      extends ConstantVisitor.External<Boolean> {
+      extends ExternalVisitor.Constant<Boolean> {
     private final List<String> newParts;
     private final List<Expr> newInterpolated;
 
