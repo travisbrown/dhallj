@@ -3,6 +3,7 @@ organization in ThisBuild := "org.dhallj"
 val testDependencies = Seq(
   "org.scalacheck" %% "scalacheck" % "1.14.3",
   "org.scalameta" %% "munit" % "0.7.2",
+  "org.scalameta" %% "munit-scalacheck" % "0.7.2",
   "co.nstant.in" % "cbor" % "0.9"
 )
 
