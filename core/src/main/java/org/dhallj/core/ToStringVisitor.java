@@ -107,7 +107,11 @@ final class ToStringVisitor implements Visitor<ToStringState> {
   }
 
   public ToStringState onInteger(Expr self, BigInteger value) {
-    return new ToStringState(value.toString());
+    String withSign =
+        (value.compareTo(BigInteger.ZERO) >= 0)
+            ? String.format("+%s", value.toString())
+            : value.toString();
+    return new ToStringState(withSign);
   }
 
   public ToStringState onDouble(Expr self, double value) {
