@@ -30,9 +30,9 @@ final class JavaCCParser {
 PARSER_END(JavaCCParser)
 
 TOKEN_MGR_DECLS : {
-  Deque<Boolean> interpolationState = new LinkedList();
-  Deque<Integer> braceDepth = new LinkedList();
-  List<Comment> comments = new ArrayList();
+  Deque<Boolean> interpolationState = new LinkedList<>();
+  Deque<Integer> braceDepth = new LinkedList<>();
+  List<Comment> comments = new ArrayList<>();
   WhitespaceManager whitespace = new WhitespaceManager();
 }
 
@@ -252,7 +252,7 @@ Map.Entry<String, Expr.Parsed> DOUBLE_QUOTE_CHUNK(): {
 }
 
 Expr.Parsed DOUBLE_QUOTE_LITERAL(): {
-  List<Map.Entry<String, Expr.Parsed>> chunks = new ArrayList(1);
+  List<Map.Entry<String, Expr.Parsed>> chunks = new ArrayList<>(1);
   Map.Entry<String, Expr.Parsed> current;
   Token first;
   Token last;
@@ -291,7 +291,7 @@ List<Map.Entry<String, Expr.Parsed>> SINGLE_QUOTE_CONTINUE(): {
 }
 
 Expr.Parsed SINGLE_QUOTE_LITERAL(): {
-  List<Map.Entry<String, Expr.Parsed>> chunks = new ArrayList(1);
+  List<Map.Entry<String, Expr.Parsed>> chunks;
   Token first;
 } {
   (
@@ -339,9 +339,9 @@ Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
   Token t0 = null;
   Token t1 = null;
   Token t2 = null;
-  List<String> other = new ArrayList();
+  List<String> other = new ArrayList<>();
   StringBuilder currentOther = new StringBuilder("[");
-  List<Expr.Parsed> values = new ArrayList();
+  List<Expr.Parsed> values = new ArrayList<>();
   Expr.Parsed current;
 } {
   (
@@ -374,9 +374,9 @@ Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
 
 
 List<Map.Entry<List<String>, Expr.Parsed>> RECORD_LITERAL_ENTRY(Wrapped<String> firstLabel): {
-  List<Map.Entry<List<String>, Expr.Parsed>> values = new ArrayList();
+  List<Map.Entry<List<String>, Expr.Parsed>> values = new ArrayList<>();
   List<Map.Entry<List<String>, Expr.Parsed>> next = null;
-  List<String> current = new ArrayList();
+  List<String> current = new ArrayList<>();
   current.add(firstLabel.value);
   Expr.Parsed expr;
 } {
@@ -390,11 +390,11 @@ List<Map.Entry<List<String>, Expr.Parsed>> RECORD_LITERAL_ENTRY(Wrapped<String> 
         [<WHSP>]
         expr=BASE_EXPRESSION() {
           values.add(new SimpleImmutableEntry(current, expr));
-          current = new ArrayList();
+          current = new ArrayList<>();
         }
         [<WHSP>]
       ) |
-      ({} { values.add(new SimpleImmutableEntry(current, null)); current = new ArrayList(); })
+      ({} { values.add(new SimpleImmutableEntry(current, null)); current = new ArrayList<>(); })
     )
       (
         <COMMA>
@@ -410,11 +410,11 @@ List<Map.Entry<List<String>, Expr.Parsed>> RECORD_LITERAL_ENTRY(Wrapped<String> 
             [<WHSP>]
             expr=BASE_EXPRESSION() {
               values.add(new SimpleImmutableEntry(current, expr));
-              current = new ArrayList();
+              current = new ArrayList<>();
             }
             [<WHSP>]
           ) |
-          ({} { values.add(new SimpleImmutableEntry(current, null)); current = new ArrayList(); })
+          ({} { values.add(new SimpleImmutableEntry(current, null)); current = new ArrayList<>(); })
         )
       )*
       <BRACE_CLOSE>
@@ -424,7 +424,7 @@ List<Map.Entry<List<String>, Expr.Parsed>> RECORD_LITERAL_ENTRY(Wrapped<String> 
 }
 
 List<Map.Entry<String, Expr.Parsed>> RECORD_TYPE_ENTRY(Wrapped<String> firstLabel): {
-  List<Map.Entry<String, Expr.Parsed>> values = new ArrayList();
+  List<Map.Entry<String, Expr.Parsed>> values = new ArrayList<>();
   List<Map.Entry<String, Expr.Parsed>> next = null;
   Expr.Parsed expr;
 } {
@@ -448,7 +448,7 @@ List<Map.Entry<String, Expr.Parsed>> RECORD_TYPE_ENTRY(Wrapped<String> firstLabe
 
 Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
   Token first;
-  Token last;
+  Token last = null;
   Wrapped<String> firstLabel = null;
   List<Map.Entry<List<String>, Expr.Parsed>> literalValues = null;
   List<Map.Entry<String, Expr.Parsed>> typeValues = null;
@@ -459,7 +459,7 @@ Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
     (<COMMA> (<WHSP>)?)?
     (
         last=<BRACE_CLOSE>
-      | (<EQUAL_SIGN> (<WHSP>)? last=<BRACE_CLOSE> { literalValues = new ArrayList(); })
+      | (<EQUAL_SIGN> (<WHSP>)? last=<BRACE_CLOSE> { literalValues = new ArrayList<>(); })
       | (
         firstLabel=ANY_LABEL_OR_SOME()
         (<WHSP>)?
@@ -468,11 +468,11 @@ Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
     )
   ) {
     if (literalValues != null) {
-      return ParsingHelpers.makeRecordLiteral(literalValues, first, first);
+      return ParsingHelpers.makeRecordLiteral(literalValues, first, last);
     } else if (typeValues != null) {
-      return ParsingHelpers.makeRecordType(typeValues, first, first);
+      return ParsingHelpers.makeRecordType(typeValues, first, last);
     } else {
-      return ParsingHelpers.makeRecordType(new ArrayList(), first, first);
+      return ParsingHelpers.makeRecordType(new ArrayList<>(), first, last);
     }
   }
 }
@@ -482,7 +482,7 @@ Expr.Parsed UNION_TYPE(): {
   Token last;
   Wrapped<String> label;
   Expr.Parsed type = null;
-  List<Map.Entry<String, Expr.Parsed>> typeValues = new ArrayList();
+  List<Map.Entry<String, Expr.Parsed>> typeValues = new ArrayList<>();
 } {
   (
     first=<ANGLE_OPEN>
@@ -1117,7 +1117,7 @@ LetBinding LET_BINDING(): {
 
 Expr.Parsed LET_EXPRESSION(): {
   LetBinding current = null;
-  List<LetBinding> bindings = new ArrayList();
+  List<LetBinding> bindings = new ArrayList<>();
   Expr.Parsed body;
   Token whsp;
 } {

@@ -83,8 +83,8 @@ final class ParsingHelpers {
     Source source =
         Source.fromString("", first.beginLine, first.beginColumn, last.endLine, last.endColumn);
 
-    List<String> parts = new ArrayList(1);
-    List<Expr> interpolated = new ArrayList();
+    List<String> parts = new ArrayList<>(1);
+    List<Expr> interpolated = new ArrayList<>();
     boolean lastWasInterpolated = true;
 
     for (Entry<String, Expr.Parsed> chunk : chunks) {
@@ -179,8 +179,8 @@ final class ParsingHelpers {
 
     Collections.reverse(chunks);
 
-    List<String> parts = new ArrayList(1);
-    List<Expr> interpolated = new ArrayList();
+    List<String> parts = new ArrayList<>(1);
+    List<Expr> interpolated = new ArrayList<>();
 
     for (Entry<String, Expr.Parsed> chunk : chunks) {
       if (chunk.getKey() == null) {
@@ -514,11 +514,14 @@ final class ParsingHelpers {
 
   static final Expr.Parsed makeRecordLiteral(
       List<Entry<List<String>, Expr.Parsed>> fields, Token first, Token last) {
-    // TODO: text is empty.
-    Source source =
-        Source.fromString("", first.beginLine, first.beginColumn, last.endLine, last.endColumn);
+    // TODO: Get actual last token in all cases.
+    int endLine = (last == null) ? first.endLine : last.endLine;
+    int endColumn = (last == null) ? first.endColumn : last.endColumn;
 
-    List<Entry<String, Expr>> dedotted = new ArrayList(fields.size());
+    // TODO: text is empty.
+    Source source = Source.fromString("", first.beginLine, first.beginColumn, endLine, endColumn);
+
+    List<Entry<String, Expr>> dedotted = new ArrayList<>(fields.size());
 
     for (Entry<List<String>, Expr.Parsed> entry : fields) {
       List<String> parts = entry.getKey();
@@ -546,7 +549,7 @@ final class ParsingHelpers {
       }
     }
 
-    List<Entry<String, Expr>> desugared = new ArrayList(dedotted.size());
+    List<Entry<String, Expr>> desugared = new ArrayList<>(dedotted.size());
     Set<String> seen = new HashSet();
 
     for (int i = 0; i < dedotted.size(); i++) {
@@ -575,18 +578,24 @@ final class ParsingHelpers {
 
   static final Expr.Parsed makeRecordType(
       List<Entry<String, Expr.Parsed>> fields, Token first, Token last) {
+    // TODO: Get actual last token in all cases.
+    int endLine = (last == null) ? first.endLine : last.endLine;
+    int endColumn = (last == null) ? first.endColumn : last.endColumn;
+
     // TODO: text is empty.
-    Source source =
-        Source.fromString("", first.beginLine, first.beginColumn, last.endLine, last.endColumn);
+    Source source = Source.fromString("", first.beginLine, first.beginColumn, endLine, endColumn);
 
     return new Expr.Parsed(Expr.makeRecordType((List) fields), source);
   }
 
   static final Expr.Parsed makeUnionType(
       List<Entry<String, Expr.Parsed>> fields, Token first, Token last) {
+    // TODO: Get actual last token in all cases.
+    int endLine = (last == null) ? first.endLine : last.endLine;
+    int endColumn = (last == null) ? first.endColumn : last.endColumn;
+
     // TODO: text is empty.
-    Source source =
-        Source.fromString("", first.beginLine, first.beginColumn, last.endLine, last.endColumn);
+    Source source = Source.fromString("", first.beginLine, first.beginColumn, endLine, endColumn);
 
     return new Expr.Parsed(Expr.makeUnionType((List) fields), source);
   }
