@@ -13,7 +13,11 @@ object Main extends IOApp {
     implicit val c: Client[IO] = client
 
     for {
-      e1 <- IO.pure(parse("let any = http://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/List/any using ./headers.dhall in any"))
+      e1 <- IO.pure(
+        parse(
+          "let any = http://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/List/any using ./headers.dhall in any"
+        )
+      )
       e2 <- e1.resolveImports[IO]()
       _ <- IO(println(e2.normalize))
     } yield ExitCode.Success

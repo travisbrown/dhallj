@@ -10,8 +10,9 @@ object ToHeaders {
 
   // See https://discourse.dhall-lang.org/t/valid-expressions-for-using-headers/205
   // For the moment, this is consistent with the Haskell implementation
-  def apply(expr: Expr): Headers = {
-    if (expr eq null) Headers.empty else {
+  def apply(expr: Expr): Headers =
+    if (expr eq null) Headers.empty
+    else {
       //TODO do we need to .accept(this) on expr?
       val e = expr.normalize
       val l = asListLiteral(e)
@@ -48,6 +49,5 @@ object ToHeaders {
         Headers(hs)
       }
     }
-  }
 
 }

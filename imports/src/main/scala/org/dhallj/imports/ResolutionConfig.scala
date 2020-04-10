@@ -13,5 +13,3 @@ object ResolutionConfig {
   case object FromResources extends LocalMode
 
 }
-
-

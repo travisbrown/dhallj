@@ -167,7 +167,8 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     onImport(Local(path), mode, hash)
 
   override def onRemoteImport(url: URI, using: F[Expr], mode: Import.Mode, hash: Array[Byte]): F[Expr] =
-    if (using != null) using >>= (u => onImport(Remote(url, u), mode, hash)) else onImport(Remote(url, null), mode, hash)
+    if (using != null) using >>= (u => onImport(Remote(url, u), mode, hash))
+    else onImport(Remote(url, null), mode, hash)
 
   override def onEnvImport(value: String, mode: Import.Mode, hash: Array[Byte]): F[Expr] =
     onImport(Env(value), mode, hash)
@@ -200,17 +201,18 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
                   F.delay(scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString)
               }
             } yield v -> Headers.empty
-          case Remote(uri, using) => for {
-            headers <- F.pure(ToHeaders(using))
-            req <-  F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
-            resp <- Client.fetch[(String, Headers)](req) {
+          case Remote(uri, using) =>
+            for {
+              headers <- F.pure(ToHeaders(using))
+              req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
+              resp <- Client.fetch[(String, Headers)](req) {
                 case Successful(resp) =>
                   for {
                     s <- EntityDecoder.decodeString(resp)
                   } yield s -> resp.headers
                 case _ => F.raiseError[(String, Headers)](new RuntimeException(s"Missing import - cannot resolve $uri"))
               }
-          } yield resp
+            } yield resp
           case Missing => F.raiseError(new RuntimeException(s"Missing import - cannot resolve missing"))
         }
 
@@ -250,10 +252,10 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
         case Import.Mode.LOCATION =>
           for {
             expr <- i match {
-              case Local(path) => makeLocation("Local", path.toString)
+              case Local(path)    => makeLocation("Local", path.toString)
               case Remote(uri, _) => makeLocation("Remote", uri.toString)
-              case Env(value)  => makeLocation("Environment", value)
-              case Missing     => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+              case Env(value)     => makeLocation("Environment", value)
+              case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
             }
           } yield expr -> Headers.empty
       }

@@ -9,7 +9,7 @@ object ReferentialSanityCheck {
     case Remote(uri, _) =>
       child match {
         case Remote(_, _) => F.unit
-        case Missing   => F.unit
+        case Missing      => F.unit
         case Local(path) =>
           F.raiseError(
             new RuntimeException(
