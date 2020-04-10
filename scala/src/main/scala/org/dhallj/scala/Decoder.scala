@@ -1,7 +1,7 @@
 package org.dhallj.scala
 
 import org.dhallj.core.Expr
-import org.dhallj.s.ast._
+import org.dhallj.ast._
 
 trait Codec[A] {
   def decode(expr: Expr): Either[Codec.DecodingError, A]
@@ -45,8 +45,8 @@ object Codec {
       }
 
     def encode(value: Option[A]): Either[Codec.EncodingError, Expr] =
-      value.fold[Either[Codec.EncodingError, Expr]](Right(Application(Identifier("None", None), Codec[A].dhallType)))(
-        a => Codec[A].encode(a).map(e => Application(Identifier("Some"), e))
+      value.fold[Either[Codec.EncodingError, Expr]](Right(Application(Identifier("None"), Codec[A].dhallType)))(a =>
+        Codec[A].encode(a).map(e => Application(Identifier("Some"), e))
       )
 
     val dhallType: Expr = Application(Identifier("Optional"), Codec[A].dhallType)
@@ -73,7 +73,7 @@ object Codec {
             .foldRight[Either[Codec.EncodingError, List[Expr]]](Right(Nil)) {
               case (v, acc) => acc.flatMap(current => Codec[A].encode(v).map(_ :: current))
             }
-            .map(NonEmptyListLiteral(_))
+            .map(vs => NonEmptyListLiteral(vs.head, vs.tail.toVector))
       }
 
     val dhallType: Expr = Application(Identifier("List"), Codec[A].dhallType)

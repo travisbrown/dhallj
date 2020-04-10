@@ -1,9 +1,9 @@
 package org.dhallj.tests
 
 import munit.FunSuite
+import org.dhallj.ast._
 import org.dhallj.core.Expr
 import org.dhallj.parser.DhallParser
-import org.dhallj.s.ast._
 import org.scalacheck.{Arbitrary, Gen}
 
 class MiscSuite extends CheckersFunSuite() {
@@ -22,7 +22,7 @@ class MiscSuite extends CheckersFunSuite() {
 
   testAll1("doubles")((value: Double) => parsesTo(value.toString, DoubleLiteral(value)))
   testAll1("naturals")((value: BigInt) => parsesTo(value.abs.toString, NaturalLiteral(value.abs)))
-  testAll1("strings")((value: AsciiPrintableString) => parsesTo(s""""${value.value}"""", TextLiteral(value.value)))
+  testAll1("strings")((value: AsciiPrintableString) => parsesTo(s""""${value.value}"""", Text(value.value)))
 
   // Temporarily matching bug in Haskell implementation.
   checkBetaNormalization(
