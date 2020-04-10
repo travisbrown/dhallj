@@ -263,7 +263,9 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
     if (len != 3) {
       throw new DecodingException("Some must be encoded in an array of length 3");
     } else {
-      Expr tpe = readExpr();
+      // The spec currently says "Some expressions store the type (if present) and their value", but
+      // we ignore the type, and (I think) it should always be null.
+      readExpr();
       Expr value = readExpr();
       return Expr.makeApplication(Expr.Constants.SOME, value);
     }
