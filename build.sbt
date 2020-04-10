@@ -77,6 +77,15 @@ lazy val scala = project
   .settings(moduleName := "dhall-scala")
   .dependsOn(parser)
 
+lazy val testing = project
+  .in(file("testing"))
+  .settings(
+    baseSettings ++ scalaSettings,
+    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.14.3")
+  )
+  .settings(moduleName := "dhall-testing")
+  .dependsOn(scala)
+
 lazy val javagen = project
   .in(file("javagen"))
   .settings(baseSettings ++ scalaSettings)
@@ -98,7 +107,6 @@ lazy val importsMini = project
   .settings(moduleName := "dhall-imports-mini")
   .dependsOn(parser, core)
 
-
 lazy val Slow = config("slow").extend(Test)
 
 lazy val tests = project
@@ -114,7 +122,7 @@ lazy val tests = project
     testOptions.in(Slow) -= Tests.Argument("--exclude-tags=Slow"),
     testOptions.in(Slow) += Tests.Argument("--include-tags=Slow")
   )
-  .dependsOn(scala, importsMini)
+  .dependsOn(scala, importsMini, testing)
 
 lazy val benchmarks = project
   .in(file("benchmarks"))
