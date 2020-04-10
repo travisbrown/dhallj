@@ -16,7 +16,7 @@ trait ArbitraryInstances {
     case other => other
   }
 
-  def isValidName(name: String): Boolean = List('\u0000', '`').forall(name.indexOf(_) == -1) && name.nonEmpty
+  def isValidName(name: String): Boolean = List('\u0000', '\u0001', '`').forall(name.indexOf(_) == -1) && name.nonEmpty
 
   def genIdentifier: Gen[Expr] = for {
     name <- genValidNameString
@@ -100,22 +100,27 @@ trait ArbitraryInstances {
     Gen.oneOf(
       genType(defaultMaxDepth),
       genType(defaultMaxDepth).flatMap(tpe => genForType(tpe).getOrElse(genType(defaultMaxDepth))),
+      /* TODO: We should test type annotations.
       genType(defaultMaxDepth).flatMap(tpe =>
         genForType(tpe).map(_.map(expr => Annotated(expr, tpe))).getOrElse(genType(defaultMaxDepth))
       )
+      */
     ).map(WellTypedExpr(_))
   )
-
 
   implicit val shrinkWellTypedExpr: Shrink[WellTypedExpr] = Shrink(expr =>
     (
       expr.value match {
-        case NaturalLiteral(value) => Shrink.shrink(value).map(NaturalLiteral(_))
+        case NaturalLiteral(value) => Shrink.shrink(value).map(value => NaturalLiteral(value.abs))
         case IntegerLiteral(value) => Shrink.shrink(value).map(IntegerLiteral(_))
         case DoubleLiteral(value) => Shrink.shrink(value).map(DoubleLiteral(_))
-        case RecordLiteral(fields) => safeFieldsShrink.shrink(fields).map(_.filterKeys(isValidName).toMap).map(RecordLiteral(_))
-        case RecordType(fields) => safeFieldsShrink.shrink(fields).map(_.filterKeys(isValidName).toMap).map(RecordType(_))
-        case UnionType(fields) => safeOptionFieldsShrink.shrink(fields).map(_.filterKeys(isValidName).toMap).map(UnionType(_))
+        case RecordLiteral(fields) => safeFieldsShrink.shrink(fields).map(RecordLiteral(_))
+        case RecordType(fields) => safeFieldsShrink.shrink(fields).map(RecordType(_))
+        case UnionType(fields) => safeOptionFieldsShrink.shrink(fields).map(UnionType(_))
+      case TextLiteral(first, rest) => Shrink.shrink(first).zip(Shrink.shrink(rest)).map {
+          case (shrunkFirst, shrunkRest) => TextLiteral(shrunkFirst, shrunkRest)
+        }
+        case Application(Expr.Constants.SOME, arg) => Shrink.shrink(arg).map(Application(Expr.Constants.SOME, _))
         case other => Stream.empty
       }
     ).map(WellTypedExpr(_))
@@ -123,7 +128,7 @@ trait ArbitraryInstances {
 
   val shrinkExprFromWellTypedExpr: Shrink[Expr] = Shrink.xmap[WellTypedExpr, Expr](_.value, WellTypedExpr(_))
 
-  val safeNameShrink: Shrink[String] = Shrink { name => Shrink.shrink(name).filter(isValidName) }
+  val safeNameShrink: Shrink[String] = Shrink { name => name.inits.toStream.init }
 
   lazy val safeFieldsShrink: Shrink[Map[String, Expr]] = Shrink.shrinkContainer2[Map, String, Expr](
     implicitly,
