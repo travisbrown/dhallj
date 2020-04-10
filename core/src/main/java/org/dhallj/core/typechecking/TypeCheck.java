@@ -654,6 +654,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     List<Entry<String, Expr>> handlersTypeFields = Expr.Util.asRecordType(handlersType);
 
     if (handlersTypeFields == null) {
+      // The handlers argument is not a record.
       throw TypeCheckFailure.makeMergeHandlersTypeError(handlersType);
     } else {
       Expr unionType = union.acceptExternal(this);
@@ -671,7 +672,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         } else if (type != null) {
           return type;
         } else {
-          throw TypeCheckFailure.makeMergeInvalidAnnotationError(type, inferredType);
+          // Both were empty (this shouldn't happen).
+          throw TypeCheckFailure.makeMergeUnionTypeError(type);
         }
       } else {
         Expr optionalElementType = Expr.Util.getOptionalArg(unionType);
@@ -691,7 +693,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
           } else if (type != null) {
             return type;
           } else {
-            throw TypeCheckFailure.makeMergeInvalidAnnotationError(type, inferredType);
+            // Both were empty (this shouldn't happen).
+            throw TypeCheckFailure.makeMergeUnionTypeError(type);
           }
         }
       }
