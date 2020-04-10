@@ -1,7 +1,7 @@
 package org.dhallj.testing
 
 import org.dhallj.ast._
-import org.dhallj.core.Expr
+import org.dhallj.core.{Expr, Operator}
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 trait ArbitraryInstances {
@@ -22,6 +22,8 @@ trait ArbitraryInstances {
     name <- genValidNameString
     index <- Gen.oneOf(Gen.const(0L), Arbitrary.arbitrary[Long].map(_.abs))
   } yield Identifier(name, index)
+
+  val genOperator: Gen[Operator] = Gen.oneOf(Operator.values())
 
   def genForType(tpe: Expr): Option[Gen[Expr]] = tpe match {
     case Expr.Constants.NATURAL => Some(Arbitrary.arbitrary[BigInt].map(value => NaturalLiteral(value.abs)))
@@ -108,38 +110,57 @@ trait ArbitraryInstances {
     ).map(WellTypedExpr(_))
   )
 
-  implicit val shrinkWellTypedExpr: Shrink[WellTypedExpr] = Shrink(expr =>
-    (
-      expr.value match {
-        case NaturalLiteral(value) => Shrink.shrink(value).map(value => NaturalLiteral(value.abs))
-        case IntegerLiteral(value) => Shrink.shrink(value).map(IntegerLiteral(_))
-        case DoubleLiteral(value) => Shrink.shrink(value).map(DoubleLiteral(_))
-        case RecordLiteral(fields) => safeFieldsShrink.shrink(fields).map(RecordLiteral(_))
-        case RecordType(fields) => safeFieldsShrink.shrink(fields).map(RecordType(_))
-        case UnionType(fields) => safeOptionFieldsShrink.shrink(fields).map(UnionType(_))
-      case TextLiteral(first, rest) => Shrink.shrink(first).zip(Shrink.shrink(rest)).map {
-          case (shrunkFirst, shrunkRest) => TextLiteral(shrunkFirst, shrunkRest)
-        }
-        case Application(Expr.Constants.SOME, arg) => Shrink.shrink(arg).map(Application(Expr.Constants.SOME, _))
-        case other => Stream.empty
-      }
-    ).map(WellTypedExpr(_))
-  )
+  def genExpr(maxDepth: Int): Gen[Expr] = if (maxDepth == 0) {
+    arbitraryWellTypedExpr.arbitrary.map(_.value)
+  } else {
+    Gen.oneOf(
+      arbitraryWellTypedExpr.arbitrary.map(_.value),
+      for {
+        operator <- genOperator
+        lhs <- genExpr(maxDepth - 1)
+        rhs <- genExpr(maxDepth - 1)
+      } yield Expr.makeOperatorApplication(operator, lhs, rhs),
+      for {
+        f <- genExpr(maxDepth - 1)
+        arg <- genExpr(maxDepth - 1)
+      } yield Expr.makeApplication(f, arg)
+    )
+  }
 
-  val shrinkExprFromWellTypedExpr: Shrink[Expr] = Shrink.xmap[WellTypedExpr, Expr](_.value, WellTypedExpr(_))
+  implicit val arbitraryExpr: Arbitrary[Expr] = Arbitrary(genExpr(defaultMaxDepth))
+
+  implicit val shrinkExpr: Shrink[Expr] = Shrink {
+    case NaturalLiteral(value) => Shrink.shrink(value).map(value => NaturalLiteral(value.abs))
+    case IntegerLiteral(value) => Shrink.shrink(value).map(IntegerLiteral(_))
+    case DoubleLiteral(value) => Shrink.shrink(value).map(DoubleLiteral(_))
+    case RecordLiteral(fields) => safeFieldsShrink.shrink(fields).map(RecordLiteral(_))
+    case RecordType(fields) => safeFieldsShrink.shrink(fields).map(RecordType(_))
+    case UnionType(fields) => safeOptionFieldsShrink.shrink(fields).map(UnionType(_))
+    case TextLiteral(first, rest) => Shrink.shrink(first).zip(Shrink.shrink(rest)).map {
+      case (shrunkFirst, shrunkRest) => TextLiteral(shrunkFirst, shrunkRest)
+    }
+    case Application(Expr.Constants.SOME, arg) => Shrink.shrink(arg).map(Application(Expr.Constants.SOME, _))
+    case NonEmptyListLiteral(values) =>
+      Shrink.shrink(values).filter(_.nonEmpty).map(values => NonEmptyListLiteral(values.head, values.tail))
+    // The following match doesn't preserve type, but is useful for isolating parsing issues for now.
+    case OperatorApplication(_, lhs, rhs) => Stream(lhs, rhs)
+    case other => Stream.empty
+  }
+
+  implicit val shrinkWellTypedExpr: Shrink[WellTypedExpr] = Shrink.xmap[Expr, WellTypedExpr](WellTypedExpr(_), _.value)
 
   val safeNameShrink: Shrink[String] = Shrink { name => name.inits.toStream.init }
 
   lazy val safeFieldsShrink: Shrink[Map[String, Expr]] = Shrink.shrinkContainer2[Map, String, Expr](
     implicitly,
-    Shrink.shrinkTuple2(safeNameShrink, shrinkExprFromWellTypedExpr),
+    Shrink.shrinkTuple2(safeNameShrink, shrinkExpr),
     implicitly
   )
 
   lazy val safeOptionFieldsShrink: Shrink[Map[String, Option[Expr]]] =
     Shrink.shrinkContainer2[Map, String, Option[Expr]](
       implicitly,
-      Shrink.shrinkTuple2(safeNameShrink, Shrink.shrinkOption(shrinkExprFromWellTypedExpr)),
+      Shrink.shrinkTuple2(safeNameShrink, Shrink.shrinkOption(shrinkExpr)),
       implicitly
     )
 }
