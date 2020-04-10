@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import org.dhallj.core.util.ArrayIterator;
 
 /**
  * Constructors for the Dhall expression abstract syntax tree.
@@ -65,7 +64,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onText(this.parts, new ArrayIterator<Expr>(interpolated));
+      return visitor.onText(this.parts, new ArrayIterable<Expr>(interpolated));
     }
   }
 
@@ -247,7 +246,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onRecord(new ArrayIterator<Entry<String, Expr>>(fields), fields.length);
+      return visitor.onRecord(new ArrayIterable<Entry<String, Expr>>(fields), fields.length);
     }
   }
 
@@ -260,7 +259,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onRecordType(new ArrayIterator<Entry<String, Expr>>(fields), fields.length);
+      return visitor.onRecordType(new ArrayIterable<Entry<String, Expr>>(fields), fields.length);
     }
   }
 
@@ -273,7 +272,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onUnionType(new ArrayIterator<Entry<String, Expr>>(fields), fields.length);
+      return visitor.onUnionType(new ArrayIterable<Entry<String, Expr>>(fields), fields.length);
     }
   }
 
@@ -286,7 +285,7 @@ final class Constructors {
     }
 
     public final <A> A acceptExternal(Visitor<Expr, A> visitor) {
-      return visitor.onNonEmptyList(new ArrayIterator<Expr>(values), this.values.length);
+      return visitor.onNonEmptyList(new ArrayIterable<Expr>(values), this.values.length);
     }
   }
 
