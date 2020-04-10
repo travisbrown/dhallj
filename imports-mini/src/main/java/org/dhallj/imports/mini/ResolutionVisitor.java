@@ -179,6 +179,7 @@ abstract class ResolutionVisitor extends IdentityVis {
     WrappedParsingFailure(String location, ParsingFailure underlying) {
       super(String.format("Can't parse import: %s", location), underlying);
       this.location = location;
+      this.underlying = underlying;
     }
   }
 
@@ -189,6 +190,7 @@ abstract class ResolutionVisitor extends IdentityVis {
     WrappedIOException(Path path, Exception underlying) {
       super(String.format("Missing file %s", path), underlying);
       this.path = path;
+      this.underlying = underlying;
     }
   }
 
