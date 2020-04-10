@@ -28,16 +28,16 @@ public final class Encode implements Vis<Writer> {
 
   private static final class BigIntegerWriter extends Writer {
     private final BigInteger value;
-    private final boolean isNatural;
+    private final long label;
 
     BigIntegerWriter(BigInteger value, boolean isNatural) {
       this.value = value;
-      this.isNatural = isNatural;
+      this.label = isNatural ? Label.NATURAL : Label.INTEGER;
     }
 
     public void writeToStream(OutputStream stream) throws IOException {
       this.writeArrayStart(stream, 2);
-      this.writeLong(stream, this.isNatural ? Label.NATURAL : Label.INTEGER);
+      this.writeLong(stream, this.label);
       this.writeBigInteger(stream, this.value);
     }
   }
@@ -66,59 +66,79 @@ public final class Encode implements Vis<Writer> {
     return new DoubleWriter(value);
   }
 
-  public Writer onBuiltIn(Expr self, final String name) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-        if (name.equals("True")) {
-          this.writeBoolean(stream, true);
-        } else if (name.equals("False")) {
-          this.writeBoolean(stream, false);
-        } else {
-          this.writeString(stream, name);
-        }
+  private static final class BuiltInWriter extends Writer {
+    private final String name;
+
+    BuiltInWriter(String name) {
+      this.name = name;
+    }
+
+    public void writeToStream(OutputStream stream) throws IOException {
+      if (this.name.equals("True")) {
+        this.writeBoolean(stream, true);
+      } else if (this.name.equals("False")) {
+        this.writeBoolean(stream, false);
+      } else {
+        this.writeString(stream, this.name);
       }
-    };
+    }
+  }
+
+  public Writer onBuiltIn(Expr self, String name) {
+    return new BuiltInWriter(name);
+  }
+
+  private static final class IdentifierWriter extends Writer {
+    private final String name;
+    private final long index;
+
+    IdentifierWriter(String name, long index) {
+      this.name = name;
+      this.index = index;
+    }
+
+    public void writeToStream(OutputStream stream) throws IOException {
+      if (this.name.equals("_")) {
+        this.writeLong(stream, this.index);
+      } else {
+        this.writeArrayStart(stream, 2);
+        this.writeString(stream, this.name);
+        this.writeLong(stream, this.index);
+      }
+    }
   }
 
   public Writer onIdentifier(Expr self, final String name, final long index) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-
-        if (name.equals("_")) {
-          this.writeLong(stream, index);
-        } else {
-          this.writeArrayStart(stream, 2);
-          this.writeString(stream, name);
-          this.writeLong(stream, index);
-        }
-      }
-    };
+    return new IdentifierWriter(name, index);
   }
 
   public void bind(String param, Expr type) {}
 
+  private static final class FunctionWriter extends Writer {
+    private final String name;
+    private final long label;
+
+    FunctionWriter(String name, boolean isLambda) {
+      this.name = name;
+      this.label = isLambda ? Label.LAMBDA : Label.PI;
+    }
+
+    public void writeToStream(OutputStream stream) throws IOException {
+      if (this.name.equals("_")) {
+        this.writeArrayStart(stream, 3);
+        this.writeLong(stream, this.label);
+      } else {
+        this.writeArrayStart(stream, 4);
+        this.writeLong(stream, this.label);
+        this.writeString(stream, this.name);
+      }
+    }
+  }
+
   public Writer onLambda(final String name, Writer type, Writer result) {
     List<Writer> writers = new ArrayList<Writer>(3);
 
-    if (name.equals("_")) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeArrayStart(stream, 3);
-              this.writeLong(stream, Label.LAMBDA);
-            }
-          });
-    } else {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeArrayStart(stream, 4);
-              this.writeLong(stream, Label.LAMBDA);
-              this.writeString(stream, name);
-            }
-          });
-    }
-
+    writers.add(new FunctionWriter(name, true));
     writers.add(type);
     writers.add(result);
 
@@ -128,41 +148,53 @@ public final class Encode implements Vis<Writer> {
   public Writer onPi(final String name, Writer type, Writer result) {
     List<Writer> writers = new ArrayList<Writer>(3);
 
-    if (name.equals("_")) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeArrayStart(stream, 3);
-              this.writeLong(stream, Label.PI);
-            }
-          });
-    } else {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeArrayStart(stream, 4);
-              this.writeLong(stream, Label.PI);
-              this.writeString(stream, name);
-            }
-          });
-    }
-
+    writers.add(new FunctionWriter(name, false));
     writers.add(type);
     writers.add(result);
 
     return new Writer.Nested(writers);
   }
 
+  private static final class SizeAndLabelWriter extends Writer {
+    private final int size;
+    private final long label;
+    private final boolean addNull;
+    private final int mapSize;
+
+    private SizeAndLabelWriter(int size, long label, boolean addNull, int mapSize) {
+      this.size = size;
+      this.label = label;
+      this.addNull = addNull;
+      this.mapSize = mapSize;
+    }
+
+    SizeAndLabelWriter(int size, long label, boolean addNull) {
+      this(size, label, addNull, -1);
+    }
+
+    SizeAndLabelWriter(int size, long label, int mapSize) {
+      this(size, label, false, mapSize);
+    }
+
+    SizeAndLabelWriter(int size, long label) {
+      this(size, label, false, -1);
+    }
+
+    public void writeToStream(OutputStream stream) throws IOException {
+      this.writeArrayStart(stream, size);
+      this.writeLong(stream, label);
+      if (this.mapSize > -1) {
+        this.writeMapStart(stream, mapSize);
+      } else if (this.addNull) {
+        this.writeNull(stream);
+      }
+    }
+  }
+
   public Writer onLet(final List<LetBinding<Writer>> bindings, Writer body) {
     List<Writer> writers = new ArrayList<Writer>();
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 2 + bindings.size() * 3);
-            this.writeLong(stream, Label.LET);
-          }
-        });
+    writers.add(new SizeAndLabelWriter(2 + bindings.size() * 3, Label.LET));
 
     for (final LetBinding<Writer> binding : bindings) {
       writers.add(
@@ -220,25 +252,26 @@ public final class Encode implements Vis<Writer> {
     return builder.toString();
   }
 
+  private static final class StringWriter extends Writer {
+    private final String value;
+
+    StringWriter(String value) {
+      this.value = value;
+    }
+
+    public void writeToStream(OutputStream stream) throws IOException {
+      this.writeString(stream, this.value);
+    }
+  }
+
   public Writer onText(final String[] parts, List<Writer> interpolated) {
     List<Writer> writers = new ArrayList<Writer>(parts.length + 1);
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, parts.length * 2);
-            this.writeLong(stream, Label.TEXT);
-          }
-        });
+    writers.add(new SizeAndLabelWriter(parts.length * 2, Label.TEXT));
 
     Iterator<Writer> it = interpolated.iterator();
     for (final String part : parts) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeString(stream, unescapeText(part));
-            }
-          });
+      writers.add(new StringWriter(unescapeText(part)));
       if (it.hasNext()) {
         writers.add(it.next());
       }
@@ -248,15 +281,8 @@ public final class Encode implements Vis<Writer> {
 
   public Writer onNonEmptyList(final List<Writer> values) {
     List<Writer> writers = new ArrayList<Writer>(values.size() + 1);
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, values.size() + 2);
-            this.writeLong(stream, Label.LIST);
-            this.writeNull(stream);
-          }
-        });
 
+    writers.add(new SizeAndLabelWriter(values.size() + 2, Label.LIST, true));
     writers.addAll(values);
 
     return new Writer.Nested(writers);
@@ -267,16 +293,8 @@ public final class Encode implements Vis<Writer> {
     final Expr listElementType = Expr.Util.getListArg(typeExpr);
 
     writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 2);
-            if (listElementType != null) {
-              this.writeLong(stream, Label.LIST);
-            } else {
-              this.writeLong(stream, Label.EMPTY_LIST_WITH_ABSTRACT_TYPE);
-            }
-          }
-        });
+        new SizeAndLabelWriter(
+            2, (listElementType != null) ? Label.LIST : Label.EMPTY_LIST_WITH_ABSTRACT_TYPE));
 
     if (listElementType != null) {
       // We have to recurse explicitly.
@@ -291,22 +309,10 @@ public final class Encode implements Vis<Writer> {
   public Writer onRecord(final List<Entry<String, Writer>> fields) {
 
     List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 2);
-            this.writeLong(stream, Label.RECORD_LITERAL);
-            this.writeMapStart(stream, fields.size());
-          }
-        });
+    writers.add(new SizeAndLabelWriter(2, Label.RECORD_LITERAL, fields.size()));
 
     for (final Entry<String, Writer> field : sortFields(fields)) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeString(stream, field.getKey());
-            }
-          });
+      writers.add(new StringWriter(field.getKey()));
       writers.add(field.getValue());
     }
     return new Writer.Nested(writers);
@@ -315,22 +321,10 @@ public final class Encode implements Vis<Writer> {
   public Writer onRecordType(final List<Entry<String, Writer>> fields) {
 
     List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 2);
-            this.writeLong(stream, Label.RECORD_TYPE);
-            this.writeMapStart(stream, fields.size());
-          }
-        });
+    writers.add(new SizeAndLabelWriter(2, Label.RECORD_TYPE, fields.size()));
 
     for (final Entry<String, Writer> field : sortFields(fields)) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeString(stream, field.getKey());
-            }
-          });
+      writers.add(new StringWriter(field.getKey()));
       writers.add(field.getValue());
     }
     return new Writer.Nested(writers);
@@ -338,22 +332,10 @@ public final class Encode implements Vis<Writer> {
 
   public Writer onUnionType(final List<Entry<String, Writer>> fields) {
     List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 2);
-            this.writeLong(stream, Label.UNION_TYPE);
-            this.writeMapStart(stream, fields.size());
-          }
-        });
+    writers.add(new SizeAndLabelWriter(2, Label.UNION_TYPE, fields.size()));
 
     for (final Entry<String, Writer> field : sortFields(fields)) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeString(stream, field.getKey());
-            }
-          });
+      writers.add(new StringWriter(field.getKey()));
       Writer value = field.getValue();
       if (value != null) {
         writers.add(field.getValue());
@@ -369,36 +351,22 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
+  private static final Writer fieldAccessHeaderWriter =
+      new SizeAndLabelWriter(3, Label.FIELD_ACCESS);
+
   public Writer onFieldAccess(Writer base, final String fieldName) {
     List<Writer> writers = new ArrayList<Writer>(3);
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 3);
-            this.writeLong(stream, Label.FIELD_ACCESS);
-          }
-        });
+    writers.add(fieldAccessHeaderWriter);
     writers.add(base);
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeString(stream, fieldName);
-          }
-        });
+    writers.add(new StringWriter(fieldName));
     return new Writer.Nested(writers);
   }
 
   public Writer onProjection(Writer base, final String[] fieldNames) {
     List<Writer> writers = new ArrayList<Writer>(3);
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, fieldNames.length + 2);
-            this.writeLong(stream, Label.PROJECTION);
-          }
-        });
+    writers.add(new SizeAndLabelWriter(fieldNames.length + 2, Label.PROJECTION));
     writers.add(base);
 
     writers.add(
@@ -412,17 +380,14 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
+  private static final Writer projectionByTypeHeaderWriter =
+      new SizeAndLabelWriter(3, Label.PROJECTION);
+
   public Writer onProjectionByType(Writer base, Writer type) {
 
     List<Writer> writers = new ArrayList<Writer>(4);
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 3);
-            this.writeLong(stream, Label.PROJECTION);
-          }
-        });
+    writers.add(projectionByTypeHeaderWriter);
     writers.add(base);
 
     writers.add(
@@ -441,34 +406,18 @@ public final class Encode implements Vis<Writer> {
     String asBuiltIn = Expr.Util.asBuiltIn(baseExpr);
 
     if (asBuiltIn != null && asBuiltIn.equals("Some")) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeArrayStart(stream, 3);
-              this.writeLong(stream, Label.SOME);
-              this.writeNull(stream);
-            }
-          });
+      writers.add(new SizeAndLabelWriter(3, Label.SOME, true));
       writers.add(args.get(0));
 
     } else {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeArrayStart(stream, args.size() + 2);
-              this.writeLong(stream, Label.APPLICATION);
-            }
-          });
-
+      writers.add(new SizeAndLabelWriter(args.size() + 2, Label.APPLICATION));
       writers.add(base);
-
       writers.addAll(args);
     }
     return new Writer.Nested(writers);
   }
 
   public Writer onOperatorApplication(final Operator operator, Writer lhs, Writer rhs) {
-
     List<Writer> writers = new ArrayList<Writer>(3);
 
     writers.add(
@@ -484,49 +433,33 @@ public final class Encode implements Vis<Writer> {
     return new Writer.Nested(writers);
   }
 
+  private static final Writer ifHeaderWriter = new SizeAndLabelWriter(4, Label.IF);
+
   public Writer onIf(Writer predicate, Writer thenValue, Writer elseValue) {
-
     List<Writer> writers = new ArrayList<Writer>(4);
-
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 4);
-            this.writeLong(stream, Label.IF);
-          }
-        });
+    writers.add(ifHeaderWriter);
     writers.add(predicate);
     writers.add(thenValue);
     writers.add(elseValue);
     return new Writer.Nested(writers);
   }
 
+  private static final Writer annotatedHeaderWriter = new SizeAndLabelWriter(3, Label.ANNOTATED);
+
   public Writer onAnnotated(Writer base, Writer type) {
-
     List<Writer> writers = new ArrayList<Writer>(3);
-
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 3);
-            this.writeLong(stream, Label.ANNOTATION);
-          }
-        });
+    writers.add(annotatedHeaderWriter);
     writers.add(base);
     writers.add(type);
     return new Writer.Nested(writers);
   }
 
+  private static final Writer assertHeaderWriter = new SizeAndLabelWriter(2, Label.ASSERT);
+
   public Writer onAssert(Writer base) {
     List<Writer> writers = new ArrayList<Writer>(2);
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 2);
-            this.writeLong(stream, Label.ASSERT);
-          }
-        });
+    writers.add(assertHeaderWriter);
     writers.add(base);
     return new Writer.Nested(writers);
   }
@@ -534,13 +467,7 @@ public final class Encode implements Vis<Writer> {
   public Writer onMerge(Writer handlers, Writer union, final Writer type) {
     List<Writer> writers = new ArrayList<Writer>(4);
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, (type != null) ? 4 : 3);
-            this.writeLong(stream, Label.MERGE);
-          }
-        });
+    writers.add(new SizeAndLabelWriter((type == null) ? 3 : 4, Label.MERGE));
     writers.add(handlers);
     writers.add(union);
     if (type != null) {
@@ -552,13 +479,7 @@ public final class Encode implements Vis<Writer> {
   public Writer onToMap(Writer base, final Writer type) {
     List<Writer> writers = new ArrayList<Writer>(4);
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, (type != null) ? 3 : 2);
-            this.writeLong(stream, Label.TO_MAP);
-          }
-        });
+    writers.add(new SizeAndLabelWriter((type == null) ? 2 : 3, Label.TO_MAP));
     writers.add(base);
     if (type != null) {
       writers.add(type);
@@ -740,7 +661,7 @@ public final class Encode implements Vis<Writer> {
     return result;
   }
 
-  public static final Comparator<Entry<String, Writer>> entryComparator =
+  private static final Comparator<Entry<String, Writer>> entryComparator =
       new Comparator<Entry<String, Writer>>() {
         public int compare(Entry<String, Writer> a, Entry<String, Writer> b) {
           return a.getKey().compareTo(b.getKey());

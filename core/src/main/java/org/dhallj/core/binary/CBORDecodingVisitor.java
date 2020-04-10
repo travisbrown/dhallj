@@ -104,7 +104,7 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
         return readImport(length);
       case Label.LET:
         return readLet(length);
-      case Label.ANNOTATION:
+      case Label.ANNOTATED:
         return readTypeAnnotation(length);
       case Label.TO_MAP:
         return readMap(length);

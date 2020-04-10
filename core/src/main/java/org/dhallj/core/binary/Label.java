@@ -20,7 +20,7 @@ final class Label {
   public static final int ASSERT = 19;
   public static final int IMPORT = 24;
   public static final int LET = 25;
-  public static final int ANNOTATION = 26;
+  public static final int ANNOTATED = 26;
   public static final int TO_MAP = 27;
   public static final int EMPTY_LIST_WITH_ABSTRACT_TYPE = 28;
 
