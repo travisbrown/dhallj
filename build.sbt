@@ -106,7 +106,7 @@ lazy val yaml = project
     moduleName := "dhall-yaml",
     libraryDependencies += "org.yaml" % "snakeyaml" % "1.26"
   )
-  .dependsOn(core)
+  .dependsOn(core, scala % Test)
 
 lazy val scala = project
   .in(file("modules/scala"))
