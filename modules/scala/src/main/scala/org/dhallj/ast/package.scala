@@ -53,6 +53,18 @@ object DoubleLiteral extends Constructor[Double] {
   }
 }
 
+object BoolLiteral extends Constructor[Boolean] {
+  def apply(value: Boolean): Expr = if (value) Expr.Constants.TRUE else Expr.Constants.FALSE
+
+  protected[this] val extractor: ExternalVisitor[Option[Result]] = new OptionVisitor[Result] {
+    override def onBuiltIn(name: String): Option[Boolean] = name match {
+      case "True"  => Some(true)
+      case "False" => Some(false)
+      case _       => None
+    }
+  }
+}
+
 object Identifier extends Constructor[(String, Option[Long])] {
   def apply(name: String, index: Long): Expr = Expr.makeIdentifier(name, index)
   def apply(name: String): Expr = apply(name, 0)
