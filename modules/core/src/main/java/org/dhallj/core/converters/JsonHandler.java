@@ -1,13 +1,14 @@
 package org.dhallj.core.converters;
 
 import java.io.PrintWriter;
+import java.math.BigInteger;
 
 public interface JsonHandler {
   void onNull();
 
   void onBoolean(boolean value);
 
-  void onNumber(String value);
+  void onNumber(BigInteger value);
 
   void onDouble(double value);
 
@@ -42,8 +43,8 @@ public interface JsonHandler {
       this.writer.print(value);
     }
 
-    public void onNumber(String value) {
-      this.writer.print(value);
+    public void onNumber(BigInteger value) {
+      this.writer.print(value.toString());
     }
 
     public void onDouble(double value) {
@@ -102,8 +103,8 @@ public interface JsonHandler {
       this.builder.append(value);
     }
 
-    public void onNumber(String value) {
-      this.builder.append(value);
+    public void onNumber(BigInteger value) {
+      this.builder.append(value.toString());
     }
 
     public void onDouble(double value) {

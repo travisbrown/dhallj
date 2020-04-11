@@ -36,12 +36,12 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
   }
 
   public Boolean onNatural(Expr self, BigInteger value) {
-    this.handler.onNumber(value.toString());
+    this.handler.onNumber(value);
     return true;
   }
 
   public Boolean onInteger(Expr self, BigInteger value) {
-    this.handler.onNumber(value.toString());
+    this.handler.onNumber(value);
     return true;
   }
 
