@@ -1,13 +1,9 @@
 package org.dhallj.core.binary;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -17,203 +13,108 @@ import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
 
-public final class Encode implements Visitor<Writer> {
-  public static final Visitor<Writer> instance = new Encode();
+public final class Encode implements Visitor<Void> {
+  private final Writer writer;
 
-  public Writer onNote(Writer base, Source source) {
+  public Encode(Writer writer) {
+    this.writer = writer;
+  }
+
+  public Void onNote(Void base, Source source) {
     return base;
   }
 
-  private static final class BigIntegerWriter extends Writer {
-    private final BigInteger value;
-    private final long label;
-
-    BigIntegerWriter(BigInteger value, boolean isNatural) {
-      this.value = value;
-      this.label = isNatural ? Label.NATURAL : Label.INTEGER;
-    }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      this.writeArrayStart(stream, 2);
-      this.writeLong(stream, this.label);
-      this.writeBigInteger(stream, this.value);
-    }
+  public Void onNatural(Expr self, BigInteger value) {
+    this.writer.writeArrayStart(2);
+    this.writer.writeLong(Label.NATURAL);
+    this.writer.writeBigInteger(value);
+    return null;
   }
 
-  public Writer onNatural(Expr self, BigInteger value) {
-    return new BigIntegerWriter(value, true);
+  public Void onInteger(Expr self, BigInteger value) {
+    this.writer.writeArrayStart(2);
+    this.writer.writeLong(Label.INTEGER);
+    this.writer.writeBigInteger(value);
+    return null;
   }
 
-  public Writer onInteger(Expr self, BigInteger value) {
-    return new BigIntegerWriter(value, false);
+  public Void onDouble(Expr self, double value) {
+    this.writer.writeDouble(value);
+    return null;
   }
 
-  private static final class DoubleWriter extends Writer {
-    private final double value;
-
-    DoubleWriter(double value) {
-      this.value = value;
+  public Void onBuiltIn(Expr self, String name) {
+    if (name.equals("True")) {
+      this.writer.writeBoolean(true);
+    } else if (name.equals("False")) {
+      this.writer.writeBoolean(false);
+    } else {
+      this.writer.writeString(name);
     }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      this.writeDouble(stream, value);
-    }
+    return null;
   }
 
-  public Writer onDouble(Expr self, double value) {
-    return new DoubleWriter(value);
-  }
-
-  private static final class BuiltInWriter extends Writer {
-    private final String name;
-
-    BuiltInWriter(String name) {
-      this.name = name;
+  public Void onIdentifier(Expr self, String name, long index) {
+    if (name.equals("_")) {
+      this.writer.writeLong(index);
+    } else {
+      this.writer.writeArrayStart(2);
+      this.writer.writeString(name);
+      this.writer.writeLong(index);
     }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      if (this.name.equals("True")) {
-        this.writeBoolean(stream, true);
-      } else if (this.name.equals("False")) {
-        this.writeBoolean(stream, false);
-      } else {
-        this.writeString(stream, this.name);
-      }
-    }
-  }
-
-  public Writer onBuiltIn(Expr self, String name) {
-    return new BuiltInWriter(name);
-  }
-
-  private static final class IdentifierWriter extends Writer {
-    private final String name;
-    private final long index;
-
-    IdentifierWriter(String name, long index) {
-      this.name = name;
-      this.index = index;
-    }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      if (this.name.equals("_")) {
-        this.writeLong(stream, this.index);
-      } else {
-        this.writeArrayStart(stream, 2);
-        this.writeString(stream, this.name);
-        this.writeLong(stream, this.index);
-      }
-    }
-  }
-
-  public Writer onIdentifier(Expr self, final String name, final long index) {
-    return new IdentifierWriter(name, index);
+    return null;
   }
 
   public void bind(String param, Expr type) {}
 
-  private static final class FunctionWriter extends Writer {
-    private final String name;
-    private final long label;
-
-    FunctionWriter(String name, boolean isLambda) {
-      this.name = name;
-      this.label = isLambda ? Label.LAMBDA : Label.PI;
+  public boolean prepareLambda(String name, Expr type) {
+    if (name.equals("_")) {
+      this.writer.writeArrayStart(3);
+      this.writer.writeLong(Label.LAMBDA);
+    } else {
+      this.writer.writeArrayStart(4);
+      this.writer.writeLong(Label.LAMBDA);
+      this.writer.writeString(name);
     }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      if (this.name.equals("_")) {
-        this.writeArrayStart(stream, 3);
-        this.writeLong(stream, this.label);
-      } else {
-        this.writeArrayStart(stream, 4);
-        this.writeLong(stream, this.label);
-        this.writeString(stream, this.name);
-      }
-    }
+    return true;
   }
 
-  public Writer onLambda(final String name, Writer type, Writer result) {
-    List<Writer> writers = new ArrayList<Writer>(3);
-
-    writers.add(new FunctionWriter(name, true));
-    writers.add(type);
-    writers.add(result);
-
-    return new Writer.Nested(writers);
+  public Void onLambda(String name, Void type, Void result) {
+    return null;
   }
 
-  public Writer onPi(final String name, Writer type, Writer result) {
-    List<Writer> writers = new ArrayList<Writer>(3);
-
-    writers.add(new FunctionWriter(name, false));
-    writers.add(type);
-    writers.add(result);
-
-    return new Writer.Nested(writers);
+  public boolean preparePi(String name, Expr type) {
+    if (name.equals("_")) {
+      this.writer.writeArrayStart(3);
+      this.writer.writeLong(Label.PI);
+    } else {
+      this.writer.writeArrayStart(4);
+      this.writer.writeLong(Label.PI);
+      this.writer.writeString(name);
+    }
+    return true;
   }
 
-  private static final class SizeAndLabelWriter extends Writer {
-    private final int size;
-    private final long label;
-    private final boolean addNull;
-    private final int mapSize;
-
-    private SizeAndLabelWriter(int size, long label, boolean addNull, int mapSize) {
-      this.size = size;
-      this.label = label;
-      this.addNull = addNull;
-      this.mapSize = mapSize;
-    }
-
-    SizeAndLabelWriter(int size, long label, boolean addNull) {
-      this(size, label, addNull, -1);
-    }
-
-    SizeAndLabelWriter(int size, long label, int mapSize) {
-      this(size, label, false, mapSize);
-    }
-
-    SizeAndLabelWriter(int size, long label) {
-      this(size, label, false, -1);
-    }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      this.writeArrayStart(stream, size);
-      this.writeLong(stream, label);
-      if (this.mapSize > -1) {
-        this.writeMapStart(stream, mapSize);
-      } else if (this.addNull) {
-        this.writeNull(stream);
-      }
-    }
+  public Void onPi(String name, Void type, Void result) {
+    return null;
   }
 
-  public Writer onLet(final List<Expr.LetBinding<Writer>> bindings, Writer body) {
-    List<Writer> writers = new ArrayList<Writer>();
+  public boolean prepareLet(int size) {
+    this.writer.writeArrayStart(2 + size * 3);
+    this.writer.writeLong(Label.LET);
+    return true;
+  }
 
-    writers.add(new SizeAndLabelWriter(2 + bindings.size() * 3, Label.LET));
-
-    for (final Expr.LetBinding<Writer> binding : bindings) {
-      writers.add(
-          new Writer() {
-            public void writeToStream(OutputStream stream) throws IOException {
-              this.writeString(stream, binding.getName());
-              if (!binding.hasType()) {
-                this.writeNull(stream);
-              }
-            }
-          });
-
-      if (binding.hasType()) {
-        writers.add(binding.getType());
-      }
-
-      writers.add(binding.getValue());
+  public boolean prepareLetBinding(String name, Expr type) {
+    this.writer.writeString(name);
+    if (type == null) {
+      this.writer.writeNull();
     }
-    writers.add(body);
+    return true;
+  }
 
-    return new Writer.Nested(writers);
+  public Void onLet(List<Expr.LetBinding<Void>> bindings, Void body) {
+    return null;
   }
 
   private static final String unescapeText(String input) {
@@ -250,239 +151,220 @@ public final class Encode implements Visitor<Writer> {
     return builder.toString();
   }
 
-  private static final class StringWriter extends Writer {
-    private final String value;
-
-    StringWriter(String value) {
-      this.value = value;
-    }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      this.writeString(stream, this.value);
-    }
+  public boolean prepareText(int size) {
+    this.writer.writeArrayStart(size * 2);
+    this.writer.writeLong(Label.TEXT);
+    return true;
   }
 
-  public Writer onText(final String[] parts, List<Writer> interpolated) {
-    List<Writer> writers = new ArrayList<Writer>(parts.length + 1);
-
-    writers.add(new SizeAndLabelWriter(parts.length * 2, Label.TEXT));
-
-    Iterator<Writer> it = interpolated.iterator();
-    for (final String part : parts) {
-      writers.add(new StringWriter(unescapeText(part)));
-      if (it.hasNext()) {
-        writers.add(it.next());
-      }
-    }
-    return new Writer.Nested(writers);
+  public boolean prepareTextPart(String part) {
+    this.writer.writeString(unescapeText(part));
+    return true;
   }
 
-  public Writer onNonEmptyList(final List<Writer> values) {
-    List<Writer> writers = new ArrayList<Writer>(values.size() + 1);
-
-    writers.add(new SizeAndLabelWriter(values.size() + 2, Label.LIST, true));
-    writers.addAll(values);
-
-    return new Writer.Nested(writers);
+  public Void onText(String[] parts, List<Void> interpolated) {
+    return null;
   }
 
-  public Writer onEmptyList(Expr typeExpr, Writer type) {
-    List<Writer> writers = new ArrayList<Writer>(2);
-    final Expr listElementType = Expr.Util.getListArg(typeExpr);
+  public boolean prepareNonEmptyList(int size) {
+    this.writer.writeArrayStart(size + 2);
+    this.writer.writeLong(Label.LIST);
+    this.writer.writeNull();
+    return true;
+  }
 
-    writers.add(
-        new SizeAndLabelWriter(
-            2, (listElementType != null) ? Label.LIST : Label.EMPTY_LIST_WITH_ABSTRACT_TYPE));
+  public Void onNonEmptyList(final List<Void> values) {
+    return null;
+  }
+
+  public boolean prepareEmptyList(Expr type) {
+    final Expr listElementType = Expr.Util.getListArg(type);
+
+    this.writer.writeArrayStart(2);
+    this.writer.writeLong(
+        (listElementType != null) ? Label.LIST : Label.EMPTY_LIST_WITH_ABSTRACT_TYPE);
 
     if (listElementType != null) {
       // We have to recurse explicitly.
-      writers.add(listElementType.accept(Encode.instance));
+      listElementType.accept(this);
+      return false;
     } else {
-      writers.add(type);
+      return true;
     }
-
-    return new Writer.Nested(writers);
   }
 
-  public Writer onRecord(final List<Entry<String, Writer>> fields) {
+  public Void onEmptyList(Void type) {
+    return null;
+  }
 
-    List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
-    writers.add(new SizeAndLabelWriter(2, Label.RECORD_LITERAL, fields.size()));
+  public boolean prepareRecord(int size) {
+    this.writer.writeArrayStart(2);
+    this.writer.writeLong(Label.RECORD_LITERAL);
+    this.writer.writeMapStart(size);
+    return true;
+  }
 
-    for (final Entry<String, Writer> field : sortFields(fields)) {
-      writers.add(new StringWriter(field.getKey()));
-      writers.add(field.getValue());
+  public boolean prepareRecordField(String name, Expr type) {
+    this.writer.writeString(name);
+    return true;
+  }
+
+  public Void onRecord(final List<Entry<String, Void>> fields) {
+    return null;
+  }
+
+  public boolean prepareRecordType(int size) {
+    this.writer.writeArrayStart(2);
+    this.writer.writeLong(Label.RECORD_TYPE);
+    this.writer.writeMapStart(size);
+    return true;
+  }
+
+  public boolean prepareRecordTypeField(String name, Expr type) {
+    this.writer.writeString(name);
+    return true;
+  }
+
+  public Void onRecordType(final List<Entry<String, Void>> fields) {
+    return null;
+  }
+
+  public boolean prepareUnionType(int size) {
+    this.writer.writeArrayStart(2);
+    this.writer.writeLong(Label.UNION_TYPE);
+    this.writer.writeMapStart(size);
+    return true;
+  }
+
+  public boolean prepareUnionTypeField(String name, Expr type) {
+    this.writer.writeString(name);
+    if (type == null) {
+      this.writer.writeNull();
     }
-    return new Writer.Nested(writers);
+    return true;
   }
 
-  public Writer onRecordType(final List<Entry<String, Writer>> fields) {
+  public Void onUnionType(final List<Entry<String, Void>> fields) {
+    return null;
+  }
 
-    List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
-    writers.add(new SizeAndLabelWriter(2, Label.RECORD_TYPE, fields.size()));
+  public boolean prepareFieldAccess() {
+    this.writer.writeArrayStart(3);
+    this.writer.writeLong(Label.FIELD_ACCESS);
+    return true;
+  }
 
-    for (final Entry<String, Writer> field : sortFields(fields)) {
-      writers.add(new StringWriter(field.getKey()));
-      writers.add(field.getValue());
+  public Void onFieldAccess(Void base, final String fieldName) {
+    this.writer.writeString(fieldName);
+    return null;
+  }
+
+  public boolean prepareProjection(int size) {
+    this.writer.writeArrayStart(size + 2);
+    this.writer.writeLong(Label.PROJECTION);
+    return true;
+  }
+
+  public Void onProjection(Void base, final String[] fieldNames) {
+    for (String fieldName : fieldNames) {
+      this.writer.writeString(fieldName);
     }
-    return new Writer.Nested(writers);
+    return null;
   }
 
-  public Writer onUnionType(final List<Entry<String, Writer>> fields) {
-    List<Writer> writers = new ArrayList<Writer>(fields.size() * 2 + 1);
-    writers.add(new SizeAndLabelWriter(2, Label.UNION_TYPE, fields.size()));
-
-    for (final Entry<String, Writer> field : sortFields(fields)) {
-      writers.add(new StringWriter(field.getKey()));
-      Writer value = field.getValue();
-      if (value != null) {
-        writers.add(field.getValue());
-      } else {
-        writers.add(
-            new Writer() {
-              public void writeToStream(OutputStream stream) throws IOException {
-                this.writeNull(stream);
-              }
-            });
-      }
-    }
-    return new Writer.Nested(writers);
+  public boolean prepareProjectionByType() {
+    this.writer.writeArrayStart(3);
+    this.writer.writeLong(Label.PROJECTION);
+    return true;
   }
 
-  private static final Writer fieldAccessHeaderWriter =
-      new SizeAndLabelWriter(3, Label.FIELD_ACCESS);
-
-  public Writer onFieldAccess(Writer base, final String fieldName) {
-    List<Writer> writers = new ArrayList<Writer>(3);
-
-    writers.add(fieldAccessHeaderWriter);
-    writers.add(base);
-    writers.add(new StringWriter(fieldName));
-    return new Writer.Nested(writers);
+  public boolean prepareProjectionByType(Expr type) {
+    this.writer.writeArrayStart(1);
+    return true;
   }
 
-  public Writer onProjection(Writer base, final String[] fieldNames) {
-    List<Writer> writers = new ArrayList<Writer>(3);
-
-    writers.add(new SizeAndLabelWriter(fieldNames.length + 2, Label.PROJECTION));
-    writers.add(base);
-
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            for (String fieldName : fieldNames) {
-              this.writeString(stream, fieldName);
-            }
-          }
-        });
-    return new Writer.Nested(writers);
+  public Void onProjectionByType(Void base, Void type) {
+    return null;
   }
 
-  private static final Writer projectionByTypeHeaderWriter =
-      new SizeAndLabelWriter(3, Label.PROJECTION);
-
-  public Writer onProjectionByType(Writer base, Writer type) {
-
-    List<Writer> writers = new ArrayList<Writer>(4);
-
-    writers.add(projectionByTypeHeaderWriter);
-    writers.add(base);
-
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 1);
-          }
-        });
-    writers.add(type);
-    return new Writer.Nested(writers);
-  }
-
-  public Writer onApplication(Expr baseExpr, Writer base, final List<Writer> args) {
-    List<Writer> writers = new ArrayList<Writer>(args.size() + 1);
-
-    String asBuiltIn = Expr.Util.asBuiltIn(baseExpr);
+  public boolean prepareApplication(Expr base, int size) {
+    String asBuiltIn = Expr.Util.asBuiltIn(base);
 
     if (asBuiltIn != null && asBuiltIn.equals("Some")) {
-      writers.add(new SizeAndLabelWriter(3, Label.SOME, true));
-      writers.add(args.get(0));
-
+      this.writer.writeArrayStart(3);
+      this.writer.writeLong(Label.SOME);
+      this.writer.writeNull();
+      return false;
     } else {
-      writers.add(new SizeAndLabelWriter(args.size() + 2, Label.APPLICATION));
-      writers.add(base);
-      writers.addAll(args);
+      this.writer.writeArrayStart(size + 2);
+      this.writer.writeLong(Label.APPLICATION);
+      return true;
     }
-    return new Writer.Nested(writers);
   }
 
-  public Writer onOperatorApplication(final Operator operator, Writer lhs, Writer rhs) {
-    List<Writer> writers = new ArrayList<Writer>(3);
-
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, 4);
-            this.writeLong(stream, Label.OPERATOR_APPLICATION);
-            this.writeLong(stream, operator.getLabel());
-          }
-        });
-    writers.add(lhs);
-    writers.add(rhs);
-    return new Writer.Nested(writers);
+  public Void onApplication(Void base, final List<Void> args) {
+    return null;
   }
 
-  private static final Writer ifHeaderWriter = new SizeAndLabelWriter(4, Label.IF);
-
-  public Writer onIf(Writer predicate, Writer thenValue, Writer elseValue) {
-    List<Writer> writers = new ArrayList<Writer>(4);
-    writers.add(ifHeaderWriter);
-    writers.add(predicate);
-    writers.add(thenValue);
-    writers.add(elseValue);
-    return new Writer.Nested(writers);
+  public boolean prepareOperatorApplication(final Operator operator) {
+    this.writer.writeArrayStart(4);
+    this.writer.writeLong(Label.OPERATOR_APPLICATION);
+    this.writer.writeLong(operator.getLabel());
+    return true;
   }
 
-  private static final Writer annotatedHeaderWriter = new SizeAndLabelWriter(3, Label.ANNOTATED);
-
-  public Writer onAnnotated(Writer base, Writer type) {
-    List<Writer> writers = new ArrayList<Writer>(3);
-    writers.add(annotatedHeaderWriter);
-    writers.add(base);
-    writers.add(type);
-    return new Writer.Nested(writers);
+  public Void onOperatorApplication(Operator operator, Void lhs, Void rhs) {
+    return null;
   }
 
-  private static final Writer assertHeaderWriter = new SizeAndLabelWriter(2, Label.ASSERT);
-
-  public Writer onAssert(Writer base) {
-    List<Writer> writers = new ArrayList<Writer>(2);
-
-    writers.add(assertHeaderWriter);
-    writers.add(base);
-    return new Writer.Nested(writers);
+  public boolean prepareIf() {
+    this.writer.writeArrayStart(4);
+    this.writer.writeLong(Label.IF);
+    return true;
   }
 
-  public Writer onMerge(Writer handlers, Writer union, final Writer type) {
-    List<Writer> writers = new ArrayList<Writer>(4);
-
-    writers.add(new SizeAndLabelWriter((type == null) ? 3 : 4, Label.MERGE));
-    writers.add(handlers);
-    writers.add(union);
-    if (type != null) {
-      writers.add(type);
-    }
-    return new Writer.Nested(writers);
+  public Void onIf(Void predicate, Void thenValue, Void elseValue) {
+    return null;
   }
 
-  public Writer onToMap(Writer base, final Writer type) {
-    List<Writer> writers = new ArrayList<Writer>(4);
+  public boolean prepareAnnotated(Expr type) {
+    this.writer.writeArrayStart(3);
+    this.writer.writeLong(Label.ANNOTATED);
+    return true;
+  }
 
-    writers.add(new SizeAndLabelWriter((type == null) ? 2 : 3, Label.TO_MAP));
-    writers.add(base);
-    if (type != null) {
-      writers.add(type);
-    }
-    return new Writer.Nested(writers);
+  public Void onAnnotated(Void base, Void type) {
+    return null;
+  }
+
+  public boolean prepareAssert() {
+    this.writer.writeArrayStart(2);
+    this.writer.writeLong(Label.ASSERT);
+    return true;
+  }
+
+  public Void onAssert(Void base) {
+    return null;
+  }
+
+  public boolean prepareMerge(Expr type) {
+    this.writer.writeArrayStart((type == null) ? 3 : 4);
+    this.writer.writeLong(Label.MERGE);
+    return true;
+  }
+
+  public Void onMerge(Void handlers, Void union, Void type) {
+    return null;
+  }
+
+  public boolean prepareToMap(Expr type) {
+    this.writer.writeArrayStart((type == null) ? 2 : 3);
+    this.writer.writeLong(Label.TO_MAP);
+    return true;
+  }
+
+  public Void onToMap(Void base, Void type) {
+    return null;
   }
 
   private final int modeLabel(Expr.ImportMode mode) {
@@ -505,37 +387,31 @@ public final class Encode implements Visitor<Writer> {
     return bytes;
   }
 
-  public Writer onMissingImport(final Expr.ImportMode mode, final byte[] hash) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-        this.writeArrayStart(stream, 4);
-        this.writeLong(stream, Label.IMPORT);
-        if (hash == null) {
-          this.writeNull(stream);
-        } else {
-          this.writeByteString(stream, multihash(hash));
-        }
-        this.writeLong(stream, modeLabel(mode));
-        this.writeLong(stream, Label.IMPORT_TYPE_MISSING);
-      }
-    };
+  public Void onMissingImport(final Expr.ImportMode mode, final byte[] hash) {
+    this.writer.writeArrayStart(4);
+    this.writer.writeLong(Label.IMPORT);
+    if (hash == null) {
+      this.writer.writeNull();
+    } else {
+      this.writer.writeByteString(multihash(hash));
+    }
+    this.writer.writeLong(modeLabel(mode));
+    this.writer.writeLong(Label.IMPORT_TYPE_MISSING);
+    return null;
   }
 
-  public Writer onEnvImport(final String value, final Expr.ImportMode mode, final byte[] hash) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-        this.writeArrayStart(stream, 5);
-        this.writeLong(stream, Label.IMPORT);
-        if (hash == null) {
-          this.writeNull(stream);
-        } else {
-          this.writeByteString(stream, multihash(hash));
-        }
-        this.writeLong(stream, modeLabel(mode));
-        this.writeLong(stream, Label.IMPORT_TYPE_ENV);
-        this.writeString(stream, value);
-      }
-    };
+  public Void onEnvImport(final String value, final Expr.ImportMode mode, final byte[] hash) {
+    this.writer.writeArrayStart(5);
+    this.writer.writeLong(Label.IMPORT);
+    if (hash == null) {
+      this.writer.writeNull();
+    } else {
+      this.writer.writeByteString(multihash(hash));
+    }
+    this.writer.writeLong(modeLabel(mode));
+    this.writer.writeLong(Label.IMPORT_TYPE_ENV);
+    this.writer.writeString(value);
+    return null;
   }
 
   private static int pathLabel(Path path) {
@@ -554,32 +430,29 @@ public final class Encode implements Visitor<Writer> {
     return -1;
   }
 
-  public Writer onLocalImport(final Path path, final Expr.ImportMode mode, final byte[] hash) {
-    return new Writer() {
-      public void writeToStream(OutputStream stream) throws IOException {
-        int size = 4 + path.getNameCount() - (path.isAbsolute() ? 0 : 1);
-        this.writeArrayStart(stream, size);
-        this.writeLong(stream, Label.IMPORT);
-        if (hash == null) {
-          this.writeNull(stream);
-        } else {
-          this.writeByteString(stream, multihash(hash));
-        }
-        this.writeLong(stream, modeLabel(mode));
-        this.writeLong(stream, pathLabel(path));
+  public Void onLocalImport(final Path path, final Expr.ImportMode mode, final byte[] hash) {
+    int size = 4 + path.getNameCount() - (path.isAbsolute() ? 0 : 1);
+    this.writer.writeArrayStart(size);
+    this.writer.writeLong(Label.IMPORT);
+    if (hash == null) {
+      this.writer.writeNull();
+    } else {
+      this.writer.writeByteString(multihash(hash));
+    }
+    this.writer.writeLong(modeLabel(mode));
+    this.writer.writeLong(pathLabel(path));
 
-        Iterator<Path> parts = path.iterator();
-        if (!path.isAbsolute()) {
-          parts.next();
-        }
-        while (parts.hasNext()) {
-          this.writeString(stream, parts.next().toString());
-        }
-      }
-    };
+    Iterator<Path> parts = path.iterator();
+    if (!path.isAbsolute()) {
+      parts.next();
+    }
+    while (parts.hasNext()) {
+      this.writer.writeString(parts.next().toString());
+    }
+    return null;
   }
 
-  private static int urlLabel(URI url) {
+  private static final int urlLabel(URI url) {
     if (url.getScheme().equals("https")) {
       return Label.IMPORT_TYPE_REMOTE_HTTPS;
     } else if (url.getScheme().equals("http")) {
@@ -589,10 +462,7 @@ public final class Encode implements Visitor<Writer> {
     }
   }
 
-  public Writer onRemoteImport(
-      final URI url, final Writer using, final Expr.ImportMode mode, final byte[] hash) {
-    List<Writer> writers = new ArrayList<Writer>(3);
-
+  private static final List<String> getUrlPathParts(URI url) {
     final List<String> parts = new ArrayList<String>();
     // TODO: verify that we don't need the raw versions here (currently escaped octets are decoded).
     parts.add(url.getAuthority());
@@ -607,63 +477,42 @@ public final class Encode implements Visitor<Writer> {
       }
     }
 
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            this.writeArrayStart(stream, parts.size() + 6);
-            this.writeLong(stream, Label.IMPORT);
-            if (hash == null) {
-              this.writeNull(stream);
-            } else {
-              this.writeByteString(stream, multihash(hash));
-            }
-            this.writeLong(stream, modeLabel(mode));
-            this.writeLong(stream, urlLabel(url));
-
-            if (using == null) {
-              this.writeNull(stream);
-            }
-          }
-        });
-
-    if (using != null) {
-      writers.add(using);
-    }
-
-    writers.add(
-        new Writer() {
-          public void writeToStream(OutputStream stream) throws IOException {
-            for (String part : parts) {
-              this.writeString(stream, part);
-            }
-
-            if (url.getQuery() == null) {
-              this.writeNull(stream);
-            } else {
-              this.writeString(stream, url.getQuery());
-            }
-          }
-        });
-
-    return new Writer.Nested(writers);
+    return parts;
   }
 
-  private static List<Entry<String, Writer>> sortFields(List<Entry<String, Writer>> fields) {
-    List<Entry<String, Writer>> result = new ArrayList(fields.size());
+  public boolean prepareRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
+    final List<String> parts = getUrlPathParts(url);
 
-    for (Entry<String, Writer> entry : fields) {
-      result.add(entry);
+    this.writer.writeArrayStart(parts.size() + 6);
+    this.writer.writeLong(Label.IMPORT);
+    if (hash == null) {
+      this.writer.writeNull();
+    } else {
+      this.writer.writeByteString(multihash(hash));
     }
+    this.writer.writeLong(modeLabel(mode));
+    this.writer.writeLong(urlLabel(url));
 
-    Collections.sort(result, entryComparator);
-    return result;
+    if (using == null) {
+      this.writer.writeNull();
+    }
+    return true;
   }
 
-  /** Java 8 introduce {@code comparingByKey}, but we can roll our own pretty easily. */
-  private static final Comparator<Entry<String, Writer>> entryComparator =
-      new Comparator<Entry<String, Writer>>() {
-        public int compare(Entry<String, Writer> a, Entry<String, Writer> b) {
-          return a.getKey().compareTo(b.getKey());
-        }
-      };
+  public Void onRemoteImport(URI url, Void using, Expr.ImportMode mode, byte[] hash) {
+
+    List<String> parts = getUrlPathParts(url);
+
+    for (String part : parts) {
+      this.writer.writeString(part);
+    }
+
+    if (url.getQuery() == null) {
+      this.writer.writeNull();
+    } else {
+      this.writer.writeString(url.getQuery());
+    }
+
+    return null;
+  }
 }

@@ -6,6 +6,8 @@ import java.io.UnsupportedEncodingException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -18,84 +20,132 @@ public abstract class Writer {
   private static final BigInteger EIGHT_BYTES_MAX_VALUE = new BigInteger("18446744073709551616");
   private static final Charset UTF_8 = Charset.forName("UTF-8");
 
-  public final byte[] getBytes() throws IOException {
-    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-    this.writeToStream(stream);
-    return stream.toByteArray();
-  }
+  private static final class WrappedIOException extends RuntimeException {
+    final IOException underlying;
 
-  public abstract void writeToStream(OutputStream stream) throws IOException;
-
-  public final boolean tryWriteToStream(OutputStream stream) {
-    try {
-      this.writeToStream(stream);
-      return true;
-    } catch (IOException e) {
-      return false;
+    WrappedIOException(IOException underlying) {
+      this.underlying = underlying;
     }
   }
 
-  private final void write(OutputStream stream, byte... bs) throws IOException {
-    stream.write(bs);
+  public static class OutputStreamWriter extends Writer {
+    protected final OutputStream stream;
+
+    public OutputStreamWriter(OutputStream stream) {
+      this.stream = stream;
+    }
+
+    protected final void write(byte b) {
+      try {
+        this.stream.write(b);
+      } catch (IOException e) {
+        throw new WrappedIOException(e);
+      }
+    }
+
+    protected final void write(byte... bs) {
+      try {
+        this.stream.write(bs);
+      } catch (IOException e) {
+        throw new WrappedIOException(e);
+      }
+    }
   }
 
-  protected final void writeNull(OutputStream stream) throws IOException {
-    stream.write((byte) NULL);
+  public static final class ByteArrayWriter extends OutputStreamWriter {
+    public ByteArrayWriter() {
+      super(new ByteArrayOutputStream());
+    }
+
+    public final byte[] getBytes() {
+      return ((ByteArrayOutputStream) this.stream).toByteArray();
+    }
   }
 
-  protected final void writeBoolean(OutputStream stream, boolean value) throws IOException {
-    stream.write((byte) (value ? TRUE : FALSE));
+  public static final class SHA256Writer extends Writer {
+    private final MessageDigest messageDigest;
+
+    public SHA256Writer() {
+      MessageDigest tmp = null;
+      try {
+        tmp = MessageDigest.getInstance("SHA-256");
+      } catch (NoSuchAlgorithmException e) {
+        // TODO: Something reasonable here.
+      }
+
+      this.messageDigest = tmp;
+    }
+
+    public final byte[] getHashBytes() {
+      return this.messageDigest.digest();
+    }
+
+    protected final void write(byte b) {
+      this.messageDigest.update(b);
+    }
+
+    protected final void write(byte... bs) {
+      this.messageDigest.update(bs);
+    }
   }
 
-  protected final void writeLong(OutputStream stream, long value) throws IOException {
+  protected abstract void write(byte b);
+
+  protected abstract void write(byte... bs);
+
+  public final void writeNull() {
+    this.write((byte) NULL);
+  }
+
+  public final void writeBoolean(boolean value) {
+    this.write((byte) (value ? TRUE : FALSE));
+  }
+
+  public final void writeLong(long value) {
     this.writeTypeAndLength(
-        stream,
-        (value >= 0) ? MajorType.UNSIGNED_INTEGER.value : MajorType.NEGATIVE_INTEGER.value,
-        value);
+        (value >= 0) ? MajorType.UNSIGNED_INTEGER.value : MajorType.NEGATIVE_INTEGER.value, value);
   }
 
-  protected final void writeBigInteger(OutputStream stream, BigInteger value) throws IOException {
+  public final void writeBigInteger(BigInteger value) {
     if (value.compareTo(BigInteger.ZERO) >= 0) {
-      this.writeTypeAndLength(stream, MajorType.UNSIGNED_INTEGER.value, value);
+      this.writeTypeAndLength(MajorType.UNSIGNED_INTEGER.value, value);
     } else {
-      this.writeTypeAndLength(
-          stream, MajorType.NEGATIVE_INTEGER.value, value.add(BigInteger.ONE).negate());
+      this.writeTypeAndLength(MajorType.NEGATIVE_INTEGER.value, value.add(BigInteger.ONE).negate());
     }
   }
 
-  protected final void writeString(OutputStream stream, String value) throws IOException {
+  public final void writeString(String value) {
     byte[] bytes = value.getBytes(UTF_8);
-    this.writeTypeAndLength(stream, MajorType.TEXT_STRING.value, bytes.length);
-    this.write(stream, bytes);
+    this.writeTypeAndLength(MajorType.TEXT_STRING.value, bytes.length);
+    this.write(bytes);
   }
 
-  protected final void writeByteString(OutputStream stream, byte[] bytes) throws IOException {
-    this.writeTypeAndLength(stream, MajorType.BYTE_STRING.value, bytes.length);
-    this.write(stream, bytes);
+  public final void writeByteString(byte[] bytes) {
+    this.writeTypeAndLength(MajorType.BYTE_STRING.value, bytes.length);
+    this.write(bytes);
   }
 
-  protected final void writeDouble(OutputStream stream, double value) throws IOException {
+  public final void writeDouble(double value) {
     int base = MajorType.PRIMITIVE.value << 5;
 
     if (Double.isNaN(value)) {
-      this.write(stream, (byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 126, (byte) 0);
+      this.write((byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 126, (byte) 0);
     } else if (Double.isInfinite(value)) {
       if (Double.compare(value, 0) > 0) {
-        this.write(stream, (byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 124, (byte) 0);
+        this.write((byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 124, (byte) 0);
       } else {
-        this.write(stream, (byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 252, (byte) 0);
+        this.write((byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 252, (byte) 0);
       }
     } else if (Double.compare(value, 0.0) == 0) {
-      this.write(stream, (byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 0, (byte) 0);
+      this.write((byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 0, (byte) 0);
 
     } else if (Double.compare(value, -0.0) == 0) {
-      this.write(stream, (byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 128, (byte) 0);
+      this.write((byte) (base | AdditionalInfo.TWO_BYTES.value), (byte) 128, (byte) 0);
     } else {
       float asFloat = (float) value;
       if (value == (double) asFloat) {
         int bits = Float.floatToRawIntBits(asFloat);
         this.write(
-            stream,
             (byte) (base | AdditionalInfo.FOUR_BYTES.value),
             (byte) ((bits >> 24) & 0xff),
             (byte) ((bits >> 16) & 0xff),
@@ -105,7 +155,6 @@ public abstract class Writer {
 
         long bits = Double.doubleToRawLongBits(value);
         this.write(
-            stream,
             (byte) (base | AdditionalInfo.EIGHT_BYTES.value),
             (byte) ((bits >> 56) & 0xff),
             (byte) ((bits >> 48) & 0xff),
@@ -119,31 +168,28 @@ public abstract class Writer {
     }
   }
 
-  protected final void writeArrayStart(OutputStream stream, int length) throws IOException {
-    this.writeTypeAndLength(stream, MajorType.ARRAY.value, length);
+  public final void writeArrayStart(int length) {
+    this.writeTypeAndLength(MajorType.ARRAY.value, length);
   }
 
-  protected final void writeMapStart(OutputStream stream, int length) throws IOException {
-    this.writeTypeAndLength(stream, MajorType.MAP.value, length);
+  public final void writeMapStart(int length) {
+    this.writeTypeAndLength(MajorType.MAP.value, length);
   }
 
-  private final void writeTypeAndLength(OutputStream stream, int majorType, long length)
-      throws IOException {
+  private final void writeTypeAndLength(int majorType, long length) {
     int base = majorType << 5;
 
     if (length <= 23L) {
-      stream.write((byte) (base | length));
+      this.write((byte) (base | length));
     } else if (length < (1L << 8)) {
-      this.write(stream, (byte) (base | AdditionalInfo.ONE_BYTE.value), (byte) length);
+      this.write((byte) (base | AdditionalInfo.ONE_BYTE.value), (byte) length);
     } else if (length < (1L << 16)) {
       this.write(
-          stream,
           (byte) (base | AdditionalInfo.TWO_BYTES.value),
           (byte) (length >> 8),
           (byte) (length & 0xff));
     } else if (length < (1L << 32)) {
       this.write(
-          stream,
           (byte) (base | AdditionalInfo.FOUR_BYTES.value),
           (byte) ((length >> 24) & 0xff),
           (byte) ((length >> 16) & 0xff),
@@ -151,7 +197,6 @@ public abstract class Writer {
           (byte) (length & 0xff));
     } else {
       this.write(
-          stream,
           (byte) (base | AdditionalInfo.EIGHT_BYTES.value),
           (byte) ((length >> 56) & 0xff),
           (byte) ((length >> 48) & 0xff),
@@ -164,15 +209,13 @@ public abstract class Writer {
     }
   }
 
-  private final void writeTypeAndLength(OutputStream stream, int majorType, BigInteger length)
-      throws IOException {
+  private final void writeTypeAndLength(int majorType, BigInteger length) {
     if (length.compareTo(LONG_MAX_VALUE) <= 0) {
-      this.writeTypeAndLength(stream, majorType, length.longValue());
+      this.writeTypeAndLength(majorType, length.longValue());
     } else if (length.compareTo(EIGHT_BYTES_MAX_VALUE) < 0) {
       int base = majorType << 5;
       BigInteger mask = BigInteger.valueOf(0xff);
       this.write(
-          stream,
           (byte) (base | AdditionalInfo.EIGHT_BYTES.value),
           length.shiftRight(56).and(mask).byteValue(),
           length.shiftRight(48).and(mask).byteValue(),
@@ -184,41 +227,13 @@ public abstract class Writer {
           length.and(mask).byteValue());
     } else {
       if (majorType == MajorType.NEGATIVE_INTEGER.value) {
-        this.writeTypeAndLength(stream, MajorType.SEMANTIC_TAG.value, 3);
+        this.writeTypeAndLength(MajorType.SEMANTIC_TAG.value, 3);
       } else {
-        this.writeTypeAndLength(stream, MajorType.SEMANTIC_TAG.value, 2);
+        this.writeTypeAndLength(MajorType.SEMANTIC_TAG.value, 2);
       }
       byte[] bs = length.toByteArray();
-      writeTypeAndLength(stream, MajorType.BYTE_STRING.value, bs.length);
-      write(stream, bs);
-    }
-  }
-
-  public static final class Nested extends Writer {
-    private final Iterable<Writer> writers;
-
-    public Nested(Iterable<Writer> writers) {
-      this.writers = writers;
-    }
-
-    public void writeToStream(OutputStream stream) throws IOException {
-      Deque<Iterator<Writer>> stack = new ArrayDeque<Iterator<Writer>>();
-      Iterator<Writer> current = this.writers.iterator();
-
-      do {
-        if (current.hasNext()) {
-          Writer next = current.next();
-
-          if (next instanceof Nested) {
-            stack.push(current);
-            current = ((Nested) next).writers.iterator();
-          } else {
-            next.writeToStream(stream);
-          }
-        } else {
-          current = stack.poll();
-        }
-      } while (current != null);
+      writeTypeAndLength(MajorType.BYTE_STRING.value, bs.length);
+      write(bs);
     }
   }
 }

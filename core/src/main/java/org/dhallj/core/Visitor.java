@@ -37,7 +37,7 @@ public interface Visitor<A> {
 
   A onNonEmptyList(List<A> values);
 
-  A onEmptyList(Expr typeExpr, A type);
+  A onEmptyList(A type);
 
   A onRecord(List<Entry<String, A>> fields);
 
@@ -51,7 +51,7 @@ public interface Visitor<A> {
 
   A onProjectionByType(A base, A type);
 
-  A onApplication(Expr baseExpr, A base, List<A> args);
+  A onApplication(A base, List<A> args);
 
   A onOperatorApplication(Operator operator, A lhs, A rhs);
 
@@ -73,6 +73,191 @@ public interface Visitor<A> {
 
   A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash);
 
+  boolean prepareLambda(String name, Expr type);
+
+  boolean preparePi(String name, Expr type);
+
+  boolean prepareLet(int size);
+
+  boolean prepareLetBinding(String name, Expr type);
+
+  boolean prepareText(int size);
+
+  boolean prepareTextPart(String part);
+
+  boolean prepareNonEmptyList(int size);
+
+  boolean prepareEmptyList(Expr type);
+
+  boolean prepareRecord(int size);
+
+  boolean prepareRecordField(String name, Expr type);
+
+  boolean prepareRecordType(int size);
+
+  boolean prepareRecordTypeField(String name, Expr type);
+
+  boolean prepareUnionType(int size);
+
+  boolean prepareUnionTypeField(String name, Expr type);
+
+  boolean prepareFieldAccess();
+
+  boolean prepareProjection(int size);
+
+  boolean prepareProjectionByType();
+
+  boolean prepareProjectionByType(Expr type);
+
+  boolean prepareApplication(Expr base, int size);
+
+  boolean prepareOperatorApplication(Operator operator);
+
+  boolean prepareIf();
+
+  boolean prepareAnnotated(Expr type);
+
+  boolean prepareAssert();
+
+  boolean prepareMerge(Expr type);
+
+  boolean prepareToMap(Expr type);
+
+  boolean prepareRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash);
+
+  /**
+   * Represents a function from a Dhall expression that doesn't need preparation events.
+   *
+   * <p>Note that by default the implementation sees through note layers.
+   *
+   * @param A The result type
+   */
+  public abstract static class NoPrepareEvents<A> implements Visitor<A> {
+
+    public void bind(String name, Expr type) {}
+
+    public boolean prepareLambda(String name, Expr type) {
+      return true;
+    }
+
+    public boolean preparePi(String name, Expr type) {
+      return true;
+    }
+
+    public boolean prepareLet(int size) {
+      return true;
+    }
+
+    public boolean prepareLetBinding(String name, Expr type) {
+      return true;
+    }
+
+    public boolean prepareText(int size) {
+      return true;
+    }
+
+    public boolean prepareTextPart(String part) {
+      return true;
+    }
+
+    public boolean prepareNonEmptyList(int size) {
+      return true;
+    }
+
+    public boolean prepareEmptyList(Expr type) {
+      return true;
+    }
+
+    public boolean prepareRecord(int size) {
+      return true;
+    }
+
+    public boolean prepareRecordField(String name, Expr type) {
+      return true;
+    }
+
+    public boolean prepareRecordType(int size) {
+      return true;
+    }
+
+    public boolean prepareRecordTypeField(String name, Expr type) {
+      return true;
+    }
+
+    public boolean prepareUnionType(int size) {
+      return true;
+    }
+
+    public boolean prepareUnionTypeField(String name, Expr type) {
+      return true;
+    }
+
+    public boolean prepareFieldAccess() {
+      return true;
+    }
+
+    public boolean prepareProjection(int size) {
+      return true;
+    }
+
+    public boolean prepareProjectionByType() {
+      return true;
+    }
+
+    public boolean prepareProjectionByType(Expr type) {
+      return true;
+    }
+
+    public boolean prepareApplication(Expr base, int size) {
+      return true;
+    }
+
+    public boolean prepareOperatorApplication(Operator operator) {
+      return true;
+    }
+
+    public boolean prepareIf() {
+      return true;
+    }
+
+    public boolean prepareAnnotated(Expr type) {
+      return true;
+    }
+
+    public boolean prepareAssert() {
+      return true;
+    }
+
+    public boolean prepareMerge(Expr type) {
+      return true;
+    }
+
+    public boolean prepareToMap(Expr type) {
+      return true;
+    }
+
+    public boolean prepareRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
+      return true;
+    }
+
+    /*
+    public A onMissingImport(Expr.ImportMode mode, byte[] hash) {
+      return this.getReturnValue();
+    }
+
+    public A onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
+      return this.getReturnValue();
+    }
+
+    public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
+      return this.getReturnValue();
+    }
+
+    public A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash) {
+      return this.getReturnValue();
+    }*/
+  }
+
   /**
    * Represents a function from a Dhall expression that always returns the same value.
    *
@@ -83,7 +268,7 @@ public interface Visitor<A> {
    *
    * @param A The result type
    */
-  public static class Constant<A> implements Visitor<A> {
+  public static class Constant<A> extends NoPrepareEvents<A> {
     private final A returnValue;
 
     protected A getReturnValue() {
@@ -140,7 +325,7 @@ public interface Visitor<A> {
       return this.getReturnValue();
     }
 
-    public A onEmptyList(Expr typeExpr, A type) {
+    public A onEmptyList(A type) {
       return this.getReturnValue();
     }
 
@@ -168,7 +353,7 @@ public interface Visitor<A> {
       return this.getReturnValue();
     }
 
-    public A onApplication(Expr baseExpr, A base, List<A> args) {
+    public A onApplication(A base, List<A> args) {
       return this.getReturnValue();
     }
 
@@ -259,7 +444,7 @@ public interface Visitor<A> {
       return true;
     }
 
-    public Boolean onEmptyList(Expr typeExpr, Boolean type) {
+    public Boolean onEmptyList(Boolean type) {
       return type;
     }
 
@@ -302,7 +487,7 @@ public interface Visitor<A> {
       return base && type;
     }
 
-    public Boolean onApplication(Expr baseExpr, Boolean base, List<Boolean> args) {
+    public Boolean onApplication(Boolean base, List<Boolean> args) {
       if (!base) {
         return false;
       }
@@ -361,7 +546,7 @@ public interface Visitor<A> {
    * <p>This is a convenience class designed to help with implementations that only need to change a
    * small number of cases.
    */
-  public abstract class Identity implements Visitor<Expr> {
+  public abstract class Identity extends NoPrepareEvents<Expr> {
     public Expr onNote(Expr base, Source source) {
       return Expr.makeNote(base, source);
     }
@@ -406,7 +591,7 @@ public interface Visitor<A> {
       return Expr.makeNonEmptyListLiteral(values);
     }
 
-    public Expr onEmptyList(Expr typeExpr, Expr type) {
+    public Expr onEmptyList(Expr type) {
       return Expr.makeEmptyListLiteral(type);
     }
 
@@ -434,7 +619,7 @@ public interface Visitor<A> {
       return Expr.makeProjectionByType(base, type);
     }
 
-    public Expr onApplication(Expr baseExpr, Expr base, List<Expr> args) {
+    public Expr onApplication(Expr base, List<Expr> args) {
       return Expr.makeApplication(base, args);
     }
 

@@ -15,13 +15,11 @@ object ToCodeVisitor {
   val instance: Visitor[Code] = new ToCodeVisitor
 }
 
-final class ToCodeVisitor extends Visitor[Code] {
+final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
   private val constants = Set("Natural", "Integer", "Double", "True", "False", "Type", "List", "Text")
 
   private def unsupported: Nothing =
     throw new RuntimeException("Java generation only supported for fully-interpreted expressions")
-
-  def bind(name: String, tpe: Expr): Unit = ()
 
   def onNote(base: Code, source: Source): Code = base
 
@@ -67,7 +65,7 @@ final class ToCodeVisitor extends Visitor[Code] {
     s"Expr.makeNonEmptyListLiteral(new Expr[] {${ids.mkString(", ")}})"
   }
 
-  def onEmptyList(typeExpr: Expr, tpe: Code): Code =
+  def onEmptyList(tpe: Code): Code =
     tpe.mapContent(tpeContent => s"Expr.makeEmptyListLiteral($tpeContent)")
 
   private def forFields(constructor: String, fields: JList[Entry[String, Code]]): Code =
@@ -109,7 +107,7 @@ final class ToCodeVisitor extends Visitor[Code] {
         s"""Expr.makeProjectionByType($baseContent, $tpeContent)"""
     }
 
-  def onApplication(baseExpr: Expr, base: Code, args: JList[Code]): Code =
+  def onApplication(base: Code, args: JList[Code]): Code =
     Code.mergeAll(base +: args.asScala.toVector) { ids =>
       s"Expr.makeApplication(${ids.head}, new Expr[] {${ids.tail.mkString(", ")}})"
     }

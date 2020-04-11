@@ -18,7 +18,7 @@ import org.dhallj.core.Visitor;
  *
  * <p>This is a stateless visitor intended for use as a singleton.
  */
-public final class BetaNormalize implements Visitor<Expr> {
+public final class BetaNormalize extends Visitor.NoPrepareEvents<Expr> {
   public static final Visitor<Expr> instance = new BetaNormalize();
 
   public void bind(String name, Expr type) {}
@@ -76,7 +76,7 @@ public final class BetaNormalize implements Visitor<Expr> {
     return Expr.makeNonEmptyListLiteral(values);
   }
 
-  public Expr onEmptyList(Expr typeExpr, Expr type) {
+  public Expr onEmptyList(Expr type) {
     return Expr.makeEmptyListLiteral(type);
   }
 
@@ -113,7 +113,7 @@ public final class BetaNormalize implements Visitor<Expr> {
     return Expr.makeProjection(base, keys.toArray(new String[keys.size()])).accept(this);
   }
 
-  public Expr onApplication(Expr baseExpr, Expr base, List<Expr> args) {
+  public Expr onApplication(Expr base, List<Expr> args) {
     return BetaNormalizeApplication.apply(base, args);
   }
 

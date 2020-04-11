@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.security.MessageDigest;
 import org.dhallj.cbor.Writer;
 import org.dhallj.core.binary.Encode;
 import org.dhallj.core.normalization.AlphaNormalize;
@@ -92,11 +91,9 @@ public abstract class Expr {
    * <p>Note that this method does not normalize the expression.
    */
   public final byte[] getEncodedBytes() {
-    try {
-      return this.accept(Encode.instance).getBytes();
-    } catch (IOException e) {
-      return null;
-    }
+    Writer.ByteArrayWriter writer = new Writer.ByteArrayWriter();
+    this.accept(new Encode(writer));
+    return writer.getBytes();
   }
 
   /**
@@ -108,15 +105,10 @@ public abstract class Expr {
     byte[] result = this.cachedHashBytes.get();
 
     if (result == null) {
-      byte[] valueEncodedBytes = this.getEncodedBytes();
+      Writer.SHA256Writer writer = new Writer.SHA256Writer();
+      this.accept(new Encode(writer));
+      result = writer.getHashBytes();
 
-      MessageDigest digest = null;
-      try {
-        digest = java.security.MessageDigest.getInstance("SHA-256");
-      } catch (java.security.NoSuchAlgorithmException e) {
-
-      }
-      result = digest.digest(valueEncodedBytes);
       if (!this.cachedHashBytes.compareAndSet(null, result)) {
         return this.cachedHashBytes.get();
       }
@@ -209,8 +201,9 @@ public abstract class Expr {
     }
 
     /** Write an encoded expression to a stream. */
-    public static final void encodeToStream(Expr expr, OutputStream stream) throws IOException {
-      expr.accept(Encode.instance).writeToStream(stream);
+    public static final void encodeToStream(Expr expr, OutputStream stream) {
+      Writer.OutputStreamWriter writer = new Writer.OutputStreamWriter(stream);
+      expr.accept(new Encode(writer));
     }
 
     /** Encode an array of bytes as a hex string. */
@@ -813,11 +806,21 @@ public abstract class Expr {
     final Expr expr;
     int state;
     int size;
+    Entry<String, Expr>[] sortedFields;
 
     State(Expr expr, int state, int size) {
       this.expr = expr;
       this.state = state;
       this.size = size;
+      this.sortedFields = null;
+    }
+
+    State(Expr expr, int state, Entry<String, Expr>[] fields) {
+      this.expr = expr;
+      this.state = state;
+      this.size = 0;
+      this.sortedFields = fields.clone();
+      Arrays.sort(sortedFields, entryComparator);
     }
 
     State(Expr expr, int state) {
@@ -840,8 +843,8 @@ public abstract class Expr {
     A v1;
     A v2;
 
-    Deque<Deque<Expr>> applicationStack = new ArrayDeque<>();
-    Deque<Deque<LetBinding<Expr>>> letBindingsStack = new ArrayDeque<>();
+    Deque<LinkedList<Expr>> applicationStack = new ArrayDeque<>();
+    Deque<List<LetBinding<Expr>>> letBindingsStack = new ArrayDeque<>();
     Deque<List<String>> letBindingNamesStack = new ArrayDeque<>();
 
     while (current != null) {
@@ -885,9 +888,11 @@ public abstract class Expr {
           Constructors.Lambda tmpLambda = (Constructors.Lambda) current.expr;
           switch (current.state) {
             case 0:
-              current.state = 1;
-              stack.push(current);
-              stack.push(new State(tmpLambda.type, 0));
+              if (visitor.prepareLambda(tmpLambda.name, tmpLambda.type)) {
+                current.state = 1;
+                stack.push(current);
+                stack.push(new State(tmpLambda.type, 0));
+              }
               break;
             case 1:
               visitor.bind(tmpLambda.name, tmpLambda.type);
@@ -905,9 +910,11 @@ public abstract class Expr {
           Constructors.Pi tmpPi = (Constructors.Pi) current.expr;
           switch (current.state) {
             case 0:
-              current.state = 1;
-              stack.push(current);
-              stack.push(new State(tmpPi.type, 0));
+              if (visitor.preparePi(tmpPi.name, tmpPi.type)) {
+                current.state = 1;
+                stack.push(current);
+                stack.push(new State(tmpPi.type, 0));
+              }
               break;
             case 1:
               visitor.bind(tmpPi.name, tmpPi.type);
@@ -924,24 +931,26 @@ public abstract class Expr {
         case Tags.LET:
           Constructors.Let tmpLet = (Constructors.Let) current.expr;
 
-          Deque<LetBinding<Expr>> letBindings;
+          List<LetBinding<Expr>> letBindings;
 
           if (current.state == 0) {
-            letBindings = new ArrayDeque<LetBinding<Expr>>();
-            letBindings.push(new LetBinding(tmpLet.name, tmpLet.type, tmpLet.value));
+            letBindings = new ArrayList<LetBinding<Expr>>();
+            letBindings.add(new LetBinding(tmpLet.name, tmpLet.type, tmpLet.value));
 
             gatherLetBindings(tmpLet.body, letBindings);
 
             current.state = 1;
             current.size = letBindings.size();
 
-            List<String> letBindingNames = new ArrayList(current.size);
+            List<String> letBindingNames = new ArrayList<>(current.size);
 
             for (LetBinding<Expr> letBinding : letBindings) {
               letBindingNames.add(letBinding.getName());
             }
 
             letBindingNamesStack.push(letBindingNames);
+
+            visitor.prepareLet(letBindings.size());
           } else {
             letBindings = letBindingsStack.poll();
           }
@@ -954,7 +963,7 @@ public abstract class Expr {
               letBindingsStack.push(letBindings);
             } else {
               List<String> letBindingNames = letBindingNamesStack.poll();
-              List<LetBinding<A>> valueBindings = new ArrayList<LetBinding<A>>(current.size);
+              LinkedList<LetBinding<A>> valueBindings = new LinkedList<LetBinding<A>>();
 
               A body = valueStack.poll();
 
@@ -962,22 +971,22 @@ public abstract class Expr {
                 v1 = valueStack.poll();
                 v0 = valueStack.poll();
 
-                valueBindings.add(
-                    new LetBinding(letBindingNames.get(current.size - i - 1), v0, v1));
+                valueBindings.push(
+                    new LetBinding(letBindingNames.get(current.size - 1 - i), v0, v1));
               }
 
               valueStack.push(visitor.onLet(valueBindings, body));
             }
           } else {
-            LetBinding<Expr> letBinding = letBindings.poll();
+            LetBinding<Expr> letBinding = letBindings.get(0);
 
             switch (current.state) {
               case 1:
                 current.state = 2;
+                visitor.prepareLetBinding(letBinding.getName(), letBinding.getType());
                 if (letBinding.hasType()) {
                   stack.push(current);
                   stack.push(new State(letBinding.getType(), 0));
-                  letBindings.push(letBinding);
                   letBindingsStack.push(letBindings);
                   break;
                 } else {
@@ -988,6 +997,7 @@ public abstract class Expr {
                 visitor.bind(letBinding.getName(), letBinding.getType());
                 stack.push(current);
                 stack.push(new State(letBinding.getValue(), 0));
+                letBindings.remove(0);
                 letBindingsStack.push(letBindings);
                 break;
             }
@@ -997,15 +1007,18 @@ public abstract class Expr {
         case Tags.TEXT:
           Constructors.TextLiteral tmpText = (Constructors.TextLiteral) current.expr;
           if (current.state == 0) {
+            visitor.prepareText(tmpText.parts.length);
+            visitor.prepareTextPart(tmpText.parts[0]);
+
             if (tmpText.interpolated.length == 0) {
               valueStack.push(visitor.onText(tmpText.parts, new ArrayList<A>()));
-
             } else {
               current.state = 1;
               stack.push(current);
               stack.push(new State(tmpText.interpolated[current.state - 1], 0));
             }
           } else if (current.state == tmpText.interpolated.length) {
+            visitor.prepareTextPart(tmpText.parts[tmpText.parts.length - 1]);
             List<A> results = new ArrayList<A>();
             for (int i = 0; i < tmpText.interpolated.length; i += 1) {
               results.add(valueStack.poll());
@@ -1014,6 +1027,7 @@ public abstract class Expr {
             valueStack.push(visitor.onText(tmpText.parts, results));
           } else {
             current.state += 1;
+            visitor.prepareTextPart(tmpText.parts[current.state - 1]);
             stack.push(current);
             stack.push(new State(tmpText.interpolated[current.state - 1], 0));
           }
@@ -1022,6 +1036,7 @@ public abstract class Expr {
           Constructors.NonEmptyListLiteral tmpNonEmptyList =
               (Constructors.NonEmptyListLiteral) current.expr;
           if (current.state == 0) {
+            visitor.prepareNonEmptyList(tmpNonEmptyList.values.length);
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
@@ -1041,73 +1056,96 @@ public abstract class Expr {
         case Tags.EMPTY_LIST:
           Constructors.EmptyListLiteral tmpEmptyList = (Constructors.EmptyListLiteral) current.expr;
           if (current.state == 0) {
-            current.state = 1;
-            stack.push(current);
-            stack.push(new State(tmpEmptyList.type, 0));
+            if (visitor.prepareEmptyList(tmpEmptyList.type)) {
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpEmptyList.type, 0));
+            }
           } else {
-            valueStack.push(visitor.onEmptyList(tmpEmptyList.type, valueStack.poll()));
+            valueStack.push(visitor.onEmptyList(valueStack.poll()));
           }
           break;
 
         case Tags.RECORD:
           Constructors.RecordLiteral tmpRecord = (Constructors.RecordLiteral) current.expr;
           if (current.state == 0) {
+            visitor.prepareRecord(tmpRecord.fields.length);
             if (tmpRecord.fields.length == 0) {
               valueStack.push(visitor.onRecord(new ArrayList<Entry<String, A>>()));
             } else {
-              current.state = 1;
+              current = new State(current.expr, 1, tmpRecord.fields);
               stack.push(current);
-              stack.push(new State(tmpRecord.fields[current.state - 1].getValue(), 0));
+
+              Entry<String, Expr> field = current.sortedFields[current.state - 1];
+              visitor.prepareRecordField(field.getKey(), field.getValue());
+              stack.push(new State(field.getValue(), 0));
             }
-          } else if (current.state == tmpRecord.fields.length) {
+          } else if (current.state == current.sortedFields.length) {
             List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
-            for (int i = tmpRecord.fields.length - 1; i >= 0; i -= 1) {
+            for (int i = current.sortedFields.length - 1; i >= 0; i -= 1) {
               results.add(
-                  new SimpleImmutableEntry(tmpRecord.fields[i].getKey(), valueStack.poll()));
+                  new SimpleImmutableEntry(current.sortedFields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
             valueStack.push(visitor.onRecord(results));
           } else {
             current.state += 1;
+            Entry<String, Expr> field = current.sortedFields[current.state - 1];
+
+            visitor.prepareRecordField(field.getKey(), field.getValue());
+
             stack.push(current);
-            stack.push(new State(tmpRecord.fields[current.state - 1].getValue(), 0));
+            stack.push(new State(field.getValue(), 0));
           }
           break;
 
         case Tags.RECORD_TYPE:
           Constructors.RecordType tmpRecordType = (Constructors.RecordType) current.expr;
           if (current.state == 0) {
+            visitor.prepareRecordType(tmpRecordType.fields.length);
             if (tmpRecordType.fields.length == 0) {
               valueStack.push(visitor.onRecordType(new ArrayList<Entry<String, A>>()));
             } else {
-              current.state = 1;
+              current = new State(current.expr, 1, tmpRecordType.fields);
               stack.push(current);
-              stack.push(new State(tmpRecordType.fields[current.state - 1].getValue(), 0));
+
+              Entry<String, Expr> field = current.sortedFields[current.state - 1];
+              visitor.prepareRecordTypeField(field.getKey(), field.getValue());
+              stack.push(new State(field.getValue(), 0));
             }
-          } else if (current.state == tmpRecordType.fields.length) {
+          } else if (current.state == current.sortedFields.length) {
             List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
-            for (int i = tmpRecordType.fields.length - 1; i >= 0; i -= 1) {
+            for (int i = current.sortedFields.length - 1; i >= 0; i -= 1) {
               results.add(
-                  new SimpleImmutableEntry(tmpRecordType.fields[i].getKey(), valueStack.poll()));
+                  new SimpleImmutableEntry(current.sortedFields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
             valueStack.push(visitor.onRecordType(results));
           } else {
             current.state += 1;
+            Entry<String, Expr> field = current.sortedFields[current.state - 1];
+
+            visitor.prepareRecordTypeField(field.getKey(), field.getValue());
+
             stack.push(current);
-            stack.push(new State(tmpRecordType.fields[current.state - 1].getValue(), 0));
+            stack.push(new State(field.getValue(), 0));
           }
           break;
 
         case Tags.UNION_TYPE:
           Constructors.UnionType tmpUnionType = (Constructors.UnionType) current.expr;
           if (current.state == 0) {
+            visitor.prepareUnionType(tmpUnionType.fields.length);
             if (tmpUnionType.fields.length == 0) {
               valueStack.push(visitor.onUnionType(new ArrayList<Entry<String, A>>()));
             } else {
-              current.state = 1;
+              current = new State(current.expr, 1, tmpUnionType.fields);
               stack.push(current);
-              Expr type = tmpUnionType.fields[current.state - 1].getValue();
+
+              Entry<String, Expr> field = current.sortedFields[current.state - 1];
+              visitor.prepareUnionTypeField(field.getKey(), field.getValue());
+
+              Expr type = field.getValue();
               if (type == null) {
                 valueStack.push(null);
               } else {
@@ -1116,16 +1154,21 @@ public abstract class Expr {
             }
           } else if (current.state == tmpUnionType.fields.length) {
             List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
-            for (int i = tmpUnionType.fields.length - 1; i >= 0; i -= 1) {
+            for (int i = current.sortedFields.length - 1; i >= 0; i -= 1) {
               results.add(
-                  new SimpleImmutableEntry(tmpUnionType.fields[i].getKey(), valueStack.poll()));
+                  new SimpleImmutableEntry(current.sortedFields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
             valueStack.push(visitor.onUnionType(results));
           } else {
             current.state += 1;
+
+            Entry<String, Expr> field = current.sortedFields[current.state - 1];
+            Expr type = field.getValue();
+
+            visitor.prepareUnionTypeField(field.getKey(), type);
+
             stack.push(current);
-            Expr type = tmpUnionType.fields[current.state - 1].getValue();
             if (type == null) {
               valueStack.push(null);
             } else {
@@ -1137,6 +1180,7 @@ public abstract class Expr {
         case Tags.FIELD_ACCESS:
           Constructors.FieldAccess tmpFieldAccess = (Constructors.FieldAccess) current.expr;
           if (current.state == 0) {
+            visitor.prepareFieldAccess();
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpFieldAccess.base, 0));
@@ -1148,6 +1192,7 @@ public abstract class Expr {
         case Tags.PROJECTION:
           Constructors.Projection tmpProjection = (Constructors.Projection) current.expr;
           if (current.state == 0) {
+            visitor.prepareProjection(tmpProjection.fieldNames.length);
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpProjection.base, 0));
@@ -1160,10 +1205,12 @@ public abstract class Expr {
           Constructors.ProjectionByType tmpProjectionByType =
               (Constructors.ProjectionByType) current.expr;
           if (current.state == 0) {
+            visitor.prepareProjectionByType();
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpProjectionByType.base, 0));
           } else if (current.state == 1) {
+            visitor.prepareProjectionByType(tmpProjectionByType.type);
             current.state = 2;
             stack.push(current);
             stack.push(new State(tmpProjectionByType.type, 0));
@@ -1177,37 +1224,40 @@ public abstract class Expr {
         case Tags.APPLICATION:
           Constructors.Application tmpApplication = (Constructors.Application) current.expr;
 
-          Deque<Expr> application;
           if (current.state == 0) {
-            application = new ArrayDeque<>();
+            LinkedList<Expr> application = new LinkedList<>();
             application.push(tmpApplication.arg);
 
             Expr base = gatherApplicationArgs(tmpApplication.base, application);
 
-            application.push(base);
-
             current.state = 1;
             current.size = application.size();
-          } else {
-            application = applicationStack.poll();
-          }
+            boolean processBase = visitor.prepareApplication(base, application.size());
 
-          if (application.isEmpty()) {
-            List<A> args = new ArrayList<>(current.size);
-            for (int i = 0; i < current.size - 1; i++) {
-              args.add(valueStack.poll());
-            }
-            Collections.reverse(args);
-
-            A base = valueStack.poll();
-
-            valueStack.push(
-                visitor.onApplication(
-                    gatherApplicationArgs(tmpApplication.base, null), base, args));
-          } else {
             stack.push(current);
-            stack.push(new State(application.poll(), 0));
+
+            if (processBase) {
+              stack.push(new State(base, 0));
+            }
             applicationStack.push(application);
+          } else {
+            LinkedList<Expr> application = applicationStack.poll();
+
+            if (application.isEmpty()) {
+              List<A> args = new ArrayList<>(current.size);
+              for (int i = 0; i < current.size; i++) {
+                args.add(valueStack.poll());
+              }
+              Collections.reverse(args);
+
+              A base = valueStack.poll();
+
+              valueStack.push(visitor.onApplication(base, args));
+            } else {
+              stack.push(current);
+              stack.push(new State(application.poll(), 0));
+              applicationStack.push(application);
+            }
           }
           break;
 
@@ -1215,6 +1265,7 @@ public abstract class Expr {
           Constructors.OperatorApplication tmpOperatorApplication =
               (Constructors.OperatorApplication) current.expr;
           if (current.state == 0) {
+            visitor.prepareOperatorApplication(tmpOperatorApplication.operator);
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpOperatorApplication.lhs, 0));
@@ -1231,6 +1282,7 @@ public abstract class Expr {
         case Tags.IF:
           Constructors.If tmpIf = (Constructors.If) current.expr;
           if (current.state == 0) {
+            visitor.prepareIf();
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpIf.predicate, 0));
@@ -1252,6 +1304,7 @@ public abstract class Expr {
         case Tags.ANNOTATED:
           Constructors.Annotated tmpAnnotated = (Constructors.Annotated) current.expr;
           if (current.state == 0) {
+            visitor.prepareAnnotated(tmpAnnotated.type);
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpAnnotated.base, 0));
@@ -1268,6 +1321,7 @@ public abstract class Expr {
         case Tags.ASSERT:
           Constructors.Assert tmpAssert = (Constructors.Assert) current.expr;
           if (current.state == 0) {
+            visitor.prepareAssert();
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpAssert.base, 0));
@@ -1279,6 +1333,7 @@ public abstract class Expr {
           Constructors.Merge tmpMerge = (Constructors.Merge) current.expr;
           switch (current.state) {
             case 0:
+              visitor.prepareMerge(tmpMerge.type);
               current.state = 1;
               stack.push(current);
               stack.push(new State(tmpMerge.handlers, 0));
@@ -1311,6 +1366,7 @@ public abstract class Expr {
           Constructors.ToMap tmpToMap = (Constructors.ToMap) current.expr;
           switch (current.state) {
             case 0:
+              visitor.prepareToMap(tmpToMap.type);
               current.state = 1;
               stack.push(current);
               stack.push(new State(tmpToMap.base, 0));
@@ -1357,6 +1413,11 @@ public abstract class Expr {
 
           switch (current.state) {
             case 0:
+              visitor.prepareRemoteImport(
+                  tmpRemoteImport.url,
+                  tmpRemoteImport.using,
+                  tmpRemoteImport.mode,
+                  tmpRemoteImport.hash);
               current.state = 1;
 
               if (tmpRemoteImport.using != null) {
@@ -1399,14 +1460,14 @@ public abstract class Expr {
     return current;
   }
 
-  private static final Expr gatherLetBindings(Expr candidate, Deque<LetBinding<Expr>> args) {
+  private static final Expr gatherLetBindings(Expr candidate, List<LetBinding<Expr>> args) {
     Expr current = candidate.getNonNote();
 
     while (current.tag == Tags.LET) {
       Constructors.Let currentLet = (Constructors.Let) current;
 
       if (args != null) {
-        args.push(new LetBinding(currentLet.name, currentLet.type, currentLet.value));
+        args.add(new LetBinding(currentLet.name, currentLet.type, currentLet.value));
       }
       current = currentLet.body.getNonNote();
     }
@@ -1776,4 +1837,12 @@ public abstract class Expr {
       return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
     }
   }
+
+  /** Java 8 introduce {@code comparingByKey}, but we can roll our own pretty easily. */
+  private static final Comparator<Entry<String, Expr>> entryComparator =
+      new Comparator<Entry<String, Expr>>() {
+        public int compare(Entry<String, Expr> a, Entry<String, Expr> b) {
+          return a.getKey().compareTo(b.getKey());
+        }
+      };
 }

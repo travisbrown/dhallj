@@ -93,7 +93,7 @@ final class ToStringState {
   }
 }
 
-final class ToStringVisitor implements Visitor<ToStringState> {
+final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
   public static Visitor<ToStringState> instance = new ToStringVisitor();
 
   public void bind(String name, Expr type) {}
@@ -252,7 +252,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
     return new ToStringState(builder.toString());
   }
 
-  public ToStringState onEmptyList(Expr typeExpr, ToStringState type) {
+  public ToStringState onEmptyList(ToStringState type) {
     return new ToStringState(String.format("[] : %s", type), ToStringState.ANNOTATED);
   }
 
@@ -342,7 +342,7 @@ final class ToStringVisitor implements Visitor<ToStringState> {
         ToStringState.FIELD_ACCESS);
   }
 
-  public ToStringState onApplication(Expr baseExpr, ToStringState base, List<ToStringState> args) {
+  public ToStringState onApplication(ToStringState base, List<ToStringState> args) {
     StringBuilder builder = new StringBuilder(base.toString(ToStringState.APPLICATION));
     builder.append(" ");
 

@@ -31,8 +31,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
                                                         parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
-) extends Visitor[F[Expr]] {
-  def bind(name: String, tpe: Expr): Unit = ()
+) extends Visitor.NoPrepareEvents[F[Expr]] {
 
   override def onDouble(self: Expr, value: Double): F[Expr] = F.pure(self)
 
@@ -45,7 +44,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       i <- interpolated.asScala.toList.sequence
     } yield Expr.makeTextLiteral(parts, i.asJava)
 
-  override def onApplication(baseExpr: Expr, base: F[Expr], args: JList[F[Expr]]): F[Expr] =
+  override def onApplication(base: F[Expr], args: JList[F[Expr]]): F[Expr] =
     for {
       b <- base
       a <- args.asScala.toList.sequence
@@ -124,7 +123,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
       v <- values.asScala.toList.sequence
     } yield Expr.makeNonEmptyListLiteral(v.asJava)
 
-  override def onEmptyList(tpeExpr: Expr, tpe: F[Expr]): F[Expr] =
+  override def onEmptyList(tpe: F[Expr]): F[Expr] =
     for {
       t <- tpe
     } yield Expr.makeEmptyListLiteral(t)
