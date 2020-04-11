@@ -807,6 +807,7 @@ public abstract class Expr {
     int state;
     int size;
     Entry<String, Expr>[] sortedFields;
+    boolean skippedRecursion = false;
 
     State(Expr expr, int state, int size) {
       this.expr = expr;
@@ -892,11 +893,10 @@ public abstract class Expr {
           Constructors.Lambda tmpLambda = (Constructors.Lambda) current.expr;
           switch (current.state) {
             case 0:
-              if (visitor.prepareLambda(tmpLambda.name, tmpLambda.type)) {
-                current.state = 1;
-                stack.push(current);
-                stack.push(new State(tmpLambda.type, 0));
-              }
+              visitor.prepareLambda(tmpLambda.name, tmpLambda.type);
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpLambda.type, 0));
               break;
             case 1:
               visitor.bind(tmpLambda.name, tmpLambda.type);
@@ -914,11 +914,10 @@ public abstract class Expr {
           Constructors.Pi tmpPi = (Constructors.Pi) current.expr;
           switch (current.state) {
             case 0:
-              if (visitor.preparePi(tmpPi.name, tmpPi.type)) {
-                current.state = 1;
-                stack.push(current);
-                stack.push(new State(tmpPi.type, 0));
-              }
+              visitor.preparePi(tmpPi.name, tmpPi.type);
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpPi.type, 0));
               break;
             case 1:
               visitor.bind(tmpPi.name, tmpPi.type);
@@ -1066,6 +1065,8 @@ public abstract class Expr {
               current.state = 1;
               stack.push(current);
               stack.push(new State(tmpEmptyList.type, 0));
+            } else {
+              valueStack.push(null);
             }
           } else {
             valueStack.push(visitor.onEmptyList(valueStack.poll()));
@@ -1239,6 +1240,7 @@ public abstract class Expr {
             current.state = 1;
             current.size = application.size();
             boolean processBase = visitor.prepareApplication(base, application.size());
+            current.skippedRecursion = !processBase;
 
             stack.push(current);
 
@@ -1256,7 +1258,10 @@ public abstract class Expr {
               }
               Collections.reverse(args);
 
-              A base = valueStack.poll();
+              A base = null;
+              if (!current.skippedRecursion) {
+                base = valueStack.poll();
+              }
 
               valueStack.push(visitor.onApplication(base, args));
             } else {
