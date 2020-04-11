@@ -34,7 +34,7 @@ val root = project
     scalaVersion := "2.13.1",
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
   )
-  .aggregate(core, parser, javagen, prelude, demo, scala, imports, importsMini, tests, benchmarks)
+  .aggregate(core, parser, javagen, prelude, demo, scala, circe, jawn, yaml, imports, importsMini, tests, benchmarks)
   .dependsOn(importsMini, scala, javagen, prelude)
 
 lazy val core = project
@@ -71,6 +71,36 @@ lazy val demo = project
   )
   .enablePlugins(GraalVMNativeImagePlugin)
   .dependsOn(parser, importsMini)
+
+lazy val circe = project
+  .in(file("modules/circe"))
+  .settings(baseSettings ++ scalaSettings)
+  .settings(
+    moduleName := "dhall-circe",
+    libraryDependencies += "io.circe" %% "circe-core" % "0.13.0"
+  )
+  .dependsOn(core)
+
+lazy val jawn = project
+  .in(file("modules/jawn"))
+  .settings(baseSettings ++ scalaSettings)
+  .settings(
+    moduleName := "dhall-jawn",
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-jawn" % "0.13.0" % Test,
+      "org.typelevel" %% "jawn-parser" % "1.0.0"
+    )
+  )
+  .dependsOn(core, scala % Test)
+
+lazy val yaml = project
+  .in(file("modules/yaml"))
+  .settings(baseSettings ++ javaSettings)
+  .settings(
+    moduleName := "dhall-yaml",
+    libraryDependencies += "org.yaml" % "snakeyaml" % "1.26"
+  )
+  .dependsOn(core)
 
 lazy val scala = project
   .in(file("modules/scala"))
