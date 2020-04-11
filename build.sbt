@@ -38,14 +38,14 @@ val root = project
   .dependsOn(importsMini, scala, javagen, prelude)
 
 lazy val core = project
-  .in(file("core"))
+  .in(file("modules/core"))
   .settings(baseSettings ++ javaSettings)
   .settings(moduleName := "dhall-core",
             javacOptions in Compile ++= Seq("-source", "1.7"),
             javacOptions in (Compile, compile) ++= Seq("-target", "1.7"))
 
 lazy val parser = project
-  .in(file("parser"))
+  .in(file("modules/parser"))
   .settings(baseSettings ++ javaSettings)
   .settings(
     moduleName := "dhall-parser",
@@ -56,7 +56,7 @@ lazy val parser = project
   .dependsOn(core)
 
 lazy val prelude = project
-  .in(file("prelude"))
+  .in(file("modules/prelude"))
   .settings(baseSettings ++ javaSettings)
   .settings(
     moduleName := "dhall-prelude"
@@ -73,13 +73,13 @@ lazy val demo = project
   .dependsOn(parser, importsMini)
 
 lazy val scala = project
-  .in(file("scala"))
+  .in(file("modules/scala"))
   .settings(baseSettings ++ scalaSettings)
   .settings(moduleName := "dhall-scala")
   .dependsOn(parser)
 
 lazy val testing = project
-  .in(file("testing"))
+  .in(file("modules/testing"))
   .settings(
     baseSettings ++ scalaSettings,
     libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.14.3")
@@ -88,7 +88,7 @@ lazy val testing = project
   .dependsOn(scala)
 
 lazy val javagen = project
-  .in(file("javagen"))
+  .in(file("modules/javagen"))
   .settings(baseSettings ++ scalaSettings)
   .settings(
     moduleName := "dhall-javagen"
@@ -96,14 +96,14 @@ lazy val javagen = project
   .dependsOn(core)
 
 lazy val imports = project
-  .in(file("imports"))
+  .in(file("modules/imports"))
   .settings(baseSettings ++ scalaSettings)
   .settings(moduleName := "dhall-imports")
   .settings(libraryDependencies ++= catsDependencies)
   .dependsOn(parser, core)
 
 lazy val importsMini = project
-  .in(file("imports-mini"))
+  .in(file("modules/imports-mini"))
   .settings(baseSettings ++ javaSettings)
   .settings(moduleName := "dhall-imports-mini")
   .dependsOn(parser, core)
