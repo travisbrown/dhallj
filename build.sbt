@@ -14,6 +14,8 @@ val catsDependencies = Seq(
   "org.http4s" %% "http4s-blaze-client" % "0.21.3"
 )
 
+val circeVersion = "0.13.0"
+
 val baseSettings = Seq(
   scalaVersion := "2.13.1",
   libraryDependencies ++= testDependencies.map(_ % Test),
@@ -77,9 +79,13 @@ lazy val circe = project
   .settings(baseSettings ++ scalaSettings)
   .settings(
     moduleName := "dhall-circe",
-    libraryDependencies += "io.circe" %% "circe-core" % "0.13.0"
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % circeVersion,
+      "io.circe" %% "circe-jawn" % circeVersion % Test,
+      "io.circe" %% "circe-testing" % circeVersion % Test
+    )
   )
-  .dependsOn(core)
+  .dependsOn(core, scala % Test)
 
 lazy val jawn = project
   .in(file("modules/jawn"))
@@ -87,7 +93,7 @@ lazy val jawn = project
   .settings(
     moduleName := "dhall-jawn",
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-jawn" % "0.13.0" % Test,
+      "io.circe" %% "circe-jawn" % circeVersion % Test,
       "org.typelevel" %% "jawn-parser" % "1.0.0"
     )
   )
