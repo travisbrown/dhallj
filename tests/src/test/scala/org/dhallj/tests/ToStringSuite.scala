@@ -9,14 +9,10 @@ import org.scalacheck.{Arbitrary, Prop}
 
 class ToStringSuite extends ScalaCheckSuite() {
   property("toString produces parseable code given well-typed values") {
-    Prop.forAll { (expr: WellTypedExpr) =>
-      DhallParser.parse(clue(expr.value.toString)) == expr.value
-    }
+    Prop.forAll((expr: WellTypedExpr) => DhallParser.parse(clue(expr.value.toString)) == expr.value)
   }
 
   property("toString produces parseable code".tag(Ignore)) {
-    Prop.forAll { (expr: Expr) =>
-      DhallParser.parse(clue(expr.toString)) == expr
-    }
+    Prop.forAll((expr: Expr) => DhallParser.parse(clue(expr.toString)) == expr)
   }
 }
