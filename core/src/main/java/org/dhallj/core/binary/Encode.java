@@ -20,6 +20,10 @@ public final class Encode implements Visitor<Void> {
     this.writer = writer;
   }
 
+  public boolean sortFields() {
+    return true;
+  }
+
   public Void onNote(Void base, Source source) {
     return base;
   }
@@ -173,6 +177,10 @@ public final class Encode implements Visitor<Void> {
     return true;
   }
 
+  public boolean prepareNonEmptyListElement(int index) {
+    return true;
+  }
+
   public Void onNonEmptyList(final List<Void> values) {
     return null;
   }
@@ -204,7 +212,7 @@ public final class Encode implements Visitor<Void> {
     return true;
   }
 
-  public boolean prepareRecordField(String name, Expr type) {
+  public boolean prepareRecordField(String name, Expr type, int index) {
     this.writer.writeString(name);
     return true;
   }
@@ -220,7 +228,7 @@ public final class Encode implements Visitor<Void> {
     return true;
   }
 
-  public boolean prepareRecordTypeField(String name, Expr type) {
+  public boolean prepareRecordTypeField(String name, Expr type, int index) {
     this.writer.writeString(name);
     return true;
   }
@@ -236,7 +244,7 @@ public final class Encode implements Visitor<Void> {
     return true;
   }
 
-  public boolean prepareUnionTypeField(String name, Expr type) {
+  public boolean prepareUnionTypeField(String name, Expr type, int index) {
     this.writer.writeString(name);
     if (type == null) {
       this.writer.writeNull();

@@ -815,12 +815,16 @@ public abstract class Expr {
       this.sortedFields = null;
     }
 
-    State(Expr expr, int state, Entry<String, Expr>[] fields) {
+    State(Expr expr, int state, Entry<String, Expr>[] fields, boolean sortFields) {
       this.expr = expr;
       this.state = state;
       this.size = 0;
-      this.sortedFields = fields.clone();
-      Arrays.sort(sortedFields, entryComparator);
+      if (sortFields) {
+        this.sortedFields = fields.clone();
+        Arrays.sort(sortedFields, entryComparator);
+      } else {
+        this.sortedFields = fields;
+      }
     }
 
     State(Expr expr, int state) {
@@ -1037,6 +1041,7 @@ public abstract class Expr {
               (Constructors.NonEmptyListLiteral) current.expr;
           if (current.state == 0) {
             visitor.prepareNonEmptyList(tmpNonEmptyList.values.length);
+            visitor.prepareNonEmptyListElement(0);
             current.state = 1;
             stack.push(current);
             stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
@@ -1048,6 +1053,7 @@ public abstract class Expr {
             Collections.reverse(results);
             valueStack.push(visitor.onNonEmptyList(results));
           } else {
+            visitor.prepareNonEmptyListElement(current.state);
             current.state += 1;
             stack.push(current);
             stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
@@ -1073,11 +1079,11 @@ public abstract class Expr {
             if (tmpRecord.fields.length == 0) {
               valueStack.push(visitor.onRecord(new ArrayList<Entry<String, A>>()));
             } else {
-              current = new State(current.expr, 1, tmpRecord.fields);
+              current = new State(current.expr, 1, tmpRecord.fields, visitor.sortFields());
               stack.push(current);
 
               Entry<String, Expr> field = current.sortedFields[current.state - 1];
-              visitor.prepareRecordField(field.getKey(), field.getValue());
+              visitor.prepareRecordField(field.getKey(), field.getValue(), current.state - 1);
               stack.push(new State(field.getValue(), 0));
             }
           } else if (current.state == current.sortedFields.length) {
@@ -1092,7 +1098,7 @@ public abstract class Expr {
             current.state += 1;
             Entry<String, Expr> field = current.sortedFields[current.state - 1];
 
-            visitor.prepareRecordField(field.getKey(), field.getValue());
+            visitor.prepareRecordField(field.getKey(), field.getValue(), current.state - 1);
 
             stack.push(current);
             stack.push(new State(field.getValue(), 0));
@@ -1106,11 +1112,11 @@ public abstract class Expr {
             if (tmpRecordType.fields.length == 0) {
               valueStack.push(visitor.onRecordType(new ArrayList<Entry<String, A>>()));
             } else {
-              current = new State(current.expr, 1, tmpRecordType.fields);
+              current = new State(current.expr, 1, tmpRecordType.fields, visitor.sortFields());
               stack.push(current);
 
               Entry<String, Expr> field = current.sortedFields[current.state - 1];
-              visitor.prepareRecordTypeField(field.getKey(), field.getValue());
+              visitor.prepareRecordTypeField(field.getKey(), field.getValue(), current.state - 1);
               stack.push(new State(field.getValue(), 0));
             }
           } else if (current.state == current.sortedFields.length) {
@@ -1125,7 +1131,7 @@ public abstract class Expr {
             current.state += 1;
             Entry<String, Expr> field = current.sortedFields[current.state - 1];
 
-            visitor.prepareRecordTypeField(field.getKey(), field.getValue());
+            visitor.prepareRecordTypeField(field.getKey(), field.getValue(), current.state - 1);
 
             stack.push(current);
             stack.push(new State(field.getValue(), 0));
@@ -1139,11 +1145,11 @@ public abstract class Expr {
             if (tmpUnionType.fields.length == 0) {
               valueStack.push(visitor.onUnionType(new ArrayList<Entry<String, A>>()));
             } else {
-              current = new State(current.expr, 1, tmpUnionType.fields);
+              current = new State(current.expr, 1, tmpUnionType.fields, visitor.sortFields());
               stack.push(current);
 
               Entry<String, Expr> field = current.sortedFields[current.state - 1];
-              visitor.prepareUnionTypeField(field.getKey(), field.getValue());
+              visitor.prepareUnionTypeField(field.getKey(), field.getValue(), current.state - 1);
 
               Expr type = field.getValue();
               if (type == null) {
@@ -1166,7 +1172,7 @@ public abstract class Expr {
             Entry<String, Expr> field = current.sortedFields[current.state - 1];
             Expr type = field.getValue();
 
-            visitor.prepareUnionTypeField(field.getKey(), type);
+            visitor.prepareUnionTypeField(field.getKey(), type, current.state - 1);
 
             stack.push(current);
             if (type == null) {

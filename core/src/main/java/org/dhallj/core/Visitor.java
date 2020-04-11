@@ -73,6 +73,8 @@ public interface Visitor<A> {
 
   A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash);
 
+  boolean sortFields();
+
   boolean prepareLambda(String name, Expr type);
 
   boolean preparePi(String name, Expr type);
@@ -87,19 +89,21 @@ public interface Visitor<A> {
 
   boolean prepareNonEmptyList(int size);
 
+  boolean prepareNonEmptyListElement(int index);
+
   boolean prepareEmptyList(Expr type);
 
   boolean prepareRecord(int size);
 
-  boolean prepareRecordField(String name, Expr type);
+  boolean prepareRecordField(String name, Expr type, int index);
 
   boolean prepareRecordType(int size);
 
-  boolean prepareRecordTypeField(String name, Expr type);
+  boolean prepareRecordTypeField(String name, Expr type, int index);
 
   boolean prepareUnionType(int size);
 
-  boolean prepareUnionTypeField(String name, Expr type);
+  boolean prepareUnionTypeField(String name, Expr type, int index);
 
   boolean prepareFieldAccess();
 
@@ -136,6 +140,10 @@ public interface Visitor<A> {
 
     public void bind(String name, Expr type) {}
 
+    public boolean sortFields() {
+      return false;
+    }
+
     public boolean prepareLambda(String name, Expr type) {
       return true;
     }
@@ -164,6 +172,10 @@ public interface Visitor<A> {
       return true;
     }
 
+    public boolean prepareNonEmptyListElement(int index) {
+      return true;
+    }
+
     public boolean prepareEmptyList(Expr type) {
       return true;
     }
@@ -172,7 +184,7 @@ public interface Visitor<A> {
       return true;
     }
 
-    public boolean prepareRecordField(String name, Expr type) {
+    public boolean prepareRecordField(String name, Expr type, int index) {
       return true;
     }
 
@@ -180,7 +192,7 @@ public interface Visitor<A> {
       return true;
     }
 
-    public boolean prepareRecordTypeField(String name, Expr type) {
+    public boolean prepareRecordTypeField(String name, Expr type, int index) {
       return true;
     }
 
@@ -188,7 +200,7 @@ public interface Visitor<A> {
       return true;
     }
 
-    public boolean prepareUnionTypeField(String name, Expr type) {
+    public boolean prepareUnionTypeField(String name, Expr type, int index) {
       return true;
     }
 
