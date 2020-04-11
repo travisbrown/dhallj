@@ -105,7 +105,7 @@ public interface Visitor<A> {
 
   boolean prepareUnionTypeField(String name, Expr type, int index);
 
-  boolean prepareFieldAccess();
+  boolean prepareFieldAccess(Expr base, String fieldName);
 
   boolean prepareProjection(int size);
 
@@ -204,7 +204,7 @@ public interface Visitor<A> {
       return true;
     }
 
-    public boolean prepareFieldAccess() {
+    public boolean prepareFieldAccess(Expr base, String fieldName) {
       return true;
     }
 

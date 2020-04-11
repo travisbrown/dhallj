@@ -256,7 +256,7 @@ public final class Encode implements Visitor<Void> {
     return null;
   }
 
-  public boolean prepareFieldAccess() {
+  public boolean prepareFieldAccess(Expr base, String fieldName) {
     this.writer.writeArrayStart(3);
     this.writer.writeLong(Label.FIELD_ACCESS);
     return true;

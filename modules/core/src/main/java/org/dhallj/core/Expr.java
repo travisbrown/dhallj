@@ -1187,10 +1187,13 @@ public abstract class Expr {
         case Tags.FIELD_ACCESS:
           Constructors.FieldAccess tmpFieldAccess = (Constructors.FieldAccess) current.expr;
           if (current.state == 0) {
-            visitor.prepareFieldAccess();
-            current.state = 1;
-            stack.push(current);
-            stack.push(new State(tmpFieldAccess.base, 0));
+            if (visitor.prepareFieldAccess(tmpFieldAccess.base, tmpFieldAccess.fieldName)) {
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpFieldAccess.base, 0));
+            } else {
+              valueStack.push(visitor.onFieldAccess(null, tmpFieldAccess.fieldName));
+            }
           } else {
             valueStack.push(visitor.onFieldAccess(valueStack.poll(), tmpFieldAccess.fieldName));
           }
