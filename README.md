@@ -19,6 +19,7 @@ team.
 * [Status](#status)
 * [Getting started](#getting-started)
 * [Converting to other formats](#converting-to-other-formats)
+* [Other stuff](#other-stuff)
 * [Developing](#developing)
 * [Community](#community)
 * [Copyright and license](#copyright-and-license)
@@ -147,6 +148,39 @@ foo:
 bar:
 - 4
 - 5
+```
+
+## Other stuff
+
+### dhall-javagen and dhall-prelude
+
+The dhall-javagen module lets you take a DhallJ representation of a Dhall expression and use it to
+generate Java code that will build the DhallJ representation of that expression.
+
+This is mostly a toy, but it allows us for example to distribute a "pre-compiled" jar containing the
+Dhall prelude:
+
+```scala
+scala> import java.math.BigInteger
+import java.math.BigInteger
+
+scala> import org.dhallj.core.Expr
+import org.dhallj.core.Expr
+
+scala> val ten = Expr.makeNaturalLiteral(new BigInteger("10"))
+ten: org.dhallj.core.Expr = 10
+
+scala> val Prelude = org.dhallj.prelude.Prelude.instance
+Prelude: org.dhallj.core.Expr = ...
+
+scala> val Natural = Expr.makeFieldAccess(Prelude, "Natural")
+Natural: org.dhallj.core.Expr = ...
+
+scala> val enumerate = Expr.makeFieldAccess(Natural, "enumerate")
+enumerate: org.dhallj.core.Expr = ...
+
+scala> Expr.makeApplication(enumerate, ten).normalize
+res0: org.dhallj.core.Expr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
 
 ## Developing
