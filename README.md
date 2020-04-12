@@ -1,7 +1,6 @@
 # Dhall for Java
 
 [![Build status](https://img.shields.io/travis/travisbrown/dhallj/master.svg)](https://travis-ci.org/travisbrown/dhallj)
-[![Coverage status](https://img.shields.io/codecov/c/github/travisbrown/dhallj/master.svg)](https://codecov.io/github/travisbrown/dhallj)
 [![Gitter](https://img.shields.io/badge/gitter-join%20chat-green.svg)](https://gitter.im/travisbrown/dhallj)
 [![Maven Central](https://img.shields.io/maven-central/v/org.dhallj/dhall-core.svg)](https://maven-badges.herokuapp.com/maven-central/org.dhallj/dhall-core)
 
