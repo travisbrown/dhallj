@@ -1,5 +1,7 @@
 organization in ThisBuild := "org.dhallj"
 
+val circeVersion = "0.13.0"
+
 val testDependencies = Seq(
   "org.scalacheck" %% "scalacheck" % "1.14.3",
   "org.scalameta" %% "munit" % "0.7.2",
@@ -7,17 +9,7 @@ val testDependencies = Seq(
   "co.nstant.in" % "cbor" % "0.9"
 )
 
-val catsDependencies = Seq(
-  "org.typelevel" %% "cats-core" % "2.2.0-M1",
-  "org.typelevel" %% "cats-effect" % "2.1.2",
-  "org.http4s" %% "http4s-dsl" % "0.21.3",
-  "org.http4s" %% "http4s-blaze-client" % "0.21.3"
-)
-
-val circeVersion = "0.13.0"
-
 val baseSettings = Seq(
-  scalaVersion := "2.13.1",
   libraryDependencies ++= testDependencies.map(_ % Test),
   testFrameworks += new TestFramework("munit.Framework")
 )
@@ -33,7 +25,6 @@ val root = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .settings(
-    scalaVersion := "2.13.1",
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
   )
   .aggregate(core, parser, javagen, prelude, demo, scala, circe, jawn, yaml, imports, importsMini, tests, benchmarks)
@@ -136,7 +127,14 @@ lazy val imports = project
   .in(file("modules/imports"))
   .settings(baseSettings ++ scalaSettings)
   .settings(moduleName := "dhall-imports")
-  .settings(libraryDependencies ++= catsDependencies)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core" % "2.2.0-M1",
+      "org.typelevel" %% "cats-effect" % "2.1.2",
+      "org.http4s" %% "http4s-dsl" % "0.21.3",
+      "org.http4s" %% "http4s-blaze-client" % "0.21.3"
+    )
+  )
   .dependsOn(parser, core)
 
 lazy val importsMini = project

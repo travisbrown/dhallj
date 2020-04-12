@@ -37,11 +37,10 @@ object Converter {
     }
     def onString(value: String): Expr = Expr.makeTextLiteral(value)
     def onObject(value: JsonObject): Expr = Expr.makeRecordLiteral(
-      value.toMap
-        .map[Entry[String, Expr]] {
-          case (k, v) => new SimpleImmutableEntry(k, v.foldWith(this))
-        }
-        .toArray
+      value.toMap.map {
+        case (k, v) =>
+          new SimpleImmutableEntry(k, v.foldWith(this)): Entry[String, Expr]
+      }.toArray
     )
     def onArray(value: Vector[Json]): Expr =
       if (value.isEmpty) {

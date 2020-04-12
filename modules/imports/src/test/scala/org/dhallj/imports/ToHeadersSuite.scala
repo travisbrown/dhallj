@@ -4,7 +4,7 @@ import munit.FunSuite
 import org.dhallj.core.Expr
 import org.http4s.{Header, Headers}
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 class ToHeadersSuite extends FunSuite {
 

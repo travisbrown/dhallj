@@ -21,7 +21,7 @@ import org.http4s.Uri.unsafeFromString
 import org.http4s.client.Client
 import org.http4s.{EntityDecoder, Headers, Request}
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 //TODO quoted path components?
 //TODO handle duplicate imports - should be easy with caching logic

@@ -4,7 +4,7 @@ import org.dhallj.core.Expr
 import org.dhallj.core.Expr.Util.{asListLiteral, asRecordLiteral, asSimpleTextLiteral}
 import org.http4s.{Header, Headers}
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 object ToHeaders {
 

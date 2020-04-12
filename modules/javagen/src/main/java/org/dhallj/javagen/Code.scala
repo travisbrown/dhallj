@@ -86,7 +86,8 @@ case class Code(content: String, defs: Vector[Code] = Vector.empty) {
 object Code {
   private[javagen] val marker: String = "__"
   private[javagen] val indexLength: Int = 4
-  private[javagen] def makeIdentifier(n: Int): String = String.format(s"%s%0${indexLength}d", marker, n)
+  private[javagen] def makeIdentifier(n: Int): String =
+    String.format(s"%s%0${indexLength}d", marker, Int.box(n))
   private[javagen] def makeFieldName(n: Int): String = f"f$n%06d"
 
   def mergeAll(other: Vector[Code])(f: Vector[String] => String): Code =
@@ -103,6 +104,6 @@ object Code {
       }
     }
 
-    Code(f(values), other.flatMap(extract))
+    Code(f(values), other.flatMap(extract(_)))
   }
 }
