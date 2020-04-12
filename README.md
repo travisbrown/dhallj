@@ -25,6 +25,8 @@ team.
 
 ## Status
 
+We support [Dhall 15.0.0][dhall-15], including the `with` keyword and record puns.
+
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization, binary
 decoding, hashing, and type inference, and currently 1,139 of 1,143 tests are passing.
 
@@ -219,6 +221,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [bsd-license]: https://opensource.org/licenses/BSD-3-Clause
 [circe]: https://github.com/circe/circe
 [code-of-conduct]: https://www.scala-lang.org/conduct/
+[dhall-15]: https://github.com/dhall-lang/dhall-lang/releases/tag/v15.0.0
 [dhall-haskell]: https://github.com/dhall-lang/dhall-haskell
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
 [dhall-tests]: https://github.com/dhall-lang/dhall-lang/tree/master/tests
