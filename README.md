@@ -154,7 +154,54 @@ bar:
 - 5
 ```
 
+It's not currently possible to convert to YAML without the SnakeYAML dependency, although we may support a simplified
+version of this in the future (something similar to what we have for JSON in the core module).
+
 ## Other stuff
+
+The dhall-testing module provides support for property-based testing with [ScalaCheck][scalacheck]
+in the form of `Arbitrary` (and `Shrink`() instances:
+
+### dhall-testing
+
+```scala
+scala> import org.dhallj.core.Expr
+import org.dhallj.core.Expr
+
+scala> import org.dhallj.testing.instances._
+import org.dhallj.testing.instances._
+
+scala> import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary
+
+scala> Arbitrary.arbitrary[Expr].sample
+res0: Option[org.dhallj.core.Expr] = Some(Optional (Optional (List Double)))
+
+scala> Arbitrary.arbitrary[Expr].sample
+res1: Option[org.dhallj.core.Expr] = Some(Optional (List <neftfEahtuSq : Double | kg...
+```
+
+It includes (fairly basic) support for producing both well-typed and probably-not-well-typed
+expressions, and for generating arbitrary elements of specified Dhall types:
+
+```scala
+scala> import org.dhallj.testing.WellTypedExpr
+import org.dhallj.testing.WellTypedExpr
+
+scala> Arbitrary.arbitrary[WellTypedExpr].sample
+res2: Option[org.dhallj.testing.WellTypedExpr] = Some(WellTypedExpr(8436008296256993755))
+
+scala> genForType(Expr.Constants.BOOL).flatMap(_.sample)
+res3: Option[org.dhallj.core.Expr] = Some(True)
+
+scala> genForType(Expr.Constants.BOOL).flatMap(_.sample)
+res4: Option[org.dhallj.core.Expr] = Some(False)
+
+scala> genForType(Expr.makeApplication(Expr.Constants.LIST, Expr.Constants.INTEGER)).flatMap(_.sample)
+res5: Option[org.dhallj.core.Expr] = Some([+1522471910085416508, -9223372036854775809, ...
+```
+
+This module is currently fairly minimal, and is likely to change substantially in future releases.
 
 ### dhall-javagen and dhall-prelude
 
@@ -264,6 +311,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
 [dhall-tests]: https://github.com/dhall-lang/dhall-lang/tree/master/tests
 [dhall-lang]: https://dhall-lang.org/
+[discipline]: https://github.com/typelevel/discipline
 [javacc]: https://javacc.github.io/javacc/
 [jawn]: https://github.com/typelevel/jawn
 [permutive]: https://permutive.com
@@ -272,6 +320,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [sbt-installation]: https://www.scala-sbt.org/1.x/docs/Setup.html
 [sbt-javacc]: https://github.com/travisbrown/sbt-javacc
 [scala]: https://www.scala-lang.org
+[scalacheck]: https://www.scalacheck.org/
 [snake-yaml]: https://bitbucket.org/asomov/snakeyaml/
 [spray-json]: https://github.com/spray/spray-json
 [timspence]: https://github.com/TimWSpence
