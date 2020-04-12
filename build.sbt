@@ -94,6 +94,7 @@ lazy val jawn = project
     moduleName := "dhall-jawn",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-jawn" % circeVersion % Test,
+      "org.typelevel" %% "jawn-spray" % "1.0.0" % Test,
       "org.typelevel" %% "jawn-parser" % "1.0.0"
     )
   )
