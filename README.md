@@ -159,10 +159,10 @@ version of this in the future (something similar to what we have for JSON in the
 
 ## Other stuff
 
-The dhall-testing module provides support for property-based testing with [ScalaCheck][scalacheck]
-in the form of `Arbitrary` (and `Shrink`() instances:
-
 ### dhall-testing
+
+The dhall-testing module provides support for property-based testing with [ScalaCheck][scalacheck]
+in the form of `Arbitrary` (and `Shrink`) instances:
 
 ```scala
 scala> import org.dhallj.core.Expr
@@ -182,7 +182,7 @@ res1: Option[org.dhallj.core.Expr] = Some(Optional (List <neftfEahtuSq : Double 
 ```
 
 It includes (fairly basic) support for producing both well-typed and probably-not-well-typed
-expressions, and for generating arbitrary elements of specified Dhall types:
+expressions, and for generating arbitrary values of specified Dhall types:
 
 ```scala
 scala> import org.dhallj.testing.WellTypedExpr
