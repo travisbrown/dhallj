@@ -196,6 +196,11 @@ sbt:root> slow:test
 [success] Total time: 79 s (01:19), completed 12-Apr-2020 08:52:41
 ```
 
+## Community
+
+This project supports the [Scala code of conduct][code-of-conduct] and wants all of its channels
+(Gitter, GitHub, etc.) to be inclusive environments.
+
 ## Copyright and license
 
 All code in this repository is available under the [3-Clause BSD License][bsd-license].
@@ -204,6 +209,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 
 [bsd-license]: https://opensource.org/licenses/BSD-3-Clause
 [circe]: https://github.com/circe/circe
+[code-of-conduct]: https://www.scala-lang.org/conduct/
 [dhall-haskell]: https://github.com/dhall-lang/dhall-haskell
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
 [dhall-tests]: https://github.com/dhall-lang/dhall-lang/tree/master/tests
