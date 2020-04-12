@@ -14,6 +14,15 @@ This project has been supported in part by [Permutive][permutive]. Please see ou
 [monthly reports][permutive-medium] for updates on the work of the Permutive Community Engineering
 team.
 
+## Table of contents
+
+* [Status](#status)
+* [Getting started](#getting-started)
+* [Converting to other formats](#converting-to-other-formats)
+* [Developing](#developing)
+* [Community](#community)
+* [Copyright and license](#copyright-and-license)
+
 ## Status
 
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization, binary
