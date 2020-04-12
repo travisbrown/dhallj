@@ -19,6 +19,7 @@ team.
 * [Status](#status)
 * [Getting started](#getting-started)
 * [Converting to other formats](#converting-to-other-formats)
+* [Import resolution](#import-resolution)
 * [Command-line interface](#command-line-interface)
 * [Other stuff](#other-stuff)
 * [Developing](#developing)
@@ -158,6 +159,90 @@ bar:
 
 It's not currently possible to convert to YAML without the SnakeYAML dependency, although we may support a simplified
 version of this in the future (something similar to what we have for JSON in the core module).
+
+## Import resolution
+
+There are currently two modules that implement import resolution (to different degrees).
+
+### dhall-imports
+
+The first is dhall-imports, which is a Scala library built on [cats-effect] that uses [http4s] for
+its HTTP client. This module is intended to be a complete implementation of the
+[import resolution and caching specification][dhall-imports].
+
+It requires a bit of ceremony to set up:
+
+```scala
+import cats.effect.{ContextShift, IO, Resource}
+import org.dhallj.core.Expr
+import org.dhallj.imports._
+import org.dhallj.parser.DhallParser
+import org.http4s.client.Client
+import org.http4s.client.blaze.BlazeClientBuilder
+import scala.concurrent.ExecutionContext
+
+implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+
+val client: Resource[IO, Client[IO]] = BlazeClientBuilder[IO](ExecutionContext.global).resource
+```
+
+And then if we have some definitions like this:
+
+```scala
+val concatSepImport = DhallParser.parse("https://prelude.dhall-lang.org/Text/concatSep")
+
+val parts = DhallParser.parse("""["foo", "bar", "baz"]""")
+val delimiter = Expr.makeTextLiteral("-")
+```
+
+We can use them with a function from the Dhall Prelude like this:
+
+```scala
+scala> val resolved = client.use { implicit c =>
+     |   concatSepImport.resolveImports[IO]()
+     | }
+resolved: cats.effect.IO[org.dhallj.core.Expr] = IO$-633277477
+
+scala> val result = resolved.map { concatSep =>
+     |   Expr.makeApplication(concatSep, Array(delimiter, parts)).normalize
+     | }
+result: cats.effect.IO[org.dhallj.core.Expr] = <function1>
+
+scala> result.unsafeRunSync
+res0: org.dhallj.core.Expr = "foo-bar-baz"
+```
+
+(Note that we could use dhall-scala to avoid the use of `Array` above.)
+
+### dhall-imports-mini
+
+The other implementation is dhall-imports-mini, which is a Java library that
+depends only on the core and parser modules, but that doesn't support
+remote imports or caching.
+
+The previous example could be rewritten as follows using dhall-imports-mini
+and a local copy of the Prelude:
+
+```scala
+import org.dhallj.core.Expr
+import org.dhallj.imports.mini.Resolver
+import org.dhallj.parser.DhallParser
+
+val concatSep = Resolver.resolve(DhallParser.parse("./dhall-lang/Prelude/Text/concatSep"), false)
+
+val parts = DhallParser.parse("""["foo", "bar", "baz"]""")
+val delimiter = Expr.makeTextLiteral("-")
+```
+
+And then:
+
+```scala
+scala> Expr.makeApplication(concatSep, Array(delimiter, parts)).normalize
+res0: org.dhallj.core.Expr = "foo-bar-baz"
+```
+
+It's likely that eventually we'll provide a complete pure-Java implementation of import resolution,
+but this isn't currently a high priority for us.
 
 ## Command-line interface
 
@@ -364,16 +449,19 @@ All code in this repository is available under the [3-Clause BSD License][bsd-li
 Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 
 [bsd-license]: https://opensource.org/licenses/BSD-3-Clause
+[cats-effect]: https://github.com/typelevel/cats-effect
 [cbor]: https://cbor.io/
 [circe]: https://github.com/circe/circe
 [code-of-conduct]: https://www.scala-lang.org/conduct/
 [dhall-15]: https://github.com/dhall-lang/dhall-lang/releases/tag/v15.0.0
 [dhall-haskell]: https://github.com/dhall-lang/dhall-haskell
+[dhall-imports]: https://github.com/dhall-lang/dhall-lang/blob/master/standard/imports.md
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
 [dhall-tests]: https://github.com/dhall-lang/dhall-lang/tree/master/tests
 [dhall-lang]: https://dhall-lang.org/
 [discipline]: https://github.com/typelevel/discipline
 [graal-native-image]: https://www.graalvm.org/docs/reference-manual/native-image/
+[http4s]: https://http4s.org
 [javacc]: https://javacc.github.io/javacc/
 [jawn]: https://github.com/typelevel/jawn
 [permutive]: https://permutive.com
