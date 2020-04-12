@@ -41,7 +41,7 @@ public class Dhall {
     }
 
     if (typeCheck) {
-      type = expr.typeCheck();
+      type = Expr.Util.typeCheck(expr);
     }
 
     if (args.length == 0 || args[0].startsWith("--")) {
@@ -50,7 +50,7 @@ public class Dhall {
       System.out.printf("sha256:%s\n", expr.hash());
     } else if (args[0].equals("type")) {
       if (!typeCheck) {
-        type = expr.typeCheck();
+        type = Expr.Util.typeCheck(expr);
       }
       System.out.println(type);
     } else if (args[0].equals("json")) {

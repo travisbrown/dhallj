@@ -25,7 +25,7 @@ class ParsingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr,
 }
 
 class TypeCheckingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, RuntimeException] {
-  def loadInput(input: Array[Byte]): Expr = DhallParser.parse(new String(input)).typeCheck
+  def loadInput(input: Array[Byte]): Expr = Expr.Util.typeCheck(DhallParser.parse(new String(input)))
 }
 
 class BinaryDecodingFailureSuite(val base: String) extends AcceptanceFailureSuite[Expr, RuntimeException] {

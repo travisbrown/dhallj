@@ -51,7 +51,7 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
-class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(_.typeCheck)
+class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
 class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize)
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize)
 

@@ -65,11 +65,6 @@ public abstract class Expr {
     return this.accept(new AlphaNormalize());
   }
 
-  /** Type-check this expression and return the inferred type. */
-  public final Expr typeCheck() {
-    return this.accept(new TypeCheck());
-  }
-
   /** Increment a variable name in this expression. */
   public final Expr increment(String name) {
     return this.accept(new Shift(true, name));
@@ -195,8 +190,13 @@ public abstract class Expr {
   public static final class Util {
     private Util() {}
 
+    /** Type-check the given expression and return the inferred type. */
+    public static final Expr typeCheck(Expr expr) {
+      return expr.accept(new TypeCheck());
+    }
+
     /** Return the first difference between the structure of two expressions as a pair. */
-    public final Entry<Expr, Expr> getFirstDiff(Expr first, Expr second) {
+    public static final Entry<Expr, Expr> getFirstDiff(Expr first, Expr second) {
       return first.getFirstDiff(second);
     }
 
