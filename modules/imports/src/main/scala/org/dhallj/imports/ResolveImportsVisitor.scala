@@ -12,7 +12,6 @@ import org.dhallj.core._
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
-import org.dhallj.imports.ResolutionConfig
 import org.dhallj.imports.ResolutionConfig.{FromFileSystem, FromResources}
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.DhallParser
@@ -26,9 +25,9 @@ import scala.collection.JavaConverters._
 //TODO quoted path components?
 //TODO handle duplicate imports - should be easy with caching logic
 //TODO proper error handling
-private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: ResolutionConfig,
-                                                        cache: ImportsCache[F],
-                                                        parents: List[ImportContext])(
+private[imports] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
+                                                                  cache: ImportsCache[F],
+                                                                  parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends Visitor.NoPrepareEvents[F[Expr]] {
@@ -167,7 +166,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
     onImport(Local(path), mode, hash)
 
   override def onRemoteImport(url: URI, using: F[Expr], mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    if (using != null) using >>= (u => onImport(Remote(url, u), mode, hash))
+    if (using.ne(null)) using >>= (u => onImport(Remote(url, u), mode, hash))
     else onImport(Remote(url, null), mode, hash)
 
   override def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
@@ -213,7 +212,7 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
                 case _ => F.raiseError[(String, Headers)](new RuntimeException(s"Missing import - cannot resolve $uri"))
               }
             } yield resp
-          case Missing => F.raiseError(new RuntimeException(s"Missing import - cannot resolve missing"))
+          case Missing => F.raiseError(new RuntimeException("Missing import - cannot resolve missing"))
         }
 
         def checkHashesMatch(encoded: Array[Byte], expected: Array[Byte]): F[Unit] = {
@@ -297,8 +296,8 @@ private[imports] case class ResolveImportsVisitor[F[_]](resolutionConfig: Resolu
 
 object ResolveImportsVisitor {
 
-  def mkVisitor[F[_]: Sync: Client](resolutionConfig: ResolutionConfig): F[ResolveImportsVisitor[F]] =
-    Caching.mkImportsCache.map(c => ResolveImportsVisitor(resolutionConfig, c, Nil))
+  def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig): F[ResolveImportsVisitor[F]] =
+    Caching.mkImportsCache[F].map(c => ResolveImportsVisitor(resolutionConfig, c, Nil))
 
   sealed trait ImportContext
   case class Env(value: String) extends ImportContext

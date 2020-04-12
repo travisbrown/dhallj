@@ -68,12 +68,14 @@ object Codec {
     def encode(value: List[A]): Either[Codec.EncodingError, Expr] =
       value match {
         case Nil => Right(EmptyListLiteral(Codec[A].dhallType))
-        case values =>
-          values
+        case head :: tail =>
+          tail
             .foldRight[Either[Codec.EncodingError, List[Expr]]](Right(Nil)) {
               case (v, acc) => acc.flatMap(current => Codec[A].encode(v).map(_ :: current))
             }
-            .map(vs => NonEmptyListLiteral(vs.head, vs.tail.toVector))
+            .flatMap { tailExprs =>
+              Codec[A].encode(head).map(headExpr => NonEmptyListLiteral(headExpr, tailExprs.toVector))
+            }
       }
 
     val dhallType: Expr = Application(Identifier("List"), Codec[A].dhallType)

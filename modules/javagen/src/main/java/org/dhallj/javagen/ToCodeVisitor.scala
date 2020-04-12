@@ -108,8 +108,9 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
     }
 
   def onApplication(base: Code, args: JList[Code]): Code =
-    Code.mergeAll(base +: args.asScala.toVector) { ids =>
-      s"Expr.makeApplication(${ids.head}, new Expr[] {${ids.tail.mkString(", ")}})"
+    Code.mergeAll(base +: args.asScala.toVector) {
+      case head +: tail =>
+        s"Expr.makeApplication($head, new Expr[] {${tail.mkString(", ")}})"
     }
 
   def onOperatorApplication(operator: Operator, lhs: Code, rhs: Code): Code = {

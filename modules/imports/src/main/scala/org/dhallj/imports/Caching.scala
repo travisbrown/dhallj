@@ -48,13 +48,13 @@ private[imports] object Caching {
     }
   }
 
-  def mkImportsCache[F[_]](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportsCache[F]]] =
+  def mkImportsCache[F[_] <: AnyRef](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportsCache[F]]] =
     for {
       _ <- if (!Files.exists(rootDir)) F.delay(Files.createDirectories(rootDir)) else F.unit
       perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
     } yield (if (perms) Some(new ImportsCacheImpl[F](rootDir)) else None)
 
-  def mkImportsCache[F[_]](implicit F: Sync[F]): F[ImportsCache[F]] = {
+  def mkImportsCache[F[_] <: AnyRef](implicit F: Sync[F]): F[ImportsCache[F]] = {
     def makeCacheFromEnvVar(env: String, relativePath: String): F[Option[ImportsCache[F]]] =
       for {
         envValO <- F.delay(sys.env.get(env))
