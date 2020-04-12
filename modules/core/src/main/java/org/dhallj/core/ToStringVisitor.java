@@ -12,15 +12,15 @@ final class ToStringState {
   static final int BASE = 0;
   static final int APPLICATION_ARGUMENT = 0;
   static final int APPLICATION = 1;
-  static final int ANNOTATED = 2;
-  static final int ASSERT = 2;
-  static final int MERGE = 3;
-  static final int TO_MAP = 3;
-  static final int LAMBDA = 4;
-  static final int PI = 4;
-  static final int LET = 4;
-  static final int IF = 5;
-  static final int FIELD_ACCESS = 7;
+  static final int ANNOTATED = 102;
+  static final int ASSERT = 102;
+  static final int MERGE = 103;
+  static final int TO_MAP = 103;
+  static final int LAMBDA = 104;
+  static final int PI = 104;
+  static final int LET = 104;
+  static final int IF = 105;
+  static final int FIELD_ACCESS = 107;
   static final int NONE = Integer.MAX_VALUE;
 
   private final String text;
