@@ -174,8 +174,22 @@ TOKEN: {
   | <#DOMAIN_LABEL: (<ALPHA> | <DIGIT>)+ (("-")+ (<ALPHA> | <DIGIT>)+)*>
   | <#DOMAIN: <DOMAIN_LABEL> ("." <DOMAIN_LABEL>)* (".")?>
   | <#IPV4: <DEC_OCTET> "." <DEC_OCTET> "." <DEC_OCTET> "." <DEC_OCTET>>
+  | <#H16: (<HEX_DIGIT>){1,4}>
+  | <#LS32: (<H16> ":" <H16>) | <IPV4>>
+  | <#IPV6:
+      ((<H16> ":"){6} <LS32>)
+    | ("::" (<H16> ":"){5} <LS32>)
+    | ((<H16>)? "::" (<H16> ":"){4} <LS32>)
+    | ((<H16> (":" <H16>){0, 1})? "::" (<H16> ":"){3} <LS32>)
+    | ((<H16> (":" <H16>){0, 2})? "::" (<H16> ":"){2} <LS32>)
+    | ((<H16> (":" <H16>){0, 3})? "::" <H16> ":" <LS32>)
+    | ((<H16> (":" <H16>){0, 4})? "::" <LS32>)
+    | ((<H16> (":" <H16>){0, 5})? "::" <H16>)
+    | ((<H16> (":" <H16>){0, 6})? "::")
+    >
+  | <#IPVFUTURE: "v" (<HEX_DIGIT>)+ "." (<UNRESERVED> | <SUB_DELIM> | ":")+>
   | <#DEC_OCTET: ("25" ["0"-"5"]) | ("2" ["0"-"4"] <DIGIT>) | ("1" <DIGIT> <DIGIT>) | (["1"-"9"] <DIGIT>) | <DIGIT>>
-  | <#HOST: <DOMAIN> | <IPV4>> // | ("[" (<IPV6> | <IPVFUTURE>) "]"))>
+  | <#HOST: <DOMAIN> | <IPV4> | ("[" (<IPV6> | <IPVFUTURE>) "]")>
   | <#PATH_CHARACTER:
       ["\u0021", "\u003d", "\u007c", "\u007e"]
     | ["\u0024"-"\u0027"] | ["\u002a"-"\u002b"] | ["\u002d"-"\u002e"]
