@@ -21,9 +21,10 @@ decoding, hashing, and type inference, and currently 1,139 of 1,143 tests are pa
 
 There are several known issues:
 
-* The parser does not support at least one known corner case.
-* The parser cannot parse e.g. deeply nested records (although indefinitely long lists are fine).
-* The type checker is not stack-safe (this should be fixed soon).
+* The parser does not support [at least one known corner case](https://github.com/travisbrown/dhallj/issues/1).
+* The parser [cannot parse deeply nested structures](https://github.com/travisbrown/dhallj/issues/2) (records, etc., although note that indefinitely long lists are fine).
+* The type checker is [also not stack-safe](https://github.com/travisbrown/dhallj/issues/3) (this should be fixed soon).
+* Exported JSON (or YAML) [doesn't exactly match `dhall-to-json`](https://github.com/travisbrown/dhallj/issues/4).
 * In some cases printing Dhall expressions may produce invalid code.
 * Import resolution is not provided in the core modules, and is a work in progress.
 
