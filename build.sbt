@@ -28,7 +28,7 @@ val root = project
   .settings(
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
   )
-  .aggregate(core, parser, javagen, prelude, demo, scala, circe, jawn, yaml, imports, importsMini, tests, benchmarks)
+  .aggregate(core, parser, javagen, prelude, cli, scala, circe, jawn, yaml, imports, importsMini, tests, benchmarks)
   .dependsOn(importsMini, scala, javagen, prelude)
 
 lazy val core = project
@@ -57,11 +57,12 @@ lazy val prelude = project
   )
   .dependsOn(core)
 
-lazy val demo = project
-  .in(file("demo"))
+lazy val cli = project
+  .in(file("cli"))
   .settings(baseSettings ++ javaSettings)
   .settings(
-    skip in publish := true
+    skip in publish := true,
+    name in GraalVMNativeImage := "dhall-cli"
   )
   .enablePlugins(GraalVMNativeImagePlugin)
   .dependsOn(parser, importsMini)

@@ -19,6 +19,7 @@ team.
 * [Status](#status)
 * [Getting started](#getting-started)
 * [Converting to other formats](#converting-to-other-formats)
+* [Command-line interface](#command-line-interface)
 * [Other stuff](#other-stuff)
 * [Developing](#developing)
 * [Community](#community)
@@ -157,6 +158,61 @@ bar:
 
 It's not currently possible to convert to YAML without the SnakeYAML dependency, although we may support a simplified
 version of this in the future (something similar to what we have for JSON in the core module).
+
+## Command-line interface
+
+We include a command-line interface that supports some common operations. It's currently similar to
+the official `dhall` and `dhall-to-json` binaries, but with many fewer options.
+
+If [GraalVM Native Image][graal-native-image] is available on your system, you can build the CLI as
+a native binary (thanks to [sbt-native-packager]).
+
+```bash
+$ sbt cli/graalvm-native-image:packageBin
+
+$ cd cli/target/graalvm-native-image/
+
+$ du -h dhall-cli
+8.2M    dhall-cli
+
+$ time ./dhall-cli hash --normalize --alpha <<< "λ(n: Natural) → [n, n + 1]"
+sha256:a8d9326812aaabeed29412e7b780dc733b1e633c5556c9ea588e8212d9dc48f3
+
+real    0m0.009s
+user    0m0.000s
+sys     0m0.009s
+
+$ time ./dhall-cli type <<< "{foo = [1, 2, 3]}"
+{foo : List Natural}
+
+real    0m0.003s
+user    0m0.000s
+sys     0m0.003s
+
+$ time ./dhall-cli json <<< "{foo = [1, 2, 3]}"
+{"foo":[1,2,3]}
+
+real    0m0.005s
+user    0m0.004s
+sys     0m0.001s
+```
+
+Even on the JVM it's close to usable, although you can definitely feel the slow startup:
+
+```bash
+$ cd ..
+
+$ time java -jar ./cli-assembly-0.1.0-SNAPSHOT.jar hash --normalize --alpha <<< "λ(n: Natural) → [n, n + 1]"
+sha256:a8d9326812aaabeed29412e7b780dc733b1e633c5556c9ea588e8212d9dc48f3
+
+real    0m0.104s
+user    0m0.106s
+sys     0m0.018s
+```
+
+There's probably not really any reason you'd want to use `dhall-cli` right now, but I think it's a
+pretty neat demonstration of how Graal can make Java (or Scala) a viable language for building
+native CLI applications.
 
 ## Other stuff
 
@@ -317,6 +373,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [dhall-tests]: https://github.com/dhall-lang/dhall-lang/tree/master/tests
 [dhall-lang]: https://dhall-lang.org/
 [discipline]: https://github.com/typelevel/discipline
+[graal-native-image]: https://www.graalvm.org/docs/reference-manual/native-image/
 [javacc]: https://javacc.github.io/javacc/
 [jawn]: https://github.com/typelevel/jawn
 [permutive]: https://permutive.com
@@ -324,6 +381,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [sbt]: https://www.scala-sbt.org
 [sbt-installation]: https://www.scala-sbt.org/1.x/docs/Setup.html
 [sbt-javacc]: https://github.com/travisbrown/sbt-javacc
+[sbt-native-packager]: https://github.com/sbt/sbt-native-packager
 [scala]: https://www.scala-lang.org
 [scalacheck]: https://www.scalacheck.org/
 [snake-yaml]: https://bitbucket.org/asomov/snakeyaml/
