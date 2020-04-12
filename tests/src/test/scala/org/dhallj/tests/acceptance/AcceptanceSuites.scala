@@ -34,7 +34,6 @@ class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-infere
 }
 
 class ParsingUnitSuite extends ParsingSuite("parser/success/unit") {
-  // I'm pretty much convinced we're doing the right thing on SomeXYZ.
   override def ignored = Set("SomeXYZ")
 }
 class ParsingOtherSuite extends ParsingSuite("parser/success")
