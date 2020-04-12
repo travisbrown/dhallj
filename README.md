@@ -28,10 +28,11 @@ team.
 
 We support [Dhall 15.0.0][dhall-15], including the `with` keyword and record puns.
 
-We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization, binary
-decoding, hashing, and type inference (everything except imports), and currently 1,139 of 1,143
-tests are passing. There are three open issues that track the acceptance tests that are not passing
-or that we're not running yet: [#5](https://github.com/travisbrown/dhallj/issues/5),
+We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization,
+[CBOR][cbor] encoding and decoding, hashing, and type inference (everything except imports), and
+currently 1,139 of 1,143 tests are passing. There are three open issues that track the acceptance
+tests that are not passing or that we're not running yet:
+[#5](https://github.com/travisbrown/dhallj/issues/5),
 [#6](https://github.com/travisbrown/dhallj/issues/6), and
 [#8](https://github.com/travisbrown/dhallj/issues/8).
 
@@ -209,7 +210,7 @@ The dhall-javagen module lets you take a DhallJ representation of a Dhall expres
 generate Java code that will build the DhallJ representation of that expression.
 
 This is mostly a toy, but it allows us for example to distribute a "pre-compiled" jar containing the
-Dhall prelude:
+Dhall Prelude:
 
 ```scala
 scala> import java.math.BigInteger
@@ -233,6 +234,9 @@ enumerate: org.dhallj.core.Expr = ...
 scala> Expr.makeApplication(enumerate, ten).normalize
 res0: org.dhallj.core.Expr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
+
+Note that the resulting jar (which is available from Maven Central as dhall-prelude) is many times
+smaller than either the Prelude source or the Prelude serialized as CBOR.
 
 ## Developing
 
@@ -304,6 +308,7 @@ All code in this repository is available under the [3-Clause BSD License][bsd-li
 Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 
 [bsd-license]: https://opensource.org/licenses/BSD-3-Clause
+[cbor]: https://cbor.io/
 [circe]: https://github.com/circe/circe
 [code-of-conduct]: https://www.scala-lang.org/conduct/
 [dhall-15]: https://github.com/dhall-lang/dhall-lang/releases/tag/v15.0.0
