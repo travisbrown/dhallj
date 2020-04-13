@@ -13,15 +13,16 @@ public class YamlConverter {
   }
 
   public static final String toYamlString(Expr expr) {
-    return toYamlString(expr, defaultOptions);
+    return toYamlString(expr, defaultOptions, true);
   }
 
-  public static final String toYamlString(Expr expr, DumperOptions options) {
-    YamlHandler handler = new YamlHandler();
+  public static final String toYamlString(Expr expr, DumperOptions options, boolean skipNulls) {
+    YamlHandler handler = new YamlHandler(skipNulls);
     boolean wasConverted = expr.accept(new JsonConverter(handler));
 
     if (wasConverted) {
       Yaml yaml = new Yaml(options);
+
       return yaml.dump(handler.getResult());
     } else {
       return null;

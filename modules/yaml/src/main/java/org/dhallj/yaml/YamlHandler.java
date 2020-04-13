@@ -7,6 +7,15 @@ import org.dhallj.core.converters.JsonHandler;
 
 public class YamlHandler implements JsonHandler {
   private final Deque<YamlContext> stack = new ArrayDeque<>();
+  private final boolean skipNulls;
+
+  public YamlHandler(boolean skipNulls) {
+    this.skipNulls = skipNulls;
+  }
+
+  public YamlHandler() {
+    this(true);
+  }
 
   private final void addValue(Object value) {
     if (stack.isEmpty()) {
@@ -57,7 +66,7 @@ public class YamlHandler implements JsonHandler {
   public void onArrayElementGap() {}
 
   public void onObjectStart() {
-    this.stack.push(new ObjectContext());
+    this.stack.push(new ObjectContext(this.skipNulls));
   }
 
   public void onObjectEnd() {

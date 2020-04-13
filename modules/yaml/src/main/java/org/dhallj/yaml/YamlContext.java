@@ -32,13 +32,22 @@ final class RootContext implements YamlContext {
 final class ObjectContext implements YamlContext {
   private String key = null;
   private final Map<String, Object> fields = new LinkedHashMap<>();
+  private final boolean skipNulls;
+
+  public ObjectContext(boolean skipNulls) {
+    this.skipNulls = skipNulls;
+  }
 
   public void add(String key) {
     this.key = key;
   }
 
   public void add(Object value) {
-    this.fields.put(this.key, value);
+    if (!skipNulls || value != null) {
+      this.fields.put(this.key, value);
+    } else {
+      this.key = null;
+    }
   }
 
   public Object getResult() {
