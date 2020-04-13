@@ -43,8 +43,6 @@ There are several known issues:
 * The parser does not support [at least one known corner case](https://github.com/travisbrown/dhallj/issues/1).
 * The parser [cannot parse deeply nested structures](https://github.com/travisbrown/dhallj/issues/2) (records, etc., although note that indefinitely long lists are fine).
 * The type checker is [also not stack-safe](https://github.com/travisbrown/dhallj/issues/3) (this should be fixed soon).
-* Exported JSON (or YAML) [doesn't exactly match `dhall-to-json`](https://github.com/travisbrown/dhallj/issues/4).
-* In some cases printing Dhall expressions [produces invalid code](https://github.com/travisbrown/dhallj/issues/7).
 * Import resolution is not provided in the core modules, and is a work in progress.
 
 While we think the project is reasonably well-tested, it's very new, is sure to be full of bugs, and
