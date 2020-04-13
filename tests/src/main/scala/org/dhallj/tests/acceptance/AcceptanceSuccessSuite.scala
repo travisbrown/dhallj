@@ -2,10 +2,17 @@ package org.dhallj.tests.acceptance
 
 import java.nio.file.{Files, Paths}
 
+import cats.effect.{IO, ContextShift}
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
-import org.dhallj.imports.mini.Resolver
 import org.dhallj.parser.DhallParser
+import org.dhallj.imports._
+import org.dhallj.imports.ResolutionConfig
+import org.dhallj.imports.ResolutionConfig._
+import org.http4s.client._
+import org.http4s.client.blaze._
+
+import scala.concurrent.ExecutionContext.global
 
 trait SuccessSuite[A, B] extends AcceptanceSuite {
   def makeExpectedPath(inputPath: String): String
@@ -34,11 +41,16 @@ trait ExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
 
 trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
   def parseInput(path: String, input: String): Expr = {
-    val parsed = DhallParser.parse(input)
+    val parsed = DhallParser.parse(s"/$path")
 
     if (parsed.isResolved) parsed
     else {
-      Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
+      implicit val cs: ContextShift[IO] = IO.contextShift(global)
+      BlazeClientBuilder[IO](global).resource.use { client =>
+        implicit val c: Client[IO] = client
+        //      Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
+        parsed.resolveImports[IO](ResolutionConfig(FromResources))
+      }.unsafeRunSync
     }
   }
 }
@@ -85,3 +97,23 @@ abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends
 }
 
 class BinaryDecodingSuite(val base: String) extends ExprDecodingAcceptanceSuite(identity)
+
+class ImportResolutionSuite(val base: String) extends ExprAcceptanceSuite[Expr] {
+
+  def setEnv(key: String, value: String) = {
+    val field = System.getenv().getClass.getDeclaredField("m")
+    field.setAccessible(true)
+    val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
+    map.put(key, value)
+  }
+
+  override def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhallb"
+
+  override def transform(input: Expr): Expr = ???
+
+  override def loadExpected(input: Array[Byte]): Expr = ???
+
+  override def compare(result: Expr, expected: Expr): Boolean = ???
+
+  private def resolveImports(expr: Expr): Expr = ???
+}
