@@ -24,6 +24,10 @@ public final class Encode implements Visitor<Void> {
     return true;
   }
 
+  public boolean flattenToMapLists() {
+    return false;
+  }
+
   public Void onNote(Void base, Source source) {
     return base;
   }

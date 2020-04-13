@@ -16,6 +16,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -1039,11 +1040,23 @@ public abstract class Expr {
           Constructors.NonEmptyListLiteral tmpNonEmptyList =
               (Constructors.NonEmptyListLiteral) current.expr;
           if (current.state == 0) {
-            visitor.prepareNonEmptyList(tmpNonEmptyList.values.length);
-            visitor.prepareNonEmptyListElement(0);
-            current.state = 1;
-            stack.push(current);
-            stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
+            boolean done = false;
+            if (visitor.flattenToMapLists()) {
+              Expr asRecord = flattenToMapList(tmpNonEmptyList.values);
+
+              if (asRecord != null) {
+                stack.push(new State(asRecord, 0));
+                done = true;
+              }
+            }
+
+            if (!done) {
+              visitor.prepareNonEmptyList(tmpNonEmptyList.values.length);
+              visitor.prepareNonEmptyListElement(0);
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpNonEmptyList.values[current.state - 1], 0));
+            }
           } else if (current.state == tmpNonEmptyList.values.length) {
             List<A> results = new ArrayList<A>();
             for (int i = 0; i < tmpNonEmptyList.values.length; i += 1) {
@@ -1061,12 +1074,16 @@ public abstract class Expr {
         case Tags.EMPTY_LIST:
           Constructors.EmptyListLiteral tmpEmptyList = (Constructors.EmptyListLiteral) current.expr;
           if (current.state == 0) {
-            if (visitor.prepareEmptyList(tmpEmptyList.type)) {
-              current.state = 1;
-              stack.push(current);
-              stack.push(new State(tmpEmptyList.type, 0));
+            if (visitor.flattenToMapLists() && isToMapListType(tmpEmptyList.type)) {
+              stack.push(new State(Constants.EMPTY_RECORD_LITERAL, 0));
             } else {
-              valueStack.push(null);
+              if (visitor.prepareEmptyList(tmpEmptyList.type)) {
+                current.state = 1;
+                stack.push(current);
+                stack.push(new State(tmpEmptyList.type, 0));
+              } else {
+                valueStack.push(null);
+              }
             }
           } else {
             valueStack.push(visitor.onEmptyList(valueStack.poll()));
@@ -1859,4 +1876,81 @@ public abstract class Expr {
           return a.getKey().compareTo(b.getKey());
         }
       };
+
+  private static final Entry<Expr, Expr> flattenToMapRecord(List<Entry<String, Expr>> fields) {
+    if (fields == null || fields.size() != 2) {
+      return null;
+    }
+
+    Expr key = null;
+    Expr value = null;
+
+    for (Entry<String, Expr> entry : fields) {
+      if (entry.getKey().equals("mapKey")) {
+        key = entry.getValue();
+      } else if (entry.getKey().equals("mapValue")) {
+        value = entry.getValue();
+      }
+    }
+
+    if (key == null || value == null) {
+      return null;
+    }
+
+    return new SimpleImmutableEntry<>(key, value);
+  }
+
+  private static final Expr flattenToMapList(Expr[] values) {
+    LinkedHashMap<String, Expr> fieldMap = new LinkedHashMap<>(values.length);
+
+    for (Expr value : values) {
+      List<Entry<String, Expr>> asRecord = Util.asRecordLiteral(value);
+
+      if (asRecord == null) {
+        return null;
+      }
+
+      Entry<Expr, Expr> entry = flattenToMapRecord(asRecord);
+
+      if (entry == null) {
+        return null;
+      }
+
+      String asText = Util.asSimpleTextLiteral(entry.getKey());
+
+      if (asText == null) {
+        return null;
+      }
+
+      fieldMap.put(asText, entry.getValue());
+    }
+
+    Set<Entry<String, Expr>> fields = fieldMap.entrySet();
+
+    return makeRecordLiteral(fields.toArray(new Entry[fields.size()]));
+  }
+
+  private static final boolean isToMapListType(Expr type) {
+    Expr elementType = Util.getListArg(type);
+
+    if (elementType == null) {
+      return false;
+    } else {
+      List<Entry<String, Expr>> asRecordType = Util.asRecordType(elementType);
+
+      if (asRecordType == null) {
+        return false;
+      }
+
+      Entry<Expr, Expr> entry = flattenToMapRecord(asRecordType);
+
+      if (entry == null) {
+        return false;
+      }
+
+      String asBuiltIn = Util.asBuiltIn(entry.getKey());
+
+      return asBuiltIn != null && asBuiltIn.equals("Text");
+    }
+  }
 }

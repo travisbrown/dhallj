@@ -73,7 +73,14 @@ public interface Visitor<A> {
 
   A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash);
 
+  /** Determines whether the driver sorts fields by name before feeding them to the visitor. */
   boolean sortFields();
+
+  /**
+   * Determines whether the driver flattens lists matching the {@code toMap} format into records
+   * before feeding them to the visitor.
+   */
+  boolean flattenToMapLists();
 
   boolean prepareLambda(String name, Expr type);
 
@@ -141,6 +148,10 @@ public interface Visitor<A> {
     public void bind(String name, Expr type) {}
 
     public boolean sortFields() {
+      return false;
+    }
+
+    public boolean flattenToMapLists() {
       return false;
     }
 

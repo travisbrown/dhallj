@@ -37,6 +37,11 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
   }
 
   @Override
+  public boolean flattenToMapLists() {
+    return true;
+  }
+
+  @Override
   public Boolean onNatural(Expr self, BigInteger value) {
     this.handler.onNumber(value);
     return true;
