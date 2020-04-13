@@ -7,8 +7,23 @@
 This project is an implementation of the [Dhall][dhall-lang] configuration language for the Java
 Virtual Machine.
 
-The core modules have no external dependencies and are compatible with Java 7 and later versions.
-There are also several [Scala][scala] modules that are published for Scala 2.12 and 2.13.
+Our goal for this project is to make it as easy as possible to integrate Dhall
+into JVM build systems (see for example the [dhall-kubernetes] demonstration
+[below](#converting-to-other-formats) for a concrete example of why you might want to do this).
+
+The core modules have no external dependencies, are Java 7-compatible, and are fairly minimal:
+
+```bash
+$ du -h modules/core/target/dhall-core-0.1.0-SNAPSHOT.jar
+152K    modules/core/target/dhall-core-0.1.0-SNAPSHOT.jar
+
+$ du -h modules/parser/target/dhall-parser-0.1.0-SNAPSHOT.jar
+108K    modules/parser/target/dhall-parser-0.1.0-SNAPSHOT.jar
+```
+
+There are also several [Scala][scala] modules that are published for Scala 2.12
+and 2.13. While most of the examples in this README are focused on Scala, you
+shouldn't need to know or care about Scala to use the core DhallJ modules.
 
 This project has been supported in part by [Permutive][permutive]. Please see our
 [monthly reports][permutive-medium] for updates on the work of the Permutive Community Engineering
@@ -334,6 +349,43 @@ bar:
 - 5
 ```
 
+You can use the YAML exporter with [dhall-kubernetes], for example. Instead of
+maintaining a lot of verbose and repetitive and error-prone YAML files, you can
+keep your configuration in well-typed Dhall files (like
+[this example](https://github.com/dhall-lang/dhall-kubernetes/blob/506d633e382872346927b8cb9884d8b7382e6cab/1.17/examples/deploymentSimple.dhall))
+and have your build system export them to YAML:
+
+```scala
+import org.dhallj.syntax._, org.dhallj.yaml.YamlConverter
+
+val kubernetesExamplePath = "../dhall-kubernetes/1.17/examples/deploymentSimple.dhall"
+val Right(kubernetesExample) = kubernetesExamplePath.parseExpr.flatMap(_.resolve)
+```
+
+And then:
+
+```scala
+scala> println(YamlConverter.toYamlString(kubernetesExample.normalize))
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: nginx
+  template:
+    metadata:
+      name: nginx
+    spec:
+      containers:
+      - image: nginx:1.15.3
+        name: nginx
+        ports:
+        - containerPort: 80
+```
+
 It's not currently possible to convert to YAML without the SnakeYAML dependency, although we may support a simplified
 version of this in the future (something similar to what we have for JSON in the core module).
 
@@ -634,6 +686,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [dhall-haskell]: https://github.com/dhall-lang/dhall-haskell
 [dhall-imports]: https://github.com/dhall-lang/dhall-lang/blob/master/standard/imports.md
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
+[dhall-kubernetes]: https://github.com/dhall-lang/dhall-kubernetes
 [dhall-tests]: https://github.com/dhall-lang/dhall-lang/tree/master/tests
 [dhall-lang]: https://dhall-lang.org/
 [discipline]: https://github.com/typelevel/discipline

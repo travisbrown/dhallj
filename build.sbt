@@ -42,7 +42,7 @@ val root = project
              importsMini,
              tests,
              benchmarks)
-  .dependsOn(importsMini, scala, javagen, prelude)
+  .dependsOn(importsMini, scala, javagen, prelude, yaml)
 
 lazy val core = project
   .in(file("modules/core"))
