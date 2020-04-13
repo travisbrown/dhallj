@@ -10,17 +10,17 @@ import java.util.Map.Entry;
 
 final class ToStringState {
   static final int BASE = 0;
-  static final int APPLICATION_ARGUMENT = 0;
   static final int APPLICATION = 1;
-  static final int ANNOTATED = 102;
-  static final int ASSERT = 102;
-  static final int MERGE = 103;
-  static final int TO_MAP = 103;
-  static final int LAMBDA = 104;
-  static final int PI = 104;
-  static final int LET = 104;
-  static final int IF = 105;
-  static final int FIELD_ACCESS = 107;
+  static final int FIELD_ACCESS = 99;
+  static final int ASSERT = 100;
+  static final int MERGE = 102;
+  static final int TO_MAP = 102;
+  static final int APPLICATION_ARGUMENT = 102;
+  static final int ANNOTATED = 104;
+  static final int LAMBDA = 105;
+  static final int PI = 105;
+  static final int LET = 105;
+  static final int IF = 106;
   static final int NONE = Integer.MAX_VALUE;
 
   private final String text;
@@ -39,12 +39,17 @@ final class ToStringState {
     return new ToStringState(text, this.looseness);
   }
 
-  String toString(int contextLooseness) {
-    if (contextLooseness >= this.looseness) {
+  String toString(int contextLooseness, boolean parenthesizeIfSame) {
+    if (contextLooseness > this.looseness
+        || (!parenthesizeIfSame && contextLooseness == this.looseness)) {
       return this.text;
     } else {
       return String.format("(%s)", this.text);
     }
+  }
+
+  String toString(int contextLooseness) {
+    return this.toString(contextLooseness, false);
   }
 
   public String toString() {
@@ -165,13 +170,13 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
         String.format(
             "λ(%s : %s) → %s",
             escapeName(name),
-            type.toString(ToStringState.LAMBDA),
+            type.toString(ToStringState.LAMBDA, true),
             result.toString(ToStringState.LAMBDA)),
         ToStringState.LAMBDA);
   }
 
   public ToStringState onPi(String name, ToStringState type, ToStringState result) {
-    String typeString = type.toString(ToStringState.PI);
+    String typeString = type.toString(ToStringState.PI, true);
     String resultString = result.toString(ToStringState.PI);
 
     return new ToStringState(
@@ -221,7 +226,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
   public ToStringState onText(String[] parts, List<ToStringState> interpolated) {
 
     StringBuilder builder = new StringBuilder("\"");
-    builder.append(parts[0]);
+    builder.append(Expr.Util.escapeText(parts[0], false));
     int i = 1;
     Iterator<ToStringState> it = interpolated.iterator();
 
@@ -229,10 +234,10 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
       builder.append("${");
       builder.append(it.next().toString(ToStringState.NONE));
       builder.append("}");
-      builder.append(parts[i++]);
+      builder.append(Expr.Util.escapeText(parts[i++], false));
     }
     if (i < parts.length) {
-      builder.append(parts[i]);
+      builder.append(Expr.Util.escapeText(parts[i], false));
     }
     builder.append("\"");
     return new ToStringState(builder.toString());
@@ -347,7 +352,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
     builder.append(" ");
 
     for (int i = 0; i < args.size(); i += 1) {
-      builder.append(args.get(i).toString(ToStringState.APPLICATION_ARGUMENT));
+      builder.append(args.get(i).toString(ToStringState.APPLICATION, true));
       if (i < args.size() - 1) {
         builder.append(" ");
       }
@@ -362,7 +367,8 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
     return new ToStringState(
         String.format(
-            "%s %s %s", lhs.toString(operatorLooseness), operator, rhs.toString(operatorLooseness)),
+            "%s %s %s",
+            lhs.toString(operatorLooseness), operator, rhs.toString(operatorLooseness, true)),
         operatorLooseness);
   }
 
@@ -395,7 +401,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
     builder.append(handlers.toString(ToStringState.MERGE));
     builder.append(" ");
-    builder.append(union.toString(ToStringState.MERGE));
+    builder.append(union.toString(ToStringState.BASE));
     if (type != null) {
       builder.append(" : ");
       builder.append(type.toString(ToStringState.MERGE));
@@ -407,10 +413,10 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
   public ToStringState onToMap(ToStringState base, ToStringState type) {
     StringBuilder builder = new StringBuilder("toMap ");
 
-    builder.append(base.toString(ToStringState.TO_MAP));
+    builder.append(base.toString(ToStringState.TO_MAP, true));
     if (type != null) {
       builder.append(" : ");
-      builder.append(type.toString(ToStringState.TO_MAP));
+      builder.append(type.toString(ToStringState.BASE));
     }
 
     return new ToStringState(builder.toString(), ToStringState.TO_MAP);

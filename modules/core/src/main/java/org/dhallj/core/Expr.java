@@ -403,6 +403,49 @@ public abstract class Expr {
       return null;
     }
 
+    public static final String escapeText(String input, boolean quoted) {
+      StringBuilder builder = new StringBuilder();
+
+      if (quoted) {
+        builder.append("\\\"");
+      }
+
+      for (int i = 0; i < input.length(); i++) {
+        char c = input.charAt(i);
+        if (c == '"') {
+          if (quoted) {
+            builder.append("\\\\\"");
+          } else {
+            builder.append("\\\"");
+          }
+        } else if (c == '$') {
+          if (quoted) {
+            builder.append("\\\\u0024");
+          } else {
+            builder.append("\\u0024");
+          }
+        } else if (c == '\\') {
+          if (quoted) {
+            builder.append("\\\\");
+          } else {
+            builder.append("\\");
+          }
+        } else if (c >= '\u0000' && c <= '\u001f') {
+          if (quoted) {
+            builder.append('\\');
+          }
+          builder.append(String.format("\\u%04X", (long) c));
+        } else {
+          builder.append(c);
+        }
+      }
+      if (quoted) {
+        builder.append("\\\"");
+      }
+
+      return builder.toString();
+    }
+
     /** Desugar the complete operator ({@code ::}). */
     public static final Expr desugarComplete(Expr lhs, Expr rhs) {
 

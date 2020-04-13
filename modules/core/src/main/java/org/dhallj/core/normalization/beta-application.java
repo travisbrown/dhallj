@@ -99,29 +99,6 @@ final class BetaNormalizeApplication {
     return value.compareTo(BigInteger.ZERO) >= 0;
   }
 
-  private static String escapeText(String input) {
-    StringBuilder builder = new StringBuilder("\\\"");
-
-    for (int i = 0; i < input.length(); i++) {
-      char c = input.charAt(i);
-      if (c == '"') {
-        builder.append("\\\\\"");
-      } else if (c == '$') {
-        builder.append("\\\\u0024");
-      } else if (c == '\\') {
-        builder.append("\\\\");
-      } else if (c >= '\u0000' && c <= '\u001f') {
-        builder.append('\\');
-        builder.append(String.format("\\u%04X", (long) c));
-      } else {
-        builder.append(c);
-      }
-    }
-    builder.append("\\\"");
-
-    return builder.toString();
-  }
-
   private static final Expr arity1(String identifier, Expr arg) {
     if (identifier.equals("Natural/isZero")) {
       BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
@@ -192,7 +169,7 @@ final class BetaNormalizeApplication {
       String argAsSimpleTextLiteral = Expr.Util.asSimpleTextLiteral(arg);
 
       if (argAsSimpleTextLiteral != null) {
-        return Expr.makeTextLiteral(escapeText(argAsSimpleTextLiteral));
+        return Expr.makeTextLiteral(Expr.Util.escapeText(argAsSimpleTextLiteral, true));
       }
     } else if (identifier.equals("Natural/build")) {
       return Expr.makeApplication(
