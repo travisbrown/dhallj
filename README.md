@@ -59,6 +59,185 @@ If you're using [sbt][sbt] that would look like this:
 libraryDependencies ++= "org.dhallj" %% "dhall-scala" % "0.1.0"
 ```
 
+This dependency includes two packages: `org.dhallj.syntax` and `org.dhallj.ast`.
+
+The `syntax` package provides some extension methods, including a `parseExpr`
+method for strings (note that this method returns an
+`Either[ParsingFailure, Expr]`, which we unwrap here with `Right`):
+
+```scala
+scala> import org.dhallj.syntax._
+import org.dhallj.syntax._
+
+scala> val Right(expr) = "\\(n: Natural) -> [n + 0, n + 1, 1 + 1]".parseExpr
+expr: org.dhallj.core.Expr = λ(n : Natural) → [n + 0, n + 1, 1 + 1]
+```
+
+Now that we have a Dhall expression, we can type-check it:
+
+```scala
+scala> val Right(exprType) = expr.typeCheck
+exprType: org.dhallj.core.Expr = ∀(n : Natural) → List Natural
+```
+
+We can "reduce" (or _β-normalize_) it:
+
+```scala
+scala> val normalized = expr.normalize
+normalized: org.dhallj.core.Expr = λ(n : Natural) → [n, n + 1, 2]
+```
+
+We can also _α-normalize_ it, which replaces all named variables with
+indexed underscores:
+
+```scala
+scala> val alphaNormalized = normalized.alphaNormalize
+alphaNormalized: org.dhallj.core.Expr = λ(_ : Natural) → [_, _ + 1, 2]
+```
+
+We can encode it as a CBOR byte array:
+
+```scala
+scala> alphaNormalized.getEncodedBytes
+res0: Array[Byte] = Array(-125, 1, 103, 78, 97, 116, 117, 114, 97, 108, -123, 4, -10, 0, -124, 3, 4, 0, -126, 15, 1, -126, 15, 2)
+```
+
+And we can compute its semantic hash:
+
+```scala
+scala> alphaNormalized.hash
+res1: String = c57cdcdae92638503f954e63c0b3ae8de00a59bc5e05b4dd24e49f42aca90054
+```
+
+If we have the official `dhall` CLI installed, we can confirm that this hash is
+correct:
+
+```bash
+$ dhall hash <<< '\(n: Natural) -> [n + 0, n + 1, 1 + 1]'
+sha256:c57cdcdae92638503f954e63c0b3ae8de00a59bc5e05b4dd24e49f42aca90054
+```
+
+We can also compare expressions:
+
+```scala
+scala> val Right(other) = "\\(n: Natural) -> [n, n + 1, 3]".parseExpr
+other: org.dhallj.core.Expr = λ(n : Natural) → [n, n + 1, 3]
+
+scala> normalized == other
+res2: Boolean = false
+
+scala> val Some(diff) = normalized.diff(other)
+diff: (Option[org.dhallj.core.Expr], Option[org.dhallj.core.Expr]) = (Some(2),Some(3))
+```
+
+And apply them to other expressions:
+
+```scala
+scala> val Right(arg) = "10".parseExpr
+arg: org.dhallj.core.Expr = 10
+
+scala> expr(arg)
+res3: org.dhallj.core.Expr = (λ(n : Natural) → [n + 0, n + 1, 1 + 1]) 10
+
+scala> expr(arg).normalize
+res4: org.dhallj.core.Expr = [10, 11, 2]
+```
+
+We can also resolve expressions containing imports (although at the moment
+dhall-scala doesn't support remote imports or caching; please see the
+[section on import resolution](#import-resolution) below for details about
+how to set up remote import resolution if you need it):
+
+```scala
+val Right(enumerate) =
+     |   "./dhall-lang/Prelude/Natural/enumerate".parseExpr.flatMap(_.resolve)
+enumerate: org.dhallj.core.Expr = let enumerate : Natural → List Natural = ...
+
+scala> enumerate(arg).normalize
+res5: org.dhallj.core.Expr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+```
+
+Note that we're working with values of type `Expr`, which comes from dhall-core,
+which is a Java module. The `Expr` class includes static methods for creating
+`Expr` values:
+
+```scala
+scala> import org.dhallj.core.Expr
+import org.dhallj.core.Expr
+
+scala> Expr.makeTextLiteral("foo")
+res6: org.dhallj.core.Expr = "foo"
+
+scala> Expr.makeEmptyListLiteral(Expr.Constants.BOOL)
+res7: org.dhallj.core.Expr = [] : Bool
+```
+
+If you're working from Scala, though, you're generally better off using the
+constructors included in the `org.dhallj.ast` package, which provide more
+type-safety:
+
+```scala
+scala> TextLiteral("foo")
+res8: org.dhallj.core.Expr = "foo"
+
+scala> NonEmptyListLiteral(BoolLiteral(true), Vector())
+res9: org.dhallj.core.Expr = [True]
+```
+
+The `ast` package also includes extractors that let you pattern match on
+`Expr` values:
+
+```scala
+scala> expr match {
+     |   case Lambda(name, _, NonEmptyListLiteral(first +: _)) => (name, first)
+     | }
+res10: (String, org.dhallj.core.Expr) = (n,n + 0)
+```
+
+Note that we don't have exhaustivity checking for these extractors, although we
+might be able to add that in an eventual Dotty version.
+
+In addition to dhall-scala, there's a (more experimental) dhall-scala-codec
+module, which supports encoding and decoding Scala types to and from Dhall expressions.
+If you add it to your build, you can write the following:
+
+```scala
+scala> import org.dhallj.codec.syntax._
+import org.dhallj.codec.syntax._
+
+scala> List(List(1, 2), Nil, List(3, -4)).asExpr
+res0: org.dhallj.core.Expr = [[+1, +2], [] : List Integer, [+3, -4]]
+```
+
+You can even decode Dhall functions into Scala functions (assuming you have the
+appropriate codecs for the input and output types):
+
+```scala
+val Right(f) = """
+
+  let enumerate = ./dhall-lang/Prelude/Natural/enumerate
+
+  let map = ./dhall-lang/Prelude/List/map
+
+  in \(n: Natural) ->
+    map Natural Integer Natural/toInteger (enumerate n)
+
+""".parseExpr.flatMap(_.resolve)
+```
+And then:
+
+```scala
+scala> val Right(scalaEnumerate) = f.as[BigInt => List[BigInt]]
+scalaEnumerate: BigInt => List[BigInt] = org.dhallj.codec.Decoder$$anon$11$$Lambda$15614/0000000050B06E20@94b036
+
+scala> scalaEnumerate(BigInt(3))
+res1: List[BigInt] = List(0, 1, 2)
+```
+
+Eventually we'll probably support generic derivation for encoding Dhall
+expressions to and from algebraic data types in Scala, but we haven't
+implemented this yet.
+
 ## Converting to other formats
 
 DhallJ currently includes several ways to export Dhall expressions to other formats. The core module
