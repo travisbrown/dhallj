@@ -1,6 +1,7 @@
 package org.dhallj.imports
 
 import cats.effect.Sync
+import org.dhallj.core.DhallException.ResolutionFailure
 import org.dhallj.imports.ResolveImportsVisitor._
 
 object ReferentialSanityCheck {
@@ -12,16 +13,16 @@ object ReferentialSanityCheck {
         case Missing      => F.unit
         case Local(path) =>
           F.raiseError(
-            new RuntimeException(
+            new ResolutionFailure(
               "Referential sanity violation - remote import $uri cannot reference local import $path"
             )
           )
         case Env(v) =>
           F.raiseError(
-            new RuntimeException("Referential sanity violation - remote import $uri cannot reference env import $v")
+            new ResolutionFailure("Referential sanity violation - remote import $uri cannot reference env import $v")
           )
       }
-    case Missing => F.raiseError(new RuntimeException(s"Missing import cannot reference import $child"))
+    case Missing => F.raiseError(new ResolutionFailure(s"Missing import cannot reference import $child"))
     case _       => F.unit
   }
 

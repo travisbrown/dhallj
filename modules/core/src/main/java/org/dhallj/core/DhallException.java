@@ -22,4 +22,20 @@ public class DhallException extends RuntimeException {
       super(message, cause);
     }
   }
+
+  public static final class ResolutionFailure extends DhallException {
+    @Override
+    public Throwable fillInStackTrace() {
+      // This is a failure type; stack traces aren't useful.
+      return this;
+    }
+
+    public ResolutionFailure(String message, Throwable cause) {
+      super(message, cause);
+    }
+
+    public ResolutionFailure(String message) {
+      super(message);
+    }
+  }
 }

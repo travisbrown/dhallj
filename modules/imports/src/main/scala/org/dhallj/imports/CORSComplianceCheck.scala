@@ -3,6 +3,7 @@ package org.dhallj.imports
 import java.net.URI
 
 import cats.effect.Sync
+import org.dhallj.core.DhallException.ResolutionFailure
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.http4s.Headers
 import org.http4s.headers.`Access-Control-Allow-Origin`
@@ -21,7 +22,7 @@ object CORSComplianceCheck {
                 .get(`Access-Control-Allow-Origin`)
                 .fold(
                   F.raiseError[Unit](
-                    new RuntimeException(
+                    new ResolutionFailure(
                       s"CORS compliance failure - No Access-Control-Allow-Origin header for import $uri2 from $uri"
                     )
                   )
@@ -30,7 +31,7 @@ object CORSComplianceCheck {
                     F.unit
                   else
                     F.raiseError(
-                      new RuntimeException(
+                      new ResolutionFailure(
                         s"CORS compliance failure - ${h.value.trim} is invalid for import $uri2 from $uri"
                       )
                     )

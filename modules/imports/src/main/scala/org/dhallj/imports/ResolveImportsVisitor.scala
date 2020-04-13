@@ -9,6 +9,7 @@ import java.util.{List => JList, Map => JMap}
 import cats.effect.Sync
 import cats.implicits._
 import org.dhallj.core._
+import org.dhallj.core.DhallException.ResolutionFailure
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
@@ -189,7 +190,7 @@ private[imports] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConf
             for {
               vO <- F.delay(sys.env.get(value))
               v <- vO.fold(
-                F.raiseError[String](new RuntimeException(s"Missing import - env import $value undefined"))
+                F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
               )(F.pure)
             } yield v -> Headers.empty
           case Local(path) =>
@@ -209,16 +210,17 @@ private[imports] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConf
                   for {
                     s <- EntityDecoder.decodeString(resp)
                   } yield s -> resp.headers
-                case _ => F.raiseError[(String, Headers)](new RuntimeException(s"Missing import - cannot resolve $uri"))
+                case _ =>
+                  F.raiseError[(String, Headers)](new ResolutionFailure(s"Missing import - cannot resolve $uri"))
               }
             } yield resp
-          case Missing => F.raiseError(new RuntimeException("Missing import - cannot resolve missing"))
+          case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
         }
 
         def checkHashesMatch(encoded: Array[Byte], expected: Array[Byte]): F[Unit] = {
           val hashed = MessageDigest.getInstance("SHA-256").digest(encoded)
           if (hashed.sameElements(expected)) F.unit
-          else F.raiseError(new RuntimeException("Cached expression does not match its hash"))
+          else F.raiseError(new ResolutionFailure("Cached expression does not match its hash"))
         }
 
         if (hash eq null) resolve(i)
@@ -263,7 +265,7 @@ private[imports] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConf
     //TODO check that equality is sensibly defined for URI and Path
     def rejectCyclicImports(imp: ImportContext, parents: List[ImportContext]): F[Unit] =
       if (parents.contains(imp))
-        F.raiseError[Unit](new RuntimeException(s"Cyclic import - $imp is already imported in chain $parents"))
+        F.raiseError[Unit](new ResolutionFailure(s"Cyclic import - $imp is already imported in chain $parents"))
       else F.unit
 
     def validateHash(imp: ImportContext, e: Expr, expected: Array[Byte]): F[Unit] =
@@ -273,7 +275,7 @@ private[imports] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConf
           bytes <- F.pure(e.normalize().getEncodedBytes())
           encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
           _ <- if (encoded.sameElements(expected)) F.unit
-          else F.raiseError(new RuntimeException(s"SHA256 validation exception for ${imp}"))
+          else F.raiseError(new ResolutionFailure(s"SHA256 validation exception for ${imp}"))
           _ <- cache.put(encoded, bytes)
         } yield ()
 
