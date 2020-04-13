@@ -28,7 +28,10 @@ abstract private[ast] class Constructor[A] {
 }
 
 object NaturalLiteral extends Constructor[BigInt] {
-  def apply(value: BigInt): Expr = Expr.makeNaturalLiteral(value.underlying)
+  def apply(value: BigInt): Option[Expr] =
+    if (value >= 0) Some(Expr.makeNaturalLiteral(value.underlying)) else None
+  def apply(value: Long): Option[Expr] =
+    if (value >= 0) Some(Expr.makeNaturalLiteral(BigInteger.valueOf(value))) else None
 
   protected[this] val extractor: ExternalVisitor[Option[Result]] =
     new OptionVisitor[Result] {
@@ -38,6 +41,7 @@ object NaturalLiteral extends Constructor[BigInt] {
 
 object IntegerLiteral extends Constructor[BigInt] {
   def apply(value: BigInt): Expr = Expr.makeIntegerLiteral(value.underlying)
+  def apply(value: Long): Expr = Expr.makeNaturalLiteral(BigInteger.valueOf(value))
 
   protected[this] val extractor: ExternalVisitor[Option[Result]] =
     new OptionVisitor[Result] {

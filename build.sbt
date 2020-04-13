@@ -28,7 +28,7 @@ val root = project
   .settings(
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
   )
-  .aggregate(core, parser, javagen, prelude, cli, scala, circe, jawn, yaml, imports, importsMini, tests, benchmarks)
+  .aggregate(core, parser, javagen, prelude, cli, scala, codec, circe, jawn, yaml, imports, importsMini, tests, benchmarks)
   .dependsOn(importsMini, scala, javagen, prelude)
 
 lazy val core = project
@@ -106,13 +106,22 @@ lazy val scala = project
   .in(file("modules/scala"))
   .settings(baseSettings ++ scalaSettings)
   .settings(moduleName := "dhall-scala")
-  .dependsOn(parser)
+  .dependsOn(parser, importsMini)
+
+lazy val codec = project
+  .in(file("modules/scala-codec"))
+  .settings(baseSettings ++ scalaSettings)
+  .settings(
+    moduleName := "dhall-scala-codec",
+    libraryDependencies += "org.typelevel" %% "cats-core" % "2.1.1"
+  )
+  .dependsOn(scala)
 
 lazy val testing = project
   .in(file("modules/testing"))
   .settings(
     baseSettings ++ scalaSettings,
-    libraryDependencies ++= Seq("org.scalacheck" %% "scalacheck" % "1.14.3")
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.3"
   )
   .settings(moduleName := "dhall-testing")
   .dependsOn(scala)
@@ -131,7 +140,7 @@ lazy val imports = project
   .settings(moduleName := "dhall-imports")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.2.0-M1",
+      "org.typelevel" %% "cats-core" % "2.1.1",
       "org.typelevel" %% "cats-effect" % "2.1.2",
       "org.http4s" %% "http4s-dsl" % "0.21.3",
       "org.http4s" %% "http4s-blaze-client" % "0.21.3"

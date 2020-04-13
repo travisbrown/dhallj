@@ -26,7 +26,7 @@ trait ArbitraryInstances {
   val genOperator: Gen[Operator] = Gen.oneOf(Operator.values())
 
   def genForType(tpe: Expr): Option[Gen[Expr]] = tpe match {
-    case Expr.Constants.NATURAL => Some(Arbitrary.arbitrary[BigInt].map(value => NaturalLiteral(value.abs)))
+    case Expr.Constants.NATURAL => Some(Arbitrary.arbitrary[BigInt].map(value => NaturalLiteral(value.abs).get))
     case Expr.Constants.INTEGER => Some(Arbitrary.arbitrary[BigInt].map(IntegerLiteral(_)))
     case Expr.Constants.DOUBLE => Some(Arbitrary.arbitrary[Double].map(DoubleLiteral(_)))
     case Expr.Constants.BOOL => Some(
@@ -130,7 +130,7 @@ trait ArbitraryInstances {
   implicit val arbitraryExpr: Arbitrary[Expr] = Arbitrary(genExpr(defaultMaxDepth))
 
   implicit val shrinkExpr: Shrink[Expr] = Shrink {
-    case NaturalLiteral(value) => Shrink.shrink(value).map(value => NaturalLiteral(value.abs))
+    case NaturalLiteral(value) => Shrink.shrink(value).flatMap(value => NaturalLiteral(value.abs))
     case IntegerLiteral(value) => Shrink.shrink(value).map(IntegerLiteral(_))
     case DoubleLiteral(value) => Shrink.shrink(value).map(DoubleLiteral(_))
     case RecordLiteral(fields) => safeFieldsShrink.shrink(fields).map(RecordLiteral(_))
