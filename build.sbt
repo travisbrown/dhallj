@@ -28,7 +28,20 @@ val root = project
   .settings(
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
   )
-  .aggregate(core, parser, javagen, prelude, cli, scala, codec, circe, jawn, yaml, imports, importsMini, tests, benchmarks)
+  .aggregate(core,
+             parser,
+             javagen,
+             prelude,
+             cli,
+             scala,
+             codec,
+             circe,
+             jawn,
+             yaml,
+             imports,
+             importsMini,
+             tests,
+             benchmarks)
   .dependsOn(importsMini, scala, javagen, prelude)
 
 lazy val core = project
