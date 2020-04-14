@@ -122,6 +122,10 @@ public final class TypeCheckFailure extends DhallException {
     return new TypeCheckFailure("Invalid field type");
   }
 
+  static TypeCheckFailure makeFieldDuplicateError(String fieldName) {
+    return new TypeCheckFailure(String.format("duplicate field: %s", fieldName));
+  }
+
   static TypeCheckFailure makeListTypeMismatchError(Expr type1, Expr type2) {
     return new TypeCheckFailure("List elements should all have the same type");
   }
