@@ -82,7 +82,8 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
-abstract class CachingExprOperationAcceptanceSuite(transformation: Expr => Expr) extends CachingResolvingExprAcceptanceSuite[Expr] {
+abstract class CachingExprOperationAcceptanceSuite(transformation: Expr => Expr)
+    extends CachingResolvingExprAcceptanceSuite[Expr] {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
 
   def transform(input: Expr): Expr = transformation(input)
