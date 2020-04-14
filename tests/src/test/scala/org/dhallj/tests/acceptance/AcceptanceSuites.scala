@@ -25,9 +25,6 @@ class TypeCheckingSimpleSuite extends TypeCheckingSuite("type-inference/success/
 class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
-  //These tests exercise logic for handling duplicate imports, which is still a TODO
-  override def ignored = Set("CacheImports", "CacheImportsCanonicalize")
-
   override def slow = Set("prelude")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
