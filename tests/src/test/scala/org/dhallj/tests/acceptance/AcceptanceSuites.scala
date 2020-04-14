@@ -46,7 +46,7 @@ class ImportResolutionSuccessSuite extends ImportResolutionSuite("import/success
 class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/success/unit") {
   //Normalize uses a relative path which isn't compatible with our current method of reading classpath resources
   //Alternative type error - open question on semantics
-  override def ignored = Set("AlternativeTypeError", "Normalize")
+  override def ignored = Set("Normalize")
 }
 class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("import/success/unit/asLocation") {
   override def ignored = Set("Hash", "RemoteChainEnv") ++ classPathRelated

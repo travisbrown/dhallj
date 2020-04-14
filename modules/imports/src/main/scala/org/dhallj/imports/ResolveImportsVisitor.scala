@@ -10,6 +10,7 @@ import cats.effect.Sync
 import cats.implicits._
 import org.dhallj.core._
 import org.dhallj.core.DhallException.ResolutionFailure
+import org.dhallj.core.Expr.Util.typeCheck
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
@@ -310,6 +311,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
         e.accept(v)
       }
       _ <- validateHash(imp, result, hash)
+      _ <- F.delay(typeCheck(result))
     } yield result
   }
 
