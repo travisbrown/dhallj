@@ -26,7 +26,7 @@ class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/un
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
   //These tests exercise logic for handling duplicate imports, which is still a TODO
-  override def ignored = Set("CacheImportsCanonicalize", "CacheImports")
+  override def ignored = Set("CacheImports", "CacheImportsCanonicalize")
 
   override def slow = Set("prelude")
 }
@@ -55,6 +55,17 @@ class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("
   override def ignored = Set("Hash", "RemoteChainEnv") ++ classPathRelated
 
   //This all fail because of issues to do with classpath semantics - TODO
-  private val classPathRelated = Set("Canonicalize1", "Canonicalize2", "Canonicalize3", "Canonicalize4", "Canonicalize5",
-    "Chain1", "Chain2", "Chain3", "Home", "Relative1", "Relative2")
+  private val classPathRelated = Set(
+    "Canonicalize1",
+    "Canonicalize2",
+    "Canonicalize3",
+    "Canonicalize4",
+    "Canonicalize5",
+    "Chain1",
+    "Chain2",
+    "Chain3",
+    "Home",
+    "Relative1",
+    "Relative2"
+  )
 }

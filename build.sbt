@@ -230,7 +230,7 @@ lazy val tests = project
     testOptions.in(Slow) -= Tests.Argument("--exclude-tags=Slow"),
     testOptions.in(Slow) += Tests.Argument("--include-tags=Slow")
   )
-  .dependsOn(scala, imports, testing)
+  .dependsOn(scala, imports, importsMini, testing)
 
 lazy val benchmarks = project
   .in(file("benchmarks"))

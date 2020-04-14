@@ -27,8 +27,8 @@ import scala.collection.JavaConverters._
 //TODO handle duplicate imports - should be easy with caching logic
 //TODO proper error handling
 private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
-                                                                  cache: ImportsCache[F],
-                                                                  parents: List[ImportContext])(
+                                                                 cache: ImportsCache[F],
+                                                                 parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends Visitor.NoPrepareEvents[F[Expr]] {
