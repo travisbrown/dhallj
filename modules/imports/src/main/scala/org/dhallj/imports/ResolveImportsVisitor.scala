@@ -27,9 +27,9 @@ import scala.collection.mutable.{Map => MMap}
 //TODO quoted path components?
 //TODO proper error handling
 private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
-                                                                  persistentCache: ImportsCache[F],
-                                                                  parents: List[ImportContext],
-                                                                  cache: MMap[ImportContext, String])(
+                                                                 persistentCache: ImportsCache[F],
+                                                                 parents: List[ImportContext],
+                                                                 cache: MMap[ImportContext, String])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends Visitor.NoPrepareEvents[F[Expr]] {
@@ -186,48 +186,52 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
 
       def resolve(i: ImportContext, hash: Array[Byte]): F[(String, Headers)] = {
 
-        def resolve(i: ImportContext): F[(String, Headers)] = for {
-          cached <- F.delay(cache.get(i))
-          result <- cached match {
-            case Some(v) => F.pure(v -> Headers.empty)
-            case None => for {
-              v <- i match {
-                  case Env(value) =>
-                    for {
-                      vO <- F.delay(sys.env.get(value))
-                      v <- vO.fold(
-                        F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
-                      )(F.pure)
-                    } yield v -> Headers.empty
-                  case Local(path) =>
-                    for {
-                      v <- resolutionConfig.localMode match {
-                        case FromFileSystem => F.delay(scala.io.Source.fromFile(path.toString).mkString)
-                        case FromResources =>
-                          F.delay(scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString)
-                      }
-                    } yield v -> Headers.empty
-                  case Remote(uri, using) =>
-                    for {
-                      headers <- F.pure(ToHeaders(using))
-                      req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
-                      resp <- Client.fetch[(String, Headers)](req) {
-                        case Successful(resp) =>
-                          for {
-                            s <- EntityDecoder.decodeString(resp)
-                          } yield s -> resp.headers
-                        case _ =>
-                          F.raiseError[(String, Headers)](new ResolutionFailure(s"Missing import - cannot resolve $uri"))
-                      }
-                    } yield resp
-                  case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
-                }
-              _ <- F.delay(cache.put(i, v._1))
-            } yield v
-          }
-        } yield result
-
-
+        def resolve(i: ImportContext): F[(String, Headers)] =
+          for {
+            cached <- F.delay(cache.get(i))
+            result <- cached match {
+              case Some(v) => F.pure(v -> Headers.empty)
+              case None =>
+                for {
+                  v <- i match {
+                    case Env(value) =>
+                      for {
+                        vO <- F.delay(sys.env.get(value))
+                        v <- vO.fold(
+                          F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
+                        )(F.pure)
+                      } yield v -> Headers.empty
+                    case Local(path) =>
+                      for {
+                        v <- resolutionConfig.localMode match {
+                          case FromFileSystem => F.delay(scala.io.Source.fromFile(path.toString).mkString)
+                          case FromResources =>
+                            F.delay(
+                              scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString
+                            )
+                        }
+                      } yield v -> Headers.empty
+                    case Remote(uri, using) =>
+                      for {
+                        headers <- F.pure(ToHeaders(using))
+                        req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
+                        resp <- Client.fetch[(String, Headers)](req) {
+                          case Successful(resp) =>
+                            for {
+                              s <- EntityDecoder.decodeString(resp)
+                            } yield s -> resp.headers
+                          case _ =>
+                            F.raiseError[(String, Headers)](
+                              new ResolutionFailure(s"Missing import - cannot resolve $uri")
+                            )
+                        }
+                      } yield resp
+                    case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
+                  }
+                  _ <- F.delay(cache.put(i, v._1))
+                } yield v
+            }
+          } yield result
 
         def checkHashesMatch(encoded: Array[Byte], expected: Array[Byte]): F[Unit] = {
           val hashed = MessageDigest.getInstance("SHA-256").digest(encoded)
@@ -313,7 +317,8 @@ object ResolveImportsVisitor {
   def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig): F[ResolveImportsVisitor[F]] =
     Caching.mkImportsCache[F].map(c => mkVisitor(resolutionConfig, c))
 
-  def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig, cache: ImportsCache[F]): ResolveImportsVisitor[F] =
+  def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig,
+                                              cache: ImportsCache[F]): ResolveImportsVisitor[F] =
     ResolveImportsVisitor(resolutionConfig, cache, Nil, MMap.empty)
 
   sealed trait ImportContext
