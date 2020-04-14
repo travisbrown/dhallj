@@ -8,7 +8,7 @@ This project is an implementation of the [Dhall][dhall-lang] configuration langu
 Virtual Machine.
 
 Our goal for this project is to make it as easy as possible to integrate Dhall
-into JVM build systems (see for example the [dhall-kubernetes] demonstration
+into JVM build systems (see the [dhall-kubernetes] demonstration
 [below](#converting-to-other-formats) for a concrete example of why you might want to do this).
 
 The core modules have no external dependencies, are Java 7-compatible, and are fairly minimal:
