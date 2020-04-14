@@ -21,8 +21,8 @@ class HashingHTProjectionSuite extends HashingSuite("semantic-hash/success/haske
 class AlphaNormalizationUnitSuite extends AlphaNormalizationSuite("alpha-normalization/success/unit")
 class AlphaNormalizationRegressionSuite extends AlphaNormalizationSuite("alpha-normalization/success/regression")
 
-class TypeCheckingSimpleSuite extends TypeCheckingSuite("type-inference/success/simple")
-class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/unit")
+class TypeCheckingSimpleSuite extends CachingTypeCheckingSuite("type-inference/success/simple")
+class TypeCheckingUnitSuite extends CachingTypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
   override def slow = Set("prelude")
