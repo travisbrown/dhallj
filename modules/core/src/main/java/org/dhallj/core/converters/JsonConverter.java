@@ -31,6 +31,10 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
     }
   }
 
+  private static final String escape(String input) {
+    return input.replace("\"", "\\\"").replace("\\$", "$");
+  }
+
   @Override
   public boolean sortFields() {
     return false;
@@ -75,7 +79,7 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
   @Override
   public Boolean onText(String[] parts, List<Boolean> interpolated) {
     if (parts.length == 1) {
-      this.handler.onString(parts[0]);
+      this.handler.onString(escape(parts[0]));
       return true;
     } else {
       return false;
@@ -125,7 +129,7 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
     if (index > 0) {
       this.handler.onObjectFieldGap();
     }
-    this.handler.onObjectField(name);
+    this.handler.onObjectField(escape(name));
     return true;
   }
 
@@ -147,7 +151,7 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
     if (asUnion != null) {
       for (Entry<String, Expr> field : asUnion) {
         if (field.getKey().equals(fieldName) && field.getValue() == null) {
-          this.handler.onString(fieldName);
+          this.handler.onString(escape(fieldName));
           return false;
         }
       }

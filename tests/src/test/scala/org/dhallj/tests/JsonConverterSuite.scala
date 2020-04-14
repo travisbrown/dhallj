@@ -5,6 +5,14 @@ import org.dhallj.core.converters.JsonConverter
 import org.dhallj.parser.DhallParser
 
 class JsonConverterSuite extends FunSuite() {
+  test("toCompactString correctly escapes text") {
+    val expr = DhallParser.parse(
+      """[{mapKey = " \n \$ \" ", mapValue = " \n \$ \" "}]"""
+    )
+
+    assert(clue(JsonConverter.toCompactString(expr)) == clue("""{" \n $ \" ":" \n $ \" "}"""))
+  }
+
   test("toCompactString flattens toMap-formatted lists") {
     val expr = DhallParser.parse(
       """[{ mapKey = "foo", mapValue = 1}, {mapKey = "bar", mapValue = 2}]"""
