@@ -22,13 +22,14 @@ import org.http4s.client.Client
 import org.http4s.{EntityDecoder, Headers, Request}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.{Map => MMap}
 
 //TODO quoted path components?
-//TODO handle duplicate imports - should be easy with caching logic
 //TODO proper error handling
 private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
-                                                                 cache: ImportsCache[F],
-                                                                 parents: List[ImportContext])(
+                                                                  persistentCache: ImportsCache[F],
+                                                                  parents: List[ImportContext],
+                                                                  cache: MMap[ImportContext, String])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends Visitor.NoPrepareEvents[F[Expr]] {
@@ -185,37 +186,48 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
 
       def resolve(i: ImportContext, hash: Array[Byte]): F[(String, Headers)] = {
 
-        def resolve(i: ImportContext): F[(String, Headers)] = i match {
-          case Env(value) =>
-            for {
-              vO <- F.delay(sys.env.get(value))
-              v <- vO.fold(
-                F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
-              )(F.pure)
-            } yield v -> Headers.empty
-          case Local(path) =>
-            for {
-              v <- resolutionConfig.localMode match {
-                case FromFileSystem => F.delay(scala.io.Source.fromFile(path.toString).mkString)
-                case FromResources =>
-                  F.delay(scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString)
-              }
-            } yield v -> Headers.empty
-          case Remote(uri, using) =>
-            for {
-              headers <- F.pure(ToHeaders(using))
-              req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
-              resp <- Client.fetch[(String, Headers)](req) {
-                case Successful(resp) =>
-                  for {
-                    s <- EntityDecoder.decodeString(resp)
-                  } yield s -> resp.headers
-                case _ =>
-                  F.raiseError[(String, Headers)](new ResolutionFailure(s"Missing import - cannot resolve $uri"))
-              }
-            } yield resp
-          case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
-        }
+        def resolve(i: ImportContext): F[(String, Headers)] = for {
+          cached <- F.delay(cache.get(i))
+          result <- cached match {
+            case Some(v) => F.pure(v -> Headers.empty)
+            case None => for {
+              v <- i match {
+                  case Env(value) =>
+                    for {
+                      vO <- F.delay(sys.env.get(value))
+                      v <- vO.fold(
+                        F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
+                      )(F.pure)
+                    } yield v -> Headers.empty
+                  case Local(path) =>
+                    for {
+                      v <- resolutionConfig.localMode match {
+                        case FromFileSystem => F.delay(scala.io.Source.fromFile(path.toString).mkString)
+                        case FromResources =>
+                          F.delay(scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString)
+                      }
+                    } yield v -> Headers.empty
+                  case Remote(uri, using) =>
+                    for {
+                      headers <- F.pure(ToHeaders(using))
+                      req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
+                      resp <- Client.fetch[(String, Headers)](req) {
+                        case Successful(resp) =>
+                          for {
+                            s <- EntityDecoder.decodeString(resp)
+                          } yield s -> resp.headers
+                        case _ =>
+                          F.raiseError[(String, Headers)](new ResolutionFailure(s"Missing import - cannot resolve $uri"))
+                      }
+                    } yield resp
+                  case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
+                }
+              _ <- F.delay(cache.put(i, v._1))
+            } yield v
+          }
+        } yield result
+
+
 
         def checkHashesMatch(encoded: Array[Byte], expected: Array[Byte]): F[Unit] = {
           val hashed = MessageDigest.getInstance("SHA-256").digest(encoded)
@@ -226,7 +238,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
         if (hash eq null) resolve(i)
         else
           for {
-            bytesO <- cache.get(hash)
+            bytesO <- persistentCache.get(hash)
             result <- bytesO.fold(resolve(i))(bs =>
               for {
                 _ <- checkHashesMatch(bs, hash)
@@ -276,7 +288,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
           encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
           _ <- if (encoded.sameElements(expected)) F.unit
           else F.raiseError(new ResolutionFailure(s"SHA256 validation exception for ${imp}"))
-          _ <- cache.put(encoded, bytes)
+          _ <- persistentCache.put(encoded, bytes)
         } yield ()
 
     for {
@@ -288,7 +300,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
       _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
       //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
       _ <- rejectCyclicImports(imp, parents)
-      result <- e.accept(ResolveImportsVisitor[F](resolutionConfig, cache, imp :: parents))
+      result <- e.accept(ResolveImportsVisitor[F](resolutionConfig, persistentCache, imp :: parents, cache))
       _ <- validateHash(imp, result, hash)
     } yield result
   }
@@ -299,7 +311,10 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
 object ResolveImportsVisitor {
 
   def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig): F[ResolveImportsVisitor[F]] =
-    Caching.mkImportsCache[F].map(c => ResolveImportsVisitor(resolutionConfig, c, Nil))
+    Caching.mkImportsCache[F].map(c => mkVisitor(resolutionConfig, c))
+
+  def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig, cache: ImportsCache[F]): ResolveImportsVisitor[F] =
+    ResolveImportsVisitor(resolutionConfig, cache, Nil, MMap.empty)
 
   sealed trait ImportContext
   case class Env(value: String) extends ImportContext

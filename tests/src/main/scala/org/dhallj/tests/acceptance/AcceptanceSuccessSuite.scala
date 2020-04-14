@@ -1,10 +1,22 @@
 package org.dhallj.tests.acceptance
 
+import cats.effect.{ContextShift, IO}
+
 import java.nio.file.{Files, Paths}
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
 import org.dhallj.imports.mini.Resolver
 import org.dhallj.parser.DhallParser
+
+import org.dhallj.imports._
+import org.dhallj.imports.ResolutionConfig
+import org.dhallj.imports.ResolutionConfig._
+import org.dhallj.imports.Caching._
+import org.http4s.client._
+import org.http4s.client.blaze._
+
+import scala.concurrent.ExecutionContext.global
+import scala.io.Source
 
 trait SuccessSuite[A, B] extends AcceptanceSuite {
   def makeExpectedPath(inputPath: String): String
@@ -33,11 +45,16 @@ trait ExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
 
 trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
   def parseInput(path: String, input: String): Expr = {
-    val parsed = DhallParser.parse(input)
+    val parsed = DhallParser.parse(s"/$path")
 
     if (parsed.isResolved) parsed
     else {
-      Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
+      implicit val cs: ContextShift[IO] = IO.contextShift(global)
+      BlazeClientBuilder[IO](global).resource.use { client =>
+        implicit val c: Client[IO] = client
+        //      Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
+        parsed.resolveImports[IO](ResolutionConfig(FromResources))
+      }.unsafeRunSync
     }
   }
 }
