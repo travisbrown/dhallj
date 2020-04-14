@@ -1,5 +1,4 @@
 organization in ThisBuild := "org.dhallj"
-scapegoatVersion in ThisBuild := "1.4.3"
 
 val circeVersion = "0.13.0"
 
