@@ -25,6 +25,8 @@ class TypeCheckingSimpleSuite extends TypeCheckingSuite("type-inference/success/
 class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
+  override def ignored = Set("CacheImportsCanonicalize", "CacheImports")
+
   override def slow = Set("prelude")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
@@ -41,3 +43,9 @@ class ParsingFailureOtherSuite extends ParsingFailureSuite("parser/failure")
 class BinaryDecodingUnitSuite extends BinaryDecodingSuite("binary-decode/success/unit")
 class BinaryDecodingImportsUnitSuite extends BinaryDecodingSuite("binary-decode/success/unit/imports")
 class BinaryDecodingFailureUnitSuite extends BinaryDecodingFailureSuite("binary-decode/failure/unit")
+
+class ImportResolutionSuccessSuite extends ImportResolutionSuite("import/success")
+class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/success/unit") {
+  override def ignored = Set("AlternativeTypeError", "Normalize")
+}
+

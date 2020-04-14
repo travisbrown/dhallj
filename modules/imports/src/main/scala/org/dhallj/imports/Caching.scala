@@ -5,7 +5,7 @@ import java.nio.file.{Files, Path, Paths}
 import cats.effect.Sync
 import cats.implicits._
 
-private[imports] object Caching {
+private[dhallj] object Caching {
 
   trait ImportsCache[F[_]] {
     def get(key: Array[Byte]): F[Option[Array[Byte]]]

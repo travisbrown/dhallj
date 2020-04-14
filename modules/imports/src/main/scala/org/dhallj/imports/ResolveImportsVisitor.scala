@@ -26,7 +26,7 @@ import scala.collection.JavaConverters._
 //TODO quoted path components?
 //TODO handle duplicate imports - should be easy with caching logic
 //TODO proper error handling
-private[imports] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
+private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
                                                                   cache: ImportsCache[F],
                                                                   parents: List[ImportContext])(
   implicit Client: Client[F],
