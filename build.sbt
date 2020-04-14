@@ -219,6 +219,8 @@ lazy val benchmarks = project
   .enablePlugins(JmhPlugin)
   .dependsOn(core, prelude)
 
+import ReleaseTransformations._
+
 lazy val publishSettings = Seq(
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -255,5 +257,18 @@ lazy val publishSettings = Seq(
         <url>https://github.com/TimWSpence</url>
       </developer>
     </developers>
+  ),
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    releaseStepCommand("javacc"),
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    publishArtifacts,
+    setNextVersion,
+    commitNextVersion
   )
 )
