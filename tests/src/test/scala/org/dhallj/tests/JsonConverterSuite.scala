@@ -13,6 +13,14 @@ class JsonConverterSuite extends FunSuite() {
     assert(clue(JsonConverter.toCompactString(expr)) == clue("""{" \n $ \" ":" \n $ \" "}"""))
   }
 
+  test("toCompactString correctly escapes text from toMap") {
+    val expr = DhallParser.parse(
+      """toMap {` \n \$ \" ` = " \n \$ \" "}"""
+    ).normalize
+
+    assert(clue(JsonConverter.toCompactString(expr)) == clue("""{" \\n \\$ \\\" ":" \n $ \" "}"""))
+  }
+
   test("toCompactString flattens toMap-formatted lists") {
     val expr = DhallParser.parse(
       """[{ mapKey = "foo", mapValue = 1}, {mapKey = "bar", mapValue = 2}]"""
