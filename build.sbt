@@ -26,6 +26,7 @@ val root = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .settings(
+    skip in publish := true,
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse"
   )
   .aggregate(core,
