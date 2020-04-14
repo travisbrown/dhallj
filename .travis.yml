@@ -14,7 +14,7 @@ cache:
     - $HOME/.sbt/boot
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean javacc scalafmtCheckAll scalafmtSbtCheck test
+  - sbt ++$TRAVIS_SCALA_VERSION clean javacc scalafmtCheckAll scalafmtSbtCheck test slow:test
   # See http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
