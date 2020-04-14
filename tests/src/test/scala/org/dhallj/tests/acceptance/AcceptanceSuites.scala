@@ -28,10 +28,7 @@ class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success")
   override def ignored = Set("CacheImports", "CacheImportsCanonicalize")
   override def slow = Set("prelude")
 }
-class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit") {
-  // The spec says we shouldn't have to worry about duplicate fields during type checking.
-  override def ignored = Set("RecordTypeDuplicateField")
-}
+class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
 
 class ParsingUnitSuite extends ParsingSuite("parser/success/unit") {
   override def ignored = Set("SomeXYZ")

@@ -417,15 +417,24 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   public final Expr onRecordType(Iterable<Entry<String, Expr>> fields, int size) {
+    // Need to check for duplicates here; see: https://github.com/travisbrown/dhallj/issues/6
+    Set<String> fieldNamesSeen = new HashSet<>(size);
+
     Universe max = Universe.TYPE;
 
     for (Entry<String, Expr> field : fields) {
+      String fieldName = field.getKey();
+
+      if (!fieldNamesSeen.add(fieldName)) {
+        throw TypeCheckFailure.makeFieldDuplicateError(fieldName);
+      }
+
       Universe universe = Universe.fromExpr(field.getValue().accept(this));
 
       if (universe != null) {
         max = max.max(universe);
       } else {
-        throw TypeCheckFailure.makeFieldTypeError(field.getKey());
+        throw TypeCheckFailure.makeFieldTypeError(fieldName);
       }
     }
 
