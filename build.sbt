@@ -25,6 +25,7 @@ val scalaSettings = Seq()
 val root = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
+  .settings(baseSettings ++ publishSettings)
   .settings(
     skip in publish := true,
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse",
