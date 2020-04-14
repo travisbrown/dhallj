@@ -25,6 +25,7 @@ class TypeCheckingSimpleSuite extends TypeCheckingSuite("type-inference/success/
 class TypeCheckingUnitSuite extends TypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
+  //These tests exercise logic for handling duplicate imports, which is still a TODO
   override def ignored = Set("CacheImportsCanonicalize", "CacheImports")
 
   override def slow = Set("prelude")
@@ -46,6 +47,14 @@ class BinaryDecodingFailureUnitSuite extends BinaryDecodingFailureSuite("binary-
 
 class ImportResolutionSuccessSuite extends ImportResolutionSuite("import/success")
 class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/success/unit") {
+  //Normalize uses a relative path which isn't compatible with our current method of reading classpath resources
+  //Alternative type error - open question on semantics
   override def ignored = Set("AlternativeTypeError", "Normalize")
 }
+class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("import/success/unit/asLocation") {
+  override def ignored = Set("Hash", "RemoteChainEnv") ++ classPathRelated
 
+  //This all fail because of issues to do with classpath semantics - TODO
+  private val classPathRelated = Set("Canonicalize1", "Canonicalize2", "Canonicalize3", "Canonicalize4", "Canonicalize5",
+    "Chain1", "Chain2", "Chain3", "Home", "Relative1", "Relative2")
+}

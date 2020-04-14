@@ -45,7 +45,6 @@ trait ExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
 trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
   def parseInput(path: String, input: String): Expr = {
     val parsed = DhallParser.parse(s"/$path")
-
     if (parsed.isResolved) parsed
     else {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
@@ -62,7 +61,7 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
 
   def transform(input: Expr): Expr = transformation(input)
-  
+
   def loadExpected(input: Array[Byte]): Expr = DhallParser.parse(new String(input))
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
@@ -90,7 +89,7 @@ class ParsingSuite(val base: String) extends ExprAcceptanceSuite[Array[Byte]] {
 abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends ExprAcceptanceSuite[Expr] {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(8) + "B.dhall"
 
-  override def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhallb")
+  override def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhallb")
 
   override def parseInput(path: String, input: String): Expr =
     decode(readBytes(path))

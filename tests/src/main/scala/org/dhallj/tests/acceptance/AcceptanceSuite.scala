@@ -8,7 +8,7 @@ trait AcceptanceSuite extends FunSuite {
   def prefix: String = "tests"
   def base: String
 
-  def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhall")
+  def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhall")
   def makeName(inputFileName: String): String = inputFileName.dropRight(7)
 
   /**
@@ -24,7 +24,7 @@ trait AcceptanceSuite extends FunSuite {
   /**
    * Returns a list of name-path pairs.
    */
-  def testInputs: List[(String, String)] =
+  def testInputs: List[(String, String)] = {
     Source
       .fromResource(s"$prefix/$base")
       .getLines
@@ -34,6 +34,7 @@ trait AcceptanceSuite extends FunSuite {
       }
       .toList
       .sortBy(_._1)
+  }
 
   final override def munitTests(): Seq[Test] =
     super
