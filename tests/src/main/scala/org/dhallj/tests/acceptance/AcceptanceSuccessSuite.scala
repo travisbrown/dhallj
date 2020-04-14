@@ -52,7 +52,21 @@ trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        //      Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)
+        parsed.accept(ResolveImportsVisitor.mkVisitor(ResolutionConfig(FromResources), NoopImportsCache[IO]))
+      }.unsafeRunSync
+    }
+  }
+}
+
+trait CachingResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] {
+  def parseInput(path: String, input: String): Expr = {
+    val parsed = DhallParser.parse(s"/$path")
+
+    if (parsed.isResolved) parsed
+    else {
+      implicit val cs: ContextShift[IO] = IO.contextShift(global)
+      BlazeClientBuilder[IO](global).resource.use { client =>
+        implicit val c: Client[IO] = client
         parsed.resolveImports[IO](ResolutionConfig(FromResources))
       }.unsafeRunSync
     }
@@ -68,9 +82,19 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
+abstract class CachingExprOperationAcceptanceSuite(transformation: Expr => Expr) extends CachingResolvingExprAcceptanceSuite[Expr] {
+  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
+
+  def transform(input: Expr): Expr = transformation(input)
+
+  def loadExpected(input: Array[Byte]): Expr = DhallParser.parse(new String(input))
+  def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
+}
+
+class CachingTypeCheckingSuite(val base: String) extends CachingExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
 class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
-class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize)
-class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize)
+class AlphaNormalizationSuite(val base: String) extends CachingExprOperationAcceptanceSuite(_.alphaNormalize)
+class NormalizationSuite(val base: String) extends CachingExprOperationAcceptanceSuite(_.normalize)
 
 class HashingSuite(val base: String) extends ResolvingExprAcceptanceSuite[String] {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
