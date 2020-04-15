@@ -505,7 +505,7 @@ Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
     } else if (typeValues != null) {
       return ParsingHelpers.makeRecordType(typeValues, first, last);
     } else {
-      return ParsingHelpers.makeRecordType(new ArrayList<>(), first, last);
+      return ParsingHelpers.makeRecordType(new ArrayList<Map.Entry<String, Expr.Parsed>>(), first, last);
     }
   }
 }
