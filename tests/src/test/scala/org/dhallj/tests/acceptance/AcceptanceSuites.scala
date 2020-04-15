@@ -1,8 +1,8 @@
 package org.dhallj.tests.acceptance
 
-class NormalizationSimpleSuite extends NormalizationSuite("normalization/success/simple")
+class NormalizationSimpleSuite extends NormalizationUSuite("normalization/success/simple")
 class NormalizationRegressionSuite extends NormalizationSuite("normalization/success/regression")
-class NormalizationUnitSuite extends NormalizationSuite("normalization/success/unit")
+class NormalizationUnitSuite extends NormalizationUSuite("normalization/success/unit")
 class NormalizationSimplificationsSuite extends NormalizationSuite("normalization/success/simplifications")
 class NormalizationOtherSuite extends NormalizationSuite("normalization/success")
 class NormalizationHTAccessSuite extends NormalizationSuite("normalization/success/haskell-tutorial/access")
@@ -25,6 +25,9 @@ class TypeCheckingSimpleSuite extends CachingTypeCheckingSuite("type-inference/s
 class TypeCheckingUnitSuite extends CachingTypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
+  //TODO prelude is WAY too slow
+  override def ignored = Set("prelude")
+
   override def slow = Set("prelude")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
@@ -45,8 +48,7 @@ class BinaryDecodingFailureUnitSuite extends BinaryDecodingFailureSuite("binary-
 class ImportResolutionSuccessSuite extends ImportResolutionSuite("import/success")
 class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/success/unit") {
   //Normalize uses a relative path which isn't compatible with our current method of reading classpath resources
-  //Alternative type error - open question on semantics
-  override def ignored = Set("AlternativeTypeError", "Normalize")
+  override def ignored = Set("Normalize")
 }
 class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("import/success/unit/asLocation") {
   override def ignored = Set("Hash", "RemoteChainEnv") ++ classPathRelated

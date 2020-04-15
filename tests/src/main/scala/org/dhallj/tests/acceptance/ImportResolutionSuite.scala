@@ -17,7 +17,9 @@ import org.http4s.client.blaze._
 import scala.concurrent.ExecutionContext.global
 import scala.io.Source
 
-class ImportResolutionSuite(val base: String) extends CachingExprOperationAcceptanceSuite(_.normalize) {
+class ImportResolutionSuite(val base: String)
+    extends ExprOperationAcceptanceSuite(_.normalize)
+    with CachedResolvingInput {
 
   setEnv("DHALL_TEST_VAR", "6 * 7") //Yes, this is SUPER hacky but the JVM doesn't really support setting env vars
 

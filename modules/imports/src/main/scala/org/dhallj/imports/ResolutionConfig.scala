@@ -9,7 +9,9 @@ case class ResolutionConfig(
 object ResolutionConfig {
 
   sealed trait LocalMode
+
   case object FromFileSystem extends LocalMode
+
   case object FromResources extends LocalMode
 
 }
