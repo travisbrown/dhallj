@@ -9,7 +9,6 @@ import munit.FunSuite
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
-import org.dhallj.imports.ResolutionConfig._
 import org.dhallj.parser.DhallParser.parse
 import org.http4s.client._
 import org.http4s.client.blaze._
@@ -22,29 +21,29 @@ class ImportResolutionSuite extends FunSuite {
 
   implicit val client: Resource[IO, Client[IO]] = BlazeClientBuilder[IO](global).resource
 
-  test("Local import") {
-    val expr = parse("let x = /local/package.dhall in x")
+  test("Classpath import") {
+    val expr = parse("let x = classpath:/local/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
   }
 
-  test("Local -> local relative import") {
-    val expr = parse("let x = /local-local-relative/package.dhall in x")
+  test("Classpath -> classpath relative import") {
+    val expr = parse("let x = classpath:/local-local-relative/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
   }
 
-  test("Local -> local absolute import") {
-    val expr = parse("let x = /local-local-absolute/package.dhall in x")
+  test("Classpath -> classpath absolute import") {
+    val expr = parse("let x = classpath:/local-local-absolute/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
   }
 
-  test("Local -> remote import") {
-    val expr = parse("let any = /local-remote/package.dhall in any Natural Natural/even [2,3,5]")
+  test("Classpath -> remote import") {
+    val expr = parse("let any = classpath:/local-remote/package.dhall in any Natural Natural/even [2,3,5]")
     val expected = parse("True").normalize
 
     assert(resolve(expr) == expected)
@@ -60,23 +59,25 @@ class ImportResolutionSuite extends FunSuite {
   }
 
   test("Multiple imports") {
-    val expr = parse("let x = /multiple-imports/package.dhall in x")
+    val expr = parse("let x = classpath:/multiple-imports/package.dhall in x")
     val expected = parse("let x = [1,2] in x").normalize
 
     assert(resolve(expr) == expected)
   }
 
   test("Import as text") {
-    val expr = parse("let x = /text-import/package.dhall as Text in x")
+    val expr = parse("let x = classpath:/text-import/package.dhall as Text in x")
     val expected = parse("\"let x = 1 in x\"").normalize
 
     assert(resolve(expr) == expected)
   }
 
-  test("Import as local location") {
-    val expr = parse("let x = /foo/bar.dhall as Location in x")
+  test("Import as classpath location") {
+    val expr = parse("let x = classpath:/foo/bar.dhall as Location in x")
     val expected =
-      parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Local \"/foo/bar.dhall\"").normalize
+      parse(
+        "< Local : Text | Classpath : Text | Remote : Text | Environment : Text | Missing >.Classpath \"/foo/bar.dhall\""
+      ).normalize
 
     assert(resolve(expr) == expected)
   }
@@ -84,7 +85,7 @@ class ImportResolutionSuite extends FunSuite {
   test("Import as remote location") {
     val expr = parse("let x = http://example.com/foo.dhall as Location in x")
     val expected = parse(
-      "< Local : Text | Remote : Text | Environment : Text | Missing >.Remote \"http://example.com/foo.dhall\""
+      "< Local : Text | Classpath: Text | Remote : Text | Environment : Text | Missing >.Remote \"http://example.com/foo.dhall\""
     ).normalize
 
     assert(resolve(expr) == expected)
@@ -93,27 +94,27 @@ class ImportResolutionSuite extends FunSuite {
   test("Import as env location") {
     val expr = parse("let x = env:foo as Location in x")
     val expected =
-      parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Environment \"foo\"").normalize
+      parse("< Local : Text | Classpath : Text | Remote : Text | Environment : Text | Missing >.Environment \"foo\"").normalize
 
     assert(resolve(expr) == expected)
   }
 
   test("Cyclic imports".fail) {
-    val expr = parse("let x = /cyclic-relative-paths/package.dhall in x")
+    val expr = parse("let x = classpath:/cyclic-relative-paths/package.dhall in x")
     val expected = parse("True").normalize
 
     assert(resolve(expr) == expected)
   }
 
   test("Cyclic imports - all relative".fail) {
-    val expr = parse("let x = /cyclic-relative-paths/package.dhall in x")
+    val expr = parse("let x = classpath:/cyclic-relative-paths/package.dhall in x")
     val expected = parse("True").normalize
 
     assert(resolve(expr) == expected)
   }
 
   test("Alternate imports - first succeeds") {
-    val expr = parse("let x = /alternate/package.dhall ? /alternate/other.dhall in x")
+    val expr = parse("let x = classpath:/alternate/package.dhall ? classpath:/alternate/other.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
@@ -121,7 +122,7 @@ class ImportResolutionSuite extends FunSuite {
 
   test("Alternate imports - first fails") {
 
-    val expr = parse("let x = /alternate/not_present.dhall ? /alternate/package.dhall in x")
+    val expr = parse("let x = classpath:/alternate/not_present.dhall ? classpath:/alternate/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
 
     assert(resolve(expr) == expected)
@@ -130,7 +131,7 @@ class ImportResolutionSuite extends FunSuite {
   test("Valid hash") {
 
     val expr = parse(
-      "let x = /hashed/package.dhall sha256:d60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
+      "let x = classpath:/hashed/package.dhall sha256:d60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
     )
     val expected = parse("let x = 1 in x").normalize
 
@@ -140,7 +141,7 @@ class ImportResolutionSuite extends FunSuite {
   test("Invalid hash".fail) {
 
     val expr = parse(
-      "let x = /hashed/package.dhall sha256:e60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
+      "let x = classpath:/hashed/package.dhall sha256:e60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
     )
     val expected = parse("let x = 1 in x").normalize
 
@@ -155,7 +156,9 @@ class ImportResolutionSuite extends FunSuite {
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
     val expr =
-      parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+      parse(
+        "let x = classpath:/does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x"
+      )
 
     assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
   }
@@ -169,7 +172,9 @@ class ImportResolutionSuite extends FunSuite {
     val hash = MessageDigest.getInstance("SHA-256").digest(expected.normalize.getEncodedBytes) //Hash doesn't match what is stored
 
     val expr =
-      parse("let x = /does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x")
+      parse(
+        "let x = classpath:/does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x"
+      )
 
     assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
   }
@@ -182,7 +187,7 @@ class ImportResolutionSuite extends FunSuite {
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
     val expr = parse(
-      "let x = /cache-write/package.dhall sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x"
+      "let x = classpath:/cache-write/package.dhall sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x"
     )
 
     val prog = resolveWithCustomCache(cache, expr) >> cache.get(hash)
@@ -197,14 +202,14 @@ class ImportResolutionSuite extends FunSuite {
     client.use { c =>
       implicit val http: Client[IO] = c
 
-      e.resolveImports[IO](ResolutionConfig(FromResources)).map(_.normalize)
+      e.resolveImports[IO].map(_.normalize)
     }.unsafeRunSync
 
   private def resolveWithCustomCache(cache: ImportsCache[IO], e: Expr): IO[Expr] =
     client.use { c =>
       implicit val http: Client[IO] = c
 
-      e.accept(ResolveImportsVisitor.mkVisitor(ResolutionConfig(FromResources), cache))
+      e.accept(ResolveImportsVisitor.mkVisitor(cache))
     }
 
   private case class InMemoryCache() extends ImportsCache[IO] {

@@ -17,6 +17,12 @@ object ReferentialSanityCheck {
               "Referential sanity violation - remote import $uri cannot reference local import $path"
             )
           )
+        case Classpath(path) =>
+          F.raiseError(
+            new ResolutionFailure(
+              "Referential sanity violation - remote import $uri cannot reference classpath import $path"
+            )
+          )
         case Env(v) =>
           F.raiseError(
             new ResolutionFailure("Referential sanity violation - remote import $uri cannot reference env import $v")
