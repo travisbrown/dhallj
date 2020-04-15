@@ -25,6 +25,9 @@ class TypeCheckingSimpleSuite extends CachingTypeCheckingSuite("type-inference/s
 class TypeCheckingUnitSuite extends CachingTypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
+  //TODO prelude is WAY too slow
+  override def ignored = Set("prelude")
+
   override def slow = Set("prelude")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
