@@ -122,9 +122,7 @@ class ParsingSuite(val base: String) extends SuccessSuite[Expr, Array[Byte]] wit
   def compare(result: Array[Byte], expected: Array[Byte]): Boolean = result.sameElements(expected)
 }
 
-abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr)
-    extends SuccessSuite[Expr, Expr]
-    with ParsingInput {
+class BinaryDecodingSuite(val base: String) extends SuccessSuite[Expr, Expr] with ParsingInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(8) + "B.dhall"
 
   override def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhallb")
@@ -132,9 +130,7 @@ abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr)
   override def parseInput(path: String, input: String): Expr =
     decode(readBytes(path))
 
-  def transform(input: Expr): Expr = transformation(input)
+  def transform(input: Expr): Expr = input
   def loadExpected(input: Array[Byte]): Expr = DhallParser.parse(new String(input))
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
-
-class BinaryDecodingSuite(val base: String) extends ExprDecodingAcceptanceSuite(identity)

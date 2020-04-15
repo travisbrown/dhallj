@@ -8,7 +8,7 @@ trait AcceptanceSuite extends FunSuite {
   def prefix: String = "tests"
   def base: String
 
-  def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhall")
+  def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhall")
   def makeName(inputFileName: String): String = inputFileName.dropRight(7)
 
   /**
