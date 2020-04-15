@@ -2,13 +2,25 @@ import ReleaseTransformations._
 
 organization in ThisBuild := "org.dhallj"
 
-val previousVersion = "0.1.0"
+val previousVersion = "0.1.1"
+val catsVersion = "2.1.1"
 val circeVersion = "0.13.0"
+val jawnVersion = "1.0.0"
+val munitVersion = "0.7.2"
+val scalaCheckVersion = "1.14.3"
+val snakeYamlVersion = "1.26"
 
 val testDependencies = Seq(
-  "org.scalacheck" %% "scalacheck" % "1.14.3",
-  "org.scalameta" %% "munit" % "0.7.2",
-  "org.scalameta" %% "munit-scalacheck" % "0.7.2"
+  "org.scalacheck" %% "scalacheck" % scalaCheckVersion,
+  "org.scalameta" %% "munit" % munitVersion,
+  "org.scalameta" %% "munit-scalacheck" % munitVersion
+)
+
+val http4sDependencies = Seq(
+  "org.typelevel" %% "cats-core" % catsVersion,
+  "org.typelevel" %% "cats-effect" % "2.1.2",
+  "org.http4s" %% "http4s-dsl" % "0.21.3",
+  "org.http4s" %% "http4s-blaze-client" % "0.21.3"
 )
 
 val baseSettings = Seq(
@@ -137,8 +149,8 @@ lazy val jawn = project
     description := "DhallJ Jawn integration",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-jawn" % circeVersion % Test,
-      "org.typelevel" %% "jawn-spray" % "1.0.0" % Test,
-      "org.typelevel" %% "jawn-parser" % "1.0.0"
+      "org.typelevel" %% "jawn-spray" % jawnVersion % Test,
+      "org.typelevel" %% "jawn-parser" % jawnVersion
     )
   )
   .dependsOn(core, scala % Test)
@@ -150,7 +162,7 @@ lazy val yaml = project
     moduleName := "dhall-yaml",
     name := "dhall-yaml",
     description := "DhallJ YAML export",
-    libraryDependencies += "org.yaml" % "snakeyaml" % "1.26"
+    libraryDependencies += "org.yaml" % "snakeyaml" % snakeYamlVersion
   )
   .dependsOn(core, scala % Test)
 
@@ -167,7 +179,7 @@ lazy val codec = project
     moduleName := "dhall-scala-codec",
     name := "dhall-scala-codec",
     description := "DhallJ Scala encoding and decoding",
-    libraryDependencies += "org.typelevel" %% "cats-core" % "2.1.1"
+    libraryDependencies += "org.typelevel" %% "cats-core" % catsVersion
   )
   .dependsOn(scala)
 
@@ -178,7 +190,7 @@ lazy val testing = project
     moduleName := "dhall-testing",
     name := "dhall-testing",
     description := "DhallJ ScalaCheck instances",
-    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.3"
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % scalaCheckVersion
   )
   .dependsOn(scala)
 
@@ -197,10 +209,7 @@ lazy val cats = project
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
   .settings(moduleName := "dhall-cats", name := "dhall-cats", description := "DhallJ Cats integration")
   .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.1.1"
-    ),
-    mimaPreviousArtifacts := Set.empty
+    libraryDependencies += "org.typelevel" %% "cats-core" % catsVersion
   )
   .dependsOn(core, testing)
 
@@ -209,12 +218,7 @@ lazy val imports = project
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
   .settings(moduleName := "dhall-imports", name := "dhall-imports", description := "DhallJ import resolution")
   .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.1.1",
-      "org.typelevel" %% "cats-effect" % "2.1.2",
-      "org.http4s" %% "http4s-dsl" % "0.21.3",
-      "org.http4s" %% "http4s-blaze-client" % "0.21.3"
-    )
+    libraryDependencies ++= http4sDependencies
   )
   .dependsOn(parser, cats)
 
@@ -236,12 +240,7 @@ lazy val tests = project
   .settings(baseSettings ++ scalaSettings)
   .settings(
     libraryDependencies ++= testDependencies,
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.1.1",
-      "org.typelevel" %% "cats-effect" % "2.1.2",
-      "org.http4s" %% "http4s-dsl" % "0.21.3",
-      "org.http4s" %% "http4s-blaze-client" % "0.21.3"
-    ),
+    libraryDependencies ++= http4sDependencies,
     skip in publish := true,
     mimaPreviousArtifacts := Set.empty,
     unmanagedResourceDirectories.in(Test) += (ThisBuild / baseDirectory).value / "dhall-lang",
