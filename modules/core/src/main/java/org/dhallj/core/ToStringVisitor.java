@@ -471,6 +471,25 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
     return new ToStringState(builder.toString(), ToStringState.BASE);
   }
 
+  @Override
+  public ToStringState onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    StringBuilder builder = new StringBuilder("classpath:");
+
+    builder.append(path.toString());
+
+    if (hash != null) {
+      builder.append(" ");
+      builder.append(Expr.Util.encodeHashBytes(hash));
+    }
+
+    if (mode != Expr.ImportMode.CODE) {
+      builder.append(" as ");
+      builder.append(mode);
+    }
+
+    return new ToStringState(builder.toString(), ToStringState.BASE);
+  }
+
   public ToStringState onRemoteImport(
       URI url, ToStringState using, Expr.ImportMode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder(url.toString());

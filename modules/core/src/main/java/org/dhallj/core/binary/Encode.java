@@ -464,6 +464,26 @@ public final class Encode implements Visitor<Void> {
     return null;
   }
 
+  @Override
+  public Void onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    int size = 4 + path.getNameCount();
+    this.writer.writeArrayStart(size);
+    this.writer.writeLong(Label.IMPORT);
+    if (hash == null) {
+      this.writer.writeNull();
+    } else {
+      this.writer.writeByteString(multihash(hash));
+    }
+    this.writer.writeLong(modeLabel(mode));
+    this.writer.writeLong(Label.IMPORT_TYPE_CLASSPATH);
+
+    Iterator<Path> parts = path.iterator();
+    while (parts.hasNext()) {
+      this.writer.writeString(parts.next().toString());
+    }
+    return null;
+  }
+
   private static final int urlLabel(URI url) {
     if (url.getScheme().equals("https")) {
       return Label.IMPORT_TYPE_REMOTE_HTTPS;

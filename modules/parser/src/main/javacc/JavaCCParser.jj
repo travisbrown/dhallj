@@ -152,6 +152,7 @@ TOKEN: {
   | <ENV: "env:" (<BASH_ENV_VAR> | ("\"" <POSIX_ENV_VAR> "\""))>
   | <HTTP: "http" ("s")? "://" (<USER_INFO> "@")? <HOST> (":" (<DIGIT>)*)? <URL_PATH> ("?" <QUERY>)?>
   | <LOCAL: <PARENT_PATH> | <HERE_PATH> | <HOME_PATH> | <PATH>>
+  | <CLASSPATH: "classpath:" <PATH> >
   | <#DIGIT: ["0"-"9"]>
   | <#DIGITS: (<DIGIT>)+>
   | <#HEX_DIGIT: <DIGIT> | ["A"-"F"] | ["a"-"f"]>
@@ -675,6 +676,7 @@ Expr.Parsed IMPORT(): {
       | token=<LOCAL>
       | (token=<HTTP> (LOOKAHEAD(2) [<WHSP>] <USING> <WHSP> using=IMPORT_EXPRESSION())?)
       | token=<ENV>
+      | token=<CLASSPATH>
     )
     (LOOKAHEAD(2) <WHSP> hash=<SHA256_HASH>)?
     (LOOKAHEAD(2) [<WHSP>] <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))?

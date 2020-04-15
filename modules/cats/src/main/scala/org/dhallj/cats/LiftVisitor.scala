@@ -97,6 +97,9 @@ class LiftVisitor[F[_] <: AnyRef](
   def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     F.pure(Expr.makeLocalImport(path, mode, hash))
 
+  def onClasspathImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
+    F.pure(Expr.makeClasspathImport(path, mode, hash))
+
   def onRemoteImport(url: URI, headers: F[Expr], mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     if (headers.eq(null)) {
       F.pure(Expr.makeRemoteImport(url, null, mode, hash))

@@ -71,6 +71,8 @@ public interface Visitor<A> {
 
   A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash);
 
+  A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash);
+
   A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash);
 
   /** Determines whether the driver sorts fields by name before feeding them to the visitor. */
@@ -304,118 +306,152 @@ public interface Visitor<A> {
 
     public void bind(String name, Expr type) {}
 
+    @Override
     public A onNote(A base, Source source) {
       return base;
     }
 
+    @Override
     public A onNatural(Expr self, BigInteger value) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onInteger(Expr self, BigInteger value) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onDouble(Expr self, double value) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onBuiltIn(Expr self, String value) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onIdentifier(Expr self, String value, long index) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onLambda(String name, A type, A result) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onPi(String name, A type, A result) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onLet(List<Expr.LetBinding<A>> bindings, A body) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onText(String[] parts, List<A> interpolated) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onNonEmptyList(List<A> values) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onEmptyList(A type) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onRecord(List<Entry<String, A>> fields) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onRecordType(List<Entry<String, A>> fields) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onUnionType(List<Entry<String, A>> fields) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onFieldAccess(A base, String fieldName) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onProjection(A base, String[] fieldNames) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onProjectionByType(A base, A type) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onApplication(A base, List<A> args) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onOperatorApplication(Operator operator, A lhs, A rhs) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onIf(A predicate, A thenValue, A elseValue) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onAnnotated(A base, A type) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onAssert(A base) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onMerge(A handlers, A union, A type) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onToMap(A base, A type) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onMissingImport(Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
+    @Override
+    public A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+      return this.getReturnValue();
+    }
+
+    @Override
     public A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
@@ -680,6 +716,10 @@ public interface Visitor<A> {
 
     public Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return Expr.makeLocalImport(path, mode, hash);
+    }
+
+    public Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+      return Expr.makeClasspathImport(path, mode, hash);
     }
 
     public Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {

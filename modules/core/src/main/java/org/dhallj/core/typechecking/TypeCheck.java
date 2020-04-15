@@ -35,6 +35,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     this(Context.EMPTY);
   }
 
+  @Override
   public final Expr onBuiltIn(String name) {
     if (name.equals("Sort")) {
       throw TypeCheckFailure.makeSortError();
@@ -48,6 +49,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onIdentifier(String name, long index) {
     Expr fromContext = this.context.lookup(name, index);
 
@@ -58,6 +60,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
     Expr lhsType = lhs.accept(this);
     Expr rhsType = rhs.accept(this);
@@ -170,18 +173,22 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onDouble(double value) {
     return Constants.DOUBLE;
   }
 
+  @Override
   public final Expr onNatural(BigInteger value) {
     return Constants.NATURAL;
   }
 
+  @Override
   public final Expr onInteger(BigInteger value) {
     return Constants.INTEGER;
   }
 
+  @Override
   public final Expr onText(String[] parts, Iterable<Expr> interpolated) {
     for (Expr expr : interpolated) {
       Expr exprType = expr.accept(this);
@@ -193,6 +200,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return Constants.TEXT;
   }
 
+  @Override
   public final Expr onApplication(Expr base, final Expr arg) {
     Expr baseType = base.accept(this);
     final Expr argType = arg.accept(this);
@@ -230,6 +238,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onIf(Expr predicate, Expr thenValue, Expr elseValue) {
     Expr predicateType = predicate.accept(this);
     if (isBool(predicateType)) {
@@ -257,6 +266,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onLambda(String param, Expr input, Expr result) {
     Expr inputType = input.accept(this);
     if (Universe.fromExpr(inputType) != null) {
@@ -271,6 +281,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onPi(String param, Expr input, Expr result) {
     Expr inputType = input.accept(this);
     Context unshiftedContext = this.context;
@@ -284,6 +295,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return Universe.functionCheck(inputTypeUniverse, resultTypeUniverse).toExpr();
   }
 
+  @Override
   public final Expr onAssert(Expr base) {
     Expr baseType = base.accept(this);
 
@@ -297,6 +309,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     throw TypeCheckFailure.makeAssertError(base);
   }
 
+  @Override
   public final Expr onFieldAccess(Expr base, String fieldName) {
     Expr baseType = base.accept(this);
     List<Entry<String, Expr>> fields = Expr.Util.asRecordType(baseType);
@@ -328,6 +341,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onProjection(Expr base, String[] fieldNames) {
     List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.accept(this));
 
@@ -364,6 +378,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onProjectionByType(Expr base, Expr type) {
     List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.accept(this));
 
@@ -397,6 +412,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
     if (size == 0) {
       return Constants.EMPTY_RECORD_TYPE;
@@ -416,6 +432,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onRecordType(Iterable<Entry<String, Expr>> fields, int size) {
     // Need to check for duplicates here; see: https://github.com/travisbrown/dhallj/issues/6
     Set<String> fieldNamesSeen = new HashSet<>(size);
@@ -441,6 +458,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return max.toExpr();
   }
 
+  @Override
   public final Expr onUnionType(Iterable<Entry<String, Expr>> fields, int size) {
     if (size == 0) {
       return Constants.TYPE;
@@ -484,6 +502,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onNonEmptyList(Iterable<Expr> values, int size) {
     Iterator<Expr> it = values.iterator();
     Expr firstType = it.next().accept(this);
@@ -502,6 +521,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onEmptyList(Expr type) {
     // We verify that the type is well-typed.
     type.accept(this);
@@ -516,6 +536,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onLet(String name, Expr type, Expr value, Expr body) {
     Expr valueType = value.accept(this);
 
@@ -528,6 +549,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     return body.substitute(name, value.accept(BetaNormalize.instance)).accept(this);
   }
 
+  @Override
   public final Expr onAnnotated(Expr base, Expr type) {
     Expr inferredType = base.accept(this);
     if (inferredType.equivalent(type)) {
@@ -537,6 +559,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onToMap(Expr base, Expr type) {
     Expr baseType = base.accept(this);
     List<Entry<String, Expr>> baseAsRecord = Expr.Util.asRecordType(baseType);
@@ -631,6 +654,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onMerge(Expr handlers, Expr union, Expr type) {
     Expr handlersType = handlers.accept(this);
     List<Entry<String, Expr>> handlersTypeFields = Expr.Util.asRecordType(handlersType);
@@ -683,22 +707,32 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
+  @Override
   public final Expr onNote(Expr base, Source source) {
     return base.accept(this);
   }
 
+  @Override
   public final Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
+  @Override
   public final Expr onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
+  @Override
   public final Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
+  @Override
+  public Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    throw TypeCheckFailure.makeUnresolvedImportError();
+  }
+
+  @Override
   public final Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }

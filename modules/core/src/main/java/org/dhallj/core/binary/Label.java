@@ -32,4 +32,6 @@ final class Label {
   public static final int IMPORT_TYPE_LOCAL_HOME = 5;
   public static final int IMPORT_TYPE_ENV = 6;
   public static final int IMPORT_TYPE_MISSING = 7;
+  public static final int IMPORT_TYPE_CLASSPATH =
+      23; // Allows CBOR tiny field encoding but leaves room for Dhall spec to expand import types
 }

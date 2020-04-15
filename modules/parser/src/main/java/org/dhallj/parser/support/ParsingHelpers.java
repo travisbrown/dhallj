@@ -667,6 +667,8 @@ final class ParsingHelpers {
       }
     } else if (type.image.startsWith("env:")) {
       value = Expr.makeEnvImport(type.image.substring(4), mode, hash);
+    } else if (type.image.startsWith("classpath:")) {
+      value = Expr.makeClasspathImport(Paths.get(type.image.substring(10)), mode, hash);
     } else {
       try {
         value = Expr.makeLocalImport(Paths.get(type.image), mode, hash);
