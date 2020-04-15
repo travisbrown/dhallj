@@ -96,10 +96,15 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
-class CachingTypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_)) with CachedResolvingInput
-class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_)) with ResolvingInput
+class CachingTypeCheckingSuite(val base: String)
+    extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
+    with CachedResolvingInput
+class TypeCheckingSuite(val base: String)
+    extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
+    with ResolvingInput
 class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize) with ParsingInput
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with CachedResolvingInput
+class NormalizationUSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with ParsingInput
 
 class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with ResolvingInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
@@ -117,7 +122,9 @@ class ParsingSuite(val base: String) extends SuccessSuite[Expr, Array[Byte]] wit
   def compare(result: Array[Byte], expected: Array[Byte]): Boolean = result.sameElements(expected)
 }
 
-abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends SuccessSuite[Expr, Expr] with ParsingInput {
+abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr)
+    extends SuccessSuite[Expr, Expr]
+    with ParsingInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(8) + "B.dhall"
 
   override def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhallb")

@@ -1,8 +1,8 @@
 package org.dhallj.tests.acceptance
 
-class NormalizationSimpleSuite extends NormalizationSuite("normalization/success/simple")
+class NormalizationSimpleSuite extends NormalizationUSuite("normalization/success/simple")
 class NormalizationRegressionSuite extends NormalizationSuite("normalization/success/regression")
-class NormalizationUnitSuite extends NormalizationSuite("normalization/success/unit")
+class NormalizationUnitSuite extends NormalizationUSuite("normalization/success/unit")
 class NormalizationSimplificationsSuite extends NormalizationSuite("normalization/success/simplifications")
 class NormalizationOtherSuite extends NormalizationSuite("normalization/success")
 class NormalizationHTAccessSuite extends NormalizationSuite("normalization/success/haskell-tutorial/access")
@@ -45,7 +45,6 @@ class BinaryDecodingFailureUnitSuite extends BinaryDecodingFailureSuite("binary-
 class ImportResolutionSuccessSuite extends ImportResolutionSuite("import/success")
 class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/success/unit") {
   //Normalize uses a relative path which isn't compatible with our current method of reading classpath resources
-  //Alternative type error - open question on semantics
   override def ignored = Set("Normalize")
 }
 class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("import/success/unit/asLocation") {
