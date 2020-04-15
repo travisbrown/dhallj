@@ -104,7 +104,7 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
 
 class CachingTypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_)) with CachedResolvingInput
 class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_)) with ResolvingInput
-class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize) with CachedResolvingInput
+class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize) with ParsingInput
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with CachedResolvingInput
 
 class HashingSuite(val base: String) extends ResolvingExprAcceptanceSuite[String] {
