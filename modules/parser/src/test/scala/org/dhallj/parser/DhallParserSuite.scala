@@ -18,4 +18,16 @@ class DhallParserSuite extends FunSuite() {
 
     assert(DhallParser.parse("https://[0:0:0:0:0:0:0:1]/") == expected)
   }
+
+  test("parse $ in double-quoted text literals") {
+    val expected = Expr.makeTextLiteral("$ $ $100 $ $")
+
+    assert(DhallParser.parse("""let x = "100" in "$ $ $${x} $ $" """) == expected)
+  }
+
+  test("parse # in double-quoted text literals") {
+    val expected = Expr.makeTextLiteral("# # # $ % ^ #")
+
+    assert(DhallParser.parse(""""# # # $ % ^ #"""") == expected)
+  }
 }
