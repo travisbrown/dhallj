@@ -422,7 +422,7 @@ public abstract class Expr {
           if (quoted) {
             builder.append("\\\\u0024");
           } else {
-            builder.append("\\u0024");
+            builder.append("$");
           }
         } else if (c == '\\') {
           if (quoted) {

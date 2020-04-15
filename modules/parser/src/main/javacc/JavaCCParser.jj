@@ -209,8 +209,9 @@ TOKEN: {
     braceDepth.push(0);
     SwitchTo(DEFAULT);
   } |
+  <DOUBLE_QUOTE_DOLLAR_SIGN: "$"> |
   <DOUBLE_QUOTE_CHARS: (
-      "\u0020" | "\u0021" | ["\u0025"-"\u005b"] | ["\u005d"-"\u007f"]
+      "\u0020" | "\u0021" | "#" | ["\u0025"-"\u005b"] | ["\u005d"-"\u007f"]
     | ("\\" (["\"", "$", "\\", "/", "b", "f", "n", "r", "t"]))
     | ("\\u" <UNICODE_ESCAPE>)
     | <VALID_NON_ASCII>
@@ -256,11 +257,30 @@ Wrapped<String> ANY_LABEL_OR_SOME():  {
 }
 
 Map.Entry<String, Expr.Parsed> DOUBLE_QUOTE_CHUNK(): {
-  Token token = null;
+  StringBuilder builder = null;
+  Token token0 = null;
+  Token token1 = null;
   Expr.Parsed expr = null;
 } {
-  ((<DOUBLE_QUOTE_INTERPOLATION> expr=COMPLETE_EXPRESSION() <BRACE_CLOSE>) | token=<DOUBLE_QUOTE_CHARS>) {
-    return new SimpleImmutableEntry(token == null ? null : token.image, expr);
+  (
+      (<DOUBLE_QUOTE_INTERPOLATION> expr=COMPLETE_EXPRESSION() <BRACE_CLOSE>)
+    | (
+      (token0=<DOUBLE_QUOTE_DOLLAR_SIGN> | token0=<DOUBLE_QUOTE_CHARS>)
+      (LOOKAHEAD(2)
+        (token1=<DOUBLE_QUOTE_DOLLAR_SIGN> | token1=<DOUBLE_QUOTE_CHARS>) {
+          if (builder == null) {
+            builder = new StringBuilder(token0.image);
+          }
+          builder.append(token1.image);
+        }
+      )*
+    )
+  ) {
+    if (builder == null) {
+      return new SimpleImmutableEntry(token0 == null ? null : token0.image, expr);
+    } else {
+      return new SimpleImmutableEntry(builder.toString(), expr);
+    }
   }
 }
 
