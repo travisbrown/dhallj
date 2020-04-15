@@ -19,7 +19,7 @@ class ToStringSuite extends ScalaCheckSuite() {
   test("Unnormalized Prelude should round-trip through toString".tag(Slow)) {
     import org.dhallj.syntax._
 
-    val Right(prelude) = "./dhall-lang/Prelude/package.dhall".parseExpr.flatMap(_.resolve)
+    val Right(prelude) = "./Prelude/package.dhall".parseExpr.flatMap(_.resolve)
     val Right(fromToString) = prelude.toString.parseExpr
 
     assert(prelude.hash.sameElements(fromToString.hash))

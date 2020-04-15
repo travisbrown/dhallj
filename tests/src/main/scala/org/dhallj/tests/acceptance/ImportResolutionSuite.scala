@@ -6,8 +6,6 @@ import cats.effect.{ContextShift, IO}
 
 import org.dhallj.core.Expr
 import org.dhallj.imports._
-import org.dhallj.imports.ResolutionConfig
-import org.dhallj.imports.ResolutionConfig._
 import org.dhallj.imports.Caching._
 import org.dhallj.parser.DhallParser
 
@@ -24,7 +22,7 @@ class ImportResolutionSuite(val base: String)
   setEnv("DHALL_TEST_VAR", "6 * 7") //Yes, this is SUPER hacky but the JVM doesn't really support setting env vars
 
   override def parseInput(path: String, input: String): Expr = {
-    val parsed = DhallParser.parse(s"/$path")
+    val parsed = DhallParser.parse(s"./$path")
 
     if (parsed.isResolved) parsed
     else {
@@ -32,7 +30,7 @@ class ImportResolutionSuite(val base: String)
       val cache = initializeCache
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(ResolutionConfig(FromResources), cache))
+        parsed.accept(ResolveImportsVisitor.mkVisitor(cache))
       }.unsafeRunSync
     }
   }

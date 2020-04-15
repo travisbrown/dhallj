@@ -73,10 +73,10 @@ class ImportResolutionSuite extends FunSuite {
   }
 
   test("Import as classpath location") {
-    val expr = parse("let x = classpath:/foo/bar.dhall as Location in x")
+    val expr = parse("let x = /foo/bar.dhall as Location in x")
     val expected =
       parse(
-        "< Local : Text | Classpath : Text | Remote : Text | Environment : Text | Missing >.Classpath \"/foo/bar.dhall\""
+        "< Local : Text | Remote : Text | Environment : Text | Missing >.Local \"/foo/bar.dhall\""
       ).normalize
 
     assert(resolve(expr) == expected)
@@ -85,7 +85,7 @@ class ImportResolutionSuite extends FunSuite {
   test("Import as remote location") {
     val expr = parse("let x = http://example.com/foo.dhall as Location in x")
     val expected = parse(
-      "< Local : Text | Classpath: Text | Remote : Text | Environment : Text | Missing >.Remote \"http://example.com/foo.dhall\""
+      "< Local : Text | Remote : Text | Environment : Text | Missing >.Remote \"http://example.com/foo.dhall\""
     ).normalize
 
     assert(resolve(expr) == expected)
@@ -94,7 +94,7 @@ class ImportResolutionSuite extends FunSuite {
   test("Import as env location") {
     val expr = parse("let x = env:foo as Location in x")
     val expected =
-      parse("< Local : Text | Classpath : Text | Remote : Text | Environment : Text | Missing >.Environment \"foo\"").normalize
+      parse("< Local : Text | Remote : Text | Environment : Text | Missing >.Environment \"foo\"").normalize
 
     assert(resolve(expr) == expected)
   }
