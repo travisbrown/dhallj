@@ -8,6 +8,7 @@ import java.util.{List => JList, Map => JMap}
 
 import cats.effect.Sync
 import cats.implicits._
+import org.dhallj.cats.LiftVisitor
 import org.dhallj.core._
 import org.dhallj.core.DhallException.ResolutionFailure
 import org.dhallj.core.binary.Decode
@@ -21,7 +22,6 @@ import org.http4s.Uri.unsafeFromString
 import org.http4s.client.Client
 import org.http4s.{EntityDecoder, Headers, Request}
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
 
 //TODO quoted path components?
@@ -31,138 +31,15 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
                                                                  parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
-) extends Visitor.NoPrepareEvents[F[Expr]] {
+) extends LiftVisitor[F](F) {
   private var duplicateImportsCache: MMap[ImportContext, String] = MMap.empty
-
-  override def onDouble(self: Expr, value: Double): F[Expr] = F.pure(self)
-
-  override def onNatural(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
-
-  override def onInteger(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
-
-  override def onText(parts: Array[String], interpolated: JList[F[Expr]]): F[Expr] =
-    for {
-      i <- interpolated.asScala.toList.sequence
-    } yield Expr.makeTextLiteral(parts, i.asJava)
-
-  override def onApplication(base: F[Expr], args: JList[F[Expr]]): F[Expr] =
-    for {
-      b <- base
-      a <- args.asScala.toList.sequence
-    } yield Expr.makeApplication(b, a.asJava)
 
   override def onOperatorApplication(operator: Operator, lhs: F[Expr], rhs: F[Expr]): F[Expr] =
     if (operator == Operator.IMPORT_ALT)
       lhs.handleErrorWith(_ => rhs)
     else {
-      for {
-        l <- lhs
-        r <- rhs
-      } yield Expr.makeOperatorApplication(operator, l, r)
+      F.map2(lhs, rhs)(Expr.makeOperatorApplication(operator, _, _))
     }
-
-  override def onIf(cond: F[Expr], thenValue: F[Expr], elseValue: F[Expr]): F[Expr] =
-    for {
-      c <- cond
-      t <- thenValue
-      e <- elseValue
-    } yield Expr.makeIf(c, t, e)
-
-  override def onLambda(param: String, input: F[Expr], result: F[Expr]): F[Expr] =
-    for {
-      i <- input
-      r <- result
-    } yield Expr.makeLambda(param, i, r)
-
-  override def onPi(param: String, input: F[Expr], result: F[Expr]): F[Expr] =
-    for {
-      i <- input
-      r <- result
-    } yield Expr.makePi(param, i, r)
-
-  override def onAssert(base: F[Expr]): F[Expr] =
-    for {
-      b <- base
-    } yield Expr.makeAssert(b)
-
-  override def onFieldAccess(base: F[Expr], fieldName: String): F[Expr] =
-    for {
-      b <- base
-    } yield Expr.makeFieldAccess(b, fieldName)
-
-  override def onProjection(base: F[Expr], fieldNames: Array[String]): F[Expr] =
-    for {
-      b <- base
-    } yield Expr.makeProjection(b, fieldNames)
-
-  override def onProjectionByType(base: F[Expr], tpe: F[Expr]): F[Expr] =
-    for {
-      b <- base
-      t <- tpe
-    } yield Expr.makeProjectionByType(b, t)
-
-  override def onBuiltIn(self: Expr, name: String): F[Expr] = F.pure(self)
-  override def onIdentifier(self: Expr, value: String, index: Long): F[Expr] = F.pure(self)
-
-  override def onRecord(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
-    for {
-      f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
-    } yield Expr.makeRecordLiteral(f.toMap.asJava.entrySet)
-
-  override def onRecordType(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
-    for {
-      f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
-    } yield Expr.makeRecordType(f.toMap.asJava.entrySet)
-
-  override def onUnionType(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
-    for {
-      f <- fields.asScala.toList.traverse(e => liftNull(e.getValue).map(v => e.getKey -> v))
-    } yield Expr.makeUnionType(f.toMap.asJava.entrySet)
-
-  override def onNonEmptyList(values: JList[F[Expr]]): F[Expr] =
-    for {
-      v <- values.asScala.toList.sequence
-    } yield Expr.makeNonEmptyListLiteral(v.asJava)
-
-  override def onEmptyList(tpe: F[Expr]): F[Expr] =
-    for {
-      t <- tpe
-    } yield Expr.makeEmptyListLiteral(t)
-
-  override def onNote(base: F[Expr], source: Source): F[Expr] =
-    for {
-      b <- base
-    } yield Expr.makeNote(b, source)
-
-  override def onLet(bindings: JList[Expr.LetBinding[F[Expr]]], body: F[Expr]): F[Expr] =
-    for {
-      bindings <- bindings.asScala.toList.traverse { binding =>
-        for {
-          t <- liftNull(binding.getType)
-          v <- binding.getValue
-        } yield new Expr.LetBinding(binding.getName, t, v)
-      }
-      b <- body
-    } yield Expr.makeLet(bindings.asJava, b)
-
-  override def onAnnotated(base: F[Expr], tpe: F[Expr]): F[Expr] =
-    for {
-      b <- base
-      t <- tpe
-    } yield Expr.makeAnnotated(b, t)
-
-  override def onToMap(base: F[Expr], tpe: F[Expr]): F[Expr] =
-    for {
-      b <- base
-      t <- liftNull(tpe)
-    } yield Expr.makeToMap(b, t)
-
-  override def onMerge(left: F[Expr], right: F[Expr], tpe: F[Expr]): F[Expr] =
-    for {
-      l <- left
-      r <- right
-      t <- liftNull(tpe)
-    } yield Expr.makeMerge(l, r, t)
 
   override def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     onImport(Local(path), mode, hash)
@@ -312,8 +189,6 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
       _ <- validateHash(imp, result, hash)
     } yield result
   }
-
-  private def liftNull(t: F[Expr]): F[Expr] = Option(t).getOrElse(F.pure(null))
 }
 
 object ResolveImportsVisitor {

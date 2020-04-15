@@ -59,6 +59,7 @@ val root = project
     circe,
     jawn,
     yaml,
+    cats,
     imports,
     importsMini,
     testing,
@@ -191,6 +192,18 @@ lazy val javagen = project
   )
   .dependsOn(core)
 
+lazy val cats = project
+  .in(file("modules/cats"))
+  .settings(baseSettings ++ scalaSettings ++ publishSettings)
+  .settings(moduleName := "dhall-cats", name := "dhall-cats", description := "DhallJ Cats integration")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core" % "2.1.1"
+    ),
+    mimaPreviousArtifacts := Set.empty
+  )
+  .dependsOn(core, testing)
+
 lazy val imports = project
   .in(file("modules/imports"))
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
@@ -203,7 +216,7 @@ lazy val imports = project
       "org.http4s" %% "http4s-blaze-client" % "0.21.3"
     )
   )
-  .dependsOn(parser, core)
+  .dependsOn(parser, cats)
 
 lazy val importsMini = project
   .in(file("modules/imports-mini"))
