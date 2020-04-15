@@ -1,101 +1,67 @@
 package org.dhallj.tests.acceptance
 
-class TypeCheckingPreludeBoolAndSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/and")
-class TypeCheckingPreludeBoolBuildSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/build")
-class TypeCheckingPreludeBoolEvenSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/even")
-class TypeCheckingPreludeBoolFoldSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/fold")
-class TypeCheckingPreludeBoolNotSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/not")
-class TypeCheckingPreludeBoolOddSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/odd")
-class TypeCheckingPreludeBoolOrSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/or")
-class TypeCheckingPreludeBoolShowSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Bool/show")
+class TypeCheckingBoolAndSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/and")
+class TypeCheckingBoolBuildSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/build")
+class TypeCheckingBoolEvenSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/even")
+class TypeCheckingBoolFoldSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/fold")
+class TypeCheckingBoolNotSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/not")
+class TypeCheckingBoolOddSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/odd")
+class TypeCheckingBoolOrSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/or")
+class TypeCheckingBoolShowSuite extends TypeCheckingSuite("type-inference/success/prelude/Bool/show")
 
-class TypeCheckingPreludeDoubleShowSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Double/show")
-class TypeCheckingPreludeIntegerShowSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Integer/show")
-class TypeCheckingPreludeIntegerToDoubleSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Integer/toDouble")
+class TypeCheckingDoubleShowSuite extends TypeCheckingSuite("type-inference/success/prelude/Double/show")
+class TypeCheckingIntegerShowSuite extends TypeCheckingSuite("type-inference/success/prelude/Integer/show")
+class TypeCheckingIntegerToDoubleSuite extends TypeCheckingSuite("type-inference/success/prelude/Integer/toDouble")
 
-class TypeCheckingPreludeListAllSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/all")
-class TypeCheckingPreludeListBuildSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/build")
-class TypeCheckingPreludeListConcatMapSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/concatMap")
-class TypeCheckingPreludeListFoldSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/fold")
-class TypeCheckingPreludeListHeadSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/head")
-class TypeCheckingPreludeListIterateSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/iterate")
-class TypeCheckingPreludeListLengthSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/length")
-class TypeCheckingPreludeListNullSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/null")
-class TypeCheckingPreludeListReverseSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/reverse")
-class TypeCheckingPreludeListUnzipSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/unzip")
-class TypeCheckingPreludeListAnySuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/any")
-class TypeCheckingPreludeListConcatSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/concat")
-class TypeCheckingPreludeListFilterSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/filter")
-class TypeCheckingPreludeListGenerateSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/generate")
-class TypeCheckingPreludeListIndexedSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/indexed")
-class TypeCheckingPreludeListLastSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/last")
-class TypeCheckingPreludeListMapSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/map")
-class TypeCheckingPreludeListReplicateSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/replicate")
-class TypeCheckingPreludeListShiftedSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/List/shifted")
+class TypeCheckingListAllSuite extends TypeCheckingSuite("type-inference/success/prelude/List/all")
+class TypeCheckingListBuildSuite extends TypeCheckingSuite("type-inference/success/prelude/List/build")
+class TypeCheckingListConcatMapSuite extends TypeCheckingSuite("type-inference/success/prelude/List/concatMap")
+class TypeCheckingListFoldSuite extends TypeCheckingSuite("type-inference/success/prelude/List/fold")
+class TypeCheckingListHeadSuite extends TypeCheckingSuite("type-inference/success/prelude/List/head")
+class TypeCheckingListIterateSuite extends TypeCheckingSuite("type-inference/success/prelude/List/iterate")
+class TypeCheckingListLengthSuite extends TypeCheckingSuite("type-inference/success/prelude/List/length")
+class TypeCheckingListNullSuite extends TypeCheckingSuite("type-inference/success/prelude/List/null")
+class TypeCheckingListReverseSuite extends TypeCheckingSuite("type-inference/success/prelude/List/reverse")
+class TypeCheckingListUnzipSuite extends TypeCheckingSuite("type-inference/success/prelude/List/unzip")
+class TypeCheckingListAnySuite extends TypeCheckingSuite("type-inference/success/prelude/List/any")
+class TypeCheckingListConcatSuite extends TypeCheckingSuite("type-inference/success/prelude/List/concat")
+class TypeCheckingListFilterSuite extends TypeCheckingSuite("type-inference/success/prelude/List/filter")
+class TypeCheckingListGenerateSuite extends TypeCheckingSuite("type-inference/success/prelude/List/generate")
+class TypeCheckingListIndexedSuite extends TypeCheckingSuite("type-inference/success/prelude/List/indexed")
+class TypeCheckingListLastSuite extends TypeCheckingSuite("type-inference/success/prelude/List/last")
+class TypeCheckingListMapSuite extends TypeCheckingSuite("type-inference/success/prelude/List/map")
+class TypeCheckingListReplicateSuite extends TypeCheckingSuite("type-inference/success/prelude/List/replicate")
+class TypeCheckingListShiftedSuite extends TypeCheckingSuite("type-inference/success/prelude/List/shifted")
 
-class TypeCheckingPreludeMonoidSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Monoid")
+class TypeCheckingMonoidSuite extends TypeCheckingSuite("type-inference/success/prelude/Monoid")
 
-class TypeCheckingPreludeNaturalBuildSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/build")
-class TypeCheckingPreludeNaturalEnumerateSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/enumerate")
-class TypeCheckingPreludeNaturalEvenSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/even")
-class TypeCheckingPreludeNaturalFoldSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/fold")
-class TypeCheckingPreludeNaturalIsZeroSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/isZero")
-class TypeCheckingPreludeNaturalOddSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/odd")
-class TypeCheckingPreludeNaturalProductSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/product")
-class TypeCheckingPreludeNaturalShowSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/show")
-class TypeCheckingPreludeNaturalSumSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/sum")
-class TypeCheckingPreludeNaturalToDoubleSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/toDouble")
-class TypeCheckingPreludeNaturalToIntegerSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Natural/toInteger")
+class TypeCheckingNaturalBuildSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/build")
+class TypeCheckingNaturalEnumerateSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/enumerate")
+class TypeCheckingNaturalEvenSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/even")
+class TypeCheckingNaturalFoldSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/fold")
+class TypeCheckingNaturalIsZeroSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/isZero")
+class TypeCheckingNaturalOddSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/odd")
+class TypeCheckingNaturalProductSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/product")
+class TypeCheckingNaturalShowSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/show")
+class TypeCheckingNaturalSumSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/sum")
+class TypeCheckingNaturalToDoubleSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/toDouble")
+class TypeCheckingNaturalToIntegerSuite extends TypeCheckingSuite("type-inference/success/prelude/Natural/toInteger")
 
-class TypeCheckingPreludeOptionalAllSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/all")
-class TypeCheckingPreludeOptionalAnySuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/any")
-class TypeCheckingPreludeOptionalBuildSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/build")
-class TypeCheckingPreludeOptionalConcatSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/concat")
-class TypeCheckingPreludeOptionalFilterSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/filter")
-class TypeCheckingPreludeOptionalFoldSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/fold")
-class TypeCheckingPreludeOptionalHeadSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/head")
-class TypeCheckingPreludeOptionalLastSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/last")
-class TypeCheckingPreludeOptionalLengthSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/length")
-class TypeCheckingPreludeOptionalMapSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/map")
-class TypeCheckingPreludeOptionalNullSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/null")
-class TypeCheckingPreludeOptionalToListSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/toList")
-class TypeCheckingPreludeOptionalUnzipSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Optional/unzip")
+class TypeCheckingOptionalAllSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/all")
+class TypeCheckingOptionalAnySuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/any")
+class TypeCheckingOptionalBuildSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/build")
+class TypeCheckingOptionalConcatSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/concat")
+class TypeCheckingOptionalFilterSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/filter")
+class TypeCheckingOptionalFoldSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/fold")
+class TypeCheckingOptionalHeadSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/head")
+class TypeCheckingOptionalLastSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/last")
+class TypeCheckingOptionalLengthSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/length")
+class TypeCheckingOptionalMapSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/map")
+class TypeCheckingOptionalNullSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/null")
+class TypeCheckingOptionalToListSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/toList")
+class TypeCheckingOptionalUnzipSuite extends TypeCheckingSuite("type-inference/success/prelude/Optional/unzip")
 
-class TypeCheckingPreludeTextConcatSuite extends PreludeTypeCheckingSuite("type-inference/success/prelude/Text/concat")
-class TypeCheckingPreludeTextConcatMapSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Text/concatMap")
-class TypeCheckingPreludeTextConcatMapSepSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Text/concatMapSep")
-class TypeCheckingPreludeTextConcatSepSuite
-    extends PreludeTypeCheckingSuite("type-inference/success/prelude/Text/concatSep")
+class TypeCheckingTextConcatSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concat")
+class TypeCheckingTextConcatMapSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concatMap")
+class TypeCheckingTextConcatMapSepSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concatMapSep")
+class TypeCheckingTextConcatSepSuite extends TypeCheckingSuite("type-inference/success/prelude/Text/concatSep")

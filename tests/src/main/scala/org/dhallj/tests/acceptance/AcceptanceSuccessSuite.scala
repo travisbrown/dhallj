@@ -69,27 +69,6 @@ trait CachedResolvingInput extends Input[Expr] {
 
 }
 
-/**
- * Caches imports and doesn't type check
- */
-trait PreludeInput extends Input[Expr] {
-
-  override def parseInput(path: String, input: String): Expr = {
-    //TODO this should only be for import tests (I think)
-    val parsed = DhallParser.parse(s"/$path")
-
-    if (parsed.isResolved) parsed
-    else {
-      implicit val cs: ContextShift[IO] = IO.contextShift(global)
-      BlazeClientBuilder[IO](global).resource.use { client =>
-        implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(ResolutionConfig(FromResources, false), NoopImportsCache[IO]))
-      }.unsafeRunSync
-    }
-  }
-
-}
-
 trait ResolvingInput extends Input[Expr] {
   def parseInput(path: String, input: String): Expr = {
     //TODO this should only be for import tests (I think)
@@ -123,22 +102,11 @@ class CachingTypeCheckingSuite(val base: String)
 class TypeCheckingSuite(val base: String)
     extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
     with ResolvingInput
-class PreludeTypeCheckingSuite(val base: String)
-    extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
-    with PreludeInput
 class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize) with ParsingInput
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with CachedResolvingInput
 class NormalizationUSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with ParsingInput
 
 class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with CachedResolvingInput {
-  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
-
-  def transform(input: Expr): String = input.normalize.alphaNormalize.hash
-  def loadExpected(input: Array[Byte]): String = new String(input).trim.drop(7)
-  def compare(result: String, expected: String): Boolean = result == expected
-}
-
-class PreludeHashingSuite(val base: String) extends SuccessSuite[Expr, String] with PreludeInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
 
   def transform(input: Expr): String = input.normalize.alphaNormalize.hash

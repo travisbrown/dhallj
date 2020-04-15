@@ -311,7 +311,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
         e.accept(v)
       }
       _ <- validateHash(imp, result, hash)
-      _ <- if (resolutionConfig.shouldTypeCheck) F.delay(typeCheck(result)) else F.unit
+      _ <- F.delay(typeCheck(result))
     } yield result
   }
 
