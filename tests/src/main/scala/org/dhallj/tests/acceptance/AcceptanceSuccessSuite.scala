@@ -124,7 +124,7 @@ class TypeCheckingSuite(val base: String)
     extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
     with ResolvingInput
 class PreludeTypeCheckingSuite(val base: String)
-  extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
+    extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
     with PreludeInput
 class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize) with ParsingInput
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with CachedResolvingInput
