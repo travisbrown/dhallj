@@ -27,12 +27,12 @@ import scala.collection.mutable.{Map => MMap}
 //TODO quoted path components?
 //TODO proper error handling
 private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
-                                                                 persistentCache: ImportsCache[F],
-                                                                 parents: List[ImportContext],
-                                                                 cache: MMap[ImportContext, String])(
+                                                                 cache: ImportsCache[F],
+                                                                 parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends Visitor.NoPrepareEvents[F[Expr]] {
+  private var duplicateImportsCache: MMap[ImportContext, String] = MMap.empty
 
   override def onDouble(self: Expr, value: Double): F[Expr] = F.pure(self)
 
@@ -188,7 +188,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
 
         def resolve(i: ImportContext): F[(String, Headers)] =
           for {
-            cached <- F.delay(cache.get(i))
+            cached <- F.delay(duplicateImportsCache.get(i))
             result <- cached match {
               case Some(v) => F.pure(v -> Headers.empty)
               case None =>
@@ -228,7 +228,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
                       } yield resp
                     case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
                   }
-                  _ <- F.delay(cache.put(i, v._1))
+                  _ <- F.delay(duplicateImportsCache.put(i, v._1))
                 } yield v
             }
           } yield result
@@ -242,7 +242,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
         if (hash eq null) resolve(i)
         else
           for {
-            bytesO <- persistentCache.get(hash)
+            bytesO <- cache.get(hash)
             result <- bytesO.fold(resolve(i))(bs =>
               for {
                 _ <- checkHashesMatch(bs, hash)
@@ -292,7 +292,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
           encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
           _ <- if (encoded.sameElements(expected)) F.unit
           else F.raiseError(new ResolutionFailure(s"SHA256 validation exception for ${imp}"))
-          _ <- persistentCache.put(encoded, bytes)
+          _ <- cache.put(encoded, bytes)
         } yield ()
 
     for {
@@ -304,7 +304,11 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
       _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
       //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
       _ <- rejectCyclicImports(imp, parents)
-      result <- e.accept(ResolveImportsVisitor[F](resolutionConfig, persistentCache, imp :: parents, cache))
+      result <- {
+        val v = ResolveImportsVisitor[F](resolutionConfig, cache, imp :: parents)
+        v.duplicateImportsCache = this.duplicateImportsCache
+        e.accept(v)
+      }
       _ <- validateHash(imp, result, hash)
     } yield result
   }
@@ -319,7 +323,7 @@ object ResolveImportsVisitor {
 
   def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig,
                                               cache: ImportsCache[F]): ResolveImportsVisitor[F] =
-    ResolveImportsVisitor(resolutionConfig, cache, Nil, MMap.empty)
+    ResolveImportsVisitor(resolutionConfig, cache, Nil)
 
   sealed trait ImportContext
   case class Env(value: String) extends ImportContext
