@@ -19,6 +19,8 @@ val baseSettings = Seq(
 val javaSettings = Seq(
   autoScalaLibrary := false,
   crossPaths := false,
+  javacOptions in Compile ++= Seq("-source", "1.7"),
+  javacOptions in (Compile, compile) ++= Seq("-target", "1.7"),
   mimaPreviousArtifacts := Set("org.dhallj" % moduleName.value % previousVersion)
 )
 
@@ -74,9 +76,7 @@ lazy val core = project
   .settings(
     moduleName := "dhall-core",
     name := "dhall-core",
-    description := "DhallJ core",
-    javacOptions in Compile ++= Seq("-source", "1.7"),
-    javacOptions in (Compile, compile) ++= Seq("-target", "1.7")
+    description := "DhallJ core"
   )
 
 lazy val parser = project
