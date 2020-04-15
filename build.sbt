@@ -2,6 +2,7 @@ import ReleaseTransformations._
 
 organization in ThisBuild := "org.dhallj"
 
+val previousVersion = "0.1.0"
 val circeVersion = "0.13.0"
 
 val testDependencies = Seq(
@@ -17,10 +18,13 @@ val baseSettings = Seq(
 
 val javaSettings = Seq(
   autoScalaLibrary := false,
-  crossPaths := false
+  crossPaths := false,
+  mimaPreviousArtifacts := Set("org.dhallj" % moduleName.value % previousVersion)
 )
 
-val scalaSettings = Seq()
+val scalaSettings = Seq(
+  mimaPreviousArtifacts := Set("org.dhallj" %% moduleName.value % previousVersion)
+)
 
 val root = project
   .in(file("."))
@@ -28,6 +32,7 @@ val root = project
   .settings(baseSettings ++ publishSettings)
   .settings(
     skip in publish := true,
+    mimaPreviousArtifacts := Set.empty,
     initialCommands in console := "import org.dhallj.parser.DhallParser.parse",
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
@@ -101,6 +106,7 @@ lazy val cli = project
   .settings(baseSettings ++ javaSettings)
   .settings(
     skip in publish := true,
+    mimaPreviousArtifacts := Set.empty,
     name in GraalVMNativeImage := "dhall-cli"
   )
   .enablePlugins(GraalVMNativeImagePlugin)
@@ -224,6 +230,7 @@ lazy val tests = project
       "org.http4s" %% "http4s-blaze-client" % "0.21.3"
     ),
     skip in publish := true,
+    mimaPreviousArtifacts := Set.empty,
     unmanagedResourceDirectories.in(Test) += (ThisBuild / baseDirectory).value / "dhall-lang",
     testOptions.in(Test) += Tests.Argument("--exclude-tags=Slow"),
     inConfig(Slow)(Defaults.testTasks),
@@ -236,7 +243,8 @@ lazy val benchmarks = project
   .in(file("benchmarks"))
   .settings(baseSettings ++ scalaSettings)
   .settings(
-    skip in publish := true
+    skip in publish := true,
+    mimaPreviousArtifacts := Set.empty
   )
   .enablePlugins(JmhPlugin)
   .dependsOn(core, prelude)
