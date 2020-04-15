@@ -1,7 +1,7 @@
 package org.dhallj
 
-import cats.effect.Sync
-import cats.implicits._
+import _root_.cats.effect.Sync
+import _root_.cats.implicits._
 import org.dhallj.core.Expr
 import org.dhallj.imports.ResolutionConfig.FromFileSystem
 import org.http4s.client._
