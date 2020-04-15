@@ -6,19 +6,19 @@ import org.dhallj.parser.DhallParser
 
 class JsonConverterSuite extends FunSuite() {
   test("toCompactString correctly escapes text") {
-    val expr = DhallParser.parse(
-      """[{mapKey = " \n \$ \" ", mapValue = " \n \$ \" "}]"""
-    )
+    val expr = DhallParser.parse("""[{mapKey = " \n \$ \" ", mapValue = " \n \$ \" "}]""")
 
     assert(clue(JsonConverter.toCompactString(expr)) == clue("""{" \n $ \" ":" \n $ \" "}"""))
   }
 
+  test("toCompactString correctly escapes text from Text/show") {
+    val expr = DhallParser.parse("""Text/show "$100 #"""").normalize
+
+    assert(clue(JsonConverter.toCompactString(expr)) == clue(""""\"\\u0024100 #\"""""))
+  }
+
   test("toCompactString correctly escapes text from toMap") {
-    val expr = DhallParser
-      .parse(
-        """toMap {` \n \$ \" ` = " \n \$ \" "}"""
-      )
-      .normalize
+    val expr = DhallParser.parse("""toMap {` \n \$ \" ` = " \n \$ \" "}""").normalize
 
     assert(clue(JsonConverter.toCompactString(expr)) == clue("""{" \\n \\$ \\\" ":" \n $ \" "}"""))
   }
