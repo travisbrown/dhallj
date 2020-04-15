@@ -1,7 +1,6 @@
 package org.dhallj.imports
 
 import cats.effect.Sync
-import org.dhallj.imports.ResolutionConfig.{FromFileSystem, FromResources}
 import org.dhallj.imports.ResolveImportsVisitor._
 
 /**
@@ -14,18 +13,14 @@ import org.dhallj.imports.ResolveImportsVisitor._
  */
 object Canonicalization {
 
-  def canonicalize[F[_]](resolutionConfig: ResolutionConfig,
-                         imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
+  def canonicalize[F[_]](imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
     case Remote(uri, headers) => F.delay(Remote(uri.normalize, headers))
-    case Local(path) =>
-      resolutionConfig.localMode match {
-        case FromFileSystem => F.delay(Local(path.toAbsolutePath.normalize))
-        case FromResources  => F.delay(Local(path.normalize))
-      }
-    case i => F.pure(i)
+    case Local(path)          => F.delay(Local(path.toAbsolutePath.normalize))
+    case Classpath(path)      => F.delay(Classpath(path.normalize))
+    case i                    => F.pure(i)
   }
 
-  def canonicalize[F[_]](resolutionConfig: ResolutionConfig, parent: ImportContext, child: ImportContext)(
+  def canonicalize[F[_]](parent: ImportContext, child: ImportContext)(
     implicit F: Sync[F]
   ): F[ImportContext] =
     parent match {
@@ -36,16 +31,24 @@ object Canonicalization {
           //need to resolve this as a remote import
           //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
           case Local(path) =>
-            if (path.isAbsolute) canonicalize(resolutionConfig, child)
-            else canonicalize(resolutionConfig, Remote(uri.resolve(path.toString), headers))
-          case _ => canonicalize(resolutionConfig, child)
+            if (path.isAbsolute) canonicalize(child)
+            else canonicalize(Remote(uri.resolve(path.toString), headers))
+          case _ => canonicalize(child)
         }
       case Local(path) =>
         child match {
-          case Local(path2) => canonicalize(resolutionConfig, Local(path.getParent.resolve(path2)))
-          case _            => canonicalize(resolutionConfig, child)
+          case Local(path2) => canonicalize(Local(path.getParent.resolve(path2)))
+          case _            => canonicalize(child)
         }
-      case _ => canonicalize(resolutionConfig, child)
+      case Classpath(path) =>
+        child match {
+          //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
+          case Local(path2) =>
+            if (path2.isAbsolute) canonicalize(Classpath(path2))
+            else canonicalize(Classpath(path.getParent.resolve(path2)))
+          case _ => canonicalize(child)
+        }
+      case _ => canonicalize(child)
     }
 
 }

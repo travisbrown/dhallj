@@ -15,7 +15,6 @@ import org.dhallj.core.Expr.Util.typeCheck
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
-import org.dhallj.imports.ResolutionConfig.{FromFileSystem, FromResources}
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.DhallParser
 import org.http4s.Status.Successful
@@ -27,9 +26,7 @@ import scala.collection.mutable.{Map => MMap}
 
 //TODO quoted path components?
 //TODO proper error handling
-private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfig: ResolutionConfig,
-                                                                 cache: ImportsCache[F],
-                                                                 parents: List[ImportContext])(
+private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsCache[F], parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends LiftVisitor[F](F) {
@@ -44,6 +41,9 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
 
   override def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     onImport(Local(path), mode, hash)
+
+  override def onClasspathImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
+    onImport(Classpath(path), mode, hash)
 
   override def onRemoteImport(url: URI, using: F[Expr], mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     if (using.ne(null)) using >>= (u => onImport(Remote(url, u), mode, hash))
@@ -81,13 +81,13 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
                       } yield v -> Headers.empty
                     case Local(path) =>
                       for {
-                        v <- resolutionConfig.localMode match {
-                          case FromFileSystem => F.delay(scala.io.Source.fromFile(path.toString).mkString)
-                          case FromResources =>
-                            F.delay(
-                              scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString
-                            )
-                        }
+                        v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
+                      } yield v -> Headers.empty
+                    case Classpath(path) =>
+                      for {
+                        v <- F.delay(
+                          scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString
+                        )
                       } yield v -> Headers.empty
                     case Remote(uri, using) =>
                       for {
@@ -147,10 +147,11 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
         case Expr.ImportMode.LOCATION =>
           for {
             expr <- i match {
-              case Local(path)    => makeLocation("Local", path.toString)
-              case Remote(uri, _) => makeLocation("Remote", uri.toString)
-              case Env(value)     => makeLocation("Environment", value)
-              case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+              case Local(path)     => makeLocation("Local", path.toString)
+              case Classpath(path) => makeLocation("Classpath", path.toString)
+              case Remote(uri, _)  => makeLocation("Remote", uri.toString)
+              case Env(value)      => makeLocation("Environment", value)
+              case Missing         => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
             }
           } yield expr -> Headers.empty
       }
@@ -174,8 +175,8 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
         } yield ()
 
     for {
-      imp <- if (parents.isEmpty) canonicalize(resolutionConfig, i)
-      else canonicalize(resolutionConfig, parents.head, i)
+      imp <- if (parents.isEmpty) canonicalize(i)
+      else canonicalize(parents.head, i)
       _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
       r <- resolve(imp, mode, hash)
       (e, headers) = r
@@ -183,7 +184,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
       //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
       _ <- rejectCyclicImports(imp, parents)
       result <- {
-        val v = ResolveImportsVisitor[F](resolutionConfig, cache, imp :: parents)
+        val v = ResolveImportsVisitor[F](cache, imp :: parents)
         v.duplicateImportsCache = this.duplicateImportsCache
         e.accept(v)
       }
@@ -195,17 +196,22 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](resolutionConfi
 
 object ResolveImportsVisitor {
 
-  def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig): F[ResolveImportsVisitor[F]] =
-    Caching.mkImportsCache[F].map(c => mkVisitor(resolutionConfig, c))
+  def mkVisitor[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] =
+    Caching.mkImportsCache[F].map(c => mkVisitor(c))
 
-  def mkVisitor[F[_] <: AnyRef: Sync: Client](resolutionConfig: ResolutionConfig,
-                                              cache: ImportsCache[F]): ResolveImportsVisitor[F] =
-    ResolveImportsVisitor(resolutionConfig, cache, Nil)
+  def mkVisitor[F[_] <: AnyRef: Sync: Client](cache: ImportsCache[F]): ResolveImportsVisitor[F] =
+    ResolveImportsVisitor(cache, Nil)
 
   sealed trait ImportContext
+
   case class Env(value: String) extends ImportContext
+
   case class Local(absolutePath: Path) extends ImportContext
+
+  case class Classpath(absolutePath: Path) extends ImportContext
+
   case class Remote(uri: URI, using: Expr) extends ImportContext
+
   case object Missing extends ImportContext
 
 }
