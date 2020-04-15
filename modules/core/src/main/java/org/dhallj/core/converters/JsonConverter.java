@@ -32,7 +32,30 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
   }
 
   private static final String escape(String input) {
-    return input.replace("\"", "\\\"").replace("\\$", "$");
+    StringBuilder builder = new StringBuilder();
+
+    for (int i = 0; i < input.length(); i++) {
+      char c = input.charAt(i);
+
+      if (c == '\\') {
+        char next = input.charAt(++i);
+
+        if (next == '"') {
+          builder.append("\\\"");
+        } else if (next == '$') {
+          builder.append("$");
+        } else {
+          builder.append(c);
+          builder.append(next);
+        }
+      } else if (c == '"') {
+        builder.append("\\\"");
+      } else {
+        builder.append(c);
+      }
+    }
+
+    return builder.toString();
   }
 
   @Override
