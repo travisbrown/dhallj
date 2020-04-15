@@ -423,7 +423,7 @@ final class Constructors {
     final byte[] hash;
 
     ClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
-      super(Tags.LOCAL_IMPORT);
+      super(Tags.CLASSPATH_IMPORT);
       this.path = path;
       this.mode = mode;
       this.hash = hash;

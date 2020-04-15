@@ -1516,6 +1516,14 @@ public abstract class Expr {
               break;
           }
           break;
+        case Tags.CLASSPATH_IMPORT:
+          Constructors.ClasspathImport tmpClasspathImport =
+              (Constructors.ClasspathImport) current.expr;
+
+          valueStack.push(
+              visitor.onClasspathImport(
+                  tmpClasspathImport.path, tmpClasspathImport.mode, tmpClasspathImport.hash));
+          break;
       }
       current = stack.poll();
     }
