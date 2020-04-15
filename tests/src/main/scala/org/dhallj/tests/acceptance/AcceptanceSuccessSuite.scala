@@ -85,12 +85,6 @@ trait ResolvingInput extends Input[Expr] {
   }
 }
 
-trait ExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] with ParsingInput  {
-}
-
-trait ResolvingExprAcceptanceSuite[A] extends SuccessSuite[Expr, A] with ResolvingInput  {
-}
-
 abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extends SuccessSuite[Expr, Expr] {
   self: Input[Expr] =>
 
@@ -107,7 +101,7 @@ class TypeCheckingSuite(val base: String) extends ExprOperationAcceptanceSuite(E
 class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize) with ParsingInput
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with CachedResolvingInput
 
-class HashingSuite(val base: String) extends ResolvingExprAcceptanceSuite[String] {
+class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with ResolvingInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
 
   def transform(input: Expr): String = input.normalize.alphaNormalize.hash
@@ -115,7 +109,7 @@ class HashingSuite(val base: String) extends ResolvingExprAcceptanceSuite[String
   def compare(result: String, expected: String): Boolean = result == expected
 }
 
-class ParsingSuite(val base: String) extends ExprAcceptanceSuite[Array[Byte]] {
+class ParsingSuite(val base: String) extends SuccessSuite[Expr, Array[Byte]] with ParsingInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhallb"
 
   def transform(input: Expr): Array[Byte] = input.getEncodedBytes
@@ -123,7 +117,7 @@ class ParsingSuite(val base: String) extends ExprAcceptanceSuite[Array[Byte]] {
   def compare(result: Array[Byte], expected: Array[Byte]): Boolean = result.sameElements(expected)
 }
 
-abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends ExprAcceptanceSuite[Expr] {
+abstract class ExprDecodingAcceptanceSuite(transformation: Expr => Expr) extends SuccessSuite[Expr, Expr] with ParsingInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(8) + "B.dhall"
 
   override def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhallb")
