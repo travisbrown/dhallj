@@ -834,6 +834,10 @@ public abstract class Expr {
     return new Constructors.LocalImport(path, mode, hash);
   }
 
+  public static final Expr makeClasspathImport(Path path, ImportMode mode, byte[] hash) {
+    return new Constructors.ClasspathImport(path, mode, hash);
+  }
+
   public static final Expr makeRemoteImport(URI url, Expr using, ImportMode mode, byte[] hash) {
     return new Constructors.RemoteImport(url, using, mode, hash);
   }

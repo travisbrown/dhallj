@@ -153,6 +153,11 @@ public final class BetaNormalize extends Visitor.NoPrepareEvents<Expr> {
     return Expr.makeLocalImport(path, mode, hash);
   }
 
+  @Override
+  public Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    return Expr.makeClasspathImport(path, mode, hash);
+  }
+
   public Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
     return Expr.makeRemoteImport(url, using, mode, hash);
   }

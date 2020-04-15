@@ -417,6 +417,23 @@ final class Constructors {
     }
   }
 
+  static final class ClasspathImport extends Expr {
+    final Path path;
+    final Expr.ImportMode mode;
+    final byte[] hash;
+
+    ClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+      super(Tags.LOCAL_IMPORT);
+      this.path = path;
+      this.mode = mode;
+      this.hash = hash;
+    }
+
+    public final <A> A accept(ExternalVisitor<A> visitor) {
+      return visitor.onClasspathImport(this.path, this.mode, this.hash);
+    }
+  }
+
   static final class RemoteImport extends Expr {
     final URI url;
     final Expr using;

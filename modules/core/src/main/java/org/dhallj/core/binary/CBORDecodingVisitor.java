@@ -437,6 +437,8 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
         return readEnvImport(length, mode, hash);
       case Label.IMPORT_TYPE_MISSING:
         return Expr.makeMissingImport(mode, hash);
+      case Label.IMPORT_TYPE_CLASSPATH:
+        return readClasspathImport(length, mode, hash, "/");
       default:
         throw new DecodingException(String.format("Import type %d is undefined", tag));
     }
@@ -463,6 +465,16 @@ final class CBORDecodingVisitor implements Visitor<Expr> {
       path = path.resolve(this.reader.readNullableTextString());
     }
     return Expr.makeLocalImport(path, mode, hash);
+  }
+
+  private Expr readClasspathImport(
+      BigInteger length, Expr.ImportMode mode, byte[] hash, String prefix) {
+    Path path = Paths.get(prefix);
+    int len = length.intValue();
+    for (int i = 4; i < len; i++) {
+      path = path.resolve(this.reader.readNullableTextString());
+    }
+    return Expr.makeClasspathImport(path, mode, hash);
   }
 
   private Expr readRemoteImport(

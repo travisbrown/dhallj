@@ -67,6 +67,8 @@ public interface ExternalVisitor<A> {
 
   A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash);
 
+  A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash);
+
   A onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash);
 
   /**
@@ -90,118 +92,152 @@ public interface ExternalVisitor<A> {
       this.returnValue = value;
     }
 
+    @Override
     public A onNote(Expr base, Source source) {
       return base.accept(this);
     }
 
+    @Override
     public A onNatural(BigInteger value) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onInteger(BigInteger value) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onDouble(double value) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onBuiltIn(String name) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onIdentifier(String name, long index) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onLambda(String name, Expr input, Expr result) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onPi(String name, Expr input, Expr result) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onLet(String name, Expr type, Expr value, Expr body) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onText(String[] parts, Iterable<Expr> interpolated) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onNonEmptyList(Iterable<Expr> values, int size) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onEmptyList(Expr tpe) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onRecord(Iterable<Entry<String, Expr>> fields, int size) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onRecordType(Iterable<Entry<String, Expr>> fields, int size) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onUnionType(Iterable<Entry<String, Expr>> fields, int size) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onFieldAccess(Expr base, String fieldName) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onProjection(Expr base, String[] fieldNames) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onProjectionByType(Expr base, Expr tpe) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onApplication(Expr base, Expr arg) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onOperatorApplication(Operator operator, Expr lhs, Expr rhs) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onIf(Expr predicate, Expr thenValue, Expr elseValue) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onAnnotated(Expr base, Expr tpe) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onAssert(Expr base) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onMerge(Expr handlers, Expr union, Expr tpe) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onToMap(Expr base, Expr type) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onMissingImport(Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
+    @Override
     public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
+    @Override
+    public A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+      return this.getReturnValue();
+    }
+
+    @Override
     public A onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }

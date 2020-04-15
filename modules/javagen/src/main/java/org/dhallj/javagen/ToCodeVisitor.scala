@@ -158,5 +158,6 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
   def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
   def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
   def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
+  def onClasspathImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
   def onRemoteImport(url: URI, `using`: Code, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
 }
