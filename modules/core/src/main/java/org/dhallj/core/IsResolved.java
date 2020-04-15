@@ -12,6 +12,11 @@ final class IsResolved extends Visitor.Property {
   }
 
   @Override
+  public Boolean onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    return false;
+  }
+
+  @Override
   public Boolean onRemoteImport(URI url, Boolean using, Expr.ImportMode mode, byte[] hash) {
     return false;
   }

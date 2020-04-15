@@ -1,11 +1,14 @@
 package org.dhallj.tests.acceptance
 
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
+
 import munit.{FunSuite, Ignore, Slow}
-import scala.io.Source
+
+import scala.collection.JavaConverters._
 
 trait AcceptanceSuite extends FunSuite {
   def prefix: String = "tests"
+
   def base: String
 
   def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhall")
@@ -25,9 +28,11 @@ trait AcceptanceSuite extends FunSuite {
    * Returns a list of name-path pairs.
    */
   def testInputs: List[(String, String)] =
-    Source
-      .fromResource(s"$prefix/$base")
-      .getLines
+    Files
+      .list(Paths.get(s"$prefix/$base"))
+      .iterator()
+      .asScala
+      .map(_.getFileName.toString)
       .filter(isInputFileName)
       .map {
         case inputFileName => (makeName(inputFileName), s"$prefix/$base/$inputFileName")
@@ -44,5 +49,5 @@ trait AcceptanceSuite extends FunSuite {
     new String(readBytes(path))
 
   final protected def readBytes(path: String): Array[Byte] =
-    Files.readAllBytes(Paths.get(getClass.getClassLoader.getResource(path).toURI))
+    Files.readAllBytes(Paths.get(path))
 }

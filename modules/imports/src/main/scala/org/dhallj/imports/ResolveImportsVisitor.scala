@@ -147,11 +147,13 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
         case Expr.ImportMode.LOCATION =>
           for {
             expr <- i match {
-              case Local(path)     => makeLocation("Local", path.toString)
-              case Classpath(path) => makeLocation("Classpath", path.toString)
-              case Remote(uri, _)  => makeLocation("Remote", uri.toString)
-              case Env(value)      => makeLocation("Environment", value)
-              case Missing         => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+              case Local(path) => makeLocation("Local", path.toString)
+              // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
+              case Classpath(path) =>
+                F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
+              case Remote(uri, _) => makeLocation("Remote", uri.toString)
+              case Env(value)     => makeLocation("Environment", value)
+              case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
             }
           } yield expr -> Headers.empty
       }

@@ -9,8 +9,6 @@ import org.dhallj.imports.mini.Resolver
 import org.dhallj.parser.DhallParser
 
 import org.dhallj.imports._
-import org.dhallj.imports.ResolutionConfig
-import org.dhallj.imports.ResolutionConfig._
 import org.dhallj.imports.Caching._
 import org.http4s.client._
 import org.http4s.client.blaze._
@@ -55,14 +53,14 @@ trait CachedResolvingInput extends Input[Expr] {
 
   override def parseInput(path: String, input: String): Expr = {
     //TODO this should only be for import tests (I think)
-    val parsed = DhallParser.parse(s"/$path")
+    val parsed = DhallParser.parse(s"./$path")
 
     if (parsed.isResolved) parsed
     else {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(ResolutionConfig(FromResources), NoopImportsCache[IO]))
+        parsed.accept(ResolveImportsVisitor.mkVisitor(NoopImportsCache[IO]))
       }.unsafeRunSync
     }
   }
@@ -72,14 +70,14 @@ trait CachedResolvingInput extends Input[Expr] {
 trait ResolvingInput extends Input[Expr] {
   def parseInput(path: String, input: String): Expr = {
     //TODO this should only be for import tests (I think)
-    val parsed = DhallParser.parse(s"/$path")
+    val parsed = DhallParser.parse(s"./$path")
 
     if (parsed.isResolved) parsed
     else {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(ResolutionConfig(FromResources), NoopImportsCache[IO]))
+        parsed.accept(ResolveImportsVisitor.mkVisitor(NoopImportsCache[IO]))
       }.unsafeRunSync
     }
   }

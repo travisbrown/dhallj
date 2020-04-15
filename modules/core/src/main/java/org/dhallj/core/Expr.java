@@ -547,7 +547,6 @@ public abstract class Expr {
         makeUnionType(
             new Entry[] {
               new SimpleImmutableEntry("Local", TEXT),
-              new SimpleImmutableEntry("Classpath", TEXT),
               new SimpleImmutableEntry("Remote", TEXT),
               new SimpleImmutableEntry("Environment", TEXT),
               new SimpleImmutableEntry("Missing", null)

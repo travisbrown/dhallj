@@ -245,8 +245,10 @@ lazy val tests = project
     libraryDependencies ++= http4sDependencies :+ http4sBlazeClient,
     skip in publish := true,
     mimaPreviousArtifacts := Set.empty,
-    unmanagedResourceDirectories.in(Test) += (ThisBuild / baseDirectory).value / "dhall-lang",
+    fork in Test := true,
+    baseDirectory in Test := (ThisBuild / baseDirectory).value / "dhall-lang",
     testOptions.in(Test) += Tests.Argument("--exclude-tags=Slow"),
+    unmanagedResourceDirectories.in(Test) += (ThisBuild / baseDirectory).value / "dhall-lang",
     inConfig(Slow)(Defaults.testTasks),
     testOptions.in(Slow) -= Tests.Argument("--exclude-tags=Slow"),
     testOptions.in(Slow) += Tests.Argument("--include-tags=Slow")
