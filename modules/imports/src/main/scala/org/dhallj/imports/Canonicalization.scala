@@ -9,20 +9,12 @@ import org.dhallj.imports.ResolveImportsVisitor._
 
 import scala.collection.JavaConverters._
 
-/**
- * Abstract over java.nio.Path so we can assert that their
- * normalization has the same behaviour as the Dhall spec's
- * import path canonicalization
- *
- * TODO check behaviour of `canonicalize /..` as the Dhall
- * spec seems to differ from Java here
- */
 object Canonicalization {
 
   def canonicalize[F[_]](imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
     case Remote(uri, headers) => F.delay(Remote(uri.normalize, headers))
     case Local(path)          => LocalFile[F](path).map(_.canonicalize.toPath).map(Local)
-    case Classpath(path)      => F.delay(Classpath(path.normalize))
+    case Classpath(path)      => LocalFile[F](path).map(_.canonicalize.toPath).map(Classpath)
     case i                    => F.pure(i)
   }
 
@@ -55,8 +47,10 @@ object Canonicalization {
         child match {
           //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
           case Local(path2) =>
-            if (path2.isAbsolute) canonicalize(Classpath(path2))
-            else canonicalize(Classpath(path.getParent.resolve(path2)))
+            for {
+              parent <- LocalFile[F](path)
+              c <- LocalFile[F](path2)
+            } yield Classpath(parent.chain(c).canonicalize.toPath)
           case _ => canonicalize(child)
         }
       case _ => canonicalize(child)
@@ -89,7 +83,8 @@ object Canonicalization {
         case l   => F.pure(LocalFile(LocalDirs(l.take(l.length - 1)), l.last))
       }
 
-    def canonicalize(f: LocalFile): LocalFile = LocalFile(f.dirs.canonicalize, f.filename)
+    def canonicalize(f: LocalFile): LocalFile =
+      LocalFile(f.dirs.canonicalize, f.filename.stripPrefix("\"").stripSuffix("\""))
 
     def chain(lhs: LocalFile, rhs: LocalFile): LocalFile = LocalFile(LocalDirs.chain(lhs.dirs, rhs.dirs), rhs.filename)
   }
@@ -107,7 +102,7 @@ object Canonicalization {
 
     def canonicalize(d: LocalDirs): LocalDirs = d.ds match {
       case Nil => d
-      case l   => LocalDirs(canonicalize(l))
+      case l   => LocalDirs(canonicalize(l.map(_.stripPrefix("\"").stripSuffix("\""))))
     }
 
     def canonicalize(l: List[String]): List[String] =

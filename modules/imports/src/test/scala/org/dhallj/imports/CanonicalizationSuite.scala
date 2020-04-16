@@ -21,6 +21,11 @@ class CanonicalizationSuite extends FunSuite {
     assertEquals(canonicalize[IO](Local(Paths.get("/foo.dhall"))).unsafeRunSync, Local(Paths.get("/foo.dhall")))
   }
 
+  test("Imports - quoted") {
+    assertEquals(canonicalize[IO](Local(Paths.get("/\"foo\"/\"bar.dhall\""))).unsafeRunSync,
+                 Local(Paths.get("/foo/bar.dhall")))
+  }
+
   test("Paths - Trailing .") {
     assertEquals(canonicalize[IO](Local(Paths.get("/foo/./bar.dhall"))).unsafeRunSync,
                  Local(Paths.get("/foo/bar.dhall")))
