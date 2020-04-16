@@ -263,7 +263,7 @@ lazy val benchmarks = project
     mimaPreviousArtifacts := Set.empty
   )
   .enablePlugins(JmhPlugin)
-  .dependsOn(core, prelude)
+  .dependsOn(core, parser, prelude)
 
 lazy val publishSettings = Seq(
   releaseCrossBuild := true,
