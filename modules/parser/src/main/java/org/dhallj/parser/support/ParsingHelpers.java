@@ -214,14 +214,14 @@ final class ParsingHelpers {
       Operator operator,
       Expr.Parsed lhs,
       Expr.Parsed rhs,
-      Token operatorToken,
+      String operatorString,
       Token whsp0,
       Token whsp1) {
     StringBuilder builder = new StringBuilder();
     if (whsp0 != null) {
       builder.append(whsp0.image);
     }
-    builder.append(operatorToken.image);
+    builder.append(operatorString);
     if (whsp1 != null) {
       builder.append(whsp1.image);
     }
@@ -428,18 +428,19 @@ final class ParsingHelpers {
   }
 
   static Expr.Parsed makeFieldAccess(
-      Expr.Parsed base, Positioned.Wrapped<String> fieldName, Token whsp0, Token whsp1) {
+      Expr.Parsed base, String fieldName, Token whsp0, Token whsp1, int endLine, int endColumn) {
     StringBuilder builder = new StringBuilder();
     if (whsp0 != null) {
       builder.append(whsp0.image);
     }
-    builder.append(':');
+    builder.append('.');
     if (whsp1 != null) {
       builder.append(whsp1.image);
     }
-    Source source = new ESSource(base, builder.toString(), fieldName.endLine, fieldName.endColumn);
+    builder.append(fieldName);
+    Source source = new ESSource(base, builder.toString(), endLine, endColumn);
 
-    return new Expr.Parsed(Expr.makeFieldAccess(base, fieldName.value), source);
+    return new Expr.Parsed(Expr.makeFieldAccess(base, fieldName), source);
   }
 
   static Expr.Parsed makeProjection(
