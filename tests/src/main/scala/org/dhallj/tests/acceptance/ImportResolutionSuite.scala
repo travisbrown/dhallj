@@ -42,7 +42,7 @@ class ImportResolutionSuite(val base: String)
       .fromResource("tests/import/cache/dhall")
       .getLines
       .foreach { p =>
-        val content = readBytes(s"tests/import/cache/dhall/$p")
+        val content = readBytes(s"dhall-lang/tests/import/cache/dhall/$p")
         Files.write(dir.resolve(p), content)
       }
     cache

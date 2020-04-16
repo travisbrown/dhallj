@@ -246,7 +246,7 @@ lazy val tests = project
     skip in publish := true,
     mimaPreviousArtifacts := Set.empty,
     fork in Test := true,
-    baseDirectory in Test := (ThisBuild / baseDirectory).value / "dhall-lang",
+    baseDirectory in Test := (ThisBuild / baseDirectory).value,
     testOptions.in(Test) += Tests.Argument("--exclude-tags=Slow"),
     unmanagedResourceDirectories.in(Test) += (ThisBuild / baseDirectory).value / "dhall-lang",
     inConfig(Slow)(Defaults.testTasks),
