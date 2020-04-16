@@ -298,6 +298,28 @@ class BinaryDecodingTests extends FunSuite {
     assert(decoded.equivalent(expected))
   }
 
+  test("Decode classpath import") {
+    val bytes = parse("let x = classpath:/foo/bar.dhall in x").getEncodedBytes
+
+    val decoded = decode(bytes)
+    val expected = parse(
+      "let x = classpath:/foo/bar.dhall in x"
+    )
+
+    assert(decoded.equivalent(expected))
+  }
+
+  test("Decode classpath import as text") {
+    val bytes = parse("let x = classpath:/foo/bar.dhall as Text in x").getEncodedBytes
+
+    val decoded = decode(bytes)
+    val expected = parse(
+      "let x = classpath:/foo/bar.dhall as Text in x"
+    )
+
+    assert(decoded.equivalent(expected))
+  }
+
   private def load(resource: String): Array[Byte] =
     Files.readAllBytes(Paths.get(getClass.getResource(s"/binary/$resource").toURI))
 

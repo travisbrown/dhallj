@@ -443,6 +443,17 @@ res0: org.dhallj.core.Expr = "foo-bar-baz"
 
 (Note that we could use dhall-scala to avoid the use of `Array` above.)
 
+#### Classpath imports
+
+We support an extension of the spec which allows you to also import expressions
+from the classpath using the syntax `let e = classpath:/absolute/path/to/file in e`.
+The semantics are subject to change as we get more experience with it but
+currently it should generally have the same behaviour as an absolute
+path import of a local file (but files on the classpath can import each other
+using relative paths). This includes it being protected by the referential
+sanity check so that remote imports cannot exfiltrate information
+from the classpath.
+
 ### dhall-imports-mini
 
 The other implementation is dhall-imports-mini, which is a Java library that

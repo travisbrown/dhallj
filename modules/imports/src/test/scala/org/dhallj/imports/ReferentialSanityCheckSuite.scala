@@ -28,6 +28,10 @@ class ReferentialSanityCheckSuite extends FunSuite {
     ReferentialSanityCheck[IO](Remote(someUri, null), Missing).unsafeRunSync
   }
 
+  test("Remote imports classpath".fail) {
+    ReferentialSanityCheck[IO](Remote(someUri, null), Classpath(somePath)).unsafeRunSync
+  }
+
   test("Local imports local") {
     ReferentialSanityCheck[IO](Local(somePath), Local(somePath)).unsafeRunSync
   }
