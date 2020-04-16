@@ -2,28 +2,30 @@ package org.dhallj.core;
 
 /** Represents a Dhall operator. */
 public enum Operator {
-  OR("||", true),
-  AND("&&", true),
-  EQUALS("==", true),
-  NOT_EQUALS("!=", true),
-  PLUS("+", false),
-  TIMES("*", false),
-  TEXT_APPEND("++", false),
-  LIST_APPEND("#", false),
-  COMBINE("\u2227", false),
-  PREFER("\u2afd", false),
-  COMBINE_TYPES("\u2a53", false),
-  IMPORT_ALT("?", false),
-  EQUIVALENT("\u2261", false),
-  COMPLETE("::", false);
+  OR("||", 2, true),
+  AND("&&", 6, true),
+  EQUALS("==", 11, true),
+  NOT_EQUALS("!=", 12, true),
+  PLUS("+", 3, false),
+  TIMES("*", 10, false),
+  TEXT_APPEND("++", 4, false),
+  LIST_APPEND("#", 5, false),
+  COMBINE("\u2227", 7, false),
+  PREFER("\u2afd", 8, false),
+  COMBINE_TYPES("\u2a53", 9, false),
+  IMPORT_ALT("?", 1, false),
+  EQUIVALENT("\u2261", 13, false),
+  COMPLETE("::", 0, false);
 
   private static final Operator[] values = values();
 
   private final String value;
+  private final int precedence;
   private final boolean isBoolOperator;
 
-  Operator(String value, boolean isBoolOperator) {
+  Operator(String value, int precedence, boolean isBoolOperator) {
     this.value = value;
+    this.precedence = precedence;
     this.isBoolOperator = isBoolOperator;
   }
 
@@ -33,6 +35,10 @@ public enum Operator {
 
   public final int getLabel() {
     return this.ordinal();
+  }
+
+  public final int getPrecedence() {
+    return this.precedence;
   }
 
   public final String toString() {
