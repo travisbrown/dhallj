@@ -43,11 +43,12 @@ object Canonicalization {
         }
       case Local(path) =>
         child match {
-          case Local(path2) => for {
-            parent <- LocalFile[F](path)
-            c <- LocalFile[F](path2)
-          } yield Local(parent.chain(c).canonicalize.toPath)
-          case _            => canonicalize(child)
+          case Local(path2) =>
+            for {
+              parent <- LocalFile[F](path)
+              c <- LocalFile[F](path2)
+            } yield Local(parent.chain(c).canonicalize.toPath)
+          case _ => canonicalize(child)
         }
       //TODO - determine semantics of classpath imports
       case Classpath(path) =>
@@ -67,10 +68,11 @@ object Canonicalization {
 
       val s: String = dirs.ds match {
         case Nil => ""
-        case l@(h :: t) => h match {
-          case h if (h == "." || h == ".." | h == "~") => s"$h${toPath(t)}"
-          case _ => toPath(l)
-        }
+        case l @ (h :: t) =>
+          h match {
+            case h if (h == "." || h == ".." | h == "~") => s"$h${toPath(t)}"
+            case _                                       => toPath(l)
+          }
       }
       Paths.get(s"$s/$filename")
     }
@@ -81,10 +83,11 @@ object Canonicalization {
   }
 
   object LocalFile {
-    def apply[F[_]](path: Path)(implicit F: Sync[F]): F[LocalFile] = path.iterator().asScala.toList.map(_.toString) match {
-      case Nil => F.raiseError(new ResolutionFailure("This shouldn't happen - / can't import a dhall expression"))
-      case l => F.pure(LocalFile(LocalDirs(l.take(l.length - 1)), l.last))
-    }
+    def apply[F[_]](path: Path)(implicit F: Sync[F]): F[LocalFile] =
+      path.iterator().asScala.toList.map(_.toString) match {
+        case Nil => F.raiseError(new ResolutionFailure("This shouldn't happen - / can't import a dhall expression"))
+        case l   => F.pure(LocalFile(LocalDirs(l.take(l.length - 1)), l.last))
+      }
 
     def canonicalize(f: LocalFile): LocalFile = LocalFile(f.dirs.canonicalize, f.filename)
 
@@ -104,16 +107,19 @@ object Canonicalization {
 
     def canonicalize(d: LocalDirs): LocalDirs = d.ds match {
       case Nil => d
-      case l => LocalDirs(canonicalize(l))
+      case l   => LocalDirs(canonicalize(l))
     }
 
-    def canonicalize(l: List[String]): List[String] = l.tail.foldLeft(List(l.head))((acc, next) => {
-      next match {
-        case "." => acc
-        case ".." => acc.tail
-        case o => o :: acc
-      }
-    }).reverse
+    def canonicalize(l: List[String]): List[String] =
+      l.tail
+        .foldLeft(List(l.head)) { (acc, next) =>
+          next match {
+            case "."  => acc
+            case ".." => acc.tail
+            case o    => o :: acc
+          }
+        }
+        .reverse
 
   }
 

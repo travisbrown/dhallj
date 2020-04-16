@@ -22,11 +22,13 @@ class CanonicalizationSuite extends FunSuite {
   }
 
   test("Paths - Trailing .") {
-    assertEquals(canonicalize[IO](Local(Paths.get("/foo/./bar.dhall"))).unsafeRunSync, Local(Paths.get("/foo/bar.dhall")))
+    assertEquals(canonicalize[IO](Local(Paths.get("/foo/./bar.dhall"))).unsafeRunSync,
+                 Local(Paths.get("/foo/bar.dhall")))
   }
 
   test("Paths - Trailing ..") {
-    assertEquals(canonicalize[IO](Local(Paths.get("/foo/bar/../baz.dhall"))).unsafeRunSync, Local(Paths.get("/foo/baz.dhall")))
+    assertEquals(canonicalize[IO](Local(Paths.get("/foo/bar/../baz.dhall"))).unsafeRunSync,
+                 Local(Paths.get("/foo/baz.dhall")))
   }
 
   //TODO determine whether spec is correct on this
@@ -145,7 +147,6 @@ class CanonicalizationSuite extends FunSuite {
       Local(Paths.get("../baz.dhall"))
     )
   }
-
 
   test("Chaining - local / remote") {
     assertEquals(

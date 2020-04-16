@@ -11,6 +11,7 @@ import cats.implicits._
 import org.dhallj.cats.LiftVisitor
 import org.dhallj.core._
 import org.dhallj.core.DhallException.ResolutionFailure
+import org.dhallj.core.Expr.ImportMode
 import org.dhallj.core.Expr.Util.typeCheck
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
@@ -57,10 +58,6 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
 
   private def onImport(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] = {
     def resolve(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[(Expr, Headers)] = {
-      def makeLocation(field: String, value: String): F[Expr] =
-        F.pure(
-          Expr.makeApplication(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, field), Expr.makeTextLiteral(value))
-        )
 
       def resolve(i: ImportContext, hash: Array[Byte]): F[(String, Headers)] = {
 
@@ -145,17 +142,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
             e <- F.pure(Expr.makeTextLiteral(s))
           } yield e -> headers
         case Expr.ImportMode.LOCATION =>
-          for {
-            expr <- i match {
-              case Local(path) => makeLocation("Local", path.toString)
-              // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
-              case Classpath(path) =>
-                F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
-              case Remote(uri, _) => makeLocation("Remote", uri.toString)
-              case Env(value)     => makeLocation("Environment", value)
-              case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
-            }
-          } yield expr -> Headers.empty
+          F.raiseError(new ResolutionFailure("Importing as location should already have been handled"))
       }
     }
 
@@ -176,22 +163,44 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
           _ <- cache.put(encoded, bytes)
         } yield ()
 
+    def importLocation(imp: ImportContext): F[Expr] = {
+      def makeLocation(field: String, value: String): F[Expr] =
+        F.pure(
+          Expr.makeApplication(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, field), Expr.makeTextLiteral(value))
+        )
+
+      imp match {
+        case Local(path) => makeLocation("Local", path.toString)
+        // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
+        case Classpath(path) =>
+          F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
+        case Remote(uri, _) => makeLocation("Remote", uri.toString)
+        case Env(value)     => makeLocation("Environment", value)
+        case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+      }
+    }
+
+    def importNonLocation(imp: ImportContext, mode: ImportMode, hash: Array[Byte]) =
+      for {
+        _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
+        r <- resolve(imp, mode, hash)
+        (e, headers) = r
+        _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
+        //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
+        _ <- rejectCyclicImports(imp, parents)
+        result <- {
+          val v = ResolveImportsVisitor[F](cache, imp :: parents)
+          v.duplicateImportsCache = this.duplicateImportsCache
+          e.accept(v)
+        }
+        _ <- validateHash(imp, result, hash)
+        _ <- F.delay(typeCheck(result))
+      } yield result
+
     for {
       imp <- if (parents.isEmpty) canonicalize(i)
       else canonicalize(parents.head, i)
-      _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
-      r <- resolve(imp, mode, hash)
-      (e, headers) = r
-      _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
-      //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
-      _ <- rejectCyclicImports(imp, parents)
-      result <- {
-        val v = ResolveImportsVisitor[F](cache, imp :: parents)
-        v.duplicateImportsCache = this.duplicateImportsCache
-        e.accept(v)
-      }
-      _ <- validateHash(imp, result, hash)
-      _ <- F.delay(typeCheck(result))
+      result <- if (mode == ImportMode.LOCATION) importLocation(imp) else importNonLocation(imp, mode, hash)
     } yield result
   }
 }
