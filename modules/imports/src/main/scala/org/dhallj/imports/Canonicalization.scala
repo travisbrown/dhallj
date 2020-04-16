@@ -1,7 +1,13 @@
 package org.dhallj.imports
 
+import java.nio.file.{Path, Paths}
+
+import cats.implicits._
 import cats.effect.Sync
+import org.dhallj.core.DhallException.ResolutionFailure
 import org.dhallj.imports.ResolveImportsVisitor._
+
+import scala.collection.JavaConverters._
 
 /**
  * Abstract over java.nio.Path so we can assert that their
@@ -15,7 +21,7 @@ object Canonicalization {
 
   def canonicalize[F[_]](imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
     case Remote(uri, headers) => F.delay(Remote(uri.normalize, headers))
-    case Local(path)          => F.delay(Local(path.normalize))
+    case Local(path)          => LocalFile[F](path).map(_.canonicalize.toPath).map(Local)
     case Classpath(path)      => F.delay(Classpath(path.normalize))
     case i                    => F.pure(i)
   }
@@ -37,9 +43,13 @@ object Canonicalization {
         }
       case Local(path) =>
         child match {
-          case Local(path2) => canonicalize(Local(path.getParent.resolve(path2)))
+          case Local(path2) => for {
+            parent <- LocalFile[F](path)
+            c <- LocalFile[F](path2)
+          } yield Local(parent.chain(c).canonicalize.toPath)
           case _            => canonicalize(child)
         }
+      //TODO - determine semantics of classpath imports
       case Classpath(path) =>
         child match {
           //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
@@ -50,5 +60,61 @@ object Canonicalization {
         }
       case _ => canonicalize(child)
     }
+
+  case class LocalFile(dirs: LocalDirs, filename: String) {
+    def toPath: Path = {
+      def toPath(l: List[String]) = "/" + l.intercalate("/")
+
+      val s: String = dirs.ds match {
+        case Nil => ""
+        case l@(h :: t) => h match {
+          case h if (h == "." || h == ".." | h == "~") => s"$h${toPath(t)}"
+          case _ => toPath(l)
+        }
+      }
+      Paths.get(s"$s/$filename")
+    }
+
+    def chain(other: LocalFile): LocalFile = LocalFile.chain(this, other)
+
+    def canonicalize: LocalFile = LocalFile.canonicalize(this)
+  }
+
+  object LocalFile {
+    def apply[F[_]](path: Path)(implicit F: Sync[F]): F[LocalFile] = path.iterator().asScala.toList.map(_.toString) match {
+      case Nil => F.raiseError(new ResolutionFailure("This shouldn't happen - / can't import a dhall expression"))
+      case l => F.pure(LocalFile(LocalDirs(l.take(l.length - 1)), l.last))
+    }
+
+    def canonicalize(f: LocalFile): LocalFile = LocalFile(f.dirs.canonicalize, f.filename)
+
+    def chain(lhs: LocalFile, rhs: LocalFile): LocalFile = LocalFile(LocalDirs.chain(lhs.dirs, rhs.dirs), rhs.filename)
+  }
+
+  case class LocalDirs(ds: List[String]) {
+    def isRelative = ds.nonEmpty && (ds.head == "." || ds.head == "..")
+
+    def canonicalize: LocalDirs = LocalDirs.canonicalize(this)
+
+    def chain(other: LocalDirs): LocalDirs = LocalDirs.chain(this, other)
+  }
+
+  object LocalDirs {
+    def chain(lhs: LocalDirs, rhs: LocalDirs): LocalDirs = if (rhs.isRelative) LocalDirs(lhs.ds ++ rhs.ds) else rhs
+
+    def canonicalize(d: LocalDirs): LocalDirs = d.ds match {
+      case Nil => d
+      case l => LocalDirs(canonicalize(l))
+    }
+
+    def canonicalize(l: List[String]): List[String] = l.tail.foldLeft(List(l.head))((acc, next) => {
+      next match {
+        case "." => acc
+        case ".." => acc.tail
+        case o => o :: acc
+      }
+    }).reverse
+
+  }
 
 }
