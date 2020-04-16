@@ -28,6 +28,13 @@ class ImportResolutionSuite extends FunSuite {
     assert(resolve(expr) == expected)
   }
 
+  test("Quoted import") {
+    val expr = parse("let x = classpath:/\"local\"/\"package.dhall\" in x")
+    val expected = parse("let x = 1 in x").normalize
+
+    assert(resolve(expr) == expected)
+  }
+
   test("Classpath -> classpath relative import") {
     val expr = parse("let x = classpath:/local-local-relative/package.dhall in x")
     val expected = parse("let x = 1 in x").normalize
@@ -52,6 +59,16 @@ class ImportResolutionSuite extends FunSuite {
   test("Remote import") {
     val expr = parse(
       "let any = https://raw.githubusercontent.com/dhall-lang/dhall-lang/master/Prelude/List/any in any Natural Natural/even [2,3,5]"
+    )
+    val expected = parse("True").normalize
+
+    assert(resolve(expr) == expected)
+  }
+
+  //TODO - dependent on https://github.com/travisbrown/dhallj/issues/34
+  test("Quoted remote import".fail) {
+    val expr = parse(
+      "let any = https://raw.githubusercontent.com/\"dhall-lang\"/\"dhall-lang\"/\"master\"/\"Prelude\"/\"List\"/\"any\" in any Natural Natural/even [2,3,5]"
     )
     val expected = parse("True").normalize
 

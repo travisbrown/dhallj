@@ -1,18 +1,16 @@
 package org.dhallj.imports
 
-import java.math.BigInteger
 import java.net.URI
 import java.nio.file.Path
 import java.security.MessageDigest
-import java.util.{List => JList, Map => JMap}
 
 import cats.effect.Sync
 import cats.implicits._
 import org.dhallj.cats.LiftVisitor
-import org.dhallj.core._
 import org.dhallj.core.DhallException.ResolutionFailure
 import org.dhallj.core.Expr.ImportMode
 import org.dhallj.core.Expr.Util.typeCheck
+import org.dhallj.core._
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
@@ -25,7 +23,6 @@ import org.http4s.{EntityDecoder, Headers, Request}
 
 import scala.collection.mutable.{Map => MMap}
 
-//TODO quoted path components?
 //TODO proper error handling
 private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsCache[F], parents: List[ImportContext])(
   implicit Client: Client[F],
