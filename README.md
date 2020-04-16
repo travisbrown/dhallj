@@ -454,6 +454,10 @@ using relative paths). This includes it being protected by the referential
 sanity check so that remote imports cannot exfiltrate information
 from the classpath.
 
+Also note that classpath imports as location are currently not supported as the spec
+requires that an import as Location must return an expression of type
+`<Local Text | Remote Text | Environment Text | Missing>`.
+
 ### dhall-imports-mini
 
 The other implementation is dhall-imports-mini, which is a Java library that
