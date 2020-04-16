@@ -72,7 +72,7 @@ class ImportResolutionSuite extends FunSuite {
     assert(resolve(expr) == expected)
   }
 
-  test("Import as classpath location") {
+  test("Import as local location") {
     val expr = parse("let x = /foo/bar.dhall as Location in x")
     val expected =
       parse(
