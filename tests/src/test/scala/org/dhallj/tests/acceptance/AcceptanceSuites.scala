@@ -32,9 +32,7 @@ class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
 
-class ParsingUnitSuite extends ParsingSuite("parser/success/unit") {
-  override def ignored = Set("SomeXYZ")
-}
+class ParsingUnitSuite extends ParsingSuite("parser/success/unit")
 class ParsingOtherSuite extends ParsingSuite("parser/success")
 
 class ParsingFailureUnitSuite extends ParsingFailureSuite("parser/failure/unit")
