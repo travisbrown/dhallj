@@ -47,10 +47,9 @@ We support [Dhall 15.0.0][dhall-15], including the `with` keyword and record pun
 
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization,
 [CBOR][cbor] encoding and decoding, hashing, and type inference (everything except imports), and
-currently 1,025 of 1,040 tests are passing. There are two open issues that track the acceptance
-tests that are not passing or that we're not running yet:
-[#5](https://github.com/travisbrown/dhallj/issues/5) and
-[#8](https://github.com/travisbrown/dhallj/issues/8).
+currently 1,040 of 1,041 tests are passing. There's an
+[open issue](https://github.com/travisbrown/dhallj/issues/8) that tracks the
+acceptance tests that are not passing or that we're not running yet.
 
 There are several known issues:
 
