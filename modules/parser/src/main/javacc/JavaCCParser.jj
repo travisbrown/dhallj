@@ -696,7 +696,7 @@ Expr.Parsed APPLICATION_EXPRESSION(): {
         [whsp2=<WHSP>]
         <COLON>
         whsp3=<WHSP>
-        type=APPLICATION_EXPRESSION()
+        type=BASE_EXPRESSION()
       )?) {
         base = ParsingHelpers.makeMerge(expr, other, type, first, whsp0, whsp1, whsp2, whsp3);
       }
@@ -710,7 +710,7 @@ Expr.Parsed APPLICATION_EXPRESSION(): {
         [whsp2=<WHSP>]
         <COLON>
         whsp3=<WHSP>
-        type=APPLICATION_EXPRESSION()
+        type=BASE_EXPRESSION()
       )?) {
           base = ParsingHelpers.makeToMap(expr, type, first, whsp0, whsp2, whsp3);
       }
@@ -828,7 +828,7 @@ Expr.Parsed EMPTY_LIST_LITERAL(): {
       builder.append(':');
       builder.append(t0.image);
     }
-    type=APPLICATION_EXPRESSION()
+    type=BASE_EXPRESSION()
   ) {
     return ParsingHelpers.makeEmptyListLiteral(type, builder.toString(), first);
   }
