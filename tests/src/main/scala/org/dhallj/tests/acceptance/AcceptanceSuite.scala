@@ -7,7 +7,7 @@ import munit.{FunSuite, Ignore, Slow}
 import scala.collection.JavaConverters._
 
 trait AcceptanceSuite extends FunSuite {
-  def prefix: String = "tests"
+  def prefix: String = "./dhall-lang/tests"
 
   def base: String
 

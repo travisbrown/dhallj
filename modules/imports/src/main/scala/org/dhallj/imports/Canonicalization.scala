@@ -15,7 +15,7 @@ object Canonicalization {
 
   def canonicalize[F[_]](imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
     case Remote(uri, headers) => F.delay(Remote(uri.normalize, headers))
-    case Local(path)          => F.delay(Local(path.toAbsolutePath.normalize))
+    case Local(path)          => F.delay(Local(path.normalize))
     case Classpath(path)      => F.delay(Classpath(path.normalize))
     case i                    => F.pure(i)
   }

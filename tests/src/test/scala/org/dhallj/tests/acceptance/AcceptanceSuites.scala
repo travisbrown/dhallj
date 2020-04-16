@@ -46,25 +46,5 @@ class BinaryDecodingImportsUnitSuite extends BinaryDecodingSuite("binary-decode/
 class BinaryDecodingFailureUnitSuite extends BinaryDecodingFailureSuite("binary-decode/failure/unit")
 
 class ImportResolutionSuccessSuite extends ImportResolutionSuite("import/success")
-class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/success/unit") {
-  //Normalize uses a relative path which isn't compatible with our current method of reading classpath resources
-  override def ignored = Set("Normalize")
-}
-class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("import/success/unit/asLocation") {
-  override def ignored = Set("Hash", "RemoteChainEnv") ++ classPathRelated
-
-  //This all fail because of issues to do with classpath semantics - TODO
-  private val classPathRelated = Set(
-    "Canonicalize1",
-    "Canonicalize2",
-    "Canonicalize3",
-    "Canonicalize4",
-    "Canonicalize5",
-    "Chain1",
-    "Chain2",
-    "Chain3",
-    "Home",
-    "Relative1",
-    "Relative2"
-  )
-}
+class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/success/unit")
+class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("import/success/unit/asLocation")
