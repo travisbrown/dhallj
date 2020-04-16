@@ -303,6 +303,14 @@ public final class Encode implements Visitor<Void> {
     String asBuiltIn = Expr.Util.asBuiltIn(base);
 
     if (asBuiltIn != null && asBuiltIn.equals("Some")) {
+      /**
+       * This is a kind of weird case that I don't think should ever occur in well-typed code, but
+       * we need this special casing to pass the {@code SomeXYZ} parser test.
+       */
+      if (size > 1) {
+        this.writer.writeArrayStart(size + 1);
+        this.writer.writeLong(Label.APPLICATION);
+      }
       this.writer.writeArrayStart(3);
       this.writer.writeLong(Label.SOME);
       this.writer.writeNull();
