@@ -43,7 +43,11 @@ team.
 
 ## Status
 
-We support [Dhall 15.0.0][dhall-15], including the `with` keyword and record puns.
+We support [Dhall 15.0.0][dhall-15], including the `with` keyword and record puns. We do not support
+[URLs with quoted paths](https://docs.dhall-lang.org/howtos/migrations/Deprecation-of-quoted-paths-in-URLs.html),
+which were deprecated in 15.0.0 and will be removed in 17.0.0. We currently do support
+`Optional/build` and `Optional/fold`, which will also be removed in 17.0.0.
+
 
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization,
 [CBOR][cbor] encoding and decoding, hashing, and type inference (everything except imports), and
