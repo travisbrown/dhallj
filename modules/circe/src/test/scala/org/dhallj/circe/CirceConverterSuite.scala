@@ -9,7 +9,7 @@ import org.dhallj.core.Expr
 import org.dhallj.parser.DhallParser
 import org.scalacheck.Prop
 
-class JawnConverterSuite extends ScalaCheckSuite {
+class CirceConverterSuite extends ScalaCheckSuite {
   property("round-trip Json values through Dhall expressions") {
     // Shrinking gives us JSON object fields with empty keys.
     Prop.forAllNoShrink { (value: Json) =>
