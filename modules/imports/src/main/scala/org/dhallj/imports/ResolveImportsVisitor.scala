@@ -24,11 +24,11 @@ import org.http4s.{EntityDecoder, Headers, Request}
 import scala.collection.mutable.{Map => MMap}
 
 //TODO proper error handling
-private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsCache[F], parents: List[ImportContext])(
+private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: ImportsCache[F], semiSemanticCache: ImportsCache[F], parents: List[ImportContext])(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends LiftVisitor[F](F) {
-  private var duplicateImportsCache: MMap[ImportContext, String] = MMap.empty
+  private var duplicateImportsCache: MMap[ImportContext, Expr] = MMap.empty
 
   override def onOperatorApplication(operator: Operator, lhs: F[Expr], rhs: F[Expr]): F[Expr] =
     if (operator == Operator.IMPORT_ALT)
@@ -68,6 +68,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
     //        load expr from semi-semantic cache
     //        alpha-normalize expr (why?!)
     //        check that hash of expr matches expected
+    //        write to semantic cache
     //        return expr
     //Load with semi-semantic cache (as code)
     //    Actually resolve import as text
@@ -90,118 +91,13 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
     //    Take expr with all imports type-checked and normalized
     //    Encode and hash it
 
-    def resolve(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[(Expr, Headers)] = {
-
-      def resolve(i: ImportContext, hash: Array[Byte]): F[(String, Headers)] = {
-
-        def resolve(i: ImportContext): F[(String, Headers)] =
-          for {
-            cached <- F.delay(duplicateImportsCache.get(i))
-            result <- cached match {
-              case Some(v) => F.pure(v -> Headers.empty)
-              case None =>
-                for {
-                  v <- i match {
-                    case Env(value) =>
-                      for {
-                        vO <- F.delay(sys.env.get(value))
-                        v <- vO.fold(
-                          F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
-                        )(F.pure)
-                      } yield v -> Headers.empty
-                    case Local(path) =>
-                      for {
-                        v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
-                      } yield v -> Headers.empty
-                    case Classpath(path) =>
-                      for {
-                        v <- F.delay(
-                          scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString
-                        )
-                      } yield v -> Headers.empty
-                    case Remote(uri, using) =>
-                      for {
-                        headers <- F.pure(ToHeaders(using))
-                        req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
-                        resp <- Client.fetch[(String, Headers)](req) {
-                          case Successful(resp) =>
-                            for {
-                              s <- EntityDecoder.decodeString(resp)
-                            } yield s -> resp.headers
-                          case _ =>
-                            F.raiseError[(String, Headers)](
-                              new ResolutionFailure(s"Missing import - cannot resolve $uri")
-                            )
-                        }
-                      } yield resp
-                    case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
-                  }
-                  _ <- F.delay(duplicateImportsCache.put(i, v._1))
-                } yield v
-            }
-          } yield result
-
-        def checkHashesMatch(encoded: Array[Byte], expected: Array[Byte]): F[Unit] = {
-          val hashed = MessageDigest.getInstance("SHA-256").digest(encoded)
-          if (hashed.sameElements(expected)) F.unit
-          else F.raiseError(new ResolutionFailure("Cached expression does not match its hash"))
-        }
-
-        if (hash eq null) resolve(i)
-        else
-          for {
-            bytesO <- cache.get(hash)
-            result <- bytesO.fold(resolve(i))(bs =>
-              for {
-                _ <- checkHashesMatch(bs, hash)
-                r <- F.delay(Decode.decode(bs).toString() -> Headers.empty)
-              } yield r
-            )
-          } yield result
-      }
-
-      mode match {
-        case Expr.ImportMode.CODE =>
-          for {
-            v <- resolve(i, hash)
-            (s, headers) = v
-            e <- F.delay(DhallParser.parse(s))
-          } yield e -> headers
-        //TODO check if this can be interpolated? The spec isn't very clear
-        case Expr.ImportMode.RAW_TEXT =>
-          for {
-            v <- resolve(i, hash)
-            (s, headers) = v
-            e <- F.pure(Expr.makeTextLiteral(s))
-          } yield e -> headers
-        case Expr.ImportMode.LOCATION =>
-          F.raiseError(new ResolutionFailure("Importing as location should already have been handled"))
-      }
-    }
-
     //TODO check that equality is sensibly defined for URI and Path
     def rejectCyclicImports(imp: ImportContext, parents: List[ImportContext]): F[Unit] =
       if (parents.contains(imp))
         F.raiseError[Unit](new ResolutionFailure(s"Cyclic import - $imp is already imported in chain $parents"))
       else F.unit
 
-    def validateHash(imp: ImportContext, e: Expr, expected: Array[Byte]): F[Unit] =
-      if (expected eq null) F.unit
-      else
-        for {
-          bytes <- F.pure(e.normalize().getEncodedBytes())
-          encoded <- F.delay(MessageDigest.getInstance("SHA-256").digest(bytes))
-          _ <- if (encoded.sameElements(expected)) F.unit
-          else F.raiseError(new ResolutionFailure(s"SHA256 validation exception for ${imp}"))
-          _ <- cache.put(encoded, bytes)
-        } yield ()
-
     def importLocation(imp: ImportContext): F[Expr] = {
-      def makeLocation(field: String, value: String): F[Expr] =
-        F.pure(
-          Expr.makeApplication(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, field), Expr.makeTextLiteral(value))
-        )
-
       imp match {
         case Local(path) => makeLocation("Local", path.toString)
         // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
@@ -213,26 +109,109 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
       }
     }
 
+    def makeLocation(field: String, value: String): F[Expr] =
+      F.pure(
+        Expr.makeApplication(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, field), Expr.makeTextLiteral(value))
+      )
+
+    def checkHashesMatch(encoded: Array[Byte], expected: Array[Byte]): F[Unit] = {
+      val hashed = MessageDigest.getInstance("SHA-256").digest(encoded)
+      if (hashed.sameElements(expected)) F.unit
+      else F.raiseError(new ResolutionFailure("Cached expression does not match its hash"))
+    }
+
+    def loadWithSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = for {
+      cached <- if (hash != null) semanticCache.get(hash) else F.pure(Option.empty[Array[Byte]])
+      e      <- cached match {
+        case Some(bs) => for {
+          _ <- checkHashesMatch(bs, hash)
+          e <- F.delay(Decode.decode(bs))
+        } yield e
+        case None => for {
+          e <- loadWithSemiSemanticCache(imp, mode, hash)
+          //TODO alpha-normalize?
+          bs = e.getEncodedBytes
+          _ <- checkHashesMatch(bs, hash)
+          _ <- semanticCache.put(hash, bs)
+        } yield e
+      }
+    } yield e
+
+    def fetch(imp: ImportContext): F[String] = imp match {
+      case Env(value) =>
+        for {
+          vO <- F.delay(sys.env.get(value))
+          v <- vO.fold(
+            F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
+          )(F.pure)
+        } yield v
+      case Local(path) =>
+        for {
+          v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
+        } yield v
+      case Classpath(path) =>
+        for {
+          v <- F.delay(
+            scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString
+          )
+        } yield v
+      case Remote(uri, using) =>
+        for {
+          headers <- F.pure(ToHeaders(using))
+          req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
+          resp <- Client.fetch[(String, Headers)](req) {
+            case Successful(resp) =>
+              for {
+                s <- EntityDecoder.decodeString(resp)
+                _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, resp.headers) else F.unit
+              } yield s
+            case _ =>
+              F.raiseError[(String, Headers)](
+                new ResolutionFailure(s"Missing import - cannot resolve $uri")
+              )
+          }
+        } yield resp
+      case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
+    }
+
+    //TODO where do we handle importing as Text?
+    def loadWithSemiSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = for {
+      text <- fetch(imp)
+      parsed    <- F.delay(DhallParser.parse(text))
+      resolved <- {
+            val v = ResolveImportsVisitor[F](semanticCache, semiSemanticCache, imp :: parents)
+            v.duplicateImportsCache = this.duplicateImportsCache
+            parsed.accept(v)
+          }
+      semiHash = resolved.getEncodedBytes
+      cached <- semiSemanticCache.get(semiHash)
+      e <- cached match {
+        case Some(bs) => F.delay(Decode.decode(bs))
+        case None => for {
+          _ <- F.delay(typeCheck(resolved))
+          normalized <- F.delay(resolved)
+          _ <- semiSemanticCache.put(semiHash, normalized.getEncodedBytes)
+        } yield normalized
+      }
+    } yield resolved
+
+    def resolve(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] =
+      if (duplicateImportsCache.contains(imp))
+        F.delay(duplicateImportsCache.get(imp))
+      else for {
+        e <- loadWithSemanticCache(imp, mode, hash)
+        _ <- F.delay(duplicateImportsCache.put(imp, e))
+      } yield e
+
     def importNonLocation(imp: ImportContext, mode: ImportMode, hash: Array[Byte]) =
       for {
         _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
-        r <- resolve(imp, mode, hash)
-        (e, headers) = r
-        _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, headers) else F.unit
-        //TODO do we need to do this based on sha256 instead or something instead? Although parents won't be fully resolved
         _ <- rejectCyclicImports(imp, parents)
-        result <- {
-          val v = ResolveImportsVisitor[F](cache, imp :: parents)
-          v.duplicateImportsCache = this.duplicateImportsCache
-          e.accept(v)
-        }
-        _ <- validateHash(imp, result, hash)
-        _ <- F.delay(typeCheck(result))
-      } yield result
+        r <- resolve(imp, mode, hash)
+      } yield r
 
     for {
-      imp <- if (parents.isEmpty) canonicalize(i)
-      else canonicalize(parents.head, i)
+      imp <- if (parents.isEmpty) canonicalize(i) else canonicalize(parents.head, i)
       result <- if (mode == ImportMode.LOCATION) importLocation(imp) else importNonLocation(imp, mode, hash)
     } yield result
   }
