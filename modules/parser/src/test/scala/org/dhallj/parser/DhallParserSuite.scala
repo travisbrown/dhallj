@@ -4,6 +4,7 @@ import java.net.URI
 import java.nio.file.Paths
 
 import munit.{FunSuite, Ignore}
+import org.dhallj.core.DhallException.ParsingFailure
 import org.dhallj.core.Expr
 import org.dhallj.core.Expr.ImportMode
 
@@ -72,5 +73,9 @@ class DhallParserSuite extends FunSuite() {
     val expected = Expr.makeClasspathImport(Paths.get("/foo/bar.dhall"), ImportMode.RAW_TEXT, null)
 
     assert(DhallParser.parse("classpath:/foo/bar.dhall as Text") == expected)
+  }
+
+  test("fail on URLs with quoted paths") {
+    intercept[ParsingFailure](DhallParser.parse("https://example.com/foo/\"bar?baz\"?qux"))
   }
 }
