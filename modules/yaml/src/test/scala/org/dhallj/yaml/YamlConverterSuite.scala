@@ -5,8 +5,9 @@ import org.dhallj.ast._
 import org.dhallj.core.Expr
 import org.dhallj.parser.DhallParser
 import org.scalacheck.Prop
+import org.yaml.snakeyaml.DumperOptions
 
-class JawnConverterSuite extends ScalaCheckSuite {
+class YamlConverterSuite extends ScalaCheckSuite {
   property("convert integers") {
     Prop.forAll { (value: BigInt) =>
       val asDhall = IntegerLiteral(value.underlying)
@@ -57,6 +58,22 @@ class JawnConverterSuite extends ScalaCheckSuite {
     val expr1 = DhallParser.parse("[<foo: Bool|bar>.foo True]").normalize()
 
     assert(clue(Option(YamlConverter.toYamlString(expr1))) == Some("- true\n"))
+  }
+
+  test("convert text containing newlines") {
+    val expr1 = DhallParser.parse(""" { a = "foo\nbar" } """).normalize()
+
+    assert(clue(Option(YamlConverter.toYamlString(expr1))) == Some("a: |-\n  foo\n  bar\n"))
+  }
+
+  test("convert text containing newlines and respect SnakeYAML configuration") {
+    val expr1 = DhallParser.parse(""" { a = "foo\nbar" } """).normalize()
+    val expected = "\"a\": \"foo\\nbar\"\n"
+
+    val options = new DumperOptions()
+    options.setDefaultScalarStyle(DumperOptions.ScalarStyle.DOUBLE_QUOTED)
+
+    assert(clue(Option(YamlConverter.toYamlString(expr1, options))) == clue(Some(expected)))
   }
 
   test("fail safely on unconvertible expressions") {

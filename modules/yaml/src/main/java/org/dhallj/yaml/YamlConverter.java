@@ -16,6 +16,14 @@ public class YamlConverter {
     return toYamlString(expr, defaultOptions, true);
   }
 
+  public static final String toYamlString(Expr expr, DumperOptions options) {
+    return toYamlString(expr, options, true);
+  }
+
+  public static final String toYamlString(Expr expr, boolean skipNulls) {
+    return toYamlString(expr, defaultOptions, skipNulls);
+  }
+
   public static final String toYamlString(Expr expr, DumperOptions options, boolean skipNulls) {
     YamlHandler handler = new YamlHandler(skipNulls);
     boolean wasConverted = expr.accept(new JsonConverter(handler));
