@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import org.dhallj.core.DhallException.ParsingFailure;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
@@ -664,7 +665,7 @@ final class ParsingHelpers {
       try {
         value = Expr.makeRemoteImport(new URI(type.image), using, mode, hash);
       } catch (java.net.URISyntaxException e) {
-        System.out.println(e);
+        throw new ParsingFailure("Invalid URL", e);
       }
     } else if (type.image.startsWith("env:")) {
       value = Expr.makeEnvImport(type.image.substring(4), mode, hash);
@@ -674,7 +675,7 @@ final class ParsingHelpers {
       try {
         value = Expr.makeLocalImport(Paths.get(type.image), mode, hash);
       } catch (java.nio.file.InvalidPathException e) {
-        System.out.println(e);
+        throw new ParsingFailure("Invalid path", e);
       }
     }
 
