@@ -54,6 +54,42 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](cache: ImportsC
     onImport(Missing, mode, hash)
 
   private def onImport(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] = {
+
+    //TODO replicate Dhall Haskell flow
+    //Compute chain
+    //Referential sanity check
+    //Check cyclic imports
+    //Resolve import - results in fully resolved, type-checked and normalized expr
+    //    Check in memory cache
+    //    Load with semantic cache >=> put in in-memory cache
+    //Load with semantic  cache
+    //    If hash present and in cache check bytes hash and return as fully resolved and normalized expr
+    //    Else
+    //        load expr from semi-semantic cache
+    //        alpha-normalize expr (why?!)
+    //        check that hash of expr matches expected
+    //        return expr
+    //Load with semi-semantic cache (as code)
+    //    Actually resolve import as text
+    //    Parse expr
+    //    Resolve expr
+    //    Compute semi-semantic hash of resolved expr
+    //    if present in semisemantic cache
+    //        return resolved, type checked normalized expr
+    //    Else
+    //        substitute expr
+    //        typecheck expr with empty context
+    //        beta-normalize expr
+    //        encode and write to semi-semantic cache
+    //        return expr
+    //Load with semi-semantic cache (as text)
+    //    Resolve expr
+    //Load with semi-semantic cache (as code)
+    //    Create location expr
+    //Compute semi-semantic hash
+    //    Take expr with all imports type-checked and normalized
+    //    Encode and hash it
+
     def resolve(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[(Expr, Headers)] = {
 
       def resolve(i: ImportContext, hash: Array[Byte]): F[(String, Headers)] = {
