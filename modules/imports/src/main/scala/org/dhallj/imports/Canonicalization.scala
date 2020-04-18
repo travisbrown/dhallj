@@ -56,7 +56,7 @@ object Canonicalization {
       case _ => canonicalize(child)
     }
 
-  case class LocalFile(dirs: LocalDirs, filename: String) {
+  private case class LocalFile(dirs: LocalDirs, filename: String) {
     def toPath: Path = {
       def toPath(l: List[String]) = "/" + l.intercalate("/")
 
@@ -76,7 +76,7 @@ object Canonicalization {
     def canonicalize: LocalFile = LocalFile.canonicalize(this)
   }
 
-  object LocalFile {
+  private object LocalFile {
     def apply[F[_]](path: Path)(implicit F: Sync[F]): F[LocalFile] =
       path.iterator().asScala.toList.map(_.toString) match {
         case Nil => F.raiseError(new ResolutionFailure("This shouldn't happen - / can't import a dhall expression"))
@@ -89,7 +89,7 @@ object Canonicalization {
     def chain(lhs: LocalFile, rhs: LocalFile): LocalFile = LocalFile(LocalDirs.chain(lhs.dirs, rhs.dirs), rhs.filename)
   }
 
-  case class LocalDirs(ds: List[String]) {
+  private case class LocalDirs(ds: List[String]) {
     def isRelative = ds.nonEmpty && (ds.head == "." || ds.head == "..")
 
     def canonicalize: LocalDirs = LocalDirs.canonicalize(this)
@@ -97,7 +97,7 @@ object Canonicalization {
     def chain(other: LocalDirs): LocalDirs = LocalDirs.chain(this, other)
   }
 
-  object LocalDirs {
+  private object LocalDirs {
     def chain(lhs: LocalDirs, rhs: LocalDirs): LocalDirs = if (rhs.isRelative) LocalDirs(lhs.ds ++ rhs.ds) else rhs
 
     def canonicalize(d: LocalDirs): LocalDirs = d.ds match {

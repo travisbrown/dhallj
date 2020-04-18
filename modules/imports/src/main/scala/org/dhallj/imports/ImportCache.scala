@@ -5,26 +5,26 @@ import java.nio.file.{Files, Path, Paths}
 import cats.effect.Sync
 import cats.implicits._
 
-private[dhallj] object Caching {
+trait ImportCache[F[_]] {
+  def get(key: Array[Byte]): F[Option[Array[Byte]]]
 
-  trait ImportsCache[F[_]] {
-    def get(key: Array[Byte]): F[Option[Array[Byte]]]
+  def put(key: Array[Byte], value: Array[Byte]): F[Unit]
+}
 
-    def put(key: Array[Byte], value: Array[Byte]): F[Unit]
-  }
+object ImportCache {
 
   /*
    * Improves the ergonomics when resolving imports if we don't have to check
    * if the cache exists. So if we fail to construct an imports cache,
    * we warn and return this instead.
    */
-  case class NoopImportsCache[F[_]]()(implicit F: Sync[F]) extends ImportsCache[F] {
+  class NoopImportCache[F[_]](implicit F: Sync[F]) extends ImportCache[F] {
     override def get(key: Array[Byte]): F[Option[Array[Byte]]] = F.pure(None)
 
     override def put(key: Array[Byte], value: Array[Byte]): F[Unit] = F.unit
   }
 
-  case class ImportsCacheImpl[F[_]] private[Caching] (rootDir: Path)(implicit F: Sync[F]) extends ImportsCache[F] {
+  private class Impl[F[_]](rootDir: Path)(implicit F: Sync[F]) extends ImportCache[F] {
     override def get(key: Array[Byte]): F[Option[Array[Byte]]] = {
       val p = path(key)
       if (Files.exists(p)) {
@@ -48,20 +48,20 @@ private[dhallj] object Caching {
     }
   }
 
-  def mkImportsCache[F[_] <: AnyRef](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportsCache[F]]] =
+  def apply[F[_] <: AnyRef](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportCache[F]]] =
     for {
       _ <- if (!Files.exists(rootDir)) F.delay(Files.createDirectories(rootDir)) else F.unit
       perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
-    } yield (if (perms) Some(new ImportsCacheImpl[F](rootDir)) else None)
+    } yield (if (perms) Some(new Impl[F](rootDir)) else None)
 
-  def mkImportsCache[F[_] <: AnyRef](cacheName: String)(implicit F: Sync[F]): F[ImportsCache[F]] = {
-    def makeCacheFromEnvVar(env: String, relativePath: String): F[Option[ImportsCache[F]]] =
+  def apply[F[_] <: AnyRef](cacheName: String)(implicit F: Sync[F]): F[ImportCache[F]] = {
+    def makeCacheFromEnvVar(env: String, relativePath: String): F[Option[ImportCache[F]]] =
       for {
         envValO <- F.delay(sys.env.get(env))
-        cache <- envValO.fold(F.pure(Option.empty[ImportsCache[F]]))(envVal =>
+        cache <- envValO.fold(F.pure(Option.empty[ImportCache[F]]))(envVal =>
           for {
             rootDir <- F.pure(Paths.get(envVal, relativePath, cacheName))
-            c <- mkImportsCache(rootDir)
+            c <- apply(rootDir)
           } yield c
         )
       } yield cache
@@ -71,7 +71,7 @@ private[dhallj] object Caching {
         cacheO <- if (isWindows)
           makeCacheFromEnvVar("LOCALAPPDATA", "")
         else makeCacheFromEnvVar("HOME", ".cache")
-        cache <- cacheO.fold(warnCacheNotCreated >> F.pure[ImportsCache[F]](NoopImportsCache[F]))(F.pure)
+        cache <- cacheO.fold[F[ImportCache[F]]](F.as(warnCacheNotCreated, new NoopImportCache[F]))(F.pure)
       } yield cache
 
     def isWindows = System.getProperty("os.name").toLowerCase.contains("Windows")

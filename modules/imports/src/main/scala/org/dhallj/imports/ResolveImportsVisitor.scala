@@ -12,7 +12,6 @@ import org.dhallj.core.Expr.ImportMode
 import org.dhallj.core.Expr.Util.typeCheck
 import org.dhallj.core._
 import org.dhallj.core.binary.Decode
-import org.dhallj.imports.Caching.ImportsCache
 import org.dhallj.imports.Canonicalization.canonicalize
 import org.dhallj.imports.ResolveImportsVisitor._
 import org.dhallj.parser.DhallParser
@@ -24,13 +23,15 @@ import org.http4s.{EntityDecoder, Request}
 import scala.collection.mutable.{Map => MMap}
 
 //TODO proper error handling
-private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: ImportsCache[F],
-                                                                 semiSemanticCache: ImportsCache[F],
-                                                                 parents: List[ImportContext])(
+final private class ResolveImportsVisitor[F[_] <: AnyRef](
+  semanticCache: ImportCache[F],
+  semiSemanticCache: ImportCache[F],
+  parents: List[ImportContext]
+)(
   implicit Client: Client[F],
   F: Sync[F]
 ) extends LiftVisitor[F](F) {
-  private var duplicateImportsCache: MMap[ImportContext, Expr] = MMap.empty
+  private var duplicateImportCache: MMap[ImportContext, Expr] = MMap.empty
 
   override def onOperatorApplication(operator: Operator, lhs: F[Expr], rhs: F[Expr]): F[Expr] =
     if (operator == Operator.IMPORT_ALT)
@@ -131,7 +132,7 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
             case Successful(resp) =>
               for {
                 s <- EntityDecoder.decodeString(resp)
-                _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, resp.headers) else F.unit
+                _ <- if (parents.nonEmpty) CorsComplianceCheck(parents.head, imp, resp.headers) else F.unit
               } yield s
             case _ =>
               F.raiseError[String](
@@ -162,8 +163,8 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
           text <- fetch(imp)
           parsed <- F.delay(DhallParser.parse(text))
           resolved <- {
-            val v = ResolveImportsVisitor[F](semanticCache, semiSemanticCache, imp :: parents)
-            v.duplicateImportsCache = this.duplicateImportsCache
+            val v = new ResolveImportsVisitor[F](semanticCache, semiSemanticCache, imp :: parents)
+            v.duplicateImportCache = this.duplicateImportCache
             parsed.accept(v)
           }
           semiHash = MessageDigest.getInstance("SHA-256").digest(resolved.getEncodedBytes)
@@ -182,12 +183,12 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
     }
 
     def resolve(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] =
-      if (duplicateImportsCache.contains(imp))
-        F.delay(duplicateImportsCache.get(imp).get)
+      if (duplicateImportCache.contains(imp))
+        F.delay(duplicateImportCache.get(imp).get)
       else
         for {
           e <- loadWithSemanticCache(imp, mode, hash)
-          _ <- F.delay(duplicateImportsCache.put(imp, e))
+          _ <- F.delay(duplicateImportCache.put(imp, e))
         } yield e
 
     def importNonLocation(imp: ImportContext, mode: ImportMode, hash: Array[Byte]) =
@@ -204,13 +205,15 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
   }
 }
 
-object ResolveImportsVisitor {
+private object ResolveImportsVisitor {
+  def apply[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] =
+    Sync[F].map2(ImportCache[F]("dhall"), ImportCache[F]("dhallj"))(apply[F](_, _))
 
-  def mkVisitor[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] =
-    (Caching.mkImportsCache[F]("dhall"), Caching.mkImportsCache[F]("dhallj")).mapN((c, c2) => mkVisitor(c, c2))
+  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F],
+                                          semiSemanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
+    new ResolveImportsVisitor(semanticCache, semiSemanticCache, Nil)
 
-  def mkVisitor[F[_] <: AnyRef: Sync: Client](semanticCache: ImportsCache[F],
-                                              semiSemanticCache: ImportsCache[F]): ResolveImportsVisitor[F] =
-    ResolveImportsVisitor(semanticCache, semiSemanticCache, Nil)
+  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
+    new ResolveImportsVisitor(semanticCache, new ImportCache.NoopImportCache, Nil)
 
 }

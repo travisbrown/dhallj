@@ -8,7 +8,6 @@ import cats.implicits._
 import munit.FunSuite
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode
-import org.dhallj.imports.Caching.{ImportsCache, NoopImportsCache}
 import org.dhallj.parser.DhallParser.parse
 import org.http4s.client._
 import org.http4s.client.blaze._
@@ -222,14 +221,14 @@ class ImportResolutionSuite extends FunSuite {
       e.resolveImports[IO].map(_.normalize)
     }.unsafeRunSync
 
-  private def resolveWithCustomCache(cache: ImportsCache[IO], e: Expr): IO[Expr] =
+  private def resolveWithCustomCache(cache: ImportCache[IO], e: Expr): IO[Expr] =
     client.use { c =>
       implicit val http: Client[IO] = c
 
-      e.accept(ResolveImportsVisitor.mkVisitor(cache, NoopImportsCache[IO]))
+      e.accept(ResolveImportsVisitor[IO](cache))
     }
 
-  private case class InMemoryCache() extends ImportsCache[IO] {
+  private case class InMemoryCache() extends ImportCache[IO] {
 
     private val store: Ref[IO, Map[List[Byte], Array[Byte]]] = Ref.unsafe(Map.empty)
 
