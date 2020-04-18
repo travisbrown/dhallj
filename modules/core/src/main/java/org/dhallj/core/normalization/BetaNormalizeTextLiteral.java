@@ -39,8 +39,8 @@ final class BetaNormalizeTextLiteral {
         }
       }
 
-      final List<String> newParts = new ArrayList(parts.length);
-      final List<Expr> newInterpolated = new ArrayList(parts.length - 1);
+      List<String> newParts = new ArrayList<>(parts.length);
+      List<Expr> newInterpolated = new ArrayList<>(parts.length - 1);
       newParts.add(parts[0]);
 
       boolean wasInlined = false;
