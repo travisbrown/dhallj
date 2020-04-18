@@ -24,11 +24,11 @@ final class ToStringState {
   static final int NONE = Integer.MAX_VALUE;
 
   private final String text;
-  private final int looseness;
+  private final int level;
 
-  ToStringState(String text, int looseness) {
+  ToStringState(String text, int level) {
     this.text = text;
-    this.looseness = looseness;
+    this.level = level;
   }
 
   ToStringState(String text) {
@@ -36,65 +36,29 @@ final class ToStringState {
   }
 
   ToStringState withText(String text) {
-    return new ToStringState(text, this.looseness);
+    return new ToStringState(text, this.level);
   }
 
-  String toString(int contextLooseness, boolean parenthesizeIfSame) {
-    if (contextLooseness > this.looseness
-        || (!parenthesizeIfSame && contextLooseness == this.looseness)) {
+  String toString(int contextLevel, boolean parenthesizeIfSame) {
+    if (contextLevel > this.level || (!parenthesizeIfSame && contextLevel == this.level)) {
       return this.text;
     } else {
       return String.format("(%s)", this.text);
     }
   }
 
-  String toString(int contextLooseness) {
-    return this.toString(contextLooseness, false);
+  String toString(int contextLevel) {
+    return this.toString(contextLevel, false);
   }
 
   public String toString() {
     return this.toString(NONE);
   }
 
-  private static final int baseOperatorLooseness = 4;
+  private static final int baseOperatorLevel = 2;
 
-  static final int getOperatorLooseness(Operator operator) {
-    int level = baseOperatorLooseness;
-
-    switch (operator) {
-      case COMPLETE:
-        level += 1;
-        ;
-      case IMPORT_ALT:
-        level += 1;
-      case OR:
-        level += 1;
-      case PLUS:
-        level += 1;
-      case TEXT_APPEND:
-        level += 1;
-      case LIST_APPEND:
-        level += 1;
-      case AND:
-        level += 1;
-      case COMBINE:
-        level += 1;
-      case PREFER:
-        level += 1;
-      case COMBINE_TYPES:
-        level += 1;
-      case TIMES:
-        level += 1;
-      case EQUALS:
-        level += 1;
-      case NOT_EQUALS:
-        level += 1;
-      case EQUIVALENT:
-        level += 1;
-      default:
-    }
-
-    return level;
+  static final int getOperatorLevel(Operator operator) {
+    return baseOperatorLevel + operator.getPrecedence();
   }
 }
 
@@ -363,13 +327,12 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
   public ToStringState onOperatorApplication(
       Operator operator, ToStringState lhs, ToStringState rhs) {
-    int operatorLooseness = ToStringState.getOperatorLooseness(operator);
+    int operatorLevel = ToStringState.getOperatorLevel(operator);
 
     return new ToStringState(
         String.format(
-            "%s %s %s",
-            lhs.toString(operatorLooseness), operator, rhs.toString(operatorLooseness, true)),
-        operatorLooseness);
+            "%s %s %s", lhs.toString(operatorLevel), operator, rhs.toString(operatorLevel, true)),
+        operatorLevel);
   }
 
   public ToStringState onIf(
