@@ -1,16 +1,9 @@
 package org.dhallj.core.converters;
 
 import java.math.BigInteger;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import org.dhallj.cbor.Writer;
 import org.dhallj.core.Expr;
-import org.dhallj.core.Operator;
-import org.dhallj.core.Source;
 import org.dhallj.core.Visitor;
 
 public final class JsonConverter extends Visitor.Constant<Boolean> {
