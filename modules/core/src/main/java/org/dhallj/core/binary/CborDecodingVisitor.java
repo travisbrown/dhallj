@@ -20,11 +20,11 @@ import java.util.Map;
  * <p>Note that e.g. a negative integer by itself is an error, but a single float by itself is
  * allowed.
  */
-final class CBORDecodingVisitor implements Visitor<Expr> {
+final class CborDecodingVisitor implements Visitor<Expr> {
 
   private final Reader reader;
 
-  CBORDecodingVisitor(Reader reader) {
+  CborDecodingVisitor(Reader reader) {
     this.reader = reader;
   }
 

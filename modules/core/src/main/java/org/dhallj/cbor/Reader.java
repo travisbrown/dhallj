@@ -29,11 +29,11 @@ public abstract class Reader {
       case MAP:
         return visitor.onMap(readMapStart(b));
       case SEMANTIC_TAG:
-        throw new CBORException("We should have skipped semantic tags");
+        throw new CborException("We should have skipped semantic tags");
       case PRIMITIVE:
         return readPrimitive(b, visitor);
       default:
-        throw new CBORException(String.format("Invalid CBOR major type %d", b));
+        throw new CborException(String.format("Invalid CBOR major type %d", b));
     }
   }
 
@@ -52,7 +52,7 @@ public abstract class Reader {
     skip55799();
     BigInteger result = readBigNum();
     if (result.compareTo(BigInteger.ZERO) < 0) {
-      throw new CBORException(String.format("%s is not a positive big num", result));
+      throw new CborException(String.format("%s is not a positive big num", result));
     } else {
       return result;
     }
@@ -78,10 +78,10 @@ public abstract class Reader {
         } else if (tag == 3) {
           return BigInteger.valueOf(-1).subtract(result);
         } else {
-          throw new CBORException(String.format("%d is not a valid tag for a bignum", tag));
+          throw new CborException(String.format("%d is not a valid tag for a bignum", tag));
         }
       default:
-        throw new CBORException(String.format("%d not a valid major type for an Unsigned Integer"));
+        throw new CborException(String.format("%d not a valid major type for an Unsigned Integer"));
     }
   }
 
@@ -94,7 +94,7 @@ public abstract class Reader {
       case PRIMITIVE:
         return readPrimitive(next, NullVisitor.instanceForString);
       default:
-        throw new CBORException("Next symbol is neither a text string or null");
+        throw new CborException("Next symbol is neither a text string or null");
     }
   }
 
@@ -107,7 +107,7 @@ public abstract class Reader {
       case PRIMITIVE:
         return readPrimitive(next, NullVisitor.instanceForByteArray);
       default:
-        throw new CBORException("Next symbol is neither a byte string or null");
+        throw new CborException("Next symbol is neither a byte string or null");
     }
   }
 
@@ -137,12 +137,12 @@ public abstract class Reader {
         AdditionalInfo info = AdditionalInfo.fromByte(next);
         BigInteger length = readBigInteger(info, next);
         if (length.compareTo(BigInteger.ZERO) < 0) {
-          throw new CBORException("Indefinite array not needed for Dhall");
+          throw new CborException("Indefinite array not needed for Dhall");
         } else {
           return length;
         }
       default:
-        throw new CBORException("Next symbol is not an array");
+        throw new CborException("Next symbol is not an array");
     }
   }
 
@@ -160,7 +160,7 @@ public abstract class Reader {
         }
         return entries;
       default:
-        throw new CBORException(
+        throw new CborException(
             String.format("Cannot read map - major type is %s", MajorType.fromByte(b)));
     }
   }
@@ -179,7 +179,7 @@ public abstract class Reader {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
-      throw new CBORException("Indefinite byte string not needed for Dhall");
+      throw new CborException("Indefinite byte string not needed for Dhall");
     } else {
       // We don't handle the case where the length is > Integer.MaxValue
       return this.read(length.intValue());
@@ -191,7 +191,7 @@ public abstract class Reader {
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
       // Indefinite length - do we need this for Dhall?
-      throw new CBORException("Indefinite text string not needed for Dhall");
+      throw new CborException("Indefinite text string not needed for Dhall");
     } else {
       // We don't handle the case where the length is > Integer.MaxValue
       return new String(this.read(length.intValue()), Charset.forName("UTF-8"));
@@ -202,7 +202,7 @@ public abstract class Reader {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
-      throw new CBORException("Indefinite array not needed for Dhall");
+      throw new CborException("Indefinite array not needed for Dhall");
     } else {
       skip55799();
       byte next = read();
@@ -212,7 +212,7 @@ public abstract class Reader {
         case TEXT_STRING:
           return visitor.onVariableArray(length, readTextString(next));
         default:
-          throw new CBORException(
+          throw new CborException(
               String.format(
                   "Invalid start to CBOR-encoded Dhall expression %s",
                   MajorType.fromByte(b).toString()));
@@ -224,7 +224,7 @@ public abstract class Reader {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
-      throw new CBORException("Indefinite array not needed for Dhall");
+      throw new CborException("Indefinite array not needed for Dhall");
     } else {
       return length;
     }
@@ -233,7 +233,7 @@ public abstract class Reader {
   private final <R> R readPrimitive(byte b, Visitor<R> visitor) {
     int value = b & 31;
     if (0 <= value && value <= 19) {
-      throw new CBORException(String.format("Primitive %d is unassigned", value));
+      throw new CborException(String.format("Primitive %d is unassigned", value));
     } else if (value == 20) {
       return visitor.onFalse();
     } else if (value == 21) {
@@ -241,9 +241,9 @@ public abstract class Reader {
     } else if (value == 22) {
       return visitor.onNull();
     } else if (value == 23) {
-      throw new CBORException(String.format("Primitive %d is unassigned", value));
+      throw new CborException(String.format("Primitive %d is unassigned", value));
     } else if (value == 24) {
-      throw new CBORException("Simple value not needed for Dhall");
+      throw new CborException("Simple value not needed for Dhall");
     } else if (value == 25) {
       // https://github.com/c-rack/cbor-java/blob/master/src/main/java/co/nstant/in/cbor/decoder/HalfPrecisionFloatDecoder.java
       int bits = 0;
@@ -283,11 +283,11 @@ public abstract class Reader {
       }
       return visitor.onDoubleFloat(Double.longBitsToDouble(result));
     } else if (28 <= value && value <= 30) {
-      throw new CBORException(String.format("Primitive %d is unassigned", value));
+      throw new CborException(String.format("Primitive %d is unassigned", value));
     } else if (value == 31) {
-      throw new CBORException("Break stop code not needed for Dhall");
+      throw new CborException("Break stop code not needed for Dhall");
     } else {
-      throw new CBORException(String.format("Primitive %d is not valid", value));
+      throw new CborException(String.format("Primitive %d is not valid", value));
     }
   }
 
@@ -303,7 +303,7 @@ public abstract class Reader {
             BigInteger tag = readBigInteger(info, read()); // Now advance pointer
             int t = tag.intValue();
             if (t != 55799) {
-              throw new CBORException(String.format("Unrecognized CBOR semantic tag %d", t));
+              throw new CborException(String.format("Unrecognized CBOR semantic tag %d", t));
             } else {
               skip55799(); // Please tell me no encoders do this
             }
@@ -325,7 +325,7 @@ public abstract class Reader {
       case EIGHT_BYTES:
         return readBigInteger(8);
       case RESERVED:
-        throw new CBORException("Additional info RESERVED should not require reading a uintXX");
+        throw new CborException("Additional info RESERVED should not require reading a uintXX");
       case INDEFINITE:
         return BigInteger.valueOf(-1);
       default:
