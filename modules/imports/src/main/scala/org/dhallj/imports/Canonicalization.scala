@@ -5,7 +5,7 @@ import java.nio.file.{Path, Paths}
 import cats.implicits._
 import cats.effect.Sync
 import org.dhallj.core.DhallException.ResolutionFailure
-import org.dhallj.imports.ResolveImportsVisitor._
+import org.dhallj.imports.ImportContext._
 
 import scala.collection.JavaConverters._
 
