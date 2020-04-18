@@ -397,7 +397,7 @@ public final class Encode implements Visitor<Void> {
     }
   }
 
-  private static byte[] multihash(byte[] hash) {
+  private static final byte[] multihash(byte[] hash) {
     byte[] bytes = new byte[34];
     // The label for SHA-256.
     bytes[0] = 18;
@@ -434,7 +434,7 @@ public final class Encode implements Visitor<Void> {
     return null;
   }
 
-  private static int pathLabel(Path path) {
+  private static final int pathLabel(Path path) {
     if (path.isAbsolute()) {
       return Label.IMPORT_TYPE_LOCAL_ABSOLUTE;
     } else {
