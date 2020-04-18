@@ -1941,9 +1941,9 @@ public abstract class Expr {
     Expr value = null;
 
     for (Entry<String, Expr> entry : fields) {
-      if (entry.getKey().equals("mapKey")) {
+      if (entry.getKey().equals(Constants.MAP_KEY_FIELD_NAME)) {
         key = entry.getValue();
-      } else if (entry.getKey().equals("mapValue")) {
+      } else if (entry.getKey().equals(Constants.MAP_VALUE_FIELD_NAME)) {
         value = entry.getValue();
       }
     }
