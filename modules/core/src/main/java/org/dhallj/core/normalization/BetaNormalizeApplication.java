@@ -34,6 +34,10 @@ final class BetaNormalizeApplication {
     return currentLambda;
   }
 
+  private static final Expr booleanToExpr(boolean value) {
+    return value ? Expr.Constants.TRUE : Expr.Constants.FALSE;
+  }
+
   static final Expr apply(Expr base, final List<Expr> args) {
     String builtIn = Expr.Util.asBuiltIn(base);
 
@@ -81,7 +85,7 @@ final class BetaNormalizeApplication {
     return Expr.makeApplication(base, args);
   }
 
-  private static Expr indexedRecordType(Expr type) {
+  private static final Expr indexedRecordType(Expr type) {
     Entry[] fields = {
       new SimpleImmutableEntry("index", Expr.Constants.NATURAL),
       new SimpleImmutableEntry("value", type)
@@ -89,13 +93,13 @@ final class BetaNormalizeApplication {
     return Expr.makeRecordType(fields);
   }
 
-  private static BigInteger TWO = new BigInteger("2");
+  private static final BigInteger TWO = new BigInteger("2");
 
-  private static boolean isBigIntegerEven(BigInteger value) {
+  private static final boolean isBigIntegerEven(BigInteger value) {
     return value.mod(TWO).equals(BigInteger.ZERO);
   }
 
-  private static boolean isBigIntegerNatural(BigInteger value) {
+  private static final boolean isBigIntegerNatural(BigInteger value) {
     return value.compareTo(BigInteger.ZERO) >= 0;
   }
 
@@ -104,19 +108,19 @@ final class BetaNormalizeApplication {
       BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
-        return NormalizationUtilities.booleanToExpr(argAsNaturalLiteral.equals(BigInteger.ZERO));
+        return booleanToExpr(argAsNaturalLiteral.equals(BigInteger.ZERO));
       }
     } else if (identifier.equals("Natural/even")) {
       BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
-        return NormalizationUtilities.booleanToExpr(isBigIntegerEven(argAsNaturalLiteral));
+        return booleanToExpr(isBigIntegerEven(argAsNaturalLiteral));
       }
     } else if (identifier.equals("Natural/odd")) {
       BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
 
       if (argAsNaturalLiteral != null) {
-        return NormalizationUtilities.booleanToExpr(!isBigIntegerEven(argAsNaturalLiteral));
+        return booleanToExpr(!isBigIntegerEven(argAsNaturalLiteral));
       }
     } else if (identifier.equals("Natural/toInteger")) {
       BigInteger argAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg);
@@ -189,6 +193,13 @@ final class BetaNormalizeApplication {
     return null;
   }
 
+  private static final Expr[] prependValue = new Expr[] {Expr.makeIdentifier("a")};
+  private static final Expr prependExpr =
+      Expr.makeOperatorApplication(
+          Operator.LIST_APPEND,
+          Expr.makeNonEmptyListLiteral(prependValue),
+          Expr.makeIdentifier("as"));
+
   private static final Expr arity2(String identifier, Expr arg1, Expr arg2) {
 
     if (identifier.equals("List/build")) {
@@ -203,7 +214,7 @@ final class BetaNormalizeApplication {
                       Expr.makeLambda(
                           "as",
                           Expr.makeApplication(Expr.Constants.LIST, arg1.increment("a")),
-                          NormalizationUtilities.prependExpr))),
+                          prependExpr))),
               Expr.makeEmptyListLiteral(listA))
           .accept(BetaNormalize.instance);
     } else if (identifier.equals("Optional/build")) {
