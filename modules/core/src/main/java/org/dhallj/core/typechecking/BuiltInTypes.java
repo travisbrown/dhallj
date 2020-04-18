@@ -8,12 +8,12 @@ import org.dhallj.core.Expr;
 import org.dhallj.core.Expr.Constants;
 
 final class BuiltInTypes {
-  static Expr getType(String name) {
+  static final Expr getType(String name) {
     return mappings.get(name);
   }
 
   private static final int SIZE = 36;
-  private static final Map<String, Expr> mappings = new HashMap(SIZE);
+  private static final Map<String, Expr> mappings = new HashMap<>(SIZE);
 
   static {
     Expr typeToType = Expr.makePi(Constants.TYPE, Constants.TYPE);

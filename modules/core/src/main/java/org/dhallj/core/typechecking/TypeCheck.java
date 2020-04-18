@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +35,26 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
+  public final Expr onNote(Expr base, Source source) {
+    return base.accept(this);
+  }
+
+  @Override
+  public final Expr onNatural(BigInteger value) {
+    return Constants.NATURAL;
+  }
+
+  @Override
+  public final Expr onInteger(BigInteger value) {
+    return Constants.INTEGER;
+  }
+
+  @Override
+  public final Expr onDouble(double value) {
+    return Constants.DOUBLE;
+  }
+
+  @Override
   public final Expr onBuiltIn(String name) {
     if (name.equals("Sort")) {
       throw TypeCheckFailure.makeSortError();
@@ -57,6 +76,301 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       return fromContext;
     } else {
       throw TypeCheckFailure.makeUnboundVariableError(name);
+    }
+  }
+
+  @Override
+  public final Expr onLambda(String param, Expr input, Expr result) {
+    Expr inputType = input.accept(this);
+    if (Universe.fromExpr(inputType) != null) {
+      Context unshiftedContext = this.context;
+      Expr inputNormalized = input.accept(BetaNormalize.instance);
+      this.context = this.context.insert(param, inputNormalized).increment(param);
+      Expr resultType = result.accept(this);
+      this.context = unshiftedContext;
+      return Expr.makePi(param, inputNormalized, resultType);
+    } else {
+      throw TypeCheckFailure.makeLambdaInputError(inputType);
+    }
+  }
+
+  @Override
+  public final Expr onPi(String param, Expr input, Expr result) {
+    Expr inputType = input.accept(this);
+    Context unshiftedContext = this.context;
+    this.context = this.context.insert(param, input).increment(param);
+    Expr resultType = result.accept(this);
+    this.context = unshiftedContext;
+
+    Universe inputTypeUniverse = Universe.fromExpr(inputType);
+    Universe resultTypeUniverse = Universe.fromExpr(resultType);
+
+    return Universe.functionCheck(inputTypeUniverse, resultTypeUniverse).toExpr();
+  }
+
+  @Override
+  public final Expr onLet(String name, Expr type, Expr value, Expr body) {
+    Expr valueType = value.accept(this);
+
+    if (type != null) {
+      if (!type.equivalent(valueType)) {
+        throw TypeCheckFailure.makeAnnotationError(type, valueType);
+      }
+    }
+
+    return body.substitute(name, value.accept(BetaNormalize.instance)).accept(this);
+  }
+
+  @Override
+  public final Expr onText(String[] parts, Iterable<Expr> interpolated) {
+    for (Expr expr : interpolated) {
+      Expr exprType = expr.accept(this);
+      if (!isText(exprType)) {
+        throw TypeCheckFailure.makeInterpolationError(expr, exprType);
+      }
+    }
+
+    return Constants.TEXT;
+  }
+
+  @Override
+  public final Expr onNonEmptyList(Iterable<Expr> values, int size) {
+    Iterator<Expr> it = values.iterator();
+    Expr firstType = it.next().accept(this);
+
+    if (isType(firstType.accept(this))) {
+      while (it.hasNext()) {
+        Expr elementType = it.next().accept(this);
+        if (!elementType.equivalent(firstType)) {
+          throw TypeCheckFailure.makeListTypeMismatchError(firstType, elementType);
+        }
+      }
+
+      return Expr.makeApplication(Expr.Constants.LIST, firstType);
+    } else {
+      throw TypeCheckFailure.makeListTypeError(firstType);
+    }
+  }
+
+  @Override
+  public final Expr onEmptyList(Expr type) {
+    // We verify that the type is well-typed.
+    type.accept(this);
+
+    Expr typeNormalized = type.accept(BetaNormalize.instance);
+    Expr elementType = Expr.Util.getListArg(typeNormalized);
+
+    if (elementType != null && isType(elementType.accept(this))) {
+      return Expr.makeApplication(Constants.LIST, elementType);
+    } else {
+      throw TypeCheckFailure.makeListTypeError(elementType);
+    }
+  }
+
+  @Override
+  public final Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
+    if (size == 0) {
+      return Constants.EMPTY_RECORD_TYPE;
+    } else {
+      Map<String, Expr> fieldTypes = new TreeMap<>();
+
+      for (Entry<String, Expr> field : fields) {
+        fieldTypes.put(
+            field.getKey(), field.getValue().accept(this).accept(BetaNormalize.instance));
+      }
+
+      Expr recordType = Expr.makeRecordType(fieldTypes.entrySet());
+
+      // The inferred type must also be well-typed.
+      recordType.accept(this);
+      return recordType;
+    }
+  }
+
+  @Override
+  public final Expr onRecordType(Iterable<Entry<String, Expr>> fields, int size) {
+    // Need to check for duplicates here; see: https://github.com/travisbrown/dhallj/issues/6
+    Set<String> fieldNamesSeen = new HashSet<>(size);
+
+    Universe max = Universe.TYPE;
+
+    for (Entry<String, Expr> field : fields) {
+      String fieldName = field.getKey();
+
+      if (!fieldNamesSeen.add(fieldName)) {
+        throw TypeCheckFailure.makeFieldDuplicateError(fieldName);
+      }
+
+      Universe universe = Universe.fromExpr(field.getValue().accept(this));
+
+      if (universe != null) {
+        max = max.max(universe);
+      } else {
+        throw TypeCheckFailure.makeFieldTypeError(fieldName);
+      }
+    }
+
+    return max.toExpr();
+  }
+
+  @Override
+  public final Expr onUnionType(Iterable<Entry<String, Expr>> fields, int size) {
+    if (size == 0) {
+      return Constants.TYPE;
+    } else {
+      Set<String> seen = new HashSet<>();
+      Universe firstUniverse = null;
+
+      for (Entry<String, Expr> field : fields) {
+        String fieldName = field.getKey();
+
+        if (!seen.contains(fieldName)) {
+          seen.add(fieldName);
+
+          Expr alternativeType = field.getValue();
+
+          if (alternativeType != null) {
+            Universe universe = Universe.fromExpr(alternativeType.accept(this));
+
+            if (universe != null) {
+              if (firstUniverse == null) {
+                firstUniverse = universe;
+              } else {
+                if (universe != firstUniverse) {
+                  throw TypeCheckFailure.makeAlternativeTypeMismatchError(alternativeType);
+                }
+              }
+            } else {
+              throw TypeCheckFailure.makeAlternativeTypeError(alternativeType);
+            }
+          }
+        } else {
+          throw TypeCheckFailure.makeAlternativeDuplicateError(fieldName);
+        }
+      }
+
+      if (firstUniverse == null) {
+        return Constants.TYPE;
+      } else {
+        return firstUniverse.toExpr();
+      }
+    }
+  }
+
+  @Override
+  public final Expr onFieldAccess(Expr base, String fieldName) {
+    Expr baseType = base.accept(this);
+    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(baseType);
+
+    if (fields != null) {
+      for (Entry<String, Expr> field : fields) {
+        if (field.getKey().equals(fieldName)) {
+          return field.getValue();
+        }
+      }
+      throw TypeCheckFailure.makeFieldAccessRecordMissingError(fieldName);
+    } else {
+      Expr baseNormalized = base.accept(BetaNormalize.instance);
+      List<Entry<String, Expr>> alternatives = Expr.Util.asUnionType(baseNormalized);
+      if (alternatives != null) {
+        for (Entry<String, Expr> alternative : alternatives) {
+          if (alternative.getKey().equals(fieldName)) {
+            if (alternative.getValue() == null) {
+              return baseNormalized;
+            } else {
+              return Expr.makePi(fieldName, alternative.getValue(), baseNormalized);
+            }
+          }
+        }
+        throw TypeCheckFailure.makeFieldAccessUnionMissingError(fieldName);
+      } else {
+        throw TypeCheckFailure.makeFieldAccessError();
+      }
+    }
+  }
+
+  @Override
+  public final Expr onProjection(Expr base, String[] fieldNames) {
+    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.accept(this));
+
+    if (fields != null) {
+      Map<String, Expr> fieldMap = new HashMap<>();
+
+      for (Entry<String, Expr> field : fields) {
+        fieldMap.put(field.getKey(), field.getValue());
+      }
+
+      List<Entry<String, Expr>> newFields = new ArrayList();
+      List<String> missing = null;
+
+      for (String fieldName : fieldNames) {
+        Expr value = fieldMap.remove(fieldName);
+
+        if (value == null) {
+          if (missing == null) {
+            missing = new ArrayList<>();
+          }
+          missing.add(fieldName);
+        } else {
+          newFields.add(new SimpleImmutableEntry(fieldName, value));
+        }
+      }
+
+      if (missing == null) {
+        return Expr.makeRecordType(newFields);
+      } else {
+        throw TypeCheckFailure.makeFieldAccessRecordMissingError(missing.get(0));
+      }
+    } else {
+      throw TypeCheckFailure.makeProjectionError();
+    }
+  }
+
+  @Override
+  public final Expr onProjectionByType(Expr base, Expr type) {
+    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.accept(this));
+
+    if (fields == null) {
+      throw TypeCheckFailure.makeProjectionError();
+    } else {
+      List<Entry<String, Expr>> projected =
+          Expr.Util.asRecordType(type.accept(BetaNormalize.instance));
+
+      if (projected == null) {
+        throw TypeCheckFailure.makeProjectionError();
+      } else {
+        Map<String, Expr> fieldMap = new HashMap<>();
+
+        for (Entry<String, Expr> field : fields) {
+          fieldMap.put(field.getKey(), field.getValue());
+        }
+
+        for (Entry<String, Expr> projectedEntry : projected) {
+          String fieldName = projectedEntry.getKey();
+          Expr value = fieldMap.get(fieldName);
+          Expr projectedValue = projectedEntry.getValue();
+
+          if (value == null || !value.equivalent(projectedValue)) {
+            throw TypeCheckFailure.makeFieldAccessRecordMissingError(fieldName);
+          }
+        }
+
+        return Expr.makeRecordType(projected);
+      }
+    }
+  }
+
+  @Override
+  public final Expr onApplication(Expr base, Expr arg) {
+    Expr baseType = base.accept(this);
+    Expr argType = arg.accept(this);
+
+    Expr result = baseType.accept(new TypeCheckApplication(arg, argType, this));
+
+    if (result != null) {
+      return result;
+    } else {
+      throw TypeCheckFailure.makeApplicationError(base, arg);
     }
   }
 
@@ -174,71 +488,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
-  public final Expr onDouble(double value) {
-    return Constants.DOUBLE;
-  }
-
-  @Override
-  public final Expr onNatural(BigInteger value) {
-    return Constants.NATURAL;
-  }
-
-  @Override
-  public final Expr onInteger(BigInteger value) {
-    return Constants.INTEGER;
-  }
-
-  @Override
-  public final Expr onText(String[] parts, Iterable<Expr> interpolated) {
-    for (Expr expr : interpolated) {
-      Expr exprType = expr.accept(this);
-      if (!isText(exprType)) {
-        throw TypeCheckFailure.makeInterpolationError(expr, exprType);
-      }
-    }
-
-    return Constants.TEXT;
-  }
-
-  @Override
-  public final Expr onApplication(Expr base, final Expr arg) {
-    Expr baseType = base.accept(this);
-    final Expr argType = arg.accept(this);
-
-    Expr result =
-        baseType.accept(
-            new ExternalVisitor.Constant<Expr>(null) {
-
-              @Override
-              public Expr onBuiltIn(String name) {
-                if (name.equals("Some")) {
-                  if (isType(argType.accept(TypeCheck.this))) {
-                    return Expr.makeApplication(Expr.Constants.OPTIONAL, argType);
-                  } else {
-                    throw TypeCheckFailure.makeSomeApplicationError(arg, argType);
-                  }
-                }
-                throw TypeCheckFailure.makeBuiltInApplicationError(name, arg, argType);
-              }
-
-              @Override
-              public Expr onPi(String param, Expr input, Expr result) {
-                if (input.equivalent(argType)) {
-                  return result.substitute(param, arg).normalize();
-                } else {
-                  throw TypeCheckFailure.makeApplicationTypeError(input, argType);
-                }
-              }
-            });
-
-    if (result != null) {
-      return result;
-    } else {
-      throw TypeCheckFailure.makeApplicationError(base, arg);
-    }
-  }
-
-  @Override
   public final Expr onIf(Expr predicate, Expr thenValue, Expr elseValue) {
     Expr predicateType = predicate.accept(this);
     if (isBool(predicateType)) {
@@ -267,32 +516,13 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
-  public final Expr onLambda(String param, Expr input, Expr result) {
-    Expr inputType = input.accept(this);
-    if (Universe.fromExpr(inputType) != null) {
-      Context unshiftedContext = this.context;
-      Expr inputNormalized = input.accept(BetaNormalize.instance);
-      this.context = this.context.insert(param, inputNormalized).increment(param);
-      Expr resultType = result.accept(this);
-      this.context = unshiftedContext;
-      return Expr.makePi(param, inputNormalized, resultType);
+  public final Expr onAnnotated(Expr base, Expr type) {
+    Expr inferredType = base.accept(this);
+    if (inferredType.equivalent(type)) {
+      return inferredType;
     } else {
-      throw TypeCheckFailure.makeLambdaInputError(inputType);
+      throw TypeCheckFailure.makeAnnotationError(type, inferredType);
     }
-  }
-
-  @Override
-  public final Expr onPi(String param, Expr input, Expr result) {
-    Expr inputType = input.accept(this);
-    Context unshiftedContext = this.context;
-    this.context = this.context.insert(param, input).increment(param);
-    Expr resultType = result.accept(this);
-    this.context = unshiftedContext;
-
-    Universe inputTypeUniverse = Universe.fromExpr(inputType);
-    Universe resultTypeUniverse = Universe.fromExpr(resultType);
-
-    return Universe.functionCheck(inputTypeUniverse, resultTypeUniverse).toExpr();
   }
 
   @Override
@@ -310,252 +540,55 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
-  public final Expr onFieldAccess(Expr base, String fieldName) {
-    Expr baseType = base.accept(this);
-    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(baseType);
+  public final Expr onMerge(Expr handlers, Expr union, Expr type) {
+    Expr handlersType = handlers.accept(this);
+    List<Entry<String, Expr>> handlersTypeFields = Expr.Util.asRecordType(handlersType);
 
-    if (fields != null) {
-      for (Entry<String, Expr> field : fields) {
-        if (field.getKey().equals(fieldName)) {
-          return field.getValue();
-        }
-      }
-      throw TypeCheckFailure.makeFieldAccessRecordMissingError(fieldName);
+    if (handlersTypeFields == null) {
+      // The handlers argument is not a record.
+      throw TypeCheckFailure.makeMergeHandlersTypeError(handlersType);
     } else {
-      Expr baseNormalized = base.accept(BetaNormalize.instance);
-      List<Entry<String, Expr>> alternatives = Expr.Util.asUnionType(baseNormalized);
-      if (alternatives != null) {
-        for (Entry<String, Expr> alternative : alternatives) {
-          if (alternative.getKey().equals(fieldName)) {
-            if (alternative.getValue() == null) {
-              return baseNormalized;
-            } else {
-              return Expr.makePi(fieldName, alternative.getValue(), baseNormalized);
-            }
+      Expr unionType = union.accept(this);
+      List<Entry<String, Expr>> unionTypeFields = Expr.Util.asUnionType(unionType);
+
+      if (unionTypeFields != null) {
+        Expr inferredType = getMergeInferredType(handlersTypeFields, unionTypeFields);
+
+        if (inferredType != null) {
+          if (type == null || inferredType.equivalent(type)) {
+            return inferredType;
+          } else {
+            throw TypeCheckFailure.makeMergeInvalidAnnotationError(type, inferredType);
           }
-        }
-        throw TypeCheckFailure.makeFieldAccessUnionMissingError(fieldName);
-      } else {
-        throw TypeCheckFailure.makeFieldAccessError();
-      }
-    }
-  }
-
-  @Override
-  public final Expr onProjection(Expr base, String[] fieldNames) {
-    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.accept(this));
-
-    if (fields != null) {
-      Map<String, Expr> fieldMap = new HashMap();
-
-      for (Entry<String, Expr> field : fields) {
-        fieldMap.put(field.getKey(), field.getValue());
-      }
-
-      List<Entry<String, Expr>> newFields = new ArrayList();
-      List<String> missing = null;
-
-      for (String fieldName : fieldNames) {
-        Expr value = fieldMap.remove(fieldName);
-
-        if (value == null) {
-          if (missing == null) {
-            missing = new ArrayList<>();
-          }
-          missing.add(fieldName);
+        } else if (type != null) {
+          return type;
         } else {
-          newFields.add(new SimpleImmutableEntry(fieldName, value));
+          // Both were empty (this shouldn't happen).
+          throw TypeCheckFailure.makeMergeUnionTypeError(type);
         }
-      }
-
-      if (missing == null) {
-        return Expr.makeRecordType(newFields);
       } else {
-        throw TypeCheckFailure.makeFieldAccessRecordMissingError(missing.get(0));
-      }
-    } else {
-      throw TypeCheckFailure.makeProjectionError();
-    }
-  }
-
-  @Override
-  public final Expr onProjectionByType(Expr base, Expr type) {
-    List<Entry<String, Expr>> fields = Expr.Util.asRecordType(base.accept(this));
-
-    if (fields == null) {
-      throw TypeCheckFailure.makeProjectionError();
-    } else {
-      List<Entry<String, Expr>> projected =
-          Expr.Util.asRecordType(type.accept(BetaNormalize.instance));
-
-      if (projected == null) {
-        throw TypeCheckFailure.makeProjectionError();
-      } else {
-        Map<String, Expr> fieldMap = new HashMap<>();
-
-        for (Entry<String, Expr> field : fields) {
-          fieldMap.put(field.getKey(), field.getValue());
-        }
-
-        for (Entry<String, Expr> projectedEntry : projected) {
-          String fieldName = projectedEntry.getKey();
-          Expr value = fieldMap.get(fieldName);
-          Expr projectedValue = projectedEntry.getValue();
-
-          if (value == null || !value.equivalent(projectedValue)) {
-            throw TypeCheckFailure.makeFieldAccessRecordMissingError(fieldName);
-          }
-        }
-
-        return Expr.makeRecordType(projected);
-      }
-    }
-  }
-
-  @Override
-  public final Expr onRecord(Iterable<Entry<String, Expr>> fields, int size) {
-    if (size == 0) {
-      return Constants.EMPTY_RECORD_TYPE;
-    } else {
-      Map<String, Expr> fieldTypes = new TreeMap();
-
-      for (Entry<String, Expr> field : fields) {
-        fieldTypes.put(
-            field.getKey(), field.getValue().accept(this).accept(BetaNormalize.instance));
-      }
-
-      Expr recordType = Expr.makeRecordType(fieldTypes.entrySet());
-
-      // The inferred type must also be well-typed.
-      recordType.accept(this);
-      return recordType;
-    }
-  }
-
-  @Override
-  public final Expr onRecordType(Iterable<Entry<String, Expr>> fields, int size) {
-    // Need to check for duplicates here; see: https://github.com/travisbrown/dhallj/issues/6
-    Set<String> fieldNamesSeen = new HashSet<>(size);
-
-    Universe max = Universe.TYPE;
-
-    for (Entry<String, Expr> field : fields) {
-      String fieldName = field.getKey();
-
-      if (!fieldNamesSeen.add(fieldName)) {
-        throw TypeCheckFailure.makeFieldDuplicateError(fieldName);
-      }
-
-      Universe universe = Universe.fromExpr(field.getValue().accept(this));
-
-      if (universe != null) {
-        max = max.max(universe);
-      } else {
-        throw TypeCheckFailure.makeFieldTypeError(fieldName);
-      }
-    }
-
-    return max.toExpr();
-  }
-
-  @Override
-  public final Expr onUnionType(Iterable<Entry<String, Expr>> fields, int size) {
-    if (size == 0) {
-      return Constants.TYPE;
-    } else {
-      Set<String> seen = new HashSet();
-      Universe firstUniverse = null;
-
-      for (Entry<String, Expr> field : fields) {
-        String fieldName = field.getKey();
-
-        if (!seen.contains(fieldName)) {
-          seen.add(fieldName);
-
-          Expr alternativeType = field.getValue();
-
-          if (alternativeType != null) {
-            Universe universe = Universe.fromExpr(alternativeType.accept(this));
-
-            if (universe != null) {
-              if (firstUniverse == null) {
-                firstUniverse = universe;
-              } else {
-                if (universe != firstUniverse) {
-                  throw TypeCheckFailure.makeAlternativeTypeMismatchError(alternativeType);
-                }
-              }
-            } else {
-              throw TypeCheckFailure.makeAlternativeTypeError(alternativeType);
-            }
-          }
+        Expr optionalElementType = Expr.Util.getOptionalArg(unionType);
+        if (optionalElementType == null) {
+          throw TypeCheckFailure.makeMergeUnionTypeError(unionType);
         } else {
-          throw TypeCheckFailure.makeAlternativeDuplicateError(fieldName);
+          Expr inferredType =
+              getMergeInferredType(
+                  handlersTypeFields, makeOptionalConstructors(optionalElementType));
+
+          if (inferredType != null) {
+            if (type == null || inferredType.equivalent(type)) {
+              return inferredType;
+            } else {
+              throw TypeCheckFailure.makeMergeInvalidAnnotationError(type, inferredType);
+            }
+          } else if (type != null) {
+            return type;
+          } else {
+            // Both were empty (this shouldn't happen).
+            throw TypeCheckFailure.makeMergeUnionTypeError(type);
+          }
         }
       }
-
-      if (firstUniverse == null) {
-        return Constants.TYPE;
-      } else {
-        return firstUniverse.toExpr();
-      }
-    }
-  }
-
-  @Override
-  public final Expr onNonEmptyList(Iterable<Expr> values, int size) {
-    Iterator<Expr> it = values.iterator();
-    Expr firstType = it.next().accept(this);
-
-    if (isType(firstType.accept(this))) {
-      while (it.hasNext()) {
-        Expr elementType = it.next().accept(this);
-        if (!elementType.equivalent(firstType)) {
-          throw TypeCheckFailure.makeListTypeMismatchError(firstType, elementType);
-        }
-      }
-
-      return Expr.makeApplication(Expr.Constants.LIST, firstType);
-    } else {
-      throw TypeCheckFailure.makeListTypeError(firstType);
-    }
-  }
-
-  @Override
-  public final Expr onEmptyList(Expr type) {
-    // We verify that the type is well-typed.
-    type.accept(this);
-
-    Expr typeNormalized = type.accept(BetaNormalize.instance);
-    Expr elementType = Expr.Util.getListArg(typeNormalized);
-
-    if (elementType != null && isType(elementType.accept(this))) {
-      return Expr.makeApplication(Constants.LIST, elementType);
-    } else {
-      throw TypeCheckFailure.makeListTypeError(elementType);
-    }
-  }
-
-  @Override
-  public final Expr onLet(String name, Expr type, Expr value, Expr body) {
-    Expr valueType = value.accept(this);
-
-    if (type != null) {
-      if (!type.equivalent(valueType)) {
-        throw TypeCheckFailure.makeAnnotationError(type, valueType);
-      }
-    }
-
-    return body.substitute(name, value.accept(BetaNormalize.instance)).accept(this);
-  }
-
-  @Override
-  public final Expr onAnnotated(Expr base, Expr type) {
-    Expr inferredType = base.accept(this);
-    if (inferredType.equivalent(type)) {
-      return inferredType;
-    } else {
-      throw TypeCheckFailure.makeAnnotationError(type, inferredType);
     }
   }
 
@@ -655,64 +688,6 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
-  public final Expr onMerge(Expr handlers, Expr union, Expr type) {
-    Expr handlersType = handlers.accept(this);
-    List<Entry<String, Expr>> handlersTypeFields = Expr.Util.asRecordType(handlersType);
-
-    if (handlersTypeFields == null) {
-      // The handlers argument is not a record.
-      throw TypeCheckFailure.makeMergeHandlersTypeError(handlersType);
-    } else {
-      Expr unionType = union.accept(this);
-      List<Entry<String, Expr>> unionTypeFields = Expr.Util.asUnionType(unionType);
-
-      if (unionTypeFields != null) {
-        Expr inferredType = getMergeInferredType(handlersTypeFields, unionTypeFields);
-
-        if (inferredType != null) {
-          if (type == null || inferredType.equivalent(type)) {
-            return inferredType;
-          } else {
-            throw TypeCheckFailure.makeMergeInvalidAnnotationError(type, inferredType);
-          }
-        } else if (type != null) {
-          return type;
-        } else {
-          // Both were empty (this shouldn't happen).
-          throw TypeCheckFailure.makeMergeUnionTypeError(type);
-        }
-      } else {
-        Expr optionalElementType = Expr.Util.getOptionalArg(unionType);
-        if (optionalElementType == null) {
-          throw TypeCheckFailure.makeMergeUnionTypeError(unionType);
-        } else {
-          Expr inferredType =
-              getMergeInferredType(
-                  handlersTypeFields, makeOptionalConstructors(optionalElementType));
-
-          if (inferredType != null) {
-            if (type == null || inferredType.equivalent(type)) {
-              return inferredType;
-            } else {
-              throw TypeCheckFailure.makeMergeInvalidAnnotationError(type, inferredType);
-            }
-          } else if (type != null) {
-            return type;
-          } else {
-            // Both were empty (this shouldn't happen).
-            throw TypeCheckFailure.makeMergeUnionTypeError(type);
-          }
-        }
-      }
-    }
-  }
-
-  @Override
-  public final Expr onNote(Expr base, Source source) {
-    return base.accept(this);
-  }
-
-  @Override
   public final Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
@@ -728,7 +703,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
-  public Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+  public final Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
@@ -737,32 +712,32 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
-  static boolean isBool(Expr expr) {
+  static final boolean isBool(Expr expr) {
     String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Bool");
   }
 
-  static boolean isText(Expr expr) {
+  static final boolean isText(Expr expr) {
     String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Text");
   }
 
-  static boolean isList(Expr expr) {
+  static final boolean isList(Expr expr) {
     String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("List");
   }
 
-  static boolean isNatural(Expr expr) {
+  static final boolean isNatural(Expr expr) {
     String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Natural");
   }
 
-  static boolean isOptional(Expr expr) {
+  static final boolean isOptional(Expr expr) {
     String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Optional");
   }
 
-  static boolean isType(Expr expr) {
+  static final boolean isType(Expr expr) {
     String asBuiltIn = Expr.Util.asBuiltIn(expr);
     return asBuiltIn != null && asBuiltIn.equals("Type");
   }
@@ -770,7 +745,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   private final void checkRecursiveTypeMerge(
       List<Entry<String, Expr>> lhs, List<Entry<String, Expr>> rhs) {
 
-    Map<String, Expr> lhsMap = new HashMap();
+    Map<String, Expr> lhsMap = new HashMap<>();
 
     for (Entry<String, Expr> entry : lhs) {
       lhsMap.put(entry.getKey(), entry.getValue());
@@ -786,16 +761,16 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     }
   }
 
-  private List<Entry<String, Expr>> makeOptionalConstructors(Expr type) {
+  private static final List<Entry<String, Expr>> makeOptionalConstructors(Expr type) {
     List<Entry<String, Expr>> constructors = new ArrayList<>();
     constructors.add(new SimpleImmutableEntry("None", null));
     constructors.add(new SimpleImmutableEntry("Some", type));
     return constructors;
   }
 
-  private Expr getMergeInferredType(
+  private static final Expr getMergeInferredType(
       List<Entry<String, Expr>> handlerTypes, List<Entry<String, Expr>> constructors) {
-    Map<String, Expr> handlerTypeMap = new HashMap();
+    Map<String, Expr> handlerTypeMap = new HashMap<>();
 
     for (Entry<String, Expr> handlerTypeField : handlerTypes) {
       handlerTypeMap.put(handlerTypeField.getKey(), handlerTypeField.getValue());
@@ -870,13 +845,13 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   private static final Entry<String, Expr>[] prefer(
       List<Entry<String, Expr>> base, List<Entry<String, Expr>> updates) {
-    Map<String, Expr> updateMap = new LinkedHashMap();
+    Map<String, Expr> updateMap = new LinkedHashMap<>();
 
     for (Entry<String, Expr> field : updates) {
       updateMap.put(field.getKey(), field.getValue());
     }
 
-    List<Entry<String, Expr>> result = new ArrayList();
+    List<Entry<String, Expr>> result = new ArrayList<>();
 
     for (Entry<String, Expr> field : base) {
       String key = field.getKey();
@@ -886,7 +861,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       if (inUpdates == null) {
         result.add(field);
       } else {
-        result.add(new SimpleImmutableEntry(key, inUpdates));
+        result.add(new SimpleImmutableEntry<>(key, inUpdates));
       }
     }
 
@@ -894,7 +869,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       result.add(field);
     }
 
-    Entry<String, Expr>[] resultArray = result.toArray((Entry[]) new Entry[result.size()]);
+    Entry<String, Expr>[] resultArray = result.toArray(new Entry[result.size()]);
 
     Arrays.sort(resultArray, entryComparator);
 

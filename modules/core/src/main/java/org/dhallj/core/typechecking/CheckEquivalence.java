@@ -1,6 +1,5 @@
 package org.dhallj.core.typechecking;
 
-import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
 import org.dhallj.core.ExternalVisitor;
