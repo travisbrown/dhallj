@@ -12,7 +12,7 @@ import java.util.Map;
 public abstract class Reader {
 
   /** Only allow symbols that correspond to entire encoded Dhall expressions. */
-  public <R> R nextSymbol(Visitor<R> visitor) {
+  public final <R> R nextSymbol(Visitor<R> visitor) {
     skip55799();
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
@@ -43,12 +43,12 @@ public abstract class Reader {
 
   protected abstract byte[] read(int count);
 
-  public BigInteger readUnsignedInteger() {
+  public final BigInteger readUnsignedInteger() {
     skip55799();
     return readUnsignedInteger(read());
   }
 
-  public BigInteger readPositiveBigNum() {
+  public final BigInteger readPositiveBigNum() {
     skip55799();
     BigInteger result = readBigNum();
     if (result.compareTo(BigInteger.ZERO) < 0) {
@@ -58,7 +58,7 @@ public abstract class Reader {
     }
   }
 
-  public BigInteger readBigNum() {
+  public final BigInteger readBigNum() {
     skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
@@ -85,7 +85,7 @@ public abstract class Reader {
     }
   }
 
-  public String readNullableTextString() {
+  public final String readNullableTextString() {
     skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
@@ -98,7 +98,7 @@ public abstract class Reader {
     }
   }
 
-  public byte[] readNullableByteString() {
+  public final byte[] readNullableByteString() {
     skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
@@ -118,7 +118,7 @@ public abstract class Reader {
    * CBOR representation where we don't know simply from the length of the array and the first
    * element what type of expression we're decoding - could be projection or projection by type
    */
-  public String tryReadTextString() {
+  public final String tryReadTextString() {
     skip55799();
     byte next = peek();
     switch (MajorType.fromByte(next)) {
@@ -129,7 +129,7 @@ public abstract class Reader {
     }
   }
 
-  public BigInteger readArrayStart() {
+  public final BigInteger readArrayStart() {
     skip55799();
     byte next = read();
     switch (MajorType.fromByte(next)) {
@@ -146,14 +146,14 @@ public abstract class Reader {
     }
   }
 
-  public <R> Map<String, R> readMap(Visitor<R> visitor) {
+  public final <R> Map<String, R> readMap(Visitor<R> visitor) {
     skip55799();
     byte b = this.read();
     switch (MajorType.fromByte(b)) {
       case MAP:
-        BigInteger length = readMapStart(b);
-        Map<String, R> entries = new HashMap<>();
-        for (int i = 0; i < length.longValue(); i++) {
+        int length = readMapStart(b).intValue();
+        Map<String, R> entries = new HashMap<>(length);
+        for (int i = 0; i < length; i++) {
           String key = readNullableTextString();
           R value = nextSymbol(visitor);
           entries.put(key, value);
@@ -165,17 +165,17 @@ public abstract class Reader {
     }
   }
 
-  private BigInteger readUnsignedInteger(byte b) {
+  private final BigInteger readUnsignedInteger(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     return readBigInteger(info, b);
   }
 
-  private BigInteger readNegativeInteger(byte b) {
+  private final BigInteger readNegativeInteger(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     return BigInteger.valueOf(-1).subtract(readBigInteger(info, b));
   }
 
-  private byte[] readByteString(byte b) {
+  private final byte[] readByteString(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
@@ -186,7 +186,7 @@ public abstract class Reader {
     }
   }
 
-  private String readTextString(byte b) {
+  private final String readTextString(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
@@ -198,7 +198,7 @@ public abstract class Reader {
     }
   }
 
-  private <R> R readArrayStart(byte b, Visitor<R> visitor) {
+  private final <R> R readArrayStart(byte b, Visitor<R> visitor) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
@@ -220,7 +220,7 @@ public abstract class Reader {
     }
   }
 
-  private BigInteger readMapStart(byte b) {
+  private final BigInteger readMapStart(byte b) {
     AdditionalInfo info = AdditionalInfo.fromByte(b);
     BigInteger length = readBigInteger(info, b);
     if (length.compareTo(BigInteger.ZERO) < 0) {
@@ -230,7 +230,7 @@ public abstract class Reader {
     }
   }
 
-  private <R> R readPrimitive(byte b, Visitor<R> visitor) {
+  private final <R> R readPrimitive(byte b, Visitor<R> visitor) {
     int value = b & 31;
     if (0 <= value && value <= 19) {
       throw new CBORException(String.format("Primitive %d is unassigned", value));
@@ -291,7 +291,7 @@ public abstract class Reader {
     }
   }
 
-  private void skip55799() {
+  private final void skip55799() {
     byte next = peek();
     switch (MajorType.fromByte(next)) {
       case SEMANTIC_TAG:
@@ -312,7 +312,7 @@ public abstract class Reader {
     }
   }
 
-  private BigInteger readBigInteger(AdditionalInfo info, byte first) {
+  private final BigInteger readBigInteger(AdditionalInfo info, byte first) {
     switch (info) {
       case DIRECT:
         return BigInteger.valueOf(first & 31);
@@ -333,7 +333,7 @@ public abstract class Reader {
     }
   }
 
-  private BigInteger readBigInteger(long numBytes) {
+  private final BigInteger readBigInteger(long numBytes) {
     BigInteger result = BigInteger.ZERO;
     for (long i = 0; i < numBytes; i++) {
       int next = this.read() & 0xff;
