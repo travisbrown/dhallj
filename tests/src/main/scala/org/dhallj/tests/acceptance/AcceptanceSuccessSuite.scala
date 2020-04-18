@@ -8,8 +8,7 @@ import org.dhallj.core.binary.Decode.decode
 import org.dhallj.imports.mini.Resolver
 import org.dhallj.parser.DhallParser
 
-import org.dhallj.imports._
-import org.dhallj.imports.Caching._
+import org.dhallj.imports.{ImportCache, ResolveImports}
 import org.http4s.client._
 import org.http4s.client.blaze._
 
@@ -60,7 +59,7 @@ trait CachedResolvingInput extends Input[Expr] {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor[IO].unsafeRunSync)
+        ResolveImports(parsed)
       }.unsafeRunSync
     }
   }
@@ -77,7 +76,7 @@ trait ResolvingInput extends Input[Expr] {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(NoopImportsCache[IO], NoopImportsCache[IO]))
+        ResolveImports(new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
       }.unsafeRunSync
     }
   }

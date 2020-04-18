@@ -8,7 +8,7 @@ import org.dhallj.imports.ResolveImportsVisitor._
 import org.http4s.Headers
 import org.http4s.headers.`Access-Control-Allow-Origin`
 
-object CORSComplianceCheck {
+object CorsComplianceCheck {
 
   def apply[F[_]](parent: ImportContext, child: ImportContext, headers: Headers)(implicit F: Sync[F]): F[Unit] =
     parent match {
