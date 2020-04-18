@@ -78,6 +78,6 @@ final class NullVisitor<R> implements Visitor<R> {
   }
 
   private R notExpected(String msg) {
-    throw new CBORException(String.format("%s not expected - expected null", msg));
+    throw new CborException(String.format("%s not expected - expected null", msg));
   }
 }
