@@ -40,23 +40,22 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
     }
 
   override def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    onImport(Local(path), mode, hash)
+    onImport(ImportContext.Local(path), mode, hash)
 
   override def onClasspathImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    onImport(Classpath(path), mode, hash)
+    onImport(ImportContext.Classpath(path), mode, hash)
 
   override def onRemoteImport(url: URI, using: F[Expr], mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    if (using.ne(null)) using >>= (u => onImport(Remote(url, u), mode, hash))
-    else onImport(Remote(url, null), mode, hash)
+    if (using.ne(null)) using >>= (u => onImport(ImportContext.Remote(url, u), mode, hash))
+    else onImport(ImportContext.Remote(url, null), mode, hash)
 
   override def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    onImport(Env(value), mode, hash)
+    onImport(ImportContext.Env(value), mode, hash)
 
   override def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    onImport(Missing, mode, hash)
+    onImport(ImportContext.Missing, mode, hash)
 
   private def onImport(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] = {
-
     //TODO check that equality is sensibly defined for URI and Path
     def rejectCyclicImports(imp: ImportContext, parents: List[ImportContext]): F[Unit] =
       if (parents.contains(imp))
@@ -65,13 +64,13 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
 
     def importLocation(imp: ImportContext): F[Expr] =
       imp match {
-        case Local(path) => makeLocation("Local", path.toString)
+        case ImportContext.Local(path) => makeLocation("Local", path.toString)
         // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
-        case Classpath(path) =>
+        case ImportContext.Classpath(path) =>
           F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
-        case Remote(uri, _) => makeLocation("Remote", uri.toString)
-        case Env(value)     => makeLocation("Environment", value)
-        case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+        case ImportContext.Remote(uri, _) => makeLocation("Remote", uri.toString)
+        case ImportContext.Env(value)     => makeLocation("Environment", value)
+        case ImportContext.Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
       }
 
     def makeLocation(field: String, value: String): F[Expr] =
@@ -107,24 +106,24 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
         } yield e
 
     def fetch(imp: ImportContext): F[String] = imp match {
-      case Env(value) =>
+      case ImportContext.Env(value) =>
         for {
           vO <- F.delay(sys.env.get(value))
           v <- vO.fold(
             F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
           )(F.pure)
         } yield v
-      case Local(path) =>
+      case ImportContext.Local(path) =>
         for {
           v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
         } yield v
-      case Classpath(path) =>
+      case ImportContext.Classpath(path) =>
         for {
           v <- F.delay(
             scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString
           )
         } yield v
-      case Remote(uri, using) =>
+      case ImportContext.Remote(uri, using) =>
         for {
           headers <- F.pure(ToHeaders(using))
           req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
@@ -140,19 +139,19 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
               )
           }
         } yield resp
-      case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
+      case ImportContext.Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
     }
 
     def loadWithSemiSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = mode match {
       case ImportMode.LOCATION =>
         imp match {
-          case Local(path) => makeLocation("Local", path.toString)
+          case ImportContext.Local(path) => makeLocation("Local", path.toString)
           // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
-          case Classpath(path) =>
+          case ImportContext.Classpath(path) =>
             F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
-          case Remote(uri, _) => makeLocation("Remote", uri.toString)
-          case Env(value)     => makeLocation("Environment", value)
-          case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+          case ImportContext.Remote(uri, _) => makeLocation("Remote", uri.toString)
+          case ImportContext.Env(value)     => makeLocation("Environment", value)
+          case ImportContext.Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
         }
       case ImportMode.RAW_TEXT =>
         for {
@@ -213,17 +212,5 @@ object ResolveImportsVisitor {
   def mkVisitor[F[_] <: AnyRef: Sync: Client](semanticCache: ImportsCache[F],
                                               semiSemanticCache: ImportsCache[F]): ResolveImportsVisitor[F] =
     ResolveImportsVisitor(semanticCache, semiSemanticCache, Nil)
-
-  sealed trait ImportContext
-
-  case class Env(value: String) extends ImportContext
-
-  case class Local(absolutePath: Path) extends ImportContext
-
-  case class Classpath(absolutePath: Path) extends ImportContext
-
-  case class Remote(uri: URI, using: Expr) extends ImportContext
-
-  case object Missing extends ImportContext
 
 }

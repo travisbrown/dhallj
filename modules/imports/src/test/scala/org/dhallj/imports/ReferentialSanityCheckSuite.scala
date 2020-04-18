@@ -5,7 +5,7 @@ import java.nio.file.Paths
 
 import cats.effect.IO
 import munit.FunSuite
-import org.dhallj.imports.ResolveImportsVisitor._
+import org.dhallj.imports.ImportContext._
 
 class ReferentialSanityCheckSuite extends FunSuite {
 

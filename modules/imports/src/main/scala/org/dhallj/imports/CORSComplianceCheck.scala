@@ -12,9 +12,9 @@ object CORSComplianceCheck {
 
   def apply[F[_]](parent: ImportContext, child: ImportContext, headers: Headers)(implicit F: Sync[F]): F[Unit] =
     parent match {
-      case Remote(uri, _) =>
+      case ImportContext.Remote(uri, _) =>
         child match {
-          case Remote(uri2, _) =>
+          case ImportContext.Remote(uri2, _) =>
             if (sameOrigin(uri, uri2))
               F.unit
             else
