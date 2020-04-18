@@ -3,8 +3,6 @@ package org.dhallj.core;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 
 /**
