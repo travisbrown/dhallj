@@ -125,6 +125,26 @@ public abstract class Writer {
     this.write(bytes);
   }
 
+  // See https://stackoverflow.com/a/6162687/334519.
+  public static final int float16ToIntBits(float asFloat) {
+    int bits = Float.floatToIntBits(asFloat);
+    int sign = bits >>> 16 & 0x8000; // sign only
+    int value = (bits & 0x7fffffff) + 0x1000; // rounded value
+
+    if (value >= 0x38800000) { // remains normalized value
+      return sign | value - 0x38000000 >>> 13; // exp - 127 + 15
+    }
+    if (value < 0x33000000) { // too small for subnormal
+      return sign; // becomes +/-0
+    }
+    value = (bits & 0x7fffffff) >>> 23; // tmp exp for subnormal calc
+
+    return sign
+        | ((bits & 0x7fffff | 0x800000) // add subnormal bit
+                + (0x800000 >>> value - 102) // round depending on cut off
+            >>> 126 - value); // div by 2^(1-(exp-127+15)) and >> 13 | exp=0
+  }
+
   public final void writeDouble(double value) {
     int base = MajorType.PRIMITIVE.value << 5;
 
@@ -144,13 +164,23 @@ public abstract class Writer {
     } else {
       float asFloat = (float) value;
       if (value == (double) asFloat) {
-        int bits = Float.floatToIntBits(asFloat);
-        this.write(
-            (byte) (base | AdditionalInfo.FOUR_BYTES.value),
-            (byte) ((bits >> 24) & 0xff),
-            (byte) ((bits >> 16) & 0xff),
-            (byte) ((bits >> 8) & 0xff),
-            (byte) ((bits >> 0) & 0xff));
+        int asFloat16Bits = float16ToIntBits(asFloat);
+
+        if (Reader.intBitsToFloat16(asFloat16Bits) == asFloat) {
+          this.write(
+              (byte) (base | AdditionalInfo.TWO_BYTES.value),
+              (byte) ((asFloat16Bits >> 8) & 0xff),
+              (byte) ((asFloat16Bits >> 0) & 0xff));
+        } else {
+
+          int bits = Float.floatToRawIntBits(asFloat);
+          this.write(
+              (byte) (base | AdditionalInfo.FOUR_BYTES.value),
+              (byte) ((bits >> 24) & 0xff),
+              (byte) ((bits >> 16) & 0xff),
+              (byte) ((bits >> 8) & 0xff),
+              (byte) ((bits >> 0) & 0xff));
+        }
       } else {
 
         long bits = Double.doubleToLongBits(value);
