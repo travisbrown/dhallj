@@ -244,6 +244,20 @@ public abstract class Reader {
     return builder.toString();
   }
 
+  public static final float intBitsToFloat16(int bits) {
+    int s = (bits & 0x8000) >> 15;
+    int e = (bits & 0x7C00) >> 10;
+    int f = bits & 0x03FF;
+
+    if (e == 0) {
+      return (float) ((s != 0 ? -1 : 1) * Math.pow(2, -14) * (f / Math.pow(2, 10)));
+    } else if (e == 0x1F) {
+      return f != 0 ? Float.NaN : (s != 0 ? -1 : 1) * Float.POSITIVE_INFINITY;
+    }
+
+    return (float) ((s != 0 ? -1 : 1) * Math.pow(2, e - 15) * (1 + f / Math.pow(2, 10)));
+  }
+
   private final <R> R readPrimitive(byte b, Visitor<R> visitor) {
     int value = b & 31;
     if (0 <= value && value <= 19) {
@@ -267,19 +281,7 @@ public abstract class Reader {
         bits |= next;
       }
 
-      int s = (bits & 0x8000) >> 15;
-      int e = (bits & 0x7C00) >> 10;
-      int f = bits & 0x03FF;
-
-      float result = 0;
-      if (e == 0) {
-        result = (float) ((s != 0 ? -1 : 1) * Math.pow(2, -14) * (f / Math.pow(2, 10)));
-      } else if (e == 0x1F) {
-        result = f != 0 ? Float.NaN : (s != 0 ? -1 : 1) * Float.POSITIVE_INFINITY;
-      } else {
-        result = (float) ((s != 0 ? -1 : 1) * Math.pow(2, e - 15) * (1 + f / Math.pow(2, 10)));
-      }
-      return visitor.onHalfFloat(result);
+      return visitor.onHalfFloat(intBitsToFloat16(bits));
     } else if (value == 26) {
       int result = 0;
       for (int i = 0; i < 4; i++) {
