@@ -436,7 +436,8 @@ final class BetaNormalizeApplication {
 
         Expr tail;
         if (listArg.size() == 1) {
-          tail = Expr.makeEmptyListLiteral(newArgs.get(0));
+          tail =
+              Expr.makeEmptyListLiteral(Expr.makeApplication(Expr.Constants.LIST, newArgs.get(0)));
 
         } else {
           List<Expr> listArgTail = new ArrayList<>(listArg);
@@ -474,7 +475,7 @@ final class BetaNormalizeApplication {
       } else if (args.size() == 3) {
         return Expr.makeLambda(
             "cons",
-            Expr.makePi(newArgs.get(2).increment("cons"), newArgs.get(2).increment("cons")),
+            Expr.makePi(newArgs.get(0), Expr.makePi(newArgs.get(2), newArgs.get(2))),
             Expr.makeLambda("nil", newArgs.get(2).increment("cons"), applied));
       } else if (args.size() == 4) {
         return Expr.makeLambda("nil", newArgs.get(2).increment("cons"), applied);
@@ -532,7 +533,7 @@ final class BetaNormalizeApplication {
       } else if (args.size() == 3) {
         return Expr.makeLambda(
             "some",
-            Expr.makePi(newArgs.get(2).increment("some"), newArgs.get(2).increment("some")),
+            Expr.makePi(newArgs.get(2), newArgs.get(2)),
             Expr.makeLambda("none", newArgs.get(2).increment("some"), applied));
       } else if (args.size() == 4) {
         return Expr.makeLambda("none", newArgs.get(2).increment("some"), applied);
