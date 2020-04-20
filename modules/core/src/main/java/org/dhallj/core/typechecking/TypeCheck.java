@@ -201,12 +201,13 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
         throw TypeCheckFailure.makeFieldDuplicateError(fieldName);
       }
 
-      Universe universe = Universe.fromExpr(field.getValue().accept(this));
+      Expr type = field.getValue().accept(this);
+      Universe universe = Universe.fromExpr(type);
 
       if (universe != null) {
         max = max.max(universe);
       } else {
-        throw TypeCheckFailure.makeFieldTypeError(fieldName);
+        throw TypeCheckFailure.makeFieldTypeError(fieldName, type);
       }
     }
 
@@ -215,46 +216,32 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   @Override
   public final Expr onUnionType(Iterable<Entry<String, Expr>> fields, int size) {
-    if (size == 0) {
-      return Constants.TYPE;
-    } else {
-      Set<String> seen = new HashSet<>();
-      Universe firstUniverse = null;
+    Set<String> fieldNamesSeen = new HashSet<>(size);
 
-      for (Entry<String, Expr> field : fields) {
-        String fieldName = field.getKey();
+    Universe max = Universe.TYPE;
 
-        if (!seen.contains(fieldName)) {
-          seen.add(fieldName);
+    for (Entry<String, Expr> field : fields) {
+      String fieldName = field.getKey();
 
-          Expr alternativeType = field.getValue();
+      if (!fieldNamesSeen.add(fieldName)) {
+        throw TypeCheckFailure.makeAlternativeDuplicateError(fieldName);
+      }
 
-          if (alternativeType != null) {
-            Universe universe = Universe.fromExpr(alternativeType.accept(this));
+      Expr alternativeType = field.getValue();
 
-            if (universe != null) {
-              if (firstUniverse == null) {
-                firstUniverse = universe;
-              } else {
-                if (universe != firstUniverse) {
-                  throw TypeCheckFailure.makeAlternativeTypeMismatchError(alternativeType);
-                }
-              }
-            } else {
-              throw TypeCheckFailure.makeAlternativeTypeError(alternativeType);
-            }
-          }
+      if (alternativeType != null) {
+        Expr type = alternativeType.accept(this);
+        Universe universe = Universe.fromExpr(type);
+
+        if (universe != null) {
+          max = max.max(universe);
         } else {
-          throw TypeCheckFailure.makeAlternativeDuplicateError(fieldName);
+          throw TypeCheckFailure.makeAlternativeTypeError(fieldName, type);
         }
       }
-
-      if (firstUniverse == null) {
-        return Constants.TYPE;
-      } else {
-        return firstUniverse.toExpr();
-      }
     }
+
+    return max.toExpr();
   }
 
   @Override

@@ -118,7 +118,7 @@ public final class TypeCheckFailure extends DhallException {
     return new TypeCheckFailure("Not a record");
   }
 
-  static final TypeCheckFailure makeFieldTypeError(String fieldName) {
+  static final TypeCheckFailure makeFieldTypeError(String fieldName, Expr type) {
     return new TypeCheckFailure("Invalid field type");
   }
 
@@ -138,11 +138,7 @@ public final class TypeCheckFailure extends DhallException {
     return new TypeCheckFailure("Expression doesn't match annotation");
   }
 
-  static final TypeCheckFailure makeAlternativeTypeMismatchError(Expr type) {
-    return new TypeCheckFailure("Alternative annotation mismatch");
-  }
-
-  static final TypeCheckFailure makeAlternativeTypeError(Expr type) {
+  static final TypeCheckFailure makeAlternativeTypeError(String fieldName, Expr type) {
     return new TypeCheckFailure("Invalid alternative type");
   }
 
