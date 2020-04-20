@@ -30,7 +30,7 @@ class ImportResolutionSuite(val base: String)
       val cache = initializeCache
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(cache))
+        parsed.accept(ResolveImportsVisitor.mkVisitor(cache, NoopImportsCache[IO]))
       }.unsafeRunSync
     }
   }
