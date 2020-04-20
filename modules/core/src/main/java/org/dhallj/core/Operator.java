@@ -2,19 +2,19 @@ package org.dhallj.core;
 
 /** Represents a Dhall operator. */
 public enum Operator {
-  OR("||", 2, true),
-  AND("&&", 6, true),
-  EQUALS("==", 11, true),
-  NOT_EQUALS("!=", 12, true),
-  PLUS("+", 3, false),
-  TIMES("*", 10, false),
-  TEXT_APPEND("++", 4, false),
-  LIST_APPEND("#", 5, false),
-  COMBINE("\u2227", 7, false),
-  PREFER("\u2afd", 8, false),
-  COMBINE_TYPES("\u2a53", 9, false),
-  IMPORT_ALT("?", 1, false),
-  EQUIVALENT("\u2261", 13, false),
+  OR("||", 3, true),
+  AND("&&", 7, true),
+  EQUALS("==", 12, true),
+  NOT_EQUALS("!=", 13, true),
+  PLUS("+", 4, false),
+  TIMES("*", 11, false),
+  TEXT_APPEND("++", 5, false),
+  LIST_APPEND("#", 6, false),
+  COMBINE("\u2227", 8, false),
+  PREFER("\u2afd", 9, false),
+  COMBINE_TYPES("\u2a53", 10, false),
+  IMPORT_ALT("?", 2, false),
+  EQUIVALENT("\u2261", 1, false),
   COMPLETE("::", 0, false);
 
   private static final Operator[] values = values();
