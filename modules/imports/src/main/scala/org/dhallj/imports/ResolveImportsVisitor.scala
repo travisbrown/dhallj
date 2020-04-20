@@ -19,7 +19,7 @@ import org.dhallj.parser.DhallParser
 import org.http4s.Status.Successful
 import org.http4s.Uri.unsafeFromString
 import org.http4s.client.Client
-import org.http4s.{EntityDecoder, Headers, Request}
+import org.http4s.{EntityDecoder, Request}
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -104,8 +104,8 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
         case Classpath(path) =>
           F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
         case Remote(uri, _) => makeLocation("Remote", uri.toString)
-        case Env(value)     => makeLocation("Environment", value)
-        case Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
+        case Env(value) => makeLocation("Environment", value)
+        case Missing => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
       }
     }
 
@@ -120,22 +120,23 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
       else F.raiseError(new ResolutionFailure("Cached expression does not match its hash"))
     }
 
-    def loadWithSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = for {
-      cached <- if (hash != null) semanticCache.get(hash) else F.pure(Option.empty[Array[Byte]])
-      e      <- cached match {
-        case Some(bs) => for {
-          _ <- checkHashesMatch(bs, hash)
-          e <- F.delay(Decode.decode(bs))
-        } yield e
-        case None => for {
-          e <- loadWithSemiSemanticCache(imp, mode, hash)
-          //TODO alpha-normalize?
-          bs = e.getEncodedBytes
-          _ <- checkHashesMatch(bs, hash)
-          _ <- semanticCache.put(hash, bs)
-        } yield e
-      }
-    } yield e
+    def loadWithSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] =
+      if (hash == null) loadWithSemiSemanticCache(imp, mode, hash)
+      else for {
+        cached <- semanticCache.get(hash)
+        e <- cached match {
+          case Some(bs) => for {
+            _ <- checkHashesMatch(bs, hash)
+            e <- F.delay(Decode.decode(bs))
+          } yield e
+          case None => for {
+            e <- loadWithSemiSemanticCache(imp, mode, hash)
+            bs = e.alphaNormalize.getEncodedBytes
+            _ <- checkHashesMatch(bs, hash)
+            _ <- semanticCache.put(hash, bs)
+          } yield e
+        }
+      } yield e
 
     def fetch(imp: ImportContext): F[String] = imp match {
       case Env(value) =>
@@ -159,14 +160,14 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
         for {
           headers <- F.pure(ToHeaders(using))
           req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
-          resp <- Client.fetch[(String, Headers)](req) {
+          resp <- Client.fetch[String](req) {
             case Successful(resp) =>
               for {
                 s <- EntityDecoder.decodeString(resp)
                 _ <- if (parents.nonEmpty) CORSComplianceCheck(parents.head, imp, resp.headers) else F.unit
               } yield s
             case _ =>
-              F.raiseError[(String, Headers)](
+              F.raiseError[String](
                 new ResolutionFailure(s"Missing import - cannot resolve $uri")
               )
           }
@@ -174,30 +175,44 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
       case Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
     }
 
-    //TODO where do we handle importing as Text?
-    def loadWithSemiSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = for {
-      text <- fetch(imp)
-      parsed    <- F.delay(DhallParser.parse(text))
-      resolved <- {
-            val v = ResolveImportsVisitor[F](semanticCache, semiSemanticCache, imp :: parents)
-            v.duplicateImportsCache = this.duplicateImportsCache
-            parsed.accept(v)
-          }
-      semiHash = resolved.getEncodedBytes
-      cached <- semiSemanticCache.get(semiHash)
-      e <- cached match {
-        case Some(bs) => F.delay(Decode.decode(bs))
-        case None => for {
-          _ <- F.delay(typeCheck(resolved))
-          normalized <- F.delay(resolved)
-          _ <- semiSemanticCache.put(semiHash, normalized.getEncodedBytes)
-        } yield normalized
+    def loadWithSemiSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = mode match {
+      case ImportMode.LOCATION => imp match {
+        case Local(path) => makeLocation("Local", path.toString)
+        // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
+        case Classpath(path) =>
+          F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
+        case Remote(uri, _) => makeLocation("Remote", uri.toString)
+        case Env(value) => makeLocation("Environment", value)
+        case Missing => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
       }
-    } yield resolved
+      case ImportMode.RAW_TEXT => for {
+        text <- fetch(imp)
+      } yield Expr.makeTextLiteral(text)
+      case ImportMode.CODE => for {
+        text <- fetch(imp)
+        parsed <- F.delay(DhallParser.parse(text))
+        resolved <- {
+          val v = ResolveImportsVisitor[F](semanticCache, semiSemanticCache, imp :: parents)
+          v.duplicateImportsCache = this.duplicateImportsCache
+          parsed.accept(v)
+        }
+        semiHash = MessageDigest.getInstance("SHA-256").digest(resolved.getEncodedBytes)
+        cached <- semiSemanticCache.get(semiHash)
+        expr <- cached match {
+          case Some(bs) => F.delay(Decode.decode(bs))
+          case None => for {
+            _ <- F.delay(typeCheck(resolved))
+            //TODO substitutions here?
+            normalized <- F.delay(resolved.normalize)
+            _ <- semiSemanticCache.put(semiHash, normalized.getEncodedBytes)
+          } yield normalized
+        }
+      } yield expr
+    }
 
     def resolve(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] =
       if (duplicateImportsCache.contains(imp))
-        F.delay(duplicateImportsCache.get(imp))
+        F.delay(duplicateImportsCache.get(imp).get)
       else for {
         e <- loadWithSemanticCache(imp, mode, hash)
         _ <- F.delay(duplicateImportsCache.put(imp, e))
@@ -219,11 +234,11 @@ private[dhallj] case class ResolveImportsVisitor[F[_] <: AnyRef](semanticCache: 
 
 object ResolveImportsVisitor {
 
-  def mkVisitor[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] =
-    Caching.mkImportsCache[F].map(c => mkVisitor(c))
+  def mkVisitor[F[_] <: AnyRef : Sync : Client]: F[ResolveImportsVisitor[F]] =
+    (Caching.mkImportsCache[F]("dhall"), Caching.mkImportsCache[F]("dhallj")).mapN((c, c2) => mkVisitor(c, c2))
 
-  def mkVisitor[F[_] <: AnyRef: Sync: Client](cache: ImportsCache[F]): ResolveImportsVisitor[F] =
-    ResolveImportsVisitor(cache, Nil)
+  def mkVisitor[F[_] <: AnyRef : Sync : Client](semanticCache: ImportsCache[F], semiSemanticCache: ImportsCache[F]): ResolveImportsVisitor[F] =
+    ResolveImportsVisitor(semanticCache, semiSemanticCache, Nil)
 
   sealed trait ImportContext
 

@@ -8,7 +8,7 @@ import cats.implicits._
 import munit.FunSuite
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode
-import org.dhallj.imports.Caching.ImportsCache
+import org.dhallj.imports.Caching.{ImportsCache, NoopImportsCache}
 import org.dhallj.parser.DhallParser.parse
 import org.http4s.client._
 import org.http4s.client.blaze._
@@ -148,9 +148,9 @@ class ImportResolutionSuite extends FunSuite {
   test("Valid hash") {
 
     val expr = parse(
-      "let x = classpath:/hashed/package.dhall sha256:d60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
+      "classpath:/hashed/package.dhall sha256:d60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15"
     )
-    val expected = parse("let x = 1 in x").normalize
+    val expected = parse("let x = 1 in x").alphaNormalize.normalize
 
     assert(resolve(expr) == expected)
   }
@@ -160,7 +160,7 @@ class ImportResolutionSuite extends FunSuite {
     val expr = parse(
       "let x = classpath:/hashed/package.dhall sha256:e60d8415e36e86dae7f42933d3b0c4fe3ca238f057fba206c7e9fbf5d784fe15 in x"
     )
-    val expected = parse("let x = 1 in x").normalize
+    val expected = parse("let x = 1 in x").alphaNormalize.normalize
 
     assert(resolve(expr) == expected)
   }
@@ -169,7 +169,7 @@ class ImportResolutionSuite extends FunSuite {
     val cache = InMemoryCache()
 
     val expected = parse("let x = 2 in x")
-    val encoded = expected.normalize.getEncodedBytes
+    val encoded = expected.alphaNormalize.normalize.getEncodedBytes
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
     val expr =
@@ -185,7 +185,7 @@ class ImportResolutionSuite extends FunSuite {
 
     val cached = parse("let x = 1 in x")
     val expected = parse("let x = 2 in x")
-    val encoded = cached.normalize.getEncodedBytes
+    val encoded = cached.alphaNormalize.normalize.getEncodedBytes
     val hash = MessageDigest.getInstance("SHA-256").digest(expected.normalize.getEncodedBytes) //Hash doesn't match what is stored
 
     val expr =
@@ -200,7 +200,7 @@ class ImportResolutionSuite extends FunSuite {
     val cache = InMemoryCache()
 
     val expected = parse("let x = 2 in x")
-    val encoded = expected.normalize.getEncodedBytes
+    val encoded = expected.alphaNormalize.normalize.getEncodedBytes
     val hash = MessageDigest.getInstance("SHA-256").digest(encoded)
 
     val expr = parse(
@@ -226,7 +226,7 @@ class ImportResolutionSuite extends FunSuite {
     client.use { c =>
       implicit val http: Client[IO] = c
 
-      e.accept(ResolveImportsVisitor.mkVisitor(cache))
+      e.accept(ResolveImportsVisitor.mkVisitor(cache, NoopImportsCache[IO]))
     }
 
   private case class InMemoryCache() extends ImportsCache[IO] {

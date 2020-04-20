@@ -54,13 +54,13 @@ private[dhallj] object Caching {
       perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
     } yield (if (perms) Some(new ImportsCacheImpl[F](rootDir)) else None)
 
-  def mkImportsCache[F[_] <: AnyRef](implicit F: Sync[F]): F[ImportsCache[F]] = {
+  def mkImportsCache[F[_] <: AnyRef](cacheName: String)(implicit F: Sync[F]): F[ImportsCache[F]] = {
     def makeCacheFromEnvVar(env: String, relativePath: String): F[Option[ImportsCache[F]]] =
       for {
         envValO <- F.delay(sys.env.get(env))
         cache <- envValO.fold(F.pure(Option.empty[ImportsCache[F]]))(envVal =>
           for {
-            rootDir <- F.pure(Paths.get(envVal, relativePath, "dhall"))
+            rootDir <- F.pure(Paths.get(envVal, relativePath, cacheName))
             c <- mkImportsCache(rootDir)
           } yield c
         )

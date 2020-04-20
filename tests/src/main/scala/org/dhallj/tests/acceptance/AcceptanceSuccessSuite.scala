@@ -60,7 +60,7 @@ trait CachedResolvingInput extends Input[Expr] {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(NoopImportsCache[IO]))
+        parsed.accept(ResolveImportsVisitor.mkVisitor[IO].unsafeRunSync)
       }.unsafeRunSync
     }
   }
@@ -77,7 +77,7 @@ trait ResolvingInput extends Input[Expr] {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        parsed.accept(ResolveImportsVisitor.mkVisitor(NoopImportsCache[IO]))
+        parsed.accept(ResolveImportsVisitor.mkVisitor(NoopImportsCache[IO], NoopImportsCache[IO]))
       }.unsafeRunSync
     }
   }
@@ -94,9 +94,9 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
-class CachingTypeCheckingSuite(val base: String)
+class ParsingTypeCheckingSuite(val base: String)
     extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
-    with CachedResolvingInput
+    with ParsingInput
 class TypeCheckingSuite(val base: String)
     extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
     with ResolvingInput
@@ -104,7 +104,7 @@ class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceS
 class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with CachedResolvingInput
 class NormalizationUSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with ParsingInput
 
-class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with CachedResolvingInput {
+class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with ResolvingInput {
   def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
 
   def transform(input: Expr): String = input.normalize.alphaNormalize.hash

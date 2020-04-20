@@ -21,13 +21,10 @@ class HashingHTProjectionSuite extends HashingSuite("semantic-hash/success/haske
 class AlphaNormalizationUnitSuite extends AlphaNormalizationSuite("alpha-normalization/success/unit")
 class AlphaNormalizationRegressionSuite extends AlphaNormalizationSuite("alpha-normalization/success/regression")
 
-class TypeCheckingSimpleSuite extends CachingTypeCheckingSuite("type-inference/success/simple")
-class TypeCheckingUnitSuite extends CachingTypeCheckingSuite("type-inference/success/unit")
+class TypeCheckingSimpleSuite extends ParsingTypeCheckingSuite("type-inference/success/simple")
+class TypeCheckingUnitSuite extends ParsingTypeCheckingSuite("type-inference/success/unit")
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
-  //TODO prelude is WAY too slow
-  override def ignored = Set("prelude")
-
   override def slow = Set("prelude")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
