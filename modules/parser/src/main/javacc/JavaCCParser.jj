@@ -725,40 +725,6 @@ Expr.Parsed APPLICATION_EXPRESSION(): {
   }
 }
 
-Map.Entry<List<String>, Expr.Parsed> WITH_ENTRY(): {
-  List<String> labels = new ArrayList<String>();
-  String current;
-  Expr.Parsed expr;
-} {
-  (
-    current=ANY_LABEL_OR_SOME() { labels.add(current); }
-    (LOOKAHEAD(2) [<WHSP>] <DOT> [<WHSP>] current=ANY_LABEL_OR_SOME() { labels.add(current); })*
-    [<WHSP>]
-    <EQUAL_SIGN>
-    [<WHSP>]
-    expr=APPLICATION_EXPRESSION()
-  ) {
-    return new SimpleImmutableEntry<>(labels, expr);
-  }
-}
-
-Expr.Parsed WITH_EXPRESSION(): {
-  Expr.Parsed base;
-  Map.Entry<List<String>, Expr.Parsed> current;
-  Token first;
-} {
-  (
-    base=APPLICATION_EXPRESSION()
-    (
-      LOOKAHEAD(2)
-      first=<WHSP> <WITH> <WHSP>
-      current=WITH_ENTRY() { base = ParsingHelpers.makeWith(base, current.getKey(), current.getValue(), first); }
-    )*
-  ) {
-    return base;
-  }
-}
-
 Map.Entry<String, Operator> OPERATOR(): {
   Token token;
   Token whsp = null;
@@ -791,24 +757,46 @@ Expr.Parsed OPERATOR_EXPRESSION(int minPredecence): {
   Expr.Parsed base;
   Expr.Parsed arg;
   Map.Entry<String, Operator> operator;
+  Map.Entry<List<String>, Expr.Parsed> current;
   Token whsp0 = null;
   Token whsp1 = null;
 } {
   (
-    base=WITH_EXPRESSION()
-    (
-      LOOKAHEAD({
-        (getToken(1).kind == WHSP && OperatorPrecedenceTable.get(getToken(2).kind) >= minPredecence) ||
-        OperatorPrecedenceTable.get(getToken(1).kind) >= minPredecence
-      })
-      [whsp0=<WHSP>]
-      operator=OPERATOR() [whsp1=<WHSP>] arg=OPERATOR_EXPRESSION(operator.getValue().getPrecedence() + 1) {
-        base = ParsingHelpers.makeOperatorApplication(operator.getValue(), base, arg, operator.getKey(), whsp0, whsp1);
-        whsp0 = null;
-      }
+    base=APPLICATION_EXPRESSION()
+    (LOOKAHEAD({
+      getToken(1).kind == WHSP && getToken(2).kind == WITH && minPredecence < 1
+    })
+      whsp0=<WHSP> <WITH> <WHSP>
+      current=WITH_ENTRY() { base = ParsingHelpers.makeWith(base, current.getKey(), current.getValue(), whsp0); }
     )*
+    (LOOKAHEAD({
+      (getToken(1).kind == WHSP && OperatorPrecedenceTable.get(getToken(2).kind) >= minPredecence) ||
+      OperatorPrecedenceTable.get(getToken(1).kind) >= minPredecence
+    })
+    [whsp0=<WHSP>]
+    operator=OPERATOR() [whsp1=<WHSP>] arg=OPERATOR_EXPRESSION(operator.getValue().getPrecedence() + 1) {
+      base = ParsingHelpers.makeOperatorApplication(operator.getValue(), base, arg, operator.getKey(), whsp0, whsp1);
+      whsp0 = null;
+    })*
   ) {
     return base;
+  }
+}
+
+Map.Entry<List<String>, Expr.Parsed> WITH_ENTRY(): {
+  List<String> labels = new ArrayList<String>();
+  String current;
+  Expr.Parsed expr;
+} {
+  (
+    current=ANY_LABEL_OR_SOME() { labels.add(current); }
+    (LOOKAHEAD(2) [<WHSP>] <DOT> [<WHSP>] current=ANY_LABEL_OR_SOME() { labels.add(current); })*
+    [<WHSP>]
+    <EQUAL_SIGN>
+    [<WHSP>]
+    expr=OPERATOR_EXPRESSION(1)
+  ) {
+    return new SimpleImmutableEntry<>(labels, expr);
   }
 }
 
@@ -950,7 +938,7 @@ Expr.Parsed FUNCTION_TYPE_OR_ANNOTATED_EXPRESSION(): {
   Token whsp1 = null;
 } {
   (
-    base=OPERATOR_EXPRESSION(1)
+    base=OPERATOR_EXPRESSION(0)
     (LOOKAHEAD(2)
       [whsp0=<WHSP>]
       ((<ARROW> [<WHSP>] result=BASE_EXPRESSION()) |
