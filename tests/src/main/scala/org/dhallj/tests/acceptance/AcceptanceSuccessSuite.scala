@@ -5,10 +5,9 @@ import cats.effect.{ContextShift, IO}
 import java.nio.file.{Files, Paths}
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
-import org.dhallj.imports.mini.Resolver
 import org.dhallj.parser.DhallParser
 
-import org.dhallj.imports.{ImportCache, ResolveImports}
+import org.dhallj.imports.{ImportCache, Resolver}
 import org.http4s.client._
 import org.http4s.client.blaze._
 
@@ -59,7 +58,7 @@ trait CachedResolvingInput extends Input[Expr] {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        ResolveImports(parsed)
+        Resolver.resolve[IO](parsed)
       }.unsafeRunSync
     }
   }
@@ -76,7 +75,7 @@ trait ResolvingInput extends Input[Expr] {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        ResolveImports(new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
+        Resolver.resolve[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
       }.unsafeRunSync
     }
   }

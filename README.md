@@ -406,7 +406,7 @@ It requires a bit of ceremony to set up:
 ```scala
 import cats.effect.{ContextShift, IO, Resource}
 import org.dhallj.core.Expr
-import org.dhallj.imports._
+import org.dhallj.imports.syntax._
 import org.dhallj.parser.DhallParser
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder

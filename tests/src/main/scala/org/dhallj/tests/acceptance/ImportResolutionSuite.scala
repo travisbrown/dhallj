@@ -5,7 +5,7 @@ import java.nio.file.Files
 import cats.effect.{ContextShift, IO}
 
 import org.dhallj.core.Expr
-import org.dhallj.imports.{ImportCache, ResolveImports}
+import org.dhallj.imports.{ImportCache, Resolver}
 import org.dhallj.parser.DhallParser
 
 import org.http4s.client._
@@ -29,7 +29,7 @@ class ImportResolutionSuite(val base: String)
       val cache = initializeCache
       BlazeClientBuilder[IO](global).resource.use { client =>
         implicit val c: Client[IO] = client
-        ResolveImports[IO](cache, new ImportCache.NoopImportCache[IO])(parsed)
+        Resolver.resolve[IO](cache, new ImportCache.NoopImportCache[IO])(parsed)
       }.unsafeRunSync
     }
   }
