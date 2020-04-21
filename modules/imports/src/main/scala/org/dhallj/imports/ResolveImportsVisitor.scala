@@ -144,16 +144,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
     }
 
     def loadWithSemiSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = mode match {
-      case ImportMode.LOCATION =>
-        imp match {
-          case ImportContext.Local(path) => makeLocation("Local", path.toString)
-          // Cannot support this and remain spec-compliant as result type must be <Local Text | Remote Text | Environment Text | Missing>
-          case ImportContext.Classpath(path) =>
-            F.raiseError(new ResolutionFailure("Importing classpath as location is not supported"))
-          case ImportContext.Remote(uri, _) => makeLocation("Remote", uri.toString)
-          case ImportContext.Env(value)     => makeLocation("Environment", value)
-          case ImportContext.Missing        => F.pure(Expr.makeFieldAccess(Expr.Constants.LOCATION_TYPE, "Missing"))
-        }
+      case ImportMode.LOCATION => F.raiseError(new ResolutionFailure("Unreachable - location imports already handled"))
       case ImportMode.RAW_TEXT =>
         for {
           text <- fetch(imp)
