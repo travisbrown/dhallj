@@ -8,6 +8,7 @@ import cats.implicits._
 import munit.FunSuite
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode
+import org.dhallj.imports.syntax._
 import org.dhallj.parser.DhallParser.parse
 import org.http4s.client._
 import org.http4s.client.blaze._
