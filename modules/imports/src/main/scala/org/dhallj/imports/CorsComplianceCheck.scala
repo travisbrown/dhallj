@@ -4,7 +4,6 @@ import java.net.URI
 
 import cats.effect.Sync
 import org.dhallj.core.DhallException.ResolutionFailure
-import org.dhallj.imports.ResolveImportsVisitor._
 import org.http4s.Headers
 import org.http4s.headers.`Access-Control-Allow-Origin`
 

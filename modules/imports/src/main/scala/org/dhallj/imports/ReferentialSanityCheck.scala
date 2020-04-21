@@ -14,18 +14,18 @@ object ReferentialSanityCheck {
         case ImportContext.Local(path) =>
           F.raiseError(
             new ResolutionFailure(
-              "Referential sanity violation - remote import $uri cannot reference local import $path"
+              s"Referential sanity violation - remote import $uri cannot reference local import $path"
             )
           )
         case ImportContext.Classpath(path) =>
           F.raiseError(
             new ResolutionFailure(
-              "Referential sanity violation - remote import $uri cannot reference classpath import $path"
+              s"Referential sanity violation - remote import $uri cannot reference classpath import $path"
             )
           )
         case ImportContext.Env(v) =>
           F.raiseError(
-            new ResolutionFailure("Referential sanity violation - remote import $uri cannot reference env import $v")
+            new ResolutionFailure(s"Referential sanity violation - remote import $uri cannot reference env import $v")
           )
       }
     case ImportContext.Missing => F.raiseError(new ResolutionFailure(s"Missing import cannot reference import $child"))
