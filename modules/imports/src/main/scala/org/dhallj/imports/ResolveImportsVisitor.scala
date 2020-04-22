@@ -1,7 +1,7 @@
 package org.dhallj.imports
 
 import java.net.URI
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 import java.security.MessageDigest
 
 import cats.data.NonEmptyList
@@ -32,6 +32,14 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
   implicit Client: Client[F],
   F: Sync[F]
 ) extends LiftVisitor[F](F) {
+  def this(
+    semanticCache: ImportCache[F],
+    semiSemanticCache: ImportCache[F],
+    parents: List[ImportContext]
+  )(implicit Client: Client[F], F: Sync[F]) {
+    this(semanticCache, semiSemanticCache, NonEmptyList.fromListUnsafe(parents))
+  }
+
   private var duplicateImportCache: MMap[ImportContext, Expr] = MMap.empty
 
   override def onOperatorApplication(operator: Operator, lhs: F[Expr], rhs: F[Expr]): F[Expr] =
@@ -212,4 +220,14 @@ private object ResolveImportsVisitor {
   def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F], relativeTo: Path): ResolveImportsVisitor[F] =
     apply[F](semanticCache, new ImportCache.NoopImportCache, relativeTo)
 
+  private def cwd: Path = Paths.get(".")
+
+  def apply[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] = apply[F](cwd)
+
+  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F],
+                                          semiSemanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
+    apply[F](semanticCache, semiSemanticCache, cwd)
+
+  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
+    apply[F](semanticCache, cwd)
 }
