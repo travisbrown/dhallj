@@ -226,7 +226,7 @@ class ImportResolutionSuite extends FunSuite {
     client.use { c =>
       implicit val http: Client[IO] = c
 
-      e.accept(ResolveImportsVisitor[IO](cache))
+      Resolver.resolve(cache)(e)
     }
 
   private case class InMemoryCache() extends ImportCache[IO] {

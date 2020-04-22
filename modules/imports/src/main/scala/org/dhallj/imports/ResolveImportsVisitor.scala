@@ -4,6 +4,7 @@ import java.net.URI
 import java.nio.file.Path
 import java.security.MessageDigest
 
+import cats.data.NonEmptyList
 import cats.effect.Sync
 import cats.implicits._
 import org.dhallj.cats.LiftVisitor
@@ -13,7 +14,7 @@ import org.dhallj.core.Expr.Util.typeCheck
 import org.dhallj.core._
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.Canonicalization.canonicalize
-import org.dhallj.imports.ResolveImportsVisitor._
+import org.dhallj.imports.ImportContext.Local
 import org.dhallj.parser.DhallParser
 import org.http4s.Status.Successful
 import org.http4s.Uri.unsafeFromString
@@ -26,7 +27,7 @@ import scala.collection.mutable.{Map => MMap}
 final private class ResolveImportsVisitor[F[_] <: AnyRef](
   semanticCache: ImportCache[F],
   semiSemanticCache: ImportCache[F],
-  parents: List[ImportContext]
+  parents: NonEmptyList[ImportContext]
 )(
   implicit Client: Client[F],
   F: Sync[F]
@@ -58,8 +59,8 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
 
   private def onImport(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] = {
     //TODO check that equality is sensibly defined for URI and Path
-    def rejectCyclicImports(imp: ImportContext, parents: List[ImportContext]): F[Unit] =
-      if (parents.contains(imp))
+    def rejectCyclicImports(imp: ImportContext, parents: NonEmptyList[ImportContext]): F[Unit] =
+      if (parents.exists(_ == imp))
         F.raiseError[Unit](new ResolutionFailure(s"Cyclic import - $imp is already imported in chain $parents"))
       else F.unit
 
@@ -184,27 +185,31 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
 
     def importNonLocation(imp: ImportContext, mode: ImportMode, hash: Array[Byte]) =
       for {
-        _ <- if (parents.nonEmpty) ReferentialSanityCheck(parents.head, imp) else F.unit
+        _ <- ReferentialSanityCheck(parents.head, imp)
         _ <- rejectCyclicImports(imp, parents)
         r <- resolve(imp, mode, hash)
       } yield r
 
     for {
-      imp <- if (parents.isEmpty) canonicalize(i) else canonicalize(parents.head, i)
+      imp <- canonicalize(parents.head, i)
       result <- if (mode == ImportMode.LOCATION) importLocation(imp) else importNonLocation(imp, mode, hash)
     } yield result
   }
 }
 
 private object ResolveImportsVisitor {
-  def apply[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] =
-    Sync[F].map2(ImportCache[F]("dhall"), ImportCache[F]("dhallj"))(apply[F](_, _))
+  def apply[F[_] <: AnyRef: Sync: Client](relativeTo: Path): F[ResolveImportsVisitor[F]] =
+    Sync[F].map2(ImportCache[F]("dhall"), ImportCache[F]("dhallj"))(apply[F](_, _, relativeTo))
 
   def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F],
-                                          semiSemanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
-    new ResolveImportsVisitor(semanticCache, semiSemanticCache, Nil)
+                                          semiSemanticCache: ImportCache[F],
+                                          relativeTo: Path): ResolveImportsVisitor[F] =
+    //We add a placeholder filename "package.dhall" for the base directory as a Local import must have a filename
+    new ResolveImportsVisitor(semanticCache,
+                              semiSemanticCache,
+                              NonEmptyList.one(Local(relativeTo.resolve("package.dhall"))))
 
-  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
-    new ResolveImportsVisitor(semanticCache, new ImportCache.NoopImportCache, Nil)
+  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F], relativeTo: Path): ResolveImportsVisitor[F] =
+    apply[F](semanticCache, new ImportCache.NoopImportCache, relativeTo)
 
 }
