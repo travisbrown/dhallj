@@ -12,3 +12,7 @@ tmp/
 .bloop/
 .metals/
 project/metals.sbt
+bazel-bin
+bazel-dhallj
+bazel-out
+bazel-testlogs
