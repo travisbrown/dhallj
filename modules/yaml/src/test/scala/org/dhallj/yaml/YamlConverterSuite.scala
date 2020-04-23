@@ -66,6 +66,14 @@ class YamlConverterSuite extends ScalaCheckSuite {
     assert(clue(Option(YamlConverter.toYamlString(expr1))) == Some("a: |-\n  foo\n  bar\n"))
   }
 
+  test("convert test containing quotes") {
+    val expr1 = DhallParser.parse(""" { a = "\"" } """).normalize()
+    val expr2 = DhallParser.parse(""" { a = "\"\n" } """).normalize()
+
+    assert(clue(Option(YamlConverter.toYamlString(expr1))) == Some("a: '\"'\n"))
+    assert(clue(Option(YamlConverter.toYamlString(expr2))) == Some("a: |\n  \"\n"))
+  }
+
   test("convert text containing newlines and respect SnakeYAML configuration") {
     val expr1 = DhallParser.parse(""" { a = "foo\nbar" } """).normalize()
     val expected = "\"a\": \"foo\\nbar\"\n"
