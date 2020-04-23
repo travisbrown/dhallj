@@ -46,7 +46,7 @@ public class YamlHandler implements JsonHandler {
   }
 
   public void onString(String value) {
-    this.addValue(value.replaceAll("\\\\n", "\n"));
+    this.addValue(value.replaceAll("\\\\n", "\n").replaceAll("\\\\\"", "\""));
   }
 
   public void onArrayStart() {
