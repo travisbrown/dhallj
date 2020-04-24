@@ -2,7 +2,7 @@ language: scala
 dist: xenial
 
 scala:
-  - 2.13.1
+  - 2.13.2
   - 2.12.11
 
 jdk:
