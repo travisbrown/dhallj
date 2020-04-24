@@ -2,7 +2,7 @@ import ReleaseTransformations._
 
 organization in ThisBuild := "org.dhallj"
 
-val previousVersion = "0.1.1"
+val previousVersion = "0.2.0"
 val catsVersion = "2.1.1"
 val circeVersion = "0.13.0"
 val jawnVersion = "1.0.0"
