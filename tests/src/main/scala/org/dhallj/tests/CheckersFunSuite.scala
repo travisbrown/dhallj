@@ -22,21 +22,13 @@ class CheckersFunSuite(
     f: A => P,
     testConfig: Test.Parameters = defaultTestConfig,
     prettyConfig: Pretty.Params = defaultPrettyConfig
-  )(implicit
-    loc: Location,
-    tp: P => Prop,
-    AA: Arbitrary[A],
-    AS: Shrink[A],
-    AP: A => Pretty): Unit = check(Prop.forAll(f)(tp, AA, AS, AP), testConfig, prettyConfig)
+  )(implicit loc: Location, tp: P => Prop, AA: Arbitrary[A], AS: Shrink[A], AP: A => Pretty): Unit =
+    check(Prop.forAll(f)(tp, AA, AS, AP), testConfig, prettyConfig)
 
   def testAll1[A, P](name: String)(
     f: A => P,
     testConfig: Test.Parameters = defaultTestConfig,
     prettyConfig: Pretty.Params = defaultPrettyConfig
-  )(implicit
-    loc: Location,
-    tp: P => Prop,
-    AA: Arbitrary[A],
-    AS: Shrink[A],
-    AP: A => Pretty): Unit = test(name)(check1(f, testConfig, prettyConfig))
+  )(implicit loc: Location, tp: P => Prop, AA: Arbitrary[A], AS: Shrink[A], AP: A => Pretty): Unit =
+    test(name)(check1(f, testConfig, prettyConfig))
 }
