@@ -23,17 +23,20 @@ class CanonicalizationSuite extends FunSuite {
 
   test("Imports - quoted") {
     assertEquals(canonicalize[IO](Local(Paths.get("/\"foo\"/\"bar.dhall\""))).unsafeRunSync,
-                 Local(Paths.get("/foo/bar.dhall")))
+                 Local(Paths.get("/foo/bar.dhall"))
+    )
   }
 
   test("Paths - Trailing .") {
     assertEquals(canonicalize[IO](Local(Paths.get("/foo/./bar.dhall"))).unsafeRunSync,
-                 Local(Paths.get("/foo/bar.dhall")))
+                 Local(Paths.get("/foo/bar.dhall"))
+    )
   }
 
   test("Paths - Trailing ..") {
     assertEquals(canonicalize[IO](Local(Paths.get("/foo/bar/../baz.dhall"))).unsafeRunSync,
-                 Local(Paths.get("/foo/baz.dhall")))
+                 Local(Paths.get("/foo/baz.dhall"))
+    )
   }
 
   //TODO determine whether spec is correct on this
@@ -155,7 +158,9 @@ class CanonicalizationSuite extends FunSuite {
 
   test("Chaining - local / remote") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Remote(new URI("http://foo.org/bar.dhall"), headers1)).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")),
+                       Remote(new URI("http://foo.org/bar.dhall"), headers1)
+      ).unsafeRunSync,
       Remote(new URI("http://foo.org/bar.dhall"), headers1)
     )
   }
@@ -163,14 +168,17 @@ class CanonicalizationSuite extends FunSuite {
   test("Chaining - remote / remote absolute") {
     assertEquals(
       canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1),
-                       Remote(new URI("https://bar.com/bar/baz.dhall"), headers2)).unsafeRunSync,
+                       Remote(new URI("https://bar.com/bar/baz.dhall"), headers2)
+      ).unsafeRunSync,
       Remote((new URI("https://bar.com/bar/baz.dhall")), headers2)
     )
   }
 
   test("Chaining - remote / local relative") {
     assertEquals(
-      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1), Local(Paths.get("./baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1),
+                       Local(Paths.get("./baz.dhall"))
+      ).unsafeRunSync,
       Remote(new URI("http://foo.org/baz.dhall"), headers1)
     )
   }
@@ -178,7 +186,9 @@ class CanonicalizationSuite extends FunSuite {
   //This is actually prohibited by the sanity check but we don't worry about it here
   test("Chaining - remote / local absolute") {
     assertEquals(
-      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1), Local(Paths.get("/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1),
+                       Local(Paths.get("/baz.dhall"))
+      ).unsafeRunSync,
       Local(Paths.get("/baz.dhall"))
     )
   }

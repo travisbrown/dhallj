@@ -28,8 +28,8 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
   semanticCache: ImportCache[F],
   semiSemanticCache: ImportCache[F],
   parents: NonEmptyList[ImportContext]
-)(
-  implicit Client: Client[F],
+)(implicit
+  Client: Client[F],
   F: Sync[F]
 ) extends LiftVisitor[F](F) {
   def this(
@@ -211,11 +211,13 @@ private object ResolveImportsVisitor {
 
   def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F],
                                           semiSemanticCache: ImportCache[F],
-                                          relativeTo: Path): ResolveImportsVisitor[F] =
+                                          relativeTo: Path
+  ): ResolveImportsVisitor[F] =
     //We add a placeholder filename "package.dhall" for the base directory as a Local import must have a filename
     new ResolveImportsVisitor(semanticCache,
                               semiSemanticCache,
-                              NonEmptyList.one(Local(relativeTo.resolve("package.dhall"))))
+                              NonEmptyList.one(Local(relativeTo.resolve("package.dhall")))
+    )
 
   def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F], relativeTo: Path): ResolveImportsVisitor[F] =
     apply[F](semanticCache, new ImportCache.NoopImportCache, relativeTo)
@@ -225,7 +227,8 @@ private object ResolveImportsVisitor {
   def apply[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] = apply[F](cwd)
 
   def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F],
-                                          semiSemanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
+                                          semiSemanticCache: ImportCache[F]
+  ): ResolveImportsVisitor[F] =
     apply[F](semanticCache, semiSemanticCache, cwd)
 
   def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F]): ResolveImportsVisitor[F] =

@@ -125,7 +125,7 @@ trait ArbitraryInstances {
       genType(defaultMaxDepth).flatMap(tpe =>
         genForType(tpe).map(_.map(expr => Annotated(expr, tpe))).getOrElse(genType(defaultMaxDepth))
       )
-       */
+         */
       )
       .map(WellTypedExpr(_))
   )

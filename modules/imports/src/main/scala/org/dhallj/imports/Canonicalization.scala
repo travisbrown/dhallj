@@ -18,8 +18,8 @@ object Canonicalization {
     case i                    => F.pure(i)
   }
 
-  def canonicalize[F[_]](parent: ImportContext, child: ImportContext)(
-    implicit F: Sync[F]
+  def canonicalize[F[_]](parent: ImportContext, child: ImportContext)(implicit
+    F: Sync[F]
   ): F[ImportContext] =
     parent match {
       case Remote(uri, headers) =>
