@@ -12,6 +12,7 @@ val snakeYamlVersion = "1.26"
 val http4sVersion = "0.21.4"
 
 val testDependencies = Seq(
+  "co.nstant.in" % "cbor" % "0.9",
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion,
   "org.scalameta" %% "munit" % munitVersion,
   "org.scalameta" %% "munit-scalacheck" % munitVersion
