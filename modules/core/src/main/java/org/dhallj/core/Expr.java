@@ -868,7 +868,8 @@ public abstract class Expr {
       this.state = state;
       this.size = 0;
       if (sortFields) {
-        this.sortedFields = fields.clone();
+        this.sortedFields = new Entry[fields.length];
+        System.arraycopy(fields, 0, sortedFields, 0, fields.length);
         Arrays.sort(sortedFields, entryComparator);
       } else {
         this.sortedFields = fields;

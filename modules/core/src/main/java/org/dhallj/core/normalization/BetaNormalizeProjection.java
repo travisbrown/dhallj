@@ -31,7 +31,8 @@ final class BetaNormalizeProjection extends ExternalVisitor.Constant<Expr> {
       return result;
     } else {
       // We have to sort the field names if we can't reduce.
-      String[] newFieldNames = fieldNames.clone();
+      String[] newFieldNames = new String[fieldNames.length];
+      System.arraycopy(fieldNames, 0, newFieldNames, 0, fieldNames.length);
       Arrays.sort(newFieldNames);
       return Expr.makeProjection(base, newFieldNames);
     }
