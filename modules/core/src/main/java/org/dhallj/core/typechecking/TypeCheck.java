@@ -312,7 +312,7 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
           }
           missing.add(fieldName);
         } else {
-          newFields.add(new SimpleImmutableEntry(fieldName, value));
+          newFields.add(new SimpleImmutableEntry<>(fieldName, value));
         }
       }
 
@@ -621,8 +621,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       // The input record is non-empty.
       if (firstType != null) {
         Entry[] inferredTypeFields = {
-          new SimpleImmutableEntry(Constants.MAP_KEY_FIELD_NAME, Constants.TEXT),
-          new SimpleImmutableEntry(Constants.MAP_VALUE_FIELD_NAME, firstType)
+          new SimpleImmutableEntry<>(Constants.MAP_KEY_FIELD_NAME, Constants.TEXT),
+          new SimpleImmutableEntry<>(Constants.MAP_VALUE_FIELD_NAME, firstType)
         };
 
         Expr inferredType =
@@ -763,8 +763,8 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
 
   private static final List<Entry<String, Expr>> makeOptionalConstructors(Expr type) {
     List<Entry<String, Expr>> constructors = new ArrayList<>();
-    constructors.add(new SimpleImmutableEntry("None", null));
-    constructors.add(new SimpleImmutableEntry("Some", type));
+    constructors.add((Entry<String, Expr>) new SimpleImmutableEntry<>("None", (Expr) null));
+    constructors.add((Entry<String, Expr>) new SimpleImmutableEntry<>("Some", type));
     return constructors;
   }
 
