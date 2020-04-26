@@ -20,7 +20,7 @@ public final class TypeCheckFailure extends DhallException {
   }
 
   static TypeCheckFailure makeUnboundVariableError(String name) {
-    return new TypeCheckFailure(String.format("Unbound variable: %s", name));
+    return new TypeCheckFailure("Unbound variable: " + name);
   }
 
   static TypeCheckFailure makeOperatorError(Operator operator) {
@@ -29,24 +29,24 @@ public final class TypeCheckFailure extends DhallException {
       case AND:
       case EQUALS:
       case NOT_EQUALS:
-        return new TypeCheckFailure(String.format("%s only works on Bools", operator));
+        return new TypeCheckFailure(operator.toString() + " only works on Bools");
       case PLUS:
       case TIMES:
-        return new TypeCheckFailure(String.format("%s only works on Naturals", operator));
+        return new TypeCheckFailure(operator.toString() + " only works on Naturals");
       case TEXT_APPEND:
-        return new TypeCheckFailure(String.format("%s only works on Text", operator));
+        return new TypeCheckFailure(operator.toString() + " only works on Text");
       case LIST_APPEND:
-        return new TypeCheckFailure(String.format("%s only works on Lists", operator));
+        return new TypeCheckFailure(operator.toString() + " only works on Lists");
       case COMBINE:
       case PREFER:
         return new TypeCheckFailure("You can only combine records");
       case COMBINE_TYPES:
         return new TypeCheckFailure(
-            String.format("%s requires arguments that are record types", operator));
+            operator.toString() + " requires arguments that are record types");
       case EQUIVALENT:
         return new TypeCheckFailure("Incomparable expression");
       default:
-        return new TypeCheckFailure(String.format("Operator error on %s", operator));
+        return new TypeCheckFailure("Operator error on " + operator.toString());
     }
   }
 
@@ -67,7 +67,7 @@ public final class TypeCheckFailure extends DhallException {
   }
 
   static TypeCheckFailure makeBuiltInApplicationError(String name, Expr arg, Expr argType) {
-    return new TypeCheckFailure(String.format("Can't apply %s", name));
+    return new TypeCheckFailure("Can't apply " + name);
   }
 
   static TypeCheckFailure makeApplicationTypeError(Expr expected, Expr received) {
@@ -107,11 +107,11 @@ public final class TypeCheckFailure extends DhallException {
   }
 
   static TypeCheckFailure makeFieldAccessRecordMissingError(String fieldName) {
-    return new TypeCheckFailure(String.format("Missing record field: %s", fieldName));
+    return new TypeCheckFailure("Missing record field: " + fieldName);
   }
 
   static TypeCheckFailure makeFieldAccessUnionMissingError(String fieldName) {
-    return new TypeCheckFailure(String.format("Missing constructor: %s", fieldName));
+    return new TypeCheckFailure("Missing constructor: " + fieldName);
   }
 
   static TypeCheckFailure makeProjectionError() {
@@ -123,7 +123,7 @@ public final class TypeCheckFailure extends DhallException {
   }
 
   static TypeCheckFailure makeFieldDuplicateError(String fieldName) {
-    return new TypeCheckFailure(String.format("duplicate field: %s", fieldName));
+    return new TypeCheckFailure("duplicate field: " + fieldName);
   }
 
   static TypeCheckFailure makeListTypeMismatchError(Expr type1, Expr type2) {
@@ -148,7 +148,7 @@ public final class TypeCheckFailure extends DhallException {
 
   /** Not sure under what conditions this wouldn't be caught by the parser.s */
   static TypeCheckFailure makeAlternativeDuplicateError(String fieldName) {
-    return new TypeCheckFailure(String.format("duplicate field: %s", fieldName));
+    return new TypeCheckFailure("duplicate field: " + fieldName);
   }
 
   static TypeCheckFailure makeMergeHandlersTypeError(Expr type) {
@@ -160,11 +160,11 @@ public final class TypeCheckFailure extends DhallException {
   }
 
   static TypeCheckFailure makeMergeHandlerMissingError(String fieldName) {
-    return new TypeCheckFailure(String.format("Missing handler: %s", fieldName));
+    return new TypeCheckFailure("Missing handler: " + fieldName);
   }
 
   static TypeCheckFailure makeMergeHandlerUnusedError(String fieldName) {
-    return new TypeCheckFailure(String.format("Unused handler: %s", fieldName));
+    return new TypeCheckFailure("Unused handler: " + fieldName);
   }
 
   static TypeCheckFailure makeMergeHandlerTypeInvalidError(Expr expected, Expr type) {
@@ -173,7 +173,7 @@ public final class TypeCheckFailure extends DhallException {
 
   static TypeCheckFailure makeMergeHandlerTypeNotFunctionError(
       String fieldName, Expr expected, Expr type) {
-    return new TypeCheckFailure(String.format("Handler for %s is not a function", fieldName));
+    return new TypeCheckFailure("Handler for " + fieldName + " is not a function");
   }
 
   static TypeCheckFailure makeMergeHandlerTypeMismatchError(Expr type1, Expr type2) {

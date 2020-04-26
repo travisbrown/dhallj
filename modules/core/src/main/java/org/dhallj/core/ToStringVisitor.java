@@ -43,7 +43,7 @@ final class ToStringState {
     if (contextLevel > this.level || (!parenthesizeIfSame && contextLevel == this.level)) {
       return this.text;
     } else {
-      return String.format("(%s)", this.text);
+      return "(" + this.text + ")";
     }
   }
 
@@ -77,9 +77,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
   public ToStringState onInteger(Expr self, BigInteger value) {
     String withSign =
-        (value.compareTo(BigInteger.ZERO) >= 0)
-            ? String.format("+%s", value.toString())
-            : value.toString();
+        (value.compareTo(BigInteger.ZERO) >= 0) ? ("+" + value.toString()) : value.toString();
     return new ToStringState(withSign);
   }
 
@@ -117,7 +115,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
   private static String escapeName(String name) {
     if (!isSimpleLabel(name) || Expr.Constants.isBuiltIn(name) || Expr.Constants.isKeyword(name)) {
-      return String.format("`%s`", name);
+      return "`" + name + "`";
     } else {
       return name;
     }
@@ -126,16 +124,17 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
   public ToStringState onIdentifier(Expr self, String name, long index) {
     String maybeEscaped = escapeName(name);
     return new ToStringState(
-        (index == 0) ? maybeEscaped : String.format("%s@%d", maybeEscaped, index));
+        (index == 0) ? maybeEscaped : (maybeEscaped + "@" + Long.toString(index)));
   }
 
   public ToStringState onLambda(String name, ToStringState type, ToStringState result) {
     return new ToStringState(
-        String.format(
-            "λ(%s : %s) → %s",
-            escapeName(name),
-            type.toString(ToStringState.LAMBDA, true),
-            result.toString(ToStringState.LAMBDA)),
+        "λ("
+            + escapeName(name)
+            + " : "
+            + type.toString(ToStringState.LAMBDA, true)
+            + ") → "
+            + result.toString(ToStringState.LAMBDA),
         ToStringState.LAMBDA);
   }
 
@@ -145,23 +144,9 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
     return new ToStringState(
         name.equals("_")
-            ? String.format("%s → %s", typeString, resultString)
-            : String.format("∀(%s : %s) → %s", escapeName(name), typeString, resultString),
+            ? (typeString + " → " + resultString)
+            : ("∀(" + escapeName(name) + " : " + typeString + ") → " + resultString),
         ToStringState.PI);
-  }
-
-  public ToStringState onLet(
-      String name, ToStringState type, ToStringState value, ToStringState body) {
-    String typeString =
-        (type == null) ? "" : String.format(" : %s", type.toString(ToStringState.LET));
-    return new ToStringState(
-        String.format(
-            "let %s%s = %s in %s",
-            escapeName(name),
-            typeString,
-            value.toString(ToStringState.LET),
-            body.toString(ToStringState.LET)),
-        ToStringState.LET);
   }
 
   public ToStringState onLet(List<Expr.LetBinding<ToStringState>> bindings, ToStringState body) {
@@ -171,17 +156,16 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
       Expr.LetBinding<ToStringState> binding = bindings.get(i);
 
       String typeString =
-          binding.hasType()
-              ? String.format(" : %s", binding.getType().toString(ToStringState.LET))
-              : "";
+          binding.hasType() ? (" : " + binding.getType().toString(ToStringState.LET)) : "";
 
       result =
-          String.format(
-              "let %s%s = %s in %s",
-              escapeName(binding.getName()),
-              typeString,
-              binding.getValue().toString(ToStringState.LET),
-              result);
+          "let "
+              + escapeName(binding.getName())
+              + typeString
+              + " = "
+              + binding.getValue().toString(ToStringState.LET)
+              + " in "
+              + result;
     }
 
     return new ToStringState(result, ToStringState.LET);
@@ -222,7 +206,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
   }
 
   public ToStringState onEmptyList(ToStringState type) {
-    return new ToStringState(String.format("[] : %s", type), ToStringState.ANNOTATED);
+    return new ToStringState("[] : " + type, ToStringState.ANNOTATED);
   }
 
   public ToStringState onRecord(List<Entry<String, ToStringState>> fields) {
@@ -285,8 +269,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
   public ToStringState onFieldAccess(ToStringState base, String fieldName) {
     return new ToStringState(
-        String.format("%s.%s", base.toString(ToStringState.FIELD_ACCESS), fieldName),
-        ToStringState.FIELD_ACCESS);
+        base.toString(ToStringState.FIELD_ACCESS) + "." + fieldName, ToStringState.FIELD_ACCESS);
   }
 
   public ToStringState onProjection(ToStringState base, String[] fieldNames) {
@@ -305,9 +288,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
   public ToStringState onProjectionByType(ToStringState base, ToStringState type) {
     return new ToStringState(
-        String.format(
-            "%s.(%s)",
-            base.toString(ToStringState.FIELD_ACCESS), type.toString(ToStringState.NONE)),
+        base.toString(ToStringState.FIELD_ACCESS) + ".(" + type.toString(ToStringState.NONE) + ")",
         ToStringState.FIELD_ACCESS);
   }
 
@@ -330,33 +311,35 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
     int operatorLevel = ToStringState.getOperatorLevel(operator);
 
     return new ToStringState(
-        String.format(
-            "%s %s %s", lhs.toString(operatorLevel), operator, rhs.toString(operatorLevel, true)),
+        lhs.toString(operatorLevel)
+            + " "
+            + operator.toString()
+            + " "
+            + rhs.toString(operatorLevel, true),
         operatorLevel);
   }
 
   public ToStringState onIf(
       ToStringState predicate, ToStringState thenValue, ToStringState elseValue) {
     return new ToStringState(
-        String.format(
-            "if %s then %s else %s",
-            predicate.toString(ToStringState.IF),
-            thenValue.toString(ToStringState.IF),
-            elseValue.toString(ToStringState.IF)),
+        "if "
+            + predicate.toString(ToStringState.IF)
+            + " then "
+            + thenValue.toString(ToStringState.IF)
+            + " else "
+            + elseValue.toString(ToStringState.IF),
         ToStringState.IF);
   }
 
   public ToStringState onAnnotated(ToStringState base, ToStringState type) {
     return new ToStringState(
-        String.format(
-            "%s : %s",
-            base.toString(ToStringState.ANNOTATED), type.toString(ToStringState.ANNOTATED)),
+        base.toString(ToStringState.ANNOTATED) + " : " + type.toString(ToStringState.ANNOTATED),
         ToStringState.ANNOTATED);
   }
 
   public ToStringState onAssert(ToStringState base) {
     return new ToStringState(
-        String.format("assert : %s", base.toString(ToStringState.ASSERT)), ToStringState.ASSERT);
+        "assert : " + base.toString(ToStringState.ASSERT), ToStringState.ASSERT);
   }
 
   public ToStringState onMerge(ToStringState handlers, ToStringState union, ToStringState type) {

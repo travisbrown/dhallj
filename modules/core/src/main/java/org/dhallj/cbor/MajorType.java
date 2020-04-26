@@ -35,7 +35,7 @@ public enum MajorType {
       case 7:
         return PRIMITIVE;
       default:
-        throw new IllegalArgumentException(String.format("Invalid CBOR major type %d", b));
+        throw new IllegalArgumentException("Invalid CBOR major type " + Byte.toString(b));
     }
   }
 }

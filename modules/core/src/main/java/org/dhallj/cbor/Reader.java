@@ -33,7 +33,7 @@ public abstract class Reader {
       case PRIMITIVE:
         return readPrimitive(b, visitor);
       default:
-        throw new CborException(String.format("Invalid CBOR major type %d", b));
+        throw new CborException("Invalid CBOR major type " + Byte.toString(b));
     }
   }
 
@@ -52,7 +52,7 @@ public abstract class Reader {
     skip55799();
     BigInteger result = readBigNum();
     if (result.compareTo(BigInteger.ZERO) < 0) {
-      throw new CborException(String.format("%s is not a positive big num", result));
+      throw new CborException(result.toString() + " is not a positive big num");
     } else {
       return result;
     }
@@ -78,10 +78,12 @@ public abstract class Reader {
         } else if (tag == 3) {
           return BigInteger.valueOf(-1).subtract(result);
         } else {
-          throw new CborException(String.format("%d is not a valid tag for a bignum", tag));
+          throw new CborException(Long.toString(tag) + " is not a valid tag for a bignum");
         }
       default:
-        throw new CborException(String.format("%d not a valid major type for an Unsigned Integer"));
+        throw new CborException(
+            "Not a valid major type for an Unsigned Integer: "
+                + MajorType.fromByte(next).toString());
     }
   }
 
@@ -161,7 +163,7 @@ public abstract class Reader {
         return entries;
       default:
         throw new CborException(
-            String.format("Cannot read map - major type is %s", MajorType.fromByte(b)));
+            "Cannot read map - major type is " + MajorType.fromByte(b).toString());
     }
   }
 
@@ -213,9 +215,7 @@ public abstract class Reader {
           return visitor.onVariableArray(length, readTextString(next));
         default:
           throw new CborException(
-              String.format(
-                  "Invalid start to CBOR-encoded Dhall expression %s",
-                  MajorType.fromByte(b).toString()));
+              "Invalid start to CBOR-encoded Dhall expression " + MajorType.fromByte(b).toString());
       }
     }
   }
@@ -303,7 +303,7 @@ public abstract class Reader {
             BigInteger tag = readBigInteger(info, read()); // Now advance pointer
             int t = tag.intValue();
             if (t != 55799) {
-              throw new CborException(String.format("Unrecognized CBOR semantic tag %d", t));
+              throw new CborException("Unrecognized CBOR semantic tag " + Integer.toString(t));
             } else {
               skip55799(); // Please tell me no encoders do this
             }

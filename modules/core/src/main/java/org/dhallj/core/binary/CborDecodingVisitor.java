@@ -110,7 +110,7 @@ final class CborDecodingVisitor implements Visitor<Expr> {
       case Label.EMPTY_LIST_WITH_ABSTRACT_TYPE:
         return readEmptyListAbstractType(length);
       default:
-        throw new DecodingException(String.format("Array tag %d undefined", tag));
+        throw new DecodingException("Array tag " + Integer.toString(tag) + " undefined");
     }
   }
 
@@ -219,7 +219,8 @@ final class CborDecodingVisitor implements Visitor<Expr> {
     if (operator != null) {
       return Expr.makeOperatorApplication(operator, lhs, rhs);
     } else {
-      throw new DecodingException(String.format("Operator tag %d is undefined", operatorLabel));
+      throw new DecodingException(
+          "Operator tag " + Integer.toString(operatorLabel) + " is undefined");
     }
   }
 
@@ -253,7 +254,7 @@ final class CborDecodingVisitor implements Visitor<Expr> {
         return Expr.makeEmptyListLiteral(tpe);
       }
     } else {
-      throw new DecodingException(String.format("List of abstract type %s must be empty"));
+      throw new DecodingException("List of abstract type must be empty");
     }
   }
 
@@ -440,7 +441,7 @@ final class CborDecodingVisitor implements Visitor<Expr> {
       case Label.IMPORT_TYPE_CLASSPATH:
         return readClasspathImport(length, mode, hash, "/");
       default:
-        throw new DecodingException(String.format("Import type %d is undefined", tag));
+        throw new DecodingException("Import type " + Integer.toString(tag) + " is undefined");
     }
   }
 
@@ -453,7 +454,7 @@ final class CborDecodingVisitor implements Visitor<Expr> {
     } else if (m == 2) {
       return Expr.ImportMode.LOCATION;
     } else {
-      throw new DecodingException(String.format("Import mode %d is undefined", m));
+      throw new DecodingException("Import mode " + Integer.toString(m) + " is undefined");
     }
   }
 

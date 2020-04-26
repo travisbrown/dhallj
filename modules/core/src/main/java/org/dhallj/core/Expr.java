@@ -732,7 +732,7 @@ public abstract class Expr {
 
   public static final Expr makeBuiltIn(String name) {
     if (Constants.getBuiltIn(name) == null) {
-      throw new IllegalArgumentException(String.format("%s is not a built-in", name));
+      throw new IllegalArgumentException(name + " is not a built-in");
     }
     return Constants.getBuiltIn(name);
   }
