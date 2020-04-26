@@ -144,7 +144,7 @@ public abstract class Writer {
     } else {
       float asFloat = (float) value;
       if (value == (double) asFloat) {
-        int bits = Float.floatToRawIntBits(asFloat);
+        int bits = Float.floatToIntBits(asFloat);
         this.write(
             (byte) (base | AdditionalInfo.FOUR_BYTES.value),
             (byte) ((bits >> 24) & 0xff),
@@ -153,7 +153,7 @@ public abstract class Writer {
             (byte) ((bits >> 0) & 0xff));
       } else {
 
-        long bits = Double.doubleToRawLongBits(value);
+        long bits = Double.doubleToLongBits(value);
         this.write(
             (byte) (base | AdditionalInfo.EIGHT_BYTES.value),
             (byte) ((bits >> 56) & 0xff),
