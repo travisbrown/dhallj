@@ -12,6 +12,7 @@ val snakeYamlVersion = "1.26"
 val http4sVersion = "0.21.3"
 
 val testDependencies = Seq(
+  "co.nstant.in" % "cbor" % "0.9",
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion,
   "org.scalameta" %% "munit" % munitVersion,
   "org.scalameta" %% "munit-scalacheck" % munitVersion
@@ -22,6 +23,7 @@ val http4sDependencies = Seq(
   "org.typelevel" %% "cats-effect" % "2.1.2",
   "org.http4s" %% "http4s-client" % http4sVersion
 )
+
 val http4sBlazeClient =
   "org.http4s" %% "http4s-blaze-client" % http4sVersion
 
