@@ -34,10 +34,4 @@ final class Comment {
   public final int getEndColumn() {
     return this.endColumn;
   }
-
-  public String toString() {
-    return String.format(
-        "%s [%d, %d, %d, %d]",
-        content, getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
-  }
 }

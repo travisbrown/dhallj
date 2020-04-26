@@ -879,10 +879,6 @@ public abstract class Expr {
     State(Expr expr, int state) {
       this(expr, state, 0);
     }
-
-    public String toString() {
-      return String.format("%s %d %d", this.expr, this.expr.tag, this.state);
-    }
   }
 
   /** Run the given internal visitor on this expression. */
