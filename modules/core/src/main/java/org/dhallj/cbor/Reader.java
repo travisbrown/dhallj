@@ -230,10 +230,24 @@ public abstract class Reader {
     }
   }
 
+  private static final String unassignedMessage(int v) {
+    StringBuilder builder = new StringBuilder("Primitive ");
+    builder.append(v);
+    builder.append(" is unassigned");
+    return builder.toString();
+  }
+
+  private static final String notValidMessage(int v) {
+    StringBuilder builder = new StringBuilder("Primitive ");
+    builder.append(v);
+    builder.append(" is not valid");
+    return builder.toString();
+  }
+
   private final <R> R readPrimitive(byte b, Visitor<R> visitor) {
     int value = b & 31;
     if (0 <= value && value <= 19) {
-      throw new CborException(String.format("Primitive %d is unassigned", value));
+      throw new CborException(unassignedMessage(value));
     } else if (value == 20) {
       return visitor.onFalse();
     } else if (value == 21) {
@@ -241,7 +255,7 @@ public abstract class Reader {
     } else if (value == 22) {
       return visitor.onNull();
     } else if (value == 23) {
-      throw new CborException(String.format("Primitive %d is unassigned", value));
+      throw new CborException(unassignedMessage(value));
     } else if (value == 24) {
       throw new CborException("Simple value not needed for Dhall");
     } else if (value == 25) {
@@ -283,11 +297,11 @@ public abstract class Reader {
       }
       return visitor.onDoubleFloat(Double.longBitsToDouble(result));
     } else if (28 <= value && value <= 30) {
-      throw new CborException(String.format("Primitive %d is unassigned", value));
+      throw new CborException(unassignedMessage(value));
     } else if (value == 31) {
       throw new CborException("Break stop code not needed for Dhall");
     } else {
-      throw new CborException(String.format("Primitive %d is not valid", value));
+      throw new CborException(notValidMessage(value));
     }
   }
 
