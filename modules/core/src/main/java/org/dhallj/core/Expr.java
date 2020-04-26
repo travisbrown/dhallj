@@ -434,7 +434,20 @@ public abstract class Expr {
           if (quoted) {
             builder.append('\\');
           }
-          builder.append(String.format("\\u%04X", (long) c));
+          String asHex = Long.toHexString((long) c);
+
+          builder.append("\\u");
+
+          if (asHex.length() < 2) {
+            builder.append('0');
+          }
+          if (asHex.length() < 3) {
+            builder.append('0');
+          }
+          if (asHex.length() < 4) {
+            builder.append('0');
+          }
+          builder.append(asHex);
         } else {
           builder.append(c);
         }
