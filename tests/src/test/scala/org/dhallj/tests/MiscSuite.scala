@@ -1,12 +1,12 @@
 package org.dhallj.tests
 
-import munit.FunSuite
+import munit.ScalaCheckSuite
 import org.dhallj.ast._
 import org.dhallj.core.Expr
 import org.dhallj.parser.DhallParser
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Gen, Prop}
 
-class MiscSuite extends CheckersFunSuite() {
+class MiscSuite extends ScalaCheckSuite {
   case class AsciiPrintableString(value: String)
 
   implicit val arbitraryAsciiPrintableString: Arbitrary[AsciiPrintableString] =
@@ -20,9 +20,11 @@ class MiscSuite extends CheckersFunSuite() {
 
   def parsesTo(input: String, expected: Expr): Boolean = DhallParser.parse(input).equivalent(expected)
 
-  testAll1("doubles")((value: Double) => parsesTo(value.toString, DoubleLiteral(value)))
-  testAll1("naturals")((value: BigInt) => parsesTo(value.abs.toString, NaturalLiteral(value.abs).get))
-  testAll1("strings")((value: AsciiPrintableString) => parsesTo(s""""${value.value}"""", TextLiteral(value.value)))
+  property("doubles")(Prop.forAll((value: Double) => parsesTo(value.toString, DoubleLiteral(value))))
+  property("naturals")(Prop.forAll((value: BigInt) => parsesTo(value.abs.toString, NaturalLiteral(value.abs).get)))
+  property("strings")(
+    Prop.forAll((value: AsciiPrintableString) => parsesTo(s""""${value.value}"""", TextLiteral(value.value)))
+  )
 
   // Temporarily matching bug in Haskell implementation.
   checkBetaNormalization(

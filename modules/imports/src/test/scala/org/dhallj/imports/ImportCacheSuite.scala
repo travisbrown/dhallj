@@ -1,6 +1,6 @@
 package org.dhallj.imports
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Path}
 
 import cats.effect.IO
 import cats.implicits._
@@ -9,7 +9,7 @@ import scala.reflect.io.Directory
 
 class CachingSuite extends FunSuite {
 
-  val rootDir = new FunFixture[(ImportCache[IO], Path)](
+  val rootDir = FunFixture[(ImportCache[IO], Path)](
     setup = { test =>
       val rootDir = Files.createTempDirectory(test.name).resolve("dhall")
       ImportCache[IO](rootDir).unsafeRunSync.get -> rootDir

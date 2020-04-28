@@ -16,7 +16,8 @@ trait ArbitraryInstances {
     case other => other
   }
 
-  def isValidName(name: String): Boolean = List('\u0000', '\u0001', '`').forall(name.indexOf(_) == -1) && name.nonEmpty
+  def isValidName(name: String): Boolean =
+    List('\u0000', '\u0001', '`').forall(c => name.indexOf(c.toInt) == -1) && name.nonEmpty
 
   def genIdentifier: Gen[Expr] =
     for {

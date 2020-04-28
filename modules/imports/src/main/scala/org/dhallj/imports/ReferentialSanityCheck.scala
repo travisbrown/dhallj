@@ -2,7 +2,6 @@ package org.dhallj.imports
 
 import cats.effect.Sync
 import org.dhallj.core.DhallException.ResolutionFailure
-import org.dhallj.imports.ResolveImportsVisitor._
 
 object ReferentialSanityCheck {
 

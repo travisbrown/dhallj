@@ -22,8 +22,29 @@ val http4sDependencies = Seq(
   "org.typelevel" %% "cats-effect" % "2.1.3",
   "org.http4s" %% "http4s-client" % http4sVersion
 )
+
 val http4sBlazeClient =
   "org.http4s" %% "http4s-blaze-client" % http4sVersion
+
+val compilerOptions = Seq(
+  "-deprecation",
+  "-encoding",
+  "UTF-8",
+  "-feature",
+  "-language:existentials",
+  "-language:higherKinds",
+  "-unchecked",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Xfuture",
+  "-Ywarn-unused-import"
+)
+
+def priorTo2_13(scalaVersion: String): Boolean =
+  CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, minor)) if minor < 13 => true
+    case _                              => false
+  }
 
 val baseSettings = Seq(
   libraryDependencies ++= testDependencies.map(_ % Test),
@@ -39,7 +60,19 @@ val javaSettings = Seq(
 )
 
 val scalaSettings = Seq(
-  mimaPreviousArtifacts := Set("org.dhallj" %% moduleName.value % previousVersion)
+  mimaPreviousArtifacts := Set("org.dhallj" %% moduleName.value % previousVersion),
+  scalacOptions ++= {
+    if (priorTo2_13(scalaVersion.value)) compilerOptions
+    else
+      compilerOptions.flatMap {
+        case "-Ywarn-unused-import" => Seq("-Ywarn-unused:imports")
+        case "-Xfuture"             => Nil
+        case other                  => Seq(other)
+      }
+  },
+  scalacOptions in (Compile, console) ~= {
+    _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
+  }
 )
 
 val root = project

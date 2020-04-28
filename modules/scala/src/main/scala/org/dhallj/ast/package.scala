@@ -6,7 +6,7 @@ import java.lang.{Iterable => JIterable}
 import java.math.BigInteger
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.{Map => JMap}
-import org.dhallj.core.{Expr, ExternalVisitor, Operator, Source}
+import org.dhallj.core.{Expr, ExternalVisitor, Operator}
 import scala.collection.JavaConverters._
 
 abstract private class OptionVisitor[A] extends ExternalVisitor.Constant[Option[A]](None)
