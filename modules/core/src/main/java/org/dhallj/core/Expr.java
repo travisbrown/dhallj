@@ -376,7 +376,7 @@ public abstract class Expr {
 
       if (value.tag == Tags.FIELD_ACCESS) {
         Constructors.FieldAccess fieldAccess = (Constructors.FieldAccess) value;
-        return new SimpleImmutableEntry(fieldAccess.base, fieldAccess.fieldName);
+        return new SimpleImmutableEntry<>(fieldAccess.base, fieldAccess.fieldName);
       } else {
         return null;
       }
@@ -434,7 +434,20 @@ public abstract class Expr {
           if (quoted) {
             builder.append('\\');
           }
-          builder.append(String.format("\\u%04X", (long) c));
+          String asHex = Long.toHexString((long) c);
+
+          builder.append("\\u");
+
+          if (asHex.length() < 2) {
+            builder.append('0');
+          }
+          if (asHex.length() < 3) {
+            builder.append('0');
+          }
+          if (asHex.length() < 4) {
+            builder.append('0');
+          }
+          builder.append(asHex);
         } else {
           builder.append(c);
         }
@@ -507,13 +520,12 @@ public abstract class Expr {
     LOCATION;
 
     public String toString() {
-      switch (this) {
-        case RAW_TEXT:
-          return "Text";
-        case LOCATION:
-          return "Location";
-        default:
-          return "Code";
+      if (this == RAW_TEXT) {
+        return "Text";
+      } else if (this == LOCATION) {
+        return "Location";
+      } else {
+        return "Code";
       }
     }
   }
@@ -546,10 +558,10 @@ public abstract class Expr {
     public static final Expr LOCATION_TYPE =
         makeUnionType(
             new Entry[] {
-              new SimpleImmutableEntry("Local", TEXT),
-              new SimpleImmutableEntry("Remote", TEXT),
-              new SimpleImmutableEntry("Environment", TEXT),
-              new SimpleImmutableEntry("Missing", null)
+              new SimpleImmutableEntry<>("Local", TEXT),
+              new SimpleImmutableEntry<>("Remote", TEXT),
+              new SimpleImmutableEntry<>("Environment", TEXT),
+              new SimpleImmutableEntry<>("Missing", null)
             });
     public static final String MAP_KEY_FIELD_NAME = "mapKey";
     public static final String MAP_VALUE_FIELD_NAME = "mapValue";
@@ -732,7 +744,7 @@ public abstract class Expr {
 
   public static final Expr makeBuiltIn(String name) {
     if (Constants.getBuiltIn(name) == null) {
-      throw new IllegalArgumentException(String.format("%s is not a built-in", name));
+      throw new IllegalArgumentException(name + " is not a built-in");
     }
     return Constants.getBuiltIn(name);
   }
@@ -754,8 +766,7 @@ public abstract class Expr {
   }
 
   public static final Expr makeRecordLiteral(String key, Expr value) {
-    return new Constructors.RecordLiteral(
-        new Entry[] {new SimpleImmutableEntry<String, Expr>(key, value)});
+    return new Constructors.RecordLiteral(new Entry[] {new SimpleImmutableEntry<>(key, value)});
   }
 
   public static final Expr makeRecordType(Entry<String, Expr>[] fields) {
@@ -869,7 +880,8 @@ public abstract class Expr {
       this.state = state;
       this.size = 0;
       if (sortFields) {
-        this.sortedFields = fields.clone();
+        this.sortedFields = new Entry[fields.length];
+        System.arraycopy(fields, 0, sortedFields, 0, fields.length);
         Arrays.sort(sortedFields, entryComparator);
       } else {
         this.sortedFields = fields;
@@ -878,10 +890,6 @@ public abstract class Expr {
 
     State(Expr expr, int state) {
       this(expr, state, 0);
-    }
-
-    public String toString() {
-      return String.format("%s %d %d", this.expr, this.expr.tag, this.state);
     }
   }
 
@@ -1155,7 +1163,7 @@ public abstract class Expr {
             List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
             for (int i = current.sortedFields.length - 1; i >= 0; i -= 1) {
               results.add(
-                  new SimpleImmutableEntry(current.sortedFields[i].getKey(), valueStack.poll()));
+                  new SimpleImmutableEntry<>(current.sortedFields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
             valueStack.push(visitor.onRecord(results));
@@ -1188,7 +1196,7 @@ public abstract class Expr {
             List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
             for (int i = current.sortedFields.length - 1; i >= 0; i -= 1) {
               results.add(
-                  new SimpleImmutableEntry(current.sortedFields[i].getKey(), valueStack.poll()));
+                  new SimpleImmutableEntry<>(current.sortedFields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
             valueStack.push(visitor.onRecordType(results));
@@ -1227,7 +1235,7 @@ public abstract class Expr {
             List<Entry<String, A>> results = new ArrayList<Entry<String, A>>();
             for (int i = current.sortedFields.length - 1; i >= 0; i -= 1) {
               results.add(
-                  new SimpleImmutableEntry(current.sortedFields[i].getKey(), valueStack.poll()));
+                  new SimpleImmutableEntry<>(current.sortedFields[i].getKey(), valueStack.poll()));
             }
             Collections.reverse(results);
             valueStack.push(visitor.onUnionType(results));
@@ -1708,8 +1716,7 @@ public abstract class Expr {
         if (fieldsA.length == fieldsB.length) {
           for (int i = 0; i < fieldsA.length; i++) {
             if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
-              return new SimpleImmutableEntry<Expr, Expr>(
-                  fieldsA[i].getValue(), fieldsB[i].getValue());
+              return new SimpleImmutableEntry<>(fieldsA[i].getValue(), fieldsB[i].getValue());
             }
 
             stackA.add(fieldsA[i].getValue());
@@ -1728,8 +1735,7 @@ public abstract class Expr {
         if (fieldsA.length == fieldsB.length) {
           for (int i = 0; i < fieldsA.length; i++) {
             if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
-              return new SimpleImmutableEntry<Expr, Expr>(
-                  fieldsA[i].getValue(), fieldsB[i].getValue());
+              return new SimpleImmutableEntry<>(fieldsA[i].getValue(), fieldsB[i].getValue());
             }
 
             stackA.add(fieldsA[i].getValue());
@@ -1748,15 +1754,14 @@ public abstract class Expr {
         if (fieldsA.length == fieldsB.length) {
           for (int i = 0; i < fieldsA.length; i++) {
             if (!fieldsA[i].getKey().equals(fieldsB[i].getKey())) {
-              return new SimpleImmutableEntry<Expr, Expr>(
-                  fieldsA[i].getValue(), fieldsB[i].getValue());
+              return new SimpleImmutableEntry<>(fieldsA[i].getValue(), fieldsB[i].getValue());
             }
 
             if (fieldsA[i].getValue() != null && fieldsB[i].getValue() != null) {
               stackA.add(fieldsA[i].getValue());
               stackB.add(fieldsB[i].getValue());
             } else if (fieldsA[i].getValue() == null ^ fieldsB[i].getValue() == null) {
-              return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
+              return new SimpleImmutableEntry<>(currentA, currentB);
             }
           }
           continue;
@@ -1920,7 +1925,7 @@ public abstract class Expr {
     if (currentA == null && currentB == null) {
       return null;
     } else {
-      return new SimpleImmutableEntry<Expr, Expr>(currentA, currentB);
+      return new SimpleImmutableEntry<>(currentA, currentB);
     }
   }
 

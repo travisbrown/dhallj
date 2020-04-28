@@ -86,11 +86,11 @@ final class BetaNormalizeApplication {
     return Expr.makeApplication(base, args);
   }
 
+  private static final Entry<String, Expr> indexField =
+      new SimpleImmutableEntry<>("index", Expr.Constants.NATURAL);
+
   private static final Expr indexedRecordType(Expr type) {
-    Entry[] fields = {
-      new SimpleImmutableEntry("index", Expr.Constants.NATURAL),
-      new SimpleImmutableEntry("value", type)
-    };
+    Entry[] fields = {indexField, new SimpleImmutableEntry<>("value", type)};
     return Expr.makeRecordType(fields);
   }
 
@@ -303,8 +303,9 @@ final class BetaNormalizeApplication {
         for (Expr value : argAsListLiteral) {
           List<Entry<String, Expr>> fields = new ArrayList<>();
           fields.add(
-              new SimpleImmutableEntry("index", Expr.makeNaturalLiteral(BigInteger.valueOf(i++))));
-          fields.add(new SimpleImmutableEntry("value", value));
+              new SimpleImmutableEntry<>(
+                  "index", Expr.makeNaturalLiteral(BigInteger.valueOf(i++))));
+          fields.add(new SimpleImmutableEntry<>("value", value));
           result.add(Expr.makeRecordLiteral(fields));
         }
 

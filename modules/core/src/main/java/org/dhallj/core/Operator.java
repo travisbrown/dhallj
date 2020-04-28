@@ -83,8 +83,7 @@ public enum Operator {
     } else if (input.equals(COMPLETE.value)) {
       return COMPLETE;
     } else {
-      throw new IllegalArgumentException(
-          String.format("No org.dhallj.core.Operator represented by %s", input));
+      throw new IllegalArgumentException("No org.dhallj.core.Operator represented by " + input);
     }
   }
 }

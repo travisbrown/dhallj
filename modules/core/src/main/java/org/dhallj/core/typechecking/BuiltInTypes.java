@@ -93,7 +93,8 @@ final class BuiltInTypes {
     mappings.put("List/last", listAToOptionalA);
 
     Entry[] indexedRecordFields = {
-      new SimpleImmutableEntry("index", Constants.NATURAL), new SimpleImmutableEntry("value", _a)
+      new SimpleImmutableEntry<>("index", Constants.NATURAL),
+      new SimpleImmutableEntry<>("value", _a)
     };
 
     mappings.put(

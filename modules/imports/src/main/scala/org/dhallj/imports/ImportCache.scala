@@ -68,9 +68,10 @@ object ImportCache {
 
     def backupCache =
       for {
-        cacheO <- if (isWindows)
-          makeCacheFromEnvVar("LOCALAPPDATA", "")
-        else makeCacheFromEnvVar("HOME", ".cache")
+        cacheO <-
+          if (isWindows)
+            makeCacheFromEnvVar("LOCALAPPDATA", "")
+          else makeCacheFromEnvVar("HOME", ".cache")
         cache <- cacheO.fold[F[ImportCache[F]]](F.as(warnCacheNotCreated, new NoopImportCache[F]))(F.pure)
       } yield cache
 

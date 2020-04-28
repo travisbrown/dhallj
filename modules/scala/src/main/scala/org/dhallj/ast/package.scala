@@ -182,7 +182,8 @@ object UnionType extends Constructor[Map[String, Option[Expr]]] {
   protected[this] val extractor: ExternalVisitor[Option[Result]] =
     new OptionVisitor[Result] {
       override def onUnionType(fields: JIterable[JMap.Entry[String, Expr]],
-                               size: Int): Option[Map[String, Option[Expr]]] =
+                               size: Int
+      ): Option[Map[String, Option[Expr]]] =
         Some(fields.asScala.map(entryToOptionTuple).toMap)
     }
 }

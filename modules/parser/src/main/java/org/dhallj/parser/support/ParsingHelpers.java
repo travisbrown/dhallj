@@ -538,7 +538,7 @@ final class ParsingHelpers {
       }
 
       if (parts.isEmpty()) {
-        dedotted.add(new SimpleImmutableEntry(firstPart, value));
+        dedotted.add(new SimpleImmutableEntry<>(firstPart, value));
       } else {
         Collections.reverse(parts);
         Expr current = value;
@@ -546,7 +546,7 @@ final class ParsingHelpers {
         for (String part : parts) {
           current = Expr.makeRecordLiteral(part, current);
         }
-        dedotted.add(new SimpleImmutableEntry(firstPart, current));
+        dedotted.add(new SimpleImmutableEntry<>(firstPart, current));
       }
     }
 
@@ -568,7 +568,7 @@ final class ParsingHelpers {
           }
         }
 
-        desugared.add(new SimpleImmutableEntry(key, current));
+        desugared.add(new SimpleImmutableEntry<>(key, current));
 
         seen.add(key);
       }

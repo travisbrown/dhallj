@@ -804,7 +804,7 @@ Expr.Parsed EMPTY_LIST_LITERAL(): {
   Expr.Parsed type;
   Token first;
   Token t0;
-  StringBuilder builder = new StringBuilder('[');
+  StringBuilder builder = new StringBuilder("[");
 } {
   (
     first=<BRACKET_OPEN>

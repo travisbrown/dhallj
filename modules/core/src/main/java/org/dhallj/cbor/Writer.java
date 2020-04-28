@@ -152,7 +152,7 @@ public abstract class Writer {
         }
       } else {
 
-        long bits = Double.doubleToRawLongBits(value);
+        long bits = Double.doubleToLongBits(value);
         this.write(
             (byte) (base | AdditionalInfo.EIGHT_BYTES.value),
             (byte) ((bits >> 56) & 0xff),
