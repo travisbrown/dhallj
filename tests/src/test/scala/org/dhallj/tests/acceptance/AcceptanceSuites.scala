@@ -26,6 +26,8 @@ class TypeCheckingUnitSuite extends ParsingTypeCheckingSuite("type-inference/suc
 class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/success/regression")
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
   override def slow = Set("prelude")
+  // Depends on http://csrng.net/, which is rate-limited (and also currently entirely down).
+  override def ignored = Set("CacheImports", "CacheImportsCanonicalize")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
 
