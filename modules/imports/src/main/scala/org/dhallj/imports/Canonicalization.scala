@@ -64,8 +64,8 @@ object Canonicalization {
         case Nil => ""
         case l @ (h :: t) =>
           h match {
-            case h if (h == "." || h == ".." || h == "~") => s"$h${toPath(t)}"
-            case _                                        => toPath(l)
+            case h if h == "." || h == ".." || h == "~" => s"$h${toPath(t)}"
+            case _                                      => toPath(l)
           }
       }
       Paths.get(s"$s/$filename")
