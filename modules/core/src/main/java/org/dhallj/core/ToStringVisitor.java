@@ -98,6 +98,10 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
   }
 
   private static boolean isSimpleLabel(String name) {
+    if (name.length() == 0) {
+      return false;
+    }
+
     char c = name.charAt(0);
     if (!isAlpha(c) && c != '_') {
       return false;
