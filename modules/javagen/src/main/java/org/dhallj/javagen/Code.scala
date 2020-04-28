@@ -64,22 +64,22 @@ case class Code(content: String, defs: Vector[Code] = Vector.empty) {
       }
       .mkString("\n")
 
-    s"""|package $packageName;
-        |
-        |import java.math.BigInteger;
-        |import java.util.AbstractMap.SimpleImmutableEntry;
-        |import java.util.ArrayList;
-        |import java.util.List;
-        |import java.util.Map.Entry;
-        |import org.dhallj.core.Expr;
-        |import org.dhallj.core.Operator;
-        |
-        |public final class $className {
-        |$fieldDefs
-        |
-        |public static final Expr instance = $topLevelFieldName;
-        |}
-        |""".stripMargin
+    s"""package $packageName;
+       |
+       |import java.math.BigInteger;
+       |import java.util.AbstractMap.SimpleImmutableEntry;
+       |import java.util.ArrayList;
+       |import java.util.List;
+       |import java.util.Map.Entry;
+       |import org.dhallj.core.Expr;
+       |import org.dhallj.core.Operator;
+       |
+       |public final class $className {
+       |$fieldDefs
+       |
+       |public static final Expr instance = $topLevelFieldName;
+       |}
+       |""".stripMargin
   }
 }
 
