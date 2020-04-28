@@ -8,9 +8,9 @@ public enum Universe {
   SORT;
 
   public final Universe max(Universe other) {
-    if (this.equals(SORT) || other.equals(SORT)) {
+    if (this == SORT || other == SORT) {
       return SORT;
-    } else if (this.equals(KIND) || other.equals(KIND)) {
+    } else if (this == KIND || other == KIND) {
       return KIND;
     } else {
       return TYPE;
@@ -18,15 +18,12 @@ public enum Universe {
   }
 
   public final Expr toExpr() {
-    switch (this) {
-      case TYPE:
-        return Expr.Constants.TYPE;
-      case KIND:
-        return Expr.Constants.KIND;
-      case SORT:
-        return Expr.Constants.SORT;
-      default:
-        return null;
+    if (this == TYPE) {
+      return Expr.Constants.TYPE;
+    } else if (this == KIND) {
+      return Expr.Constants.KIND;
+    } else {
+      return Expr.Constants.SORT;
     }
   }
 
@@ -50,7 +47,7 @@ public enum Universe {
   }
 
   public static Universe functionCheck(Universe input, Universe output) {
-    if (output.equals(Universe.TYPE)) {
+    if (output == Universe.TYPE) {
       return Universe.TYPE;
     } else {
       return input.max(output);
