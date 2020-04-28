@@ -520,13 +520,12 @@ public abstract class Expr {
     LOCATION;
 
     public String toString() {
-      switch (this) {
-        case RAW_TEXT:
-          return "Text";
-        case LOCATION:
-          return "Location";
-        default:
-          return "Code";
+      if (this == RAW_TEXT) {
+        return "Text";
+      } else if (this == LOCATION) {
+        return "Location";
+      } else {
+        return "Code";
       }
     }
   }
