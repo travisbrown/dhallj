@@ -50,12 +50,14 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
 
   def onLet(bindings: JList[Expr.LetBinding[Code]], body: Code): Code = unsupported
 
+  private def escape(input: String): String = input.replace("\"", "\\\"")
+
   def onText(parts: Array[String], interpolated: JList[Code]): Code =
     if (parts.length == 1) {
-      Code(s"""Expr.makeTextLiteral("${parts(0)}")""")
+      Code(s"""Expr.makeTextLiteral("${escape(parts(0))}")""")
     } else {
       Code.mergeAll(interpolated.asScala.toVector) { ids =>
-        val partArray = parts.map(part => "\"" + part + "\"").mkString(", ")
+        val partArray = parts.map(part => "\"" + escape(part) + "\"").mkString(", ")
 
         s"Expr.makeTextLiteral(new String[] {$partArray}, new Expr[] {${ids.mkString(", ")}})"
       }
