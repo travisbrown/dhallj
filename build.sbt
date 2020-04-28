@@ -9,7 +9,7 @@ val jawnVersion = "1.0.0"
 val munitVersion = "0.7.3"
 val scalaCheckVersion = "1.14.3"
 val snakeYamlVersion = "1.26"
-val http4sVersion = "0.21.3"
+val http4sVersion = "0.21.4"
 
 val testDependencies = Seq(
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion,
