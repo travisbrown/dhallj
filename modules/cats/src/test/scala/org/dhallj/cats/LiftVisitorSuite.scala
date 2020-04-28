@@ -4,9 +4,8 @@ import cats.Applicative
 import cats.instances.option._
 import munit.ScalaCheckSuite
 import org.dhallj.core.Expr
-import org.dhallj.parser.DhallParser
 import org.dhallj.testing.instances._
-import org.scalacheck.{Arbitrary, Prop}
+import org.scalacheck.Prop
 
 class ToStringSuite extends ScalaCheckSuite {
   property("LiftVisitor with no overrides is pure") {

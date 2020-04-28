@@ -2,7 +2,6 @@ package org.dhallj.tests.acceptance
 
 import cats.effect.{ContextShift, IO}
 
-import java.nio.file.{Files, Paths}
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
 import org.dhallj.parser.DhallParser
@@ -11,8 +10,7 @@ import org.dhallj.imports.{ImportCache, Resolver}
 import org.http4s.client._
 import org.http4s.client.blaze._
 
-import scala.concurrent.ExecutionContext.global
-import scala.io.Source
+import scala.concurrent.ExecutionContext
 
 trait SuccessSuite[A, B] extends AcceptanceSuite {
   self: Input[A] =>
@@ -55,8 +53,8 @@ trait CachedResolvingInput extends Input[Expr] {
 
     if (parsed.isResolved) parsed
     else {
-      implicit val cs: ContextShift[IO] = IO.contextShift(global)
-      BlazeClientBuilder[IO](global).resource.use { client =>
+      implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+      BlazeClientBuilder[IO](ExecutionContext.global).resource.use { client =>
         implicit val c: Client[IO] = client
         Resolver.resolve[IO](parsed)
       }.unsafeRunSync
@@ -72,8 +70,8 @@ trait ResolvingInput extends Input[Expr] {
 
     if (parsed.isResolved) parsed
     else {
-      implicit val cs: ContextShift[IO] = IO.contextShift(global)
-      BlazeClientBuilder[IO](global).resource.use { client =>
+      implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+      BlazeClientBuilder[IO](ExecutionContext.global).resource.use { client =>
         implicit val c: Client[IO] = client
         Resolver.resolve[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
       }.unsafeRunSync

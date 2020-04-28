@@ -3,7 +3,6 @@ package org.dhallj.tests
 import java.nio.file.Paths
 import munit.{FunSuite, Ignore, Slow, TestOptions}
 import org.dhallj.imports.mini.Resolver
-import org.dhallj.core.Expr
 import org.dhallj.parser.DhallParser
 import scala.io.Source
 

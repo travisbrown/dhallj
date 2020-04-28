@@ -6,7 +6,6 @@ import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.Map.Entry
 import org.dhallj.core.Expr
 import org.dhallj.core.converters.JsonConverter
-import scala.collection.JavaConverters._
 
 object Converter {
   def apply(expr: Expr): Option[Json] = {
