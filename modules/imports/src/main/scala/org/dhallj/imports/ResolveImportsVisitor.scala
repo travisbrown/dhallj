@@ -65,6 +65,11 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
   override def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     onImport(ImportContext.Missing, mode, hash)
 
+  private[this] def checkHash(encoded: Array[Byte], expected: Array[Byte]): Boolean = {
+    val hashed = MessageDigest.getInstance("SHA-256").digest(encoded)
+    hashed.sameElements(expected)
+  }
+
   private def onImport(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] = {
     //TODO check that equality is sensibly defined for URI and Path
     def rejectCyclicImports(imp: ImportContext, parents: NonEmptyList[ImportContext]): F[Unit] =
@@ -89,8 +94,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
       )
 
     def checkHashesMatch(encoded: Array[Byte], expected: Array[Byte]): F[Unit] = {
-      val hashed = MessageDigest.getInstance("SHA-256").digest(encoded)
-      if (hashed.sameElements(expected)) F.unit
+      if (checkHash(encoded, expected)) F.unit
       else F.raiseError(new ResolutionFailure("Cached expression does not match its hash"))
     }
 
@@ -100,12 +104,9 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
         for {
           cached <- semanticCache.get(hash)
           e <- cached match {
-            case Some(bs) =>
-              for {
-                _ <- checkHashesMatch(bs, hash)
-                e <- F.delay(Decode.decode(bs))
-              } yield e
-            case None =>
+            case Some(bs) if checkHash(bs, hash) =>
+              F.delay(Decode.decode(bs))
+            case _ =>
               for {
                 e <- loadWithSemiSemanticCache(imp, mode, hash)
                 bs = e.alphaNormalize.getEncodedBytes
