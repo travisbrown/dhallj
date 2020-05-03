@@ -1,0 +1,28 @@
+"="                 { return EQUALS_SIGN; }
+"<"                 { return ANGLE_OPEN; }
+">"                 { return ANGLE_CLOSE; }
+"("                 { return PARENS_OPEN; }
+")"                 { return PARENS_CLOSE; }
+"["                 { return BRACKET_OPEN; }
+"]"                 { return BRACKET_CLOSE; }
+"."                 { return DOT; }
+":"                 { this.waitForWhitespace(COLON); }
+","                 { return COMMA; }
+"|"                 { return BAR; }
+"@"                 { return AT_SIGN; }
+"\\" | "\u03bb"     { return LAMBDA; }
+"->" | "\u2192"     { return ARROW; }
+"::"                { return COMPLETE; }
+"||"                { return OR; }
+"&&"                { return AND; }
+"=="                { return EQUALS; }
+"!="                { return NOT_EQUALS; }
+"+"                 { this.waitForWhitespace(PLUS); }
+"*"                 { return TIMES; }
+"++"                { return TEXT_APPEND; }
+"#"                 { return LIST_APPEND; }
+"/\\" | "\u2227"    { return COMBINE; }
+"//" | "\u2afd"     { return PREFER; }
+"//\\\\" | "\u2a53" { return COMBINE_TYPES; }
+"?"                 { this.waitForWhitespace(IMPORT_ALT); }
+"===" | "\u2261"    { return EQUIVALENT; }

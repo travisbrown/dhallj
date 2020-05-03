@@ -1,0 +1,17 @@
+"if"           { this.waitForWhitespace(IF); }
+"then"         { this.waitForWhitespace(THEN); }
+"else"         { this.waitForWhitespace(ELSE); }
+"let"          { this.waitForWhitespace(LET); }
+"in"           { this.waitForWhitespace(IN); }
+"as"           { this.waitForWhitespace(AS); }
+"using"        { this.waitForWhitespace(USING); }
+"merge"        { this.waitForWhitespace(MERGE); }
+"missing"      { semantic = yytext(); return MISSING; }
+"Some"         { semantic = yytext(); return SOME; }
+"toMap"        { this.waitForWhitespace(TO_MAP); }
+"assert"       { return ASSERT; }
+"forall" | "∀" { return FORALL; }
+"with"         { this.waitForWhitespace(WITH); }
+
+"Text"         { semantic = yytext(); return TEXT; }
+"Location"     { semantic = yytext(); return LOCATION; }

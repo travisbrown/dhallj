@@ -165,6 +165,17 @@ lazy val core = project
     description := "DhallJ core"
   )
 
+lazy val parserJacc = project
+  .in(file("modules/parser-jacc"))
+  .settings(baseSettings ++ javaSettings ++ publishSettings)
+  .settings(
+    moduleName := "dhall-parser-jacc",
+    name := "dhall-parser-jacc",
+    description := "DhallJ parser"
+  )
+  .enablePlugins(JaccPlugin)
+  .dependsOn(core)
+
 lazy val parser = project
   .in(file("modules/parser"))
   .settings(baseSettings ++ javaSettings ++ publishSettings)
