@@ -247,7 +247,7 @@ lazy val cats = project
   .settings(
     libraryDependencies += "org.typelevel" %% "cats-core" % catsVersion
   )
-  .dependsOn(core, testing)
+  .dependsOn(core, testing % Test)
 
 lazy val imports = project
   .in(file("modules/imports"))
