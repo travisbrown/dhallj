@@ -14,11 +14,11 @@ into JVM build systems (see the [dhall-kubernetes] demonstration
 The core modules have no external dependencies, are Java 7-compatible, and are fairly minimal:
 
 ```bash
-$ du -h modules/core/target/dhall-core-0.3.1-SNAPSHOT.jar
-148K    modules/core/target/dhall-core-0.3.1-SNAPSHOT.jar
+$ du -h modules/core/target/dhall-core-0.3.2-SNAPSHOT.jar
+148K    modules/core/target/dhall-core-0.3.2-SNAPSHOT.jar
 
-$ du -h modules/parser/target/dhall-parser-0.3.1-SNAPSHOT.jar
-104K    modules/parser/target/dhall-parser-0.3.1-SNAPSHOT.jar
+$ du -h modules/parser/target/dhall-parser-0.3.2-SNAPSHOT.jar
+104K    modules/parser/target/dhall-parser-0.3.2-SNAPSHOT.jar
 ```
 
 There are also several [Scala][scala] modules that are published for Scala 2.12
@@ -68,7 +68,7 @@ The easiest way to try things out is to add the Scala wrapper module to your bui
 If you're using [sbt][sbt] that would look like this:
 
 ```scala
-libraryDependencies += "org.dhallj" %% "dhall-scala" % "0.3.0"
+libraryDependencies += "org.dhallj" %% "dhall-scala" % "0.3.1"
 ```
 
 This dependency includes two packages: `org.dhallj.syntax` and `org.dhallj.ast`.
@@ -302,7 +302,7 @@ values:
 
 ```scala
 libraryDependencies ++= Seq(
-  "org.dhallj"    %% "dhall-jawn" % "0.3.0",
+  "org.dhallj"    %% "dhall-jawn" % "0.3.1",
   "org.typelevel" %% "jawn-spray" % "1.0.0"
 )
 ```
@@ -530,7 +530,7 @@ Even on the JVM it's close to usable, although you can definitely feel the slow 
 ```bash
 $ cd ..
 
-$ time java -jar ./cli-assembly-0.3.1-SNAPSHOT.jar hash --normalize --alpha <<< "λ(n: Natural) → [n, n + 1]"
+$ time java -jar ./cli-assembly-0.3.2-SNAPSHOT.jar hash --normalize --alpha <<< "λ(n: Natural) → [n, n + 1]"
 sha256:a8d9326812aaabeed29412e7b780dc733b1e633c5556c9ea588e8212d9dc48f3
 
 real    0m0.104s
