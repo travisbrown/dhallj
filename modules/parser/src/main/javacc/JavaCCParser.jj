@@ -122,7 +122,7 @@ TOKEN: {
   | <EQUIVALENT: "===" | "\u2261">
 
   | <DOUBLE_QUOTE_START: "\"">: WITHIN_DOUBLE_QUOTE
-  | <SINGLE_QUOTE_START: "''\n">: WITHIN_SINGLE_QUOTE
+  | <SINGLE_QUOTE_START: "''" ("\n" | "\r\n")>: WITHIN_SINGLE_QUOTE
   | <PARENS_OPEN: "(">
   | <PARENS_CLOSE: ")">
   | <BRACKET_OPEN: "[">
@@ -218,16 +218,16 @@ TOKEN: {
     | ("\\u" <UNICODE_ESCAPE>)
     | <VALID_NON_ASCII>
   )+> |
-  <#UNICODE_ESCAPE: <UNBRACED_ESCAPE> | ("{" <BRACED_CODEPOINT> "}")> |
+  <#UNICODE_ESCAPE: <UNBRACED_ESCAPE> | ("{" <BRACED_ESCAPE> "}")> |
   <#UNBRACED_ESCAPE:
       ((<DIGIT> | "A" | "B" | "C" | "a" | "b" | "c") (<HEX_DIGIT>){3})
-    | ("D" ["0"-"7"] <HEX_DIGIT> <HEX_DIGIT>)
+    | (("D" | "d") ["0"-"7"] <HEX_DIGIT> <HEX_DIGIT>)
     | (("E" | "e") (<HEX_DIGIT>){3})
     | (("F" | "f") <HEX_DIGIT> <HEX_DIGIT> ("A" | "B" | "C" | "D" | "a" | "b" | "c" | "d"))
   > |
   <#BRACED_ESCAPE: ("0")* <BRACED_CODEPOINT>> |
   <#BRACED_CODEPOINT: ((["0"-"9"] | ["A"-"F"] | ["a"-"f"] | "10") <UNICODE_SUFFIX>) | <UNBRACED_ESCAPE> | ((<HEX_DIGIT>){3})+> |
-  <#UNICODE_SUFFIX: ((<DIGIT> | ["A"-"E"] | ["a"-"e"]) (<HEX_DIGIT>){3}) | ("F" <HEX_DIGIT> <HEX_DIGIT> (<DIGIT> | ["A"-"D"] | ["a"-"d"]))>
+  <#UNICODE_SUFFIX: ((<DIGIT> | ["A"-"E"] | ["a"-"e"]) (<HEX_DIGIT>){3}) | (("F" | "f") <HEX_DIGIT> <HEX_DIGIT> (<DIGIT> | ["A"-"D"] | ["a"-"d"]))>
 }
 <WITHIN_DOUBLE_QUOTE> TOKEN: { <DOUBLE_QUOTE_END: "\"">: DEFAULT }
 
@@ -237,6 +237,8 @@ TOKEN: {
     braceDepth.push(0);
     SwitchTo(DEFAULT);
   } |
+  <ESCAPED_QUOTE_PAIR: "'''"> |
+  <ESCAPED_INTERPOLATION: "''${"> |
   <SINGLE_QUOTE_CHARS: (<ASCII> | <VALID_NON_ASCII> | "\t" | "\n" | "\r\n")>
 }
 <WITHIN_SINGLE_QUOTE> TOKEN: { <SINGLE_QUOTE_END: "''">: DEFAULT }
@@ -302,15 +304,27 @@ List<Map.Entry<String, Expr.Parsed>> SINGLE_QUOTE_CONTINUE(): {
 
     (
       <SINGLE_QUOTE_INTERPOLATION> expr=COMPLETE_EXPRESSION() <BRACE_CLOSE> continuation=SINGLE_QUOTE_CONTINUE()
+    | token=<ESCAPED_QUOTE_PAIR> continuation=SINGLE_QUOTE_CONTINUE()
+    | token=<ESCAPED_INTERPOLATION> continuation=SINGLE_QUOTE_CONTINUE()
     | token=<SINGLE_QUOTE_CHARS> continuation=SINGLE_QUOTE_CONTINUE()
     | <SINGLE_QUOTE_END>
     ) {
       if (continuation == null) {
         return new ArrayList<Map.Entry<String, Expr.Parsed>>();
       } else {
-        continuation.add(
-          new SimpleImmutableEntry<>(token == null ? null : token.image, expr)
-        );
+        String value = null;
+
+        if (token != null) {
+          value = token.image;
+
+          if (value.equals("'''")) {
+            value = "''";
+          } else if (value.equals("''${")) {
+            value = "${";
+          }
+        }
+
+        continuation.add(new SimpleImmutableEntry<>(value, expr));
         return continuation;
       }
     }

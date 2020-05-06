@@ -165,11 +165,7 @@ final class ParsingHelpers {
   }
 
   static final String reEscape(String input) {
-    return input
-        .replace("\\", "\\\\")
-        .replace("\n", "\\n")
-        .replace("'''", "''")
-        .replace("''${", "\\${");
+    return input.replace("\\", "\\\\").replace("\n", "\\n");
   }
 
   static final Expr.Parsed makeSingleQuotedTextLiteral(

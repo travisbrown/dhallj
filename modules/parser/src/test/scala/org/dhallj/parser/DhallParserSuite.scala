@@ -78,4 +78,14 @@ class DhallParserSuite extends FunSuite() {
   test("fail on URLs with quoted paths") {
     intercept[ParsingFailure](DhallParser.parse("https://example.com/foo/\"bar?baz\"?qux"))
   }
+
+  test("handle single-quoted escape sequences") {
+    val expected = Expr.makeTextLiteral("foo '' bar ${ baz '''' qux")
+
+    val input = """''
+foo ''' bar ''${ baz '''''' qux''"""
+
+    assertEquals(DhallParser.parse(input): Expr, expected)
+
+  }
 }
