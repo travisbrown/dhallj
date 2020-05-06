@@ -43,17 +43,14 @@ team.
 
 ## Status
 
-We support [Dhall 15.0.0][dhall-15], including the `with` keyword and record puns. We do not support
+We support [Dhall 16.0.0][dhall-16], including the `with` keyword and record puns. We do not support
 [URLs with quoted paths](https://docs.dhall-lang.org/howtos/migrations/Deprecation-of-quoted-paths-in-URLs.html),
 which were deprecated in 15.0.0 and will be removed in 17.0.0. We currently do support
 `Optional/build` and `Optional/fold`, which will also be removed in 17.0.0.
 
-
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization,
-[CBOR][cbor] encoding and decoding, hashing, and type inference (everything except imports), and
-currently 1,040 of 1,041 tests are passing. There's an
-[open issue](https://github.com/travisbrown/dhallj/issues/8) that tracks the
-acceptance tests that are not passing or that we're not running yet.
+[CBOR][cbor] encoding and decoding, hashing, and type inference, and
+currently all tests are passing.
 
 There are several known issues:
 
@@ -699,7 +696,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [cbor]: https://cbor.io/
 [circe]: https://github.com/circe/circe
 [code-of-conduct]: https://www.scala-lang.org/conduct/
-[dhall-15]: https://github.com/dhall-lang/dhall-lang/releases/tag/v15.0.0
+[dhall-16]: https://github.com/dhall-lang/dhall-lang/releases/tag/v16.0.0
 [dhall-haskell]: https://github.com/dhall-lang/dhall-haskell
 [dhall-imports]: https://github.com/dhall-lang/dhall-lang/blob/master/standard/imports.md
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
