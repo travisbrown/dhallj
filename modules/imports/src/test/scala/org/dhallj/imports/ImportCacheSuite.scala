@@ -7,7 +7,7 @@ import cats.implicits._
 import munit.FunSuite
 import scala.reflect.io.Directory
 
-class CachingSuite extends FunSuite {
+class ImportCacheSuite extends FunSuite {
 
   val rootDir = FunFixture[(ImportCache[IO], Path)](
     setup = { test =>
@@ -35,7 +35,7 @@ class CachingSuite extends FunSuite {
     case (cache, _) =>
       val prog = cache.put(key, bytes) >> cache.get(key)
 
-      assertEquals(prog.unsafeRunSync, Some(bytes))
+      assert(prog.unsafeRunSync.exists(_.sameElements(bytes)))
   }
 
 }
