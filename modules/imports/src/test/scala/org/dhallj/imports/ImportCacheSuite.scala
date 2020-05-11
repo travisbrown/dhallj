@@ -35,7 +35,7 @@ class CachingSuite extends FunSuite {
     case (cache, _) =>
       val prog = cache.put(key, bytes) >> cache.get(key)
 
-      assertEquals(prog.unsafeRunSync, Some(bytes))
+      assert(prog.unsafeRunSync.exists(_.sameElements(bytes)))
   }
 
 }
