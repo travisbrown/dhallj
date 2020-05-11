@@ -7,7 +7,7 @@ import cats.implicits._
 import munit.FunSuite
 import scala.reflect.io.Directory
 
-class CachingSuite extends FunSuite {
+class ImportCacheSuite extends FunSuite {
 
   val rootDir = FunFixture[(ImportCache[IO], Path)](
     setup = { test =>
