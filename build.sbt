@@ -260,7 +260,7 @@ lazy val scala = project
   .in(file("modules/scala"))
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
   .settings(moduleName := "dhall-scala", name := "dhall-scala", description := "DhallJ Scala wrapper")
-  .dependsOn(ast, parser, importsMini)
+  .dependsOn(ast, parserJacc, importsMini)
 
 lazy val codec = project
   .in(file("modules/scala-codec"))
@@ -310,7 +310,7 @@ lazy val imports = project
   .settings(
     libraryDependencies ++= http4sDependencies :+ (http4sBlazeClient % Test)
   )
-  .dependsOn(parser, cats)
+  .dependsOn(parserJacc, cats)
 
 lazy val importsMini = project
   .in(file("modules/imports-mini"))
@@ -320,7 +320,7 @@ lazy val importsMini = project
     name := "dhall-imports-mini",
     description := "DhallJ import resolution for Java"
   )
-  .dependsOn(parser, core)
+  .dependsOn(parserJacc, core)
 
 lazy val Slow = config("slow").extend(Test)
 

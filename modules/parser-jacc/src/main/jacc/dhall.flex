@@ -13,6 +13,7 @@ import java.util.Deque;
 %final
 %ctorarg WhitespaceHandler whitespaceHandler
 %apiprivate
+%unicode
 
 %line
 %column
@@ -100,10 +101,15 @@ LINE_COMMENT_CHAR = [\u0020-\u007f] | \t | {VALID_NON_ASCII}
 LINE_COMMENT = {LINE_COMMENT_START} {LINE_COMMENT_CHAR}* {END_OF_LINE}
 
 WHSP_CHUNK = [ \t] | {END_OF_LINE}
-VALID_NON_ASCII = [\u0080-\ud7ff] | ([\ud800-\udbff] [\udc00-\udfff]) | [\ue000-\ufffd]
+VALID_NON_ASCII
+  = [\u0080-\ud7ff] | [\ue000-\ufffd]
+  | [\U010000-\U01fffd] | [\U020000-\U02fffd] | [\U030000-\U03fffd] | [\U040000-\U04fffd] | [\U050000-\U05fffd]
+  | [\U060000-\U06fffd] | [\U070000-\U07fffd] | [\U080000-\U09fffd] | [\U040000-\U09fffd] | [\U0a0000-\U0afffd]
+  | [\U0b0000-\U0bfffd] | [\U0c0000-\U0cfffd] | [\U0d0000-\U0dfffd] | [\U0e0000-\U0efffd] | [\U0f0000-\U0ffffd]
+  | [\U100000-\U10fffd]
 
 INTERPOLATION_START = "${"
-DOUBLE_QUOTE_CHARS = (\u0020 | \u0021 | "#" | [\u0025-\u005b] | [\u005d-\u007f] | (\\ [\bfnrt\$\/\"]) | (\u {UNICODE_ESCAPE}) | {VALID_NON_ASCII})+
+DOUBLE_QUOTE_CHARS = (\u0020 | \u0021 | "#" | [\u0025-\u005b] | [\u005d-\u007f] | ("\\" ("\"" | "$" | "\\" | "/" | [bfnrt])) | ("\\u" {UNICODE_ESCAPE}) | {VALID_NON_ASCII})+
 
 SINGLE_QUOTE_START = "''" {END_OF_LINE}
 SINGLE_QUOTE_END = "''"
@@ -249,7 +255,12 @@ HOST = {DOMAIN} | {IPV4} | ("[" ({IPV6} | {IPVFUTURE}) "]")
     this.content.setLength(0);
     return INTERPOLATION_START;
   }
-  "\"" { this.popState(); this.semantic = this.content.toString(); return DOUBLE_QUOTE_MARK; }
+  "\"" {
+    this.popState();
+    this.semantic = this.content.toString();
+    this.content.setLength(0);
+    return DOUBLE_QUOTE_MARK;
+  }
   {DOUBLE_QUOTE_CHARS} { this.content.append(this.yytext()); }
   "$" { this.content.append("$"); }
 }

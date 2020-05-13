@@ -19,11 +19,12 @@ import java.util.Set;
 import org.dhallj.core.DhallException.ParsingFailure;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
+import org.dhallj.core.Parser;
 %}
 
 %package org.dhallj.parser
 
-%class Parser
+%class JaccParser
 %interface ParserTokens
 
 %semantic Object
@@ -32,11 +33,16 @@ import org.dhallj.core.Operator;
   assert_expr operator_expr annotated_expr application_expr
   primitive_expr text_literal import_or_completion_expr first_application_expr selector_expr
 %type <String> label any_label_or_some name_binding import_mode
-%type <List> labels let_bindings with_clauses with_path
-  record_type_fields union_type_fields record_literal_fields list_entries record_literal_field_dotted_label
-  double_quote_pairs single_quote_chunks
-%type <Entry> with_clause import_type record_type_field union_type_field record_literal_field
-%type <Expr.LetBinding> let_binding
+%type <List<String>> labels with_path record_literal_field_dotted_label
+%type <List<Expr>> list_entries
+
+%type <List<Expr.LetBinding<Expr>>> let_bindings
+%type <List<Entry<List<String>, Expr>>> record_literal_fields with_clauses
+%type <List<Entry<String, Expr>>> record_type_fields union_type_fields double_quote_pairs single_quote_chunks
+
+%type <Entry<List<String>, Expr>> record_literal_field with_clause
+%type <Entry<String, Expr>> record_type_field union_type_field import_type
+%type <Expr.LetBinding<Expr>> let_binding
 
 %start base_expr
 
@@ -76,12 +82,12 @@ import org.dhallj.core.Operator;
 
 label : LABEL | BUILT_IN;
 any_label_or_some : LABEL | TEXT | LOCATION | BUILT_IN | SOME;
-name_binding : LABEL | TEXT | LOCATION;
+name_binding : LABEL | LOCATION;
 
 identifier
-  : LABEL { $$ = Expr.makeIdentifier($1); }
-  | LABEL AT_SIGN NATURAL_LITERAL {
-    long indexValue = $3.startsWith("0x") ? Long.parseLong($3.substring(2), 16) : Long.parseLong($3);
+  : name_binding { $$ = Expr.makeIdentifier($1); }
+  | name_binding AT_SIGN NATURAL_LITERAL {
+    long indexValue = Parser.parseBigInteger($3).longValue();
 
     $$ = Expr.makeIdentifier($1, indexValue);
   }
@@ -127,8 +133,8 @@ let_bindings
   ;
 
 let_binding
-  : LET LABEL EQUALS_SIGN base_expr { $$ = new Expr.LetBinding<Expr>($2, null, $4); }
-  | LET LABEL COLON base_expr EQUALS_SIGN base_expr { $$ = new Expr.LetBinding<Expr>($2, $4, $6); }
+  : LET name_binding EQUALS_SIGN base_expr { $$ = new Expr.LetBinding<Expr>($2, null, $4); }
+  | LET name_binding COLON base_expr EQUALS_SIGN base_expr { $$ = new Expr.LetBinding<Expr>($2, $4, $6); }
   ;
 
 forall_expr
@@ -234,8 +240,8 @@ labels
 
 primitive_expr
   : DOUBLE_LITERAL { $$ = Expr.makeDoubleLiteral(Double.parseDouble($1)); }
-  | NATURAL_LITERAL { $$ = makeNaturalLiteral($1); }
-  | INTEGER_LITERAL { $$ = makeIntegerLiteral($1); }
+  | NATURAL_LITERAL { $$ = Expr.makeNaturalLiteral(Parser.parseBigInteger($1)); }
+  | INTEGER_LITERAL { $$ = Expr.makeIntegerLiteral(Parser.parseBigInteger($1)); }
   | text_literal
   | BRACE_OPEN COMMA BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_TYPE; }
   | BRACE_OPEN BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_TYPE; }
@@ -258,19 +264,19 @@ primitive_expr
   ;
 
 text_literal
-  : DOUBLE_QUOTE_MARK double_quote_pairs DOUBLE_QUOTE_MARK { $$ = makeTextLiteral($2, $3); }
-  | SINGLE_QUOTE_START single_quote_chunks { $$ = makeSingleQuotedTextLiteral($2); }
+  : DOUBLE_QUOTE_MARK double_quote_pairs DOUBLE_QUOTE_MARK { $$ = Parser.makeTextLiteral($2, $3); }
+  | SINGLE_QUOTE_START single_quote_chunks { $$ = Parser.makeSingleQuotedTextLiteral($2); }
   ;
 
 double_quote_pairs
-  : double_quote_pairs INTERPOLATION_START base_expr BRACE_CLOSE { $1.add(new SimpleImmutableEntry<>($2, $3)); $$ = $1; }
+  : double_quote_pairs INTERPOLATION_START base_expr BRACE_CLOSE { $1.add(new SimpleImmutableEntry<String, Expr>($2, $3)); $$ = $1; }
   | { $$ = new ArrayList<Entry<String, Expr>>(); }
   ;
 
 single_quote_chunks
   : INTERPOLATION_START base_expr BRACE_CLOSE single_quote_chunks { $4.add(new SimpleImmutableEntry<String, Expr>(null, $2)); $$ = $4; }
   | SINGLE_QUOTE_CHAR single_quote_chunks { $2.add(new SimpleImmutableEntry<String, Expr>($1, null)); $$ = $2; }
-  | SINGLE_QUOTE_END { $$ = new ArrayList<Entry<String, Expr>>(); }
+  | SINGLE_QUOTE_END { $$ = new ArrayList<>(); }
   ;
 
 record_type_fields
@@ -287,7 +293,7 @@ record_type_fields
   ;
 
 record_type_field
-  : any_label_or_some COLON base_expr { $$ = new SimpleImmutableEntry<String, Expr>($1, $3); }
+  : any_label_or_some COLON base_expr { $$ = new SimpleImmutableEntry<>($1, $3); }
   ;
 
 union_type_fields
@@ -352,7 +358,7 @@ list_entries
 %%
   private final Lexer lexer;
 
-  public Parser(Reader reader) {
+  public JaccParser(Reader reader) {
     this.lexer = new Lexer(reader);
   }
 
@@ -361,7 +367,7 @@ list_entries
   }
 
   public static Expr parse(String input) {
-    Parser parser = new Parser(new StringReader(input));
+    JaccParser parser = new JaccParser(new StringReader(input));
 
     parser.lexer.nextToken();
     parser.parse();
@@ -369,31 +375,11 @@ list_entries
   }
 
   public static Expr parse(InputStream stream) {
-    Parser parser = new Parser(new InputStreamReader(stream));
+    JaccParser parser = new JaccParser(new InputStreamReader(stream));
 
     parser.lexer.nextToken();
     parser.parse();
     return (Expr) parser.yyrv;
-  }
-
-  private static final Expr makeNaturalLiteral(String input) {
-    BigInteger value = input.startsWith("0x") ? new BigInteger(input.substring(2), 16) : new BigInteger(input);
-
-    return Expr.makeNaturalLiteral(value);
-  }
-
-  private static final Expr makeIntegerLiteral(String input) {
-    BigInteger value;
-
-    if (input.startsWith("0x")) {
-      value = new BigInteger(input.substring(2), 16);
-    } else if (input.startsWith("-0x")) {
-      value = new BigInteger(input.substring(3), 16).negate();
-    } else {
-      value = new BigInteger(input);
-    }
-
-    return Expr.makeIntegerLiteral(value);
   }
 
   private final static Expr makeWith(Expr base, List clauses) {
@@ -425,9 +411,9 @@ list_entries
     return current;
   }
 
-  private final static Expr makeImport(Entry typeWithUsing, String hash, String mode) {
-    String type = (String) typeWithUsing.getKey();
-    Expr using = (Expr) typeWithUsing.getValue();
+  private final static Expr makeImport(Entry<String, Expr> typeWithUsing, String hash, String mode) {
+    String type = typeWithUsing.getKey();
+    Expr using = typeWithUsing.getValue();
 
     byte[] hashValue = (hash == null) ? null : Expr.Util.decodeHashBytes(hash.substring(7));
 
@@ -456,28 +442,22 @@ list_entries
     }
   }
 
-  private final static Expr makeNonEmptyList(List entries) {
-    Expr[] entryArray = ((List<Expr>) entries).toArray(new Expr[entries.size()]);
-
-    return Expr.makeNonEmptyListLiteral(entryArray);
+  private final static Expr makeNonEmptyList(List<Expr> entries) {
+    return Expr.makeNonEmptyListLiteral(entries.toArray(new Expr[entries.size()]));
   }
 
-  private final static Expr makeRecordType(List fields) {
-    Entry[] fieldArray = ((List<Entry>) fields).toArray(new Entry[fields.size()]);
-
-    return Expr.makeRecordType(fieldArray);
+  private final static Expr makeRecordType(List<Entry<String, Expr>> fields) {
+    return Expr.makeRecordType(fields.toArray(new Entry[fields.size()]));
   }
 
-  private final static Expr makeUnionType(List fields) {
-    Entry[] fieldArray = ((List<Entry>) fields).toArray(new Entry[fields.size()]);
-
-    return Expr.makeUnionType(fieldArray);
+  private final static Expr makeUnionType(List<Entry<String, Expr>> fields) {
+    return Expr.makeUnionType(fields.toArray(new Entry[fields.size()]));
   }
 
-  private static final Expr makeRecordLiteral(List fields) {
+  private static final Expr makeRecordLiteral(List<Entry<List<String>, Expr>> fields) {
     List<Entry<String, Expr>> dedotted = new ArrayList<>(fields.size());
 
-    for (Entry<List<String>, Expr> entry : ((List<Entry<List<String>, Expr>>) fields)) {
+    for (Entry<List<String>, Expr> entry : fields) {
       List<String> parts = entry.getKey();
       String firstPart = parts.remove(0);
 
@@ -529,140 +509,3 @@ list_entries
 
     return Expr.makeRecordLiteral(desugared);
   }
-
-  private static final Expr makeTextLiteral(List<Entry<String, Expr>> pairs, String last) {
-    int size = pairs.size();
-
-    String[] parts = new String[size + 1];
-    Expr[] interpolated = new Expr[size];
-
-    for (int i = 0; i < size; i += 1) {
-      Entry<String, Expr> pair = pairs.get(i);
-      parts[i] = unescapeText(pair.getKey());
-      interpolated[i] = pair.getValue();
-    }
-
-    parts[size] = last;
-
-    return Expr.makeTextLiteral(parts, interpolated);
-  }
-
-  private static final void dedent(String[] input) {
-    List<Character> candidate = null;
-
-    input[0] = "\n" + input[0];
-
-    for (int i = 0; i < input.length; i++) {
-      String part = input[i].replace("\r\n", "\n");
-      input[i] = part;
-
-      for (int j = 0; j < part.length(); j++) {
-        // Check if this character is a newline (but not before a blank line).
-        if ((part.charAt(j) == '\n') && (j == part.length() - 1 || part.charAt(j + 1) != '\n')) {
-          if (candidate == null) {
-            candidate = new ArrayList<Character>();
-            for (int k = j + 1; k < part.length(); k++) {
-              char c = part.charAt(k);
-              if (c == ' ' || c == '\t') {
-                candidate.add(c);
-              } else {
-                break;
-              }
-            }
-          } else {
-            for (int k = j + 1; k < part.length(); k++) {
-              if (candidate.size() >= k - j
-                  && part.charAt(k) != candidate.get(k - j - 1).charValue()) {
-                for (int r = candidate.size() - 1; r >= k - j - 1; r--) {
-                  candidate.remove(r);
-                }
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (!candidate.isEmpty()) {
-      StringBuilder builder = new StringBuilder();
-      for (Character c : candidate) {
-        builder.append(c);
-      }
-      String target = builder.toString();
-
-      for (int i = 0; i < input.length; i++) {
-        input[i] = input[i].replace("\n" + target, "\n");
-      }
-    }
-
-    input[0] = input[0].substring(1);
-
-    for (int i = 0; i < input.length; i += 1) {
-      input[i] = reEscape(input[i]);
-    }
-  }
-
-  private static final String unescapeText(String in) {
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < in.length(); i++) {
-      if (in.charAt(i) == '\\') {
-        i += 1;
-        char next = in.charAt(i);
-        if (next == '"' || next == '$') {
-          builder.append(next);
-        } else if (next == 'u') {
-          // TODO: handle braced escapes.
-          long code = Long.parseLong(in.substring(i + 1, i + 5), 16);
-          builder.append((char) code);
-          i += 4;
-        } else {
-          builder.append('\\');
-          builder.append(next);
-        }
-      } else {
-        builder.append(in.charAt(i));
-      }
-    }
-    return builder.toString();
-  }
-
-  private static final String reEscape(String input) {
-    return input
-        .replace("\\", "\\\\")
-        .replace("\n", "\\n")
-        .replace("'''", "''")
-        .replace("''${", "\\${");
-  }
-
-  private static final Expr makeSingleQuotedTextLiteral(List<Entry<String, Expr>> chunks) {
-    Collections.reverse(chunks);
-
-    List<String> parts = new ArrayList<>(1);
-    List<Expr> interpolated = new ArrayList<>();
-
-    for (Entry<String, Expr> chunk : chunks) {
-      if (chunk.getKey() == null) {
-        if (parts.isEmpty()) {
-          parts.add("");
-        }
-        interpolated.add(chunk.getValue());
-      } else {
-        if (parts.size() > interpolated.size()) {
-          parts.set(parts.size() - 1, parts.get(parts.size() - 1) + chunk.getKey());
-        } else {
-          parts.add(chunk.getKey());
-        }
-      }
-    }
-
-    if (interpolated.size() == parts.size()) {
-      parts.add("");
-    }
-
-    String[] partArray = parts.toArray(new String[parts.size()]);
-    dedent(partArray);
-
-    return Expr.makeTextLiteral(partArray, (List) interpolated);
-  }
-

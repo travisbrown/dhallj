@@ -16,6 +16,7 @@ import java.util.Set;
 import org.dhallj.core.DhallException.ParsingFailure;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
+import org.dhallj.core.Parser;
 import org.dhallj.core.Source;
 
 final class ParsingHelpers {
@@ -31,26 +32,13 @@ final class ParsingHelpers {
   }
 
   static final Expr.Parsed makeNaturalLiteral(Token token) {
-    BigInteger value =
-        token.image.startsWith("0x")
-            ? new BigInteger(token.image.substring(2), 16)
-            : new BigInteger(token.image);
-
-    return new Expr.Parsed(Expr.makeNaturalLiteral(value), sourceFromToken(token));
+    return new Expr.Parsed(
+        Expr.makeNaturalLiteral(Parser.parseBigInteger(token.image)), sourceFromToken(token));
   }
 
   static final Expr.Parsed makeIntegerLiteral(Token token) {
-    BigInteger value;
-
-    if (token.image.startsWith("0x")) {
-      value = new BigInteger(token.image.substring(2), 16);
-    } else if (token.image.startsWith("-0x")) {
-      value = new BigInteger(token.image.substring(3), 16).negate();
-    } else {
-      value = new BigInteger(token.image);
-    }
-
-    return new Expr.Parsed(Expr.makeIntegerLiteral(value), sourceFromToken(token));
+    return new Expr.Parsed(
+        Expr.makeIntegerLiteral(Parser.parseBigInteger(token.image)), sourceFromToken(token));
   }
 
   private static String unescapeText(String in) {
@@ -196,34 +184,7 @@ final class ParsingHelpers {
     // TODO: fix source.
     Source source = sourceFromToken(first);
 
-    Collections.reverse(chunks);
-
-    List<String> parts = new ArrayList<>(1);
-    List<Expr> interpolated = new ArrayList<>();
-
-    for (Entry<String, Expr.Parsed> chunk : chunks) {
-      if (chunk.getKey() == null) {
-        if (parts.isEmpty()) {
-          parts.add("");
-        }
-        interpolated.add(chunk.getValue());
-      } else {
-        if (parts.size() > interpolated.size()) {
-          parts.set(parts.size() - 1, parts.get(parts.size() - 1) + chunk.getKey());
-        } else {
-          parts.add(chunk.getKey());
-        }
-      }
-    }
-
-    if (interpolated.size() == parts.size()) {
-      parts.add("");
-    }
-
-    String[] partArray = parts.toArray(new String[parts.size()]);
-    dedent(partArray);
-
-    return new Expr.Parsed(Expr.makeTextLiteral(partArray, (List) interpolated), source);
+    return new Expr.Parsed(Parser.makeSingleQuotedTextLiteral((List) chunks), source);
   }
 
   static final Expr.Parsed makeApplication(Expr.Parsed base, Expr.Parsed arg, Token whsp) {
@@ -524,10 +485,7 @@ final class ParsingHelpers {
         Source.fromString(
             builder.toString(), value.beginLine, value.beginColumn, index.endLine, index.endColumn);
 
-    long indexValue =
-        index.image.startsWith("0x")
-            ? Long.parseLong(index.image.substring(2), 16)
-            : Long.parseLong(index.image);
+    long indexValue = Parser.parseBigInteger(index.image).longValue();
 
     return new Expr.Parsed(Expr.makeIdentifier(unescapeLabel(value.image), indexValue), source);
   }
