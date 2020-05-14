@@ -206,7 +206,7 @@ lazy val ast = project
   .in(file("modules/ast"))
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
   .settings(moduleName := "dhall-ast", name := "dhall-ast", description := "DhallJ Scala AST")
-  .dependsOn(parser, importsMini)
+  .dependsOn(importsMini)
 
 lazy val scala = project
   .in(file("modules/scala"))
