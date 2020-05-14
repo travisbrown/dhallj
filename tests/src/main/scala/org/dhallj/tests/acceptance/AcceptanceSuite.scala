@@ -1,6 +1,6 @@
 package org.dhallj.tests.acceptance
 
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 import munit.{FunSuite, Ignore, Slow}
 
@@ -10,6 +10,7 @@ trait AcceptanceSuite extends FunSuite {
   def prefix: String = "./dhall-lang/tests"
 
   def base: String
+  def recurse: Boolean = false
 
   def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhall")
   def makeName(inputFileName: String): String = inputFileName.dropRight(7)
@@ -24,30 +25,32 @@ trait AcceptanceSuite extends FunSuite {
    */
   def slow: Set[String] = Set.empty
 
+  private def basePath: Path = Paths.get(s"$prefix/$base")
+
   /**
    * Returns a list of name-path pairs.
    */
-  def testInputs: List[(String, String)] =
-    Files
-      .list(Paths.get(s"$prefix/$base"))
-      .iterator()
-      .asScala
-      .map(_.getFileName.toString)
-      .filter(isInputFileName)
-      .map {
-        case inputFileName => (makeName(inputFileName), s"$prefix/$base/$inputFileName")
-      }
-      .toList
-      .sortBy(_._1)
+  def testInputs: List[(String, Path)] = (
+    if (this.recurse) Files.walk(basePath) else Files.list(basePath)
+  ).iterator.asScala
+    .map(path => (basePath.relativize(path).toString, path))
+    .flatMap {
+      case (name, path) =>
+        if (isInputFileName(name)) {
+          Some((makeName(name), path))
+        } else None
+    }
+    .toList
+    .sortBy(_._2)
 
   final override def munitTests(): Seq[Test] =
     super
       .munitTests()
       .map(test => if (ignored(test.name)) test.tag(Ignore) else if (slow(test.name)) test.tag(Slow) else test)
 
-  final protected def readString(path: String): String =
+  final protected def readString(path: Path): String =
     new String(readBytes(path))
 
-  final protected def readBytes(path: String): Array[Byte] =
-    Files.readAllBytes(Paths.get(path))
+  final protected def readBytes(path: Path): Array[Byte] =
+    Files.readAllBytes(path)
 }
