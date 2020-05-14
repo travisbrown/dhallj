@@ -202,11 +202,17 @@ lazy val yaml = project
   )
   .dependsOn(core, scala % Test)
 
+lazy val ast = project
+  .in(file("modules/ast"))
+  .settings(baseSettings ++ scalaSettings ++ publishSettings)
+  .settings(moduleName := "dhall-ast", name := "dhall-ast", description := "DhallJ Scala AST")
+  .dependsOn(parser, importsMini)
+
 lazy val scala = project
   .in(file("modules/scala"))
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
   .settings(moduleName := "dhall-scala", name := "dhall-scala", description := "DhallJ Scala wrapper")
-  .dependsOn(parser, importsMini)
+  .dependsOn(ast, parser, importsMini)
 
 lazy val codec = project
   .in(file("modules/scala-codec"))
@@ -228,7 +234,7 @@ lazy val testing = project
     description := "DhallJ ScalaCheck instances",
     libraryDependencies += "org.scalacheck" %% "scalacheck" % scalaCheckVersion
   )
-  .dependsOn(scala)
+  .dependsOn(ast)
 
 lazy val javagen = project
   .in(file("modules/javagen"))
