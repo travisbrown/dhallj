@@ -1,6 +1,6 @@
 package org.dhallj.tests.acceptance
 
-import java.nio.file.Files
+import java.nio.file.{Files, Paths}
 
 import cats.effect.{ContextShift, IO}
 
@@ -41,7 +41,7 @@ class ImportResolutionSuite(val base: String)
       .fromResource("tests/import/cache/dhall")
       .getLines
       .foreach { p =>
-        val content = readBytes(s"dhall-lang/tests/import/cache/dhall/$p")
+        val content = readBytes(Paths.get(s"dhall-lang/tests/import/cache/dhall/$p"))
         Files.write(dir.resolve(p), content)
       }
     cache

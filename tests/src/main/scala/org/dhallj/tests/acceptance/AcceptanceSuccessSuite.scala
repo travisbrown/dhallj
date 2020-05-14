@@ -1,6 +1,7 @@
 package org.dhallj.tests.acceptance
 
 import cats.effect.{ContextShift, IO}
+import java.nio.file.{Path, Paths}
 
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
@@ -15,13 +16,15 @@ import scala.concurrent.ExecutionContext
 trait SuccessSuite[A, B] extends AcceptanceSuite {
   self: Input[A] =>
 
-  def makeExpectedPath(inputPath: String): String
+  def makeExpectedFilename(input: String): String
+  final private def makeExpectedPath(inputPath: Path): Path =
+    inputPath.resolveSibling(makeExpectedFilename(inputPath.getFileName.toString))
 
   def transform(input: A): B
   def loadExpected(input: Array[Byte]): B
   def compare(result: B, expected: B): Boolean
 
-  def testPairs: List[(String, String, (String, B))] = testInputs.map {
+  def testPairs: List[(String, Path, (String, B))] = testInputs.map {
     case (name, path) =>
       (name, path, (readString(path), loadExpected(readBytes(makeExpectedPath(path)))))
   }
@@ -29,7 +32,7 @@ trait SuccessSuite[A, B] extends AcceptanceSuite {
   testPairs.foreach {
     case (name, path, (input, expected)) =>
       test(name) {
-        assert(compare(clue(transform(parseInput(path, clue(input)))), clue(expected)))
+        assert(compare(clue(transform(parseInput(path.toString, clue(input)))), clue(expected)))
       }
   }
 }
@@ -82,7 +85,7 @@ trait ResolvingInput extends Input[Expr] {
 abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extends SuccessSuite[Expr, Expr] {
   self: Input[Expr] =>
 
-  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhall"
+  def makeExpectedFilename(input: String): String = input.dropRight(7) + "B.dhall"
 
   def transform(input: Expr): Expr = transformation(input)
 
@@ -101,7 +104,7 @@ class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(
 class NormalizationUSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with ParsingInput
 
 class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with ResolvingInput {
-  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.hash"
+  def makeExpectedFilename(input: String): String = input.dropRight(7) + "B.hash"
 
   def transform(input: Expr): String = input.normalize.alphaNormalize.hash
   def loadExpected(input: Array[Byte]): String = new String(input).trim.drop(7)
@@ -109,7 +112,7 @@ class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with Res
 }
 
 class ParsingSuite(val base: String) extends SuccessSuite[Expr, Array[Byte]] with ParsingInput {
-  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(7) + "B.dhallb"
+  def makeExpectedFilename(input: String): String = input.dropRight(7) + "B.dhallb"
 
   def transform(input: Expr): Array[Byte] = input.getEncodedBytes
   def loadExpected(input: Array[Byte]): Array[Byte] = input
@@ -117,12 +120,12 @@ class ParsingSuite(val base: String) extends SuccessSuite[Expr, Array[Byte]] wit
 }
 
 class BinaryDecodingSuite(val base: String) extends SuccessSuite[Expr, Expr] with ParsingInput {
-  def makeExpectedPath(inputPath: String): String = inputPath.dropRight(8) + "B.dhall"
+  def makeExpectedFilename(input: String): String = input.dropRight(8) + "B.dhall"
 
   override def isInputFileName(fileName: String): Boolean = fileName.endsWith("A.dhallb")
 
   override def parseInput(path: String, input: String): Expr =
-    decode(readBytes(path))
+    decode(readBytes(Paths.get(path)))
 
   def transform(input: Expr): Expr = input
   def loadExpected(input: Array[Byte]): Expr = DhallParser.parse(new String(input))
