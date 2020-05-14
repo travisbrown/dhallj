@@ -93,17 +93,21 @@ abstract class ExprOperationAcceptanceSuite(transformation: Expr => Expr) extend
   def compare(result: Expr, expected: Expr): Boolean = result.sameStructure(expected) && result.equivalent(expected)
 }
 
-class ParsingTypeCheckingSuite(val base: String)
+class ParsingTypeCheckingSuite(val base: String, override val recurse: Boolean = false)
     extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
     with ParsingInput
-class TypeCheckingSuite(val base: String)
+class TypeCheckingSuite(val base: String, override val recurse: Boolean = false)
     extends ExprOperationAcceptanceSuite(Expr.Util.typeCheck(_))
     with ResolvingInput
 class AlphaNormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.alphaNormalize) with ParsingInput
-class NormalizationSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with CachedResolvingInput
+class NormalizationSuite(val base: String, override val recurse: Boolean = false)
+    extends ExprOperationAcceptanceSuite(_.normalize)
+    with CachedResolvingInput
 class NormalizationUSuite(val base: String) extends ExprOperationAcceptanceSuite(_.normalize) with ParsingInput
 
-class HashingSuite(val base: String) extends SuccessSuite[Expr, String] with ResolvingInput {
+class HashingSuite(val base: String, override val recurse: Boolean = false)
+    extends SuccessSuite[Expr, String]
+    with ResolvingInput {
   def makeExpectedFilename(input: String): String = input.dropRight(7) + "B.hash"
 
   def transform(input: Expr): String = input.normalize.alphaNormalize.hash
