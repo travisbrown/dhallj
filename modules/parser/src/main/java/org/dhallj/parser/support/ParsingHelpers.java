@@ -59,13 +59,25 @@ final class ParsingHelpers {
       if (in.charAt(i) == '\\') {
         i += 1;
         char next = in.charAt(i);
-        if (next == '"' || next == '$') {
+        if (next == '"' || next == '$' || next == '/') {
           builder.append(next);
         } else if (next == 'u') {
-          // TODO: handle braced escapes.
-          long code = Long.parseLong(in.substring(i + 1, i + 5), 16);
-          builder.append((char) code);
-          i += 4;
+          char escapeFirst = in.charAt(i + 1);
+
+          if (escapeFirst == '{') {
+            int len = 0;
+            while (in.charAt(i + 2 + len) != '}') {
+              len += 1;
+            }
+
+            int code = Integer.parseInt(in.substring(i + 2, i + 2 + len), 16);
+            builder.appendCodePoint(code);
+            i += len + 2;
+          } else {
+            int code = Integer.parseInt(in.substring(i + 1, i + 5), 16);
+            builder.append((char) code);
+            i += 4;
+          }
         } else {
           builder.append('\\');
           builder.append(next);
@@ -110,20 +122,21 @@ final class ParsingHelpers {
 
   static final void dedent(String[] input) {
     List<Character> candidate = null;
+    String[][] partLines = new String[input.length][];
 
-    input[0] = "\n" + input[0];
-
-    for (int i = 0; i < input.length; i++) {
+    for (int i = 0; i < input.length; i += 1) {
       String part = input[i].replace("\r\n", "\n");
-      input[i] = part;
+      String[] lines = part.split("\n", -1);
+      partLines[i] = lines;
 
-      for (int j = 0; j < part.length(); j++) {
-        // Check if this character is a newline (but not before a blank line).
-        if ((part.charAt(j) == '\n') && (j == part.length() - 1 || part.charAt(j + 1) != '\n')) {
+      for (int j = (i == 0) ? 0 : 1; j < lines.length; j += 1) {
+        String line = lines[j];
+
+        if (line.length() > 0 || j == lines.length - 1) {
           if (candidate == null) {
-            candidate = new ArrayList<Character>();
-            for (int k = j + 1; k < part.length(); k++) {
-              char c = part.charAt(k);
+            candidate = new ArrayList<>();
+            for (int k = 0; k < line.length(); k += 1) {
+              char c = line.charAt(k);
               if (c == ' ' || c == '\t') {
                 candidate.add(c);
               } else {
@@ -131,12 +144,9 @@ final class ParsingHelpers {
               }
             }
           } else {
-            for (int k = j + 1; k < part.length(); k++) {
-              if (candidate.size() >= k - j
-                  && part.charAt(k) != candidate.get(k - j - 1).charValue()) {
-                for (int r = candidate.size() - 1; r >= k - j - 1; r--) {
-                  candidate.remove(r);
-                }
+            for (int k = 0; k < candidate.size(); k += 1) {
+              if (k == line.length() || line.charAt(k) != candidate.get(k).charValue()) {
+                candidate = candidate.subList(0, k);
                 break;
               }
             }
@@ -145,22 +155,35 @@ final class ParsingHelpers {
       }
     }
 
-    if (!candidate.isEmpty()) {
+    int stripCount = candidate == null ? 0 : candidate.size();
+
+    if (stripCount == 0) {
+      for (int i = 0; i < input.length; i += 1) {
+        input[i] = reEscape(input[i]);
+      }
+    } else {
       StringBuilder builder = new StringBuilder();
-      for (Character c : candidate) {
-        builder.append(c);
+
+      for (int i = 0; i < input.length; i += 1) {
+        builder.setLength(0);
+
+        String[] lines = partLines[i];
+
+        for (int j = 0; j < lines.length; j += 1) {
+          if (lines[j].length() != 0) {
+            if (i > 0 && j == 0) {
+              builder.append(lines[j]);
+            } else {
+              builder.append(lines[j].substring(stripCount));
+            }
+          }
+          if (j < lines.length - 1) {
+            builder.append("\n");
+          }
+        }
+
+        input[i] = reEscape(builder.toString());
       }
-      String target = builder.toString();
-
-      for (int i = 0; i < input.length; i++) {
-        input[i] = input[i].replace("\n" + target, "\n");
-      }
-    }
-
-    input[0] = input[0].substring(1);
-
-    for (int i = 0; i < input.length; i += 1) {
-      input[i] = reEscape(input[i]);
     }
   }
 
