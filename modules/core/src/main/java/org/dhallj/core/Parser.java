@@ -41,6 +41,25 @@ public abstract class Parser {
     return Expr.makeTextLiteral(parts, interpolated);
   }
 
+  public static final Expr makeSingleQuotedTextLiteral(
+      List<Entry<String, Expr>> pairs, String last) {
+    int size = pairs.size();
+
+    String[] parts = new String[size + 1];
+    Expr[] interpolated = new Expr[size];
+
+    for (int i = 0; i < size; i += 1) {
+      Entry<String, Expr> pair = pairs.get(i);
+      parts[i] = unescapeText(pair.getKey());
+      interpolated[i] = pair.getValue();
+    }
+
+    parts[size] = unescapeText(last);
+
+    dedentLines(parts);
+    return Expr.makeTextLiteral(parts, interpolated);
+  }
+
   public static final Expr makeSingleQuotedTextLiteral(List<Entry<String, Expr>> chunks) {
     Collections.reverse(chunks);
 

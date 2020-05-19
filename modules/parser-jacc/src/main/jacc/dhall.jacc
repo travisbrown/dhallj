@@ -38,7 +38,7 @@ import org.dhallj.core.Parser;
 
 %type <List<Expr.LetBinding<Expr>>> let_bindings
 %type <List<Entry<List<String>, Expr>>> record_literal_fields with_clauses
-%type <List<Entry<String, Expr>>> record_type_fields union_type_fields double_quote_pairs single_quote_chunks
+%type <List<Entry<String, Expr>>> record_type_fields union_type_fields quote_pairs
 
 %type <Entry<List<String>, Expr>> record_literal_field with_clause
 %type <Entry<String, Expr>> record_type_field union_type_field import_type
@@ -264,19 +264,13 @@ primitive_expr
   ;
 
 text_literal
-  : DOUBLE_QUOTE_MARK double_quote_pairs DOUBLE_QUOTE_MARK { $$ = Parser.makeTextLiteral($2, $3); }
-  | SINGLE_QUOTE_START single_quote_chunks { $$ = Parser.makeSingleQuotedTextLiteral($2); }
+  : DOUBLE_QUOTE_MARK quote_pairs DOUBLE_QUOTE_MARK { $$ = Parser.makeTextLiteral($2, $3); }
+  | SINGLE_QUOTE_START quote_pairs SINGLE_QUOTE_END { $$ = Parser.makeSingleQuotedTextLiteral($2, $3); }
   ;
 
-double_quote_pairs
-  : double_quote_pairs INTERPOLATION_START base_expr BRACE_CLOSE { $1.add(new SimpleImmutableEntry<String, Expr>($2, $3)); $$ = $1; }
+quote_pairs
+  : quote_pairs INTERPOLATION_START base_expr BRACE_CLOSE { $1.add(new SimpleImmutableEntry<String, Expr>($2, $3)); $$ = $1; }
   | { $$ = new ArrayList<Entry<String, Expr>>(); }
-  ;
-
-single_quote_chunks
-  : INTERPOLATION_START base_expr BRACE_CLOSE single_quote_chunks { $4.add(new SimpleImmutableEntry<String, Expr>(null, $2)); $$ = $4; }
-  | SINGLE_QUOTE_CHAR single_quote_chunks { $2.add(new SimpleImmutableEntry<String, Expr>($1, null)); $$ = $2; }
-  | SINGLE_QUOTE_END { $$ = new ArrayList<>(); }
   ;
 
 record_type_fields

@@ -266,9 +266,22 @@ HOST = {DOMAIN} | {IPV4} | ("[" ({IPV6} | {IPVFUTURE}) "]")
 }
 
 <SINGLE_QUOTE> {
-  {INTERPOLATION_START} { this.pushState(YYINITIAL); this.braceDepth.push(0); return INTERPOLATION_START; }
-  {SINGLE_QUOTE_END} { this.popState(); return SINGLE_QUOTE_END; }
-  {SINGLE_QUOTE_CHAR} { this.semantic = this.yytext(); return SINGLE_QUOTE_CHAR; }
+  {INTERPOLATION_START} {
+    this.pushState(YYINITIAL);
+    this.braceDepth.push(0);
+    this.semantic = this.content.toString();
+    this.content.setLength(0);
+    return INTERPOLATION_START;
+  }
+  {SINGLE_QUOTE_END} {
+    this.popState();
+    this.semantic = this.content.toString();
+    this.content.setLength(0);
+    return SINGLE_QUOTE_END;
+  }
+  {SINGLE_QUOTE_CHAR} { this.content.append(this.yytext()); }
+  {SINGLE_QUOTE_ESCAPED_PAIR} { this.content.append("''"); }
+  {SINGLE_QUOTE_ESCAPED_INTERPOLATION} { this.content.append("${"); }
 }
 
 <<EOF>> { token = ENDINPUT; return ENDINPUT; }
