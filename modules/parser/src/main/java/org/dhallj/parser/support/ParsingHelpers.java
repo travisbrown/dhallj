@@ -41,42 +41,6 @@ final class ParsingHelpers {
         Expr.makeIntegerLiteral(Parser.parseBigInteger(token.image)), sourceFromToken(token));
   }
 
-  private static String unescapeText(String in) {
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < in.length(); i++) {
-      if (in.charAt(i) == '\\') {
-        i += 1;
-        char next = in.charAt(i);
-        if (next == '"' || next == '$' || next == '/') {
-          builder.append(next);
-        } else if (next == 'u') {
-          char escapeFirst = in.charAt(i + 1);
-
-          if (escapeFirst == '{') {
-            int len = 0;
-            while (in.charAt(i + 2 + len) != '}') {
-              len += 1;
-            }
-
-            int code = Integer.parseInt(in.substring(i + 2, i + 2 + len), 16);
-            builder.appendCodePoint(code);
-            i += len + 2;
-          } else {
-            int code = Integer.parseInt(in.substring(i + 1, i + 5), 16);
-            builder.append((char) code);
-            i += 4;
-          }
-        } else {
-          builder.append('\\');
-          builder.append(next);
-        }
-      } else {
-        builder.append(in.charAt(i));
-      }
-    }
-    return builder.toString();
-  }
-
   static final Expr.Parsed makeTextLiteral(
       List<Entry<String, Expr.Parsed>> chunks, Token first, Token last) {
     // TODO: fix source.
@@ -95,7 +59,7 @@ final class ParsingHelpers {
         interpolated.add(chunk.getValue());
         lastWasInterpolated = true;
       } else {
-        parts.add(unescapeText(chunk.getKey()));
+        parts.add(Parser.unescapeText(chunk.getKey()));
         lastWasInterpolated = false;
       }
     }

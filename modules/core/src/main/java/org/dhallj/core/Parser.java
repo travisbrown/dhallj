@@ -158,19 +158,31 @@ public abstract class Parser {
     }
   }
 
-  private static final String unescapeText(String in) {
+  public static final String unescapeText(String in) {
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < in.length(); i++) {
       if (in.charAt(i) == '\\') {
         i += 1;
         char next = in.charAt(i);
-        if (next == '"' || next == '$') {
+        if (next == '"' || next == '$' || next == '/') {
           builder.append(next);
         } else if (next == 'u') {
-          // TODO: handle braced escapes.
-          long code = Long.parseLong(in.substring(i + 1, i + 5), 16);
-          builder.append((char) code);
-          i += 4;
+          char escapeFirst = in.charAt(i + 1);
+
+          if (escapeFirst == '{') {
+            int len = 0;
+            while (in.charAt(i + 2 + len) != '}') {
+              len += 1;
+            }
+
+            int code = Integer.parseInt(in.substring(i + 2, i + 2 + len), 16);
+            builder.appendCodePoint(code);
+            i += len + 2;
+          } else {
+            int code = Integer.parseInt(in.substring(i + 1, i + 5), 16);
+            builder.append((char) code);
+            i += 4;
+          }
         } else {
           builder.append('\\');
           builder.append(next);
