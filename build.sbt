@@ -104,6 +104,7 @@ val root = project
     javagen,
     prelude,
     cli,
+    ast,
     scala,
     codec,
     circe,
