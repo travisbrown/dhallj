@@ -101,7 +101,7 @@ TOKEN: {
     | "Optional"
     | "List"
   >
-  | <QUOTED_LABEL: "`" (["\u0020"-"\u005f"] | ["\u0061"-"\u007e"])+ "`">
+  | <QUOTED_LABEL: "`" (["\u0020"-"\u005f"] | ["\u0061"-"\u007e"])* "`">
   | <SIMPLE_LABEL: (<ALPHA> | "_") (<ALPHA> | <DIGIT> | "_" | "-" | "/" )*>
   | <LAMBDA: "\\" | "\u03bb">
   | <ARROW: "->" | "\u2192">
