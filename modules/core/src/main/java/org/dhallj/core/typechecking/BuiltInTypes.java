@@ -12,7 +12,7 @@ final class BuiltInTypes {
     return mappings.get(name);
   }
 
-  private static final int SIZE = 36;
+  private static final int SIZE = 34;
   private static final Map<String, Expr> mappings = new HashMap<>(SIZE);
 
   static {
@@ -40,14 +40,6 @@ final class BuiltInTypes {
                 "cons",
                 Expr.makePi(_a, Expr.makePi(_list, _list)),
                 Expr.makePi("nil", _list, _list)));
-
-    Expr _optional = Expr.makeIdentifier("optional");
-    Expr optionalType =
-        Expr.makePi(
-            "optional",
-            Constants.TYPE,
-            Expr.makePi(
-                "just", Expr.makePi(_a, _optional), Expr.makePi("nothing", _optional, _optional)));
 
     mappings.put("Kind", Constants.SORT);
     mappings.put("Type", Constants.KIND);
@@ -107,10 +99,6 @@ final class BuiltInTypes {
                 Expr.makeApplication(Constants.LIST, Expr.makeRecordType(indexedRecordFields)))));
     mappings.put("List/reverse", Expr.makePi("a", Constants.TYPE, Expr.makePi(listA, listA)));
 
-    mappings.put(
-        "Optional/build", Expr.makePi("a", Constants.TYPE, Expr.makePi(optionalType, optionalA)));
-    mappings.put(
-        "Optional/fold", Expr.makePi("a", Constants.TYPE, Expr.makePi(optionalA, optionalType)));
     mappings.put("Some", Constants.SOME);
   }
 }

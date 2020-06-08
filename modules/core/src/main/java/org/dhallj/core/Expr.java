@@ -566,7 +566,7 @@ public abstract class Expr {
     public static final String MAP_KEY_FIELD_NAME = "mapKey";
     public static final String MAP_VALUE_FIELD_NAME = "mapValue";
 
-    private static final Map<String, Expr> builtIns = new HashMap<String, Expr>(36);
+    private static final Map<String, Expr> builtIns = new HashMap<String, Expr>(34);
     private static final Set<String> keywords = new HashSet<String>(16);
 
     static {
@@ -599,8 +599,6 @@ public abstract class Expr {
       builtIns.put("Natural/toInteger", new Constructors.BuiltIn("Natural/toInteger"));
       builtIns.put("None", NONE);
       builtIns.put("Optional", OPTIONAL);
-      builtIns.put("Optional/build", new Constructors.BuiltIn("Optional/build"));
-      builtIns.put("Optional/fold", new Constructors.BuiltIn("Optional/fold"));
       builtIns.put("Some", SOME);
       builtIns.put("Sort", SORT);
       builtIns.put("Text", TEXT);
