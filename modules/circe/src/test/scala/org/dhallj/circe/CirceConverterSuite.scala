@@ -10,9 +10,8 @@ import org.dhallj.parser.DhallParser
 import org.scalacheck.Prop
 
 class CirceConverterSuite extends ScalaCheckSuite {
-  property("round-trip Json values through Dhall expressions".tag(Ignore)) {
-    // Shrinking gives us JSON object fields with empty keys.
-    Prop.forAllNoShrink { (value: Json) =>
+  property("round-trip Json values through Dhall expressions") {
+    Prop.forAll { (value: Json) =>
       val cleanedJson = value.foldWith(JsonCleaner)
       val asDhall = Converter(cleanedJson)
       Converter(asDhall) == Some(cleanedJson)

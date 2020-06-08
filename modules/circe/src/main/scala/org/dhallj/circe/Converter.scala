@@ -10,7 +10,7 @@ import org.dhallj.core.converters.JsonConverter
 object Converter {
   def apply(expr: Expr): Option[Json] = {
     val handler = new CirceHandler()
-    val wasConverted = expr.accept(new JsonConverter(handler))
+    val wasConverted = expr.accept(new JsonConverter(handler, false))
 
     if (wasConverted) Some(handler.result) else None
   }

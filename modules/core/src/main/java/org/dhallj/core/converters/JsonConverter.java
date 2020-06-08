@@ -8,10 +8,16 @@ import org.dhallj.core.Visitor;
 
 public final class JsonConverter extends Visitor.Constant<Boolean> {
   private final JsonHandler handler;
+  private final boolean escapeStrings;
 
-  public JsonConverter(JsonHandler handler) {
+  public JsonConverter(JsonHandler handler, boolean escapeStrings) {
     super(false);
     this.handler = handler;
+    this.escapeStrings = escapeStrings;
+  }
+
+  public JsonConverter(JsonHandler handler) {
+    this(handler, true);
   }
 
   public static final String toCompactString(Expr expr) {
@@ -95,7 +101,11 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
   @Override
   public Boolean onText(String[] parts, List<Boolean> interpolated) {
     if (parts.length == 1) {
-      this.handler.onString(escape(parts[0]));
+      if (this.escapeStrings) {
+        this.handler.onString(escape(parts[0]));
+      } else {
+        this.handler.onString(parts[0]);
+      }
       return true;
     } else {
       return false;
@@ -145,7 +155,11 @@ public final class JsonConverter extends Visitor.Constant<Boolean> {
     if (index > 0) {
       this.handler.onObjectFieldGap();
     }
-    this.handler.onObjectField(escape(name));
+    if (this.escapeStrings) {
+      this.handler.onObjectField(escape(name));
+    } else {
+      this.handler.onObjectField(name);
+    }
     return true;
   }
 
