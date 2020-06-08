@@ -56,12 +56,6 @@ final class BetaNormalizeApplication {
         if (result != null) {
           return result;
         }
-      } else if (builtIn.equals("Optional/fold") && args.size() >= 5) {
-        Expr result = optionalFold(base, args);
-
-        if (result != null) {
-          return result;
-        }
       } else if (args.size() == 1) {
         Expr result = arity1(builtIn, args.get(0));
 
@@ -218,18 +212,7 @@ final class BetaNormalizeApplication {
                           prependExpr))),
               Expr.makeEmptyListLiteral(listA))
           .accept(BetaNormalize.instance);
-    } else if (identifier.equals("Optional/build")) {
-      return Expr.makeApplication(
-              Expr.makeApplication(
-                  Expr.makeApplication(arg2, Expr.makeApplication(Expr.Constants.OPTIONAL, arg1)),
-                  Expr.makeLambda(
-                      "a",
-                      arg1,
-                      Expr.makeApplication(Expr.Constants.SOME, Expr.makeIdentifier("a")))),
-              Expr.makeApplication(Expr.Constants.NONE, arg1))
-          .accept(BetaNormalize.instance);
-    }
-    if (identifier.equals("Natural/subtract")) {
+    } else if (identifier.equals("Natural/subtract")) {
       BigInteger firstAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg1);
       BigInteger secondAsNaturalLiteral = Expr.Util.asNaturalLiteral(arg2);
 
@@ -399,25 +382,6 @@ final class BetaNormalizeApplication {
       } else {
         applied = args.get(4);
       }
-
-      if (args.size() == 5) {
-        return applied;
-      } else {
-        return Expr.makeApplication(applied, drop(args, 5)).accept(BetaNormalize.instance);
-      }
-    }
-    return null;
-  }
-
-  private static final Expr optionalFold(Expr base, List<Expr> args) {
-    Expr someArg = Expr.Util.getSomeArg(args.get(1));
-    Expr noneArg = Expr.Util.getNoneArg(args.get(1));
-
-    if (someArg != null || noneArg != null) {
-      Expr applied =
-          (someArg != null)
-              ? (Expr.makeApplication(args.get(3), someArg).accept(BetaNormalize.instance))
-              : args.get(4);
 
       if (args.size() == 5) {
         return applied;
