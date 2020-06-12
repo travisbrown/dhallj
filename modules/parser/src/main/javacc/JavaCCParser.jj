@@ -669,7 +669,7 @@ Expr.Parsed IMPORT(): {
     (
         token=<MISSING>
       | token=<LOCAL>
-      | (token=<HTTP> (LOOKAHEAD(2) [<WHSP>] <USING> <WHSP> using=IMPORT_EXPRESSION())?)
+      | (token=<HTTP> (LOOKAHEAD(2) [<WHSP>] <USING> <WHSP> using=IMPORT_TYPE_EXPRESSION())?)
       | token=<ENV>
       | token=<CLASSPATH>
     )
@@ -680,8 +680,31 @@ Expr.Parsed IMPORT(): {
   }
 }
 
+Expr.Parsed IMPORT_WITHOUT_CHECK(): {
+  Token token = null;
+  Token asValue = null;
+  Expr.Parsed using = null;
+} {
+  (
+    (
+        token=<MISSING>
+      | token=<LOCAL>
+      | (token=<HTTP> (LOOKAHEAD(2) [<WHSP>] <USING> <WHSP> using=IMPORT_TYPE_EXPRESSION())?)
+      | token=<ENV>
+      | token=<CLASSPATH>
+    )
+    (LOOKAHEAD(2) [<WHSP>] <AS> <WHSP> (asValue=<TEXT> | asValue=<LOCATION>))?
+  ) {
+    return ParsingHelpers.makeImport(token, null, asValue, using);
+  }
+}
+
 Expr.Parsed IMPORT_EXPRESSION(): { Expr.Parsed expr; } {
   (expr=IMPORT() | expr=COMPLETION_EXPRESSION()) { return expr; }
+}
+
+Expr.Parsed IMPORT_TYPE_EXPRESSION(): { Expr.Parsed expr; } {
+  (expr=IMPORT_WITHOUT_CHECK() | expr=COMPLETION_EXPRESSION()) { return expr; }
 }
 
 Expr.Parsed APPLICATION_EXPRESSION(): {
