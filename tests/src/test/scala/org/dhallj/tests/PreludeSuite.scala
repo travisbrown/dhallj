@@ -10,7 +10,8 @@ class PreludeSuite extends FunSuite() {
   val haskellDhallIsAvailable = HaskellDhall.isAvailable()
 
   val preludeFiles = Source.fromResource(s"Prelude").getLines.toList.sorted.flatMap {
-    case "Monoid"        => List("Prelude/Monoid")
+    case "Monoid"        => Nil
+    case "Monoid.dhall"  => List("Prelude/Monoid.dhall")
     case "README.md"     => Nil
     case "package.dhall" => List("Prelude/package.dhall")
     case other =>
