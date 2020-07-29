@@ -388,12 +388,14 @@ Expr.Parsed NON_EMPTY_LIST_LITERAL(): {
     (
       t0=<COMMA> { currentOther.append(t0.image); }
       (t0=<WHSP> { currentOther.append(t0.image); })?
-      current=BASE_EXPRESSION() {
-        values.add(current);
-        other.add(currentOther.toString());
-        currentOther.setLength(0);
-      }
-      (t0=<WHSP> { currentOther.append(t0.image); })?
+      (
+        current=BASE_EXPRESSION() {
+          values.add(current);
+          other.add(currentOther.toString());
+          currentOther.setLength(0);
+        }
+        (t0=<WHSP> { currentOther.append(t0.image); })?
+      )?
     )*
     last=<BRACKET_CLOSE>
   ) {
@@ -430,23 +432,25 @@ List<Map.Entry<List<String>, Expr.Parsed>> RECORD_LITERAL_ENTRY(String firstLabe
       (
         <COMMA>
         [<WHSP>]
-        firstLabel=ANY_LABEL_OR_SOME() { current.add(firstLabel); }
-        [<WHSP>]
         (
+          firstLabel=ANY_LABEL_OR_SOME() { current.add(firstLabel); }
+          [<WHSP>]
           (
             (
-              <EQUAL_SIGN> |
-              ((<DOT> [<WHSP>] firstLabel=ANY_LABEL_OR_SOME() { current.add(firstLabel); })+ [<WHSP>] <EQUAL_SIGN>)
-            )
-            [<WHSP>]
-            expr=BASE_EXPRESSION() {
-              values.add(new SimpleImmutableEntry<>(current, expr));
-              current = new ArrayList<>();
-            }
-            [<WHSP>]
-          ) |
-          ({} { values.add(new SimpleImmutableEntry<List<String>, Expr.Parsed>(current, null)); current = new ArrayList<>(); })
-        )
+              (
+                <EQUAL_SIGN> |
+                ((<DOT> [<WHSP>] firstLabel=ANY_LABEL_OR_SOME() { current.add(firstLabel); })+ [<WHSP>] <EQUAL_SIGN>)
+              )
+              [<WHSP>]
+              expr=BASE_EXPRESSION() {
+                values.add(new SimpleImmutableEntry<>(current, expr));
+                current = new ArrayList<>();
+              }
+              [<WHSP>]
+            ) |
+            ({} { values.add(new SimpleImmutableEntry<List<String>, Expr.Parsed>(current, null)); current = new ArrayList<>(); })
+          )
+        )?
       )*
       <BRACE_CLOSE>
   ) {
@@ -466,10 +470,12 @@ List<Map.Entry<String, Expr.Parsed>> RECORD_TYPE_ENTRY(String firstLabel): {
     (
       <COMMA>
       [<WHSP>]
-      firstLabel=ANY_LABEL_OR_SOME()
-      [<WHSP>] <COLON> <WHSP>
-      expr=BASE_EXPRESSION() { values.add(new SimpleImmutableEntry<>(firstLabel, expr)); }
-      [<WHSP>]
+      (
+        firstLabel=ANY_LABEL_OR_SOME()
+        [<WHSP>] <COLON> <WHSP>
+        expr=BASE_EXPRESSION() { values.add(new SimpleImmutableEntry<>(firstLabel, expr)); }
+        [<WHSP>]
+      )?
     )*
     <BRACE_CLOSE>
   ) {
@@ -490,7 +496,7 @@ Expr.Parsed RECORD_LITERAL_OR_TYPE(): {
     (<COMMA> [<WHSP>])?
     (
         last=<BRACE_CLOSE>
-      | (<EQUAL_SIGN> [<WHSP>] last=<BRACE_CLOSE> { literalValues = new ArrayList<>(); })
+      | (<EQUAL_SIGN> [<WHSP>] [<COMMA> [<WHSP>]] last=<BRACE_CLOSE> { literalValues = new ArrayList<>(); })
       | (
         firstLabel=ANY_LABEL_OR_SOME()
         [<WHSP>]
@@ -533,12 +539,14 @@ Expr.Parsed UNION_TYPE(): {
             (
               <BAR>
               [<WHSP>]
-              label=ANY_LABEL_OR_SOME()
-              [<WHSP>]
-              [<COLON> <WHSP> type=BASE_EXPRESSION() [<WHSP>]] {
-                typeValues.add(new SimpleImmutableEntry<>(label, type));
-                type = null;
-              }
+              (
+                label=ANY_LABEL_OR_SOME()
+                [<WHSP>]
+                [<COLON> <WHSP> type=BASE_EXPRESSION() [<WHSP>]] {
+                  typeValues.add(new SimpleImmutableEntry<>(label, type));
+                  type = null;
+                }
+              )?
             )*
           )
         )
@@ -597,7 +605,7 @@ Expr.Parsed PROJECTION_EXPRESSION(Expr.Parsed base, Token whsp0, Token whsp): {
     (
       current=ANY_LABEL_OR_SOME() { labels.add(current); }
       [<WHSP>]
-      (<COMMA> [<WHSP>] current=ANY_LABEL_OR_SOME() { labels.add(current); } [<WHSP>])*
+      (<COMMA> [<WHSP>] (current=ANY_LABEL_OR_SOME() { labels.add(current); } [<WHSP>])?)*
     )?
     last=<BRACE_CLOSE>
   ) {
