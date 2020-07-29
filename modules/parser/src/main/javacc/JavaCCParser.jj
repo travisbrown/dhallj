@@ -601,7 +601,7 @@ Expr.Parsed PROJECTION_EXPRESSION(Expr.Parsed base, Token whsp0, Token whsp): {
   Token last;
 } {
   (
-    <BRACE_OPEN> [<WHSP>]
+    <BRACE_OPEN> [<WHSP>] [<COMMA> [<WHSP>]]
     (
       current=ANY_LABEL_OR_SOME() { labels.add(current); }
       [<WHSP>]
