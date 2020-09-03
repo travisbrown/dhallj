@@ -88,6 +88,9 @@ class LiftVisitor[F[_] <: AnyRef](
       F.map2(base, tpe)(Expr.makeToMap(_, _))
     }
 
+  def onWith(base: F[Expr], path: Array[String], value: F[Expr]): F[Expr] =
+    F.map2(base, value)(Expr.makeWith(_, path, _))
+
   def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     F.pure(Expr.makeMissingImport(mode, hash))
 

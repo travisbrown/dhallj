@@ -675,6 +675,11 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
+  public final Expr onWith(Expr base, String[] path, Expr value) {
+    return Expr.Util.desugarWith(base, path, value).accept(this);
+  }
+
+  @Override
   public final Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }

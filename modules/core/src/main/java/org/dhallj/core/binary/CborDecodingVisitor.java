@@ -301,6 +301,24 @@ final class CborDecodingVisitor implements Visitor<Expr> {
     }
   }
 
+  private Expr readWith(BigInteger length) {
+    int len = length.intValue();
+    if (len == 4) {
+      Expr base = readExpr();
+      int pathLen = this.reader.readArrayStart().intValue();
+      String[] path = new String[pathLen];
+
+      for (int i = 0; i < pathLen; i += 1) {
+        path[i] = this.reader.readNullableTextString();
+      }
+
+      Expr value = readExpr();
+      return Expr.makeWith(base, path, value);
+    } else {
+      throw new DecodingException("with must be encoded in an array of length 4");
+    }
+  }
+
   private Expr readRecordType(BigInteger length) {
     long len = length.longValue();
     if (len != 2) {

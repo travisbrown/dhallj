@@ -23,6 +23,7 @@ final class Label {
   public static final int ANNOTATED = 26;
   public static final int TO_MAP = 27;
   public static final int EMPTY_LIST_WITH_ABSTRACT_TYPE = 28;
+  public static final int WITH = 29;
 
   public static final int IMPORT_TYPE_REMOTE_HTTP = 0;
   public static final int IMPORT_TYPE_REMOTE_HTTPS = 1;
@@ -32,6 +33,6 @@ final class Label {
   public static final int IMPORT_TYPE_LOCAL_HOME = 5;
   public static final int IMPORT_TYPE_ENV = 6;
   public static final int IMPORT_TYPE_MISSING = 7;
-  public static final int IMPORT_TYPE_CLASSPATH =
-      23; // Allows CBOR tiny field encoding but leaves room for Dhall spec to expand import types
+  // Allows CBOR tiny field encoding but leaves room for Dhall spec to expand import types
+  public static final int IMPORT_TYPE_CLASSPATH = 23;
 }

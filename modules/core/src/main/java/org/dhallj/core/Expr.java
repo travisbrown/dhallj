@@ -467,6 +467,35 @@ public abstract class Expr {
           Expr.makeFieldAccess(lhs, "Type"));
     }
 
+    /** Desugar {@code with}. */
+    public static final Expr desugarWith(Expr base, String[] path, Expr value) {
+      if (path.length == 1) {
+        return Expr.makeOperatorApplication(
+            Operator.PREFER, base, Expr.makeRecordLiteral(path[0], value));
+      } else {
+        Expr[] accessors = new Expr[path.length - 1];
+        accessors[0] = Expr.makeFieldAccess(Constants.UNDERSCORE, path[0]);
+
+        for (int i = 1; i < path.length - 1; i += 1) {
+          accessors[i] = Expr.makeFieldAccess(accessors[i - 1], path[i]);
+        }
+
+        Expr incremented = value.increment("_");
+        Expr current = Expr.makeRecordLiteral(path[path.length - 1], incremented);
+
+        for (int i = path.length - 2; i >= 0; i -= 1) {
+          current =
+              Expr.makeRecordLiteral(
+                  path[i], Expr.makeOperatorApplication(Operator.PREFER, accessors[i], current));
+        }
+
+        return Expr.makeLet(
+            "_",
+            base,
+            Expr.makeOperatorApplication(Operator.PREFER, Constants.UNDERSCORE, current));
+      }
+    }
+
     /**
      * If the expression is a lambda, apply it to the given argument.
      *
@@ -829,6 +858,10 @@ public abstract class Expr {
 
   public static final Expr makeToMap(Expr base) {
     return makeToMap(base, null);
+  }
+
+  public static final Expr makeWith(Expr base, String[] path, Expr value) {
+    return new Constructors.With(base, path, value);
   }
 
   public static final Expr makeMerge(Expr left, Expr right, Expr type) {
@@ -1470,6 +1503,28 @@ public abstract class Expr {
               v0 = valueStack.poll();
               valueStack.push(visitor.onToMap(v0, v1));
 
+              break;
+          }
+          break;
+        case Tags.WITH:
+          Constructors.With tmpWith = (Constructors.With) current.expr;
+          switch (current.state) {
+            case 0:
+              visitor.prepareWith(tmpWith.path);
+              current.state = 1;
+              stack.push(current);
+              stack.push(new State(tmpWith.base, 0));
+              break;
+            case 1:
+              visitor.prepareWithValue(tmpWith.path);
+              current.state = 2;
+              stack.push(current);
+              stack.push(new State(tmpWith.value, 0));
+              break;
+            case 2:
+              v1 = valueStack.poll();
+              v0 = valueStack.poll();
+              valueStack.push(visitor.onWith(v0, tmpWith.path, v1));
               break;
           }
           break;

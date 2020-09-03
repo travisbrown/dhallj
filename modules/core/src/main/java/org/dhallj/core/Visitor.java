@@ -65,6 +65,8 @@ public interface Visitor<A> {
 
   A onToMap(A base, A type);
 
+  A onWith(A base, String[] path, A value);
+
   A onMissingImport(Expr.ImportMode mode, byte[] hash);
 
   A onEnvImport(String value, Expr.ImportMode mode, byte[] hash);
@@ -135,6 +137,10 @@ public interface Visitor<A> {
   boolean prepareMerge(Expr type);
 
   boolean prepareToMap(Expr type);
+
+  boolean prepareWith(String[] path);
+
+  boolean prepareWithValue(String[] path);
 
   boolean prepareRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash);
 
@@ -258,6 +264,14 @@ public interface Visitor<A> {
     }
 
     public boolean prepareToMap(Expr type) {
+      return true;
+    }
+
+    public boolean prepareWith(String[] path) {
+      return true;
+    }
+
+    public boolean prepareWithValue(String[] path) {
       return true;
     }
 
@@ -432,6 +446,11 @@ public interface Visitor<A> {
     }
 
     @Override
+    public A onWith(A base, String[] path, A value) {
+      return this.getReturnValue();
+    }
+
+    @Override
     public A onMissingImport(Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
@@ -582,6 +601,10 @@ public interface Visitor<A> {
       return base && (type == null || type);
     }
 
+    public Boolean onToMap(Boolean base, String[] path, Boolean value) {
+      return base && value;
+    }
+
     public Boolean onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
       return true;
     }
@@ -704,6 +727,10 @@ public interface Visitor<A> {
 
     public Expr onToMap(Expr base, Expr type) {
       return Expr.makeToMap(base, type);
+    }
+
+    public Expr onWith(Expr base, String[] path, Expr value) {
+      return Expr.makeWith(base, path, value);
     }
 
     public Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
