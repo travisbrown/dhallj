@@ -378,7 +378,7 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
     builder.append(base.toString(ToStringState.WITH, true));
     builder.append(" with ");
-    for (int i = 0; i < path.length - 2; i += 1) {
+    for (int i = 0; i < path.length - 1; i += 1) {
       builder.append(path[i]);
       builder.append(".");
     }
