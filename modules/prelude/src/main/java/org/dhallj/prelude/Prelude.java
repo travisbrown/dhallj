@@ -1923,17 +1923,59 @@ public final class Prelude {
   private static final Expr f001033 = Expr.makeLambda("_", f000017, f001032);
   private static final Expr f001034 = Expr.makeLambda("_", f000017, f001033);
   private static final Expr f001035 = Expr.makeLambda("_", f000017, f001034);
-  private static final Expr f001036 = Expr.makeNonEmptyListLiteral(new Expr[] {f000249});
-  private static final Expr f001037 =
-      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001036, f000002);
-  private static final Expr f001038 = Expr.makeLambda("_", f000205, f001037);
-  private static final Expr f001039 = Expr.makeLambda("_", f001007, f001038);
-  private static final Expr f001040 =
-      Expr.makeApplication(f000000, new Expr[] {f001007, f000002, f000201, f001039, f000208});
-  private static final Expr f001041 = Expr.makeLambda("_", f001001, f001040);
-  private static final Expr f001042 = Expr.makeLambda("_", f000017, f001041);
-  private static final Expr f001043 = Expr.makeLambda("_", f000017, f001042);
-  private static final Expr f001044 =
+  private static final Expr f001036 =
+      Expr.makeRecordType(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("mapKey", f000014),
+            new SimpleImmutableEntry<String, Expr>("mapValue", f000933)
+          });
+  private static final Expr f001037 = Expr.makeApplication(f000009, new Expr[] {f001007});
+  private static final Expr f001038 = Expr.makeEmptyListLiteral(f001030);
+  private static final Expr f001039 =
+      Expr.makeRecordLiteral(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("mapKey", f000248),
+            new SimpleImmutableEntry<String, Expr>("mapValue", f000002)
+          });
+  private static final Expr f001040 = Expr.makeNonEmptyListLiteral(new Expr[] {f001039});
+  private static final Expr f001041 = Expr.makeLambda("_", f000014, f001040);
+  private static final Expr f001042 =
+      Expr.makeRecordLiteral(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("None", f001038),
+            new SimpleImmutableEntry<String, Expr>("Some", f001041)
+          });
+  private static final Expr f001043 = Expr.makeMerge(f001042, f000296, null);
+  private static final Expr f001044 = Expr.makeApplication(f000009, new Expr[] {f001016});
+  private static final Expr f001045 = Expr.makeLambda("_", f001044, f000307);
+  private static final Expr f001046 = Expr.makeLambda("_", f001029, f001045);
+  private static final Expr f001047 =
+      Expr.makeApplication(f000000, new Expr[] {f001029, f001043, f001030, f001046});
+  private static final Expr f001048 = Expr.makeLambda("_", f001036, f001047);
+  private static final Expr f001049 = Expr.makeEmptyListLiteral(f001037);
+  private static final Expr f001050 =
+      Expr.makeApplication(f000000, new Expr[] {f001036, f000002, f001037, f001048, f001049});
+  private static final Expr f001051 =
+      Expr.makeRecordType(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("mapKey", f000003),
+            new SimpleImmutableEntry<String, Expr>("mapValue", f000943)
+          });
+  private static final Expr f001052 = Expr.makeApplication(f000009, new Expr[] {f001051});
+  private static final Expr f001053 = Expr.makeLambda("_", f001052, f001050);
+  private static final Expr f001054 = Expr.makeLambda("_", f000017, f001053);
+  private static final Expr f001055 = Expr.makeLambda("_", f000017, f001054);
+  private static final Expr f001056 = Expr.makeNonEmptyListLiteral(new Expr[] {f000249});
+  private static final Expr f001057 =
+      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001056, f000002);
+  private static final Expr f001058 = Expr.makeLambda("_", f000205, f001057);
+  private static final Expr f001059 = Expr.makeLambda("_", f001007, f001058);
+  private static final Expr f001060 =
+      Expr.makeApplication(f000000, new Expr[] {f001007, f000002, f000201, f001059, f000208});
+  private static final Expr f001061 = Expr.makeLambda("_", f001001, f001060);
+  private static final Expr f001062 = Expr.makeLambda("_", f000017, f001061);
+  private static final Expr f001063 = Expr.makeLambda("_", f000017, f001062);
+  private static final Expr f001064 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("Entry", f001000),
@@ -1943,630 +1985,631 @@ public final class Prelude {
             new SimpleImmutableEntry<String, Expr>("keyValue", f000235),
             new SimpleImmutableEntry<String, Expr>("keys", f001015),
             new SimpleImmutableEntry<String, Expr>("map", f001035),
-            new SimpleImmutableEntry<String, Expr>("values", f001043)
+            new SimpleImmutableEntry<String, Expr>("unpackOptionals", f001055),
+            new SimpleImmutableEntry<String, Expr>("values", f001063)
           });
-  private static final Expr f001045 = Expr.makeLambda("_", f000017, f000188);
-  private static final Expr f001046 = Expr.makeBuiltIn("Natural/build");
-  private static final Expr f001047 =
+  private static final Expr f001065 = Expr.makeLambda("_", f000017, f000188);
+  private static final Expr f001066 = Expr.makeBuiltIn("Natural/build");
+  private static final Expr f001067 =
       Expr.makeApplication(f000807, new Expr[] {f000002, f000808, f000812, f000813});
-  private static final Expr f001048 = Expr.makeApplication(f000784, new Expr[] {f000805, f001047});
-  private static final Expr f001049 = Expr.makeApplication(f000009, new Expr[] {f000178});
-  private static final Expr f001050 = Expr.makeNonEmptyListLiteral(new Expr[] {f000786});
-  private static final Expr f001051 =
-      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001050, f000002);
-  private static final Expr f001052 = Expr.makeLambda("_", f001049, f001051);
-  private static final Expr f001053 = Expr.makeLambda("_", f000806, f001052);
-  private static final Expr f001054 = Expr.makeEmptyListLiteral(f001049);
-  private static final Expr f001055 =
-      Expr.makeApplication(f000000, new Expr[] {f000806, f001048, f001049, f001053, f001054});
-  private static final Expr f001056 = Expr.makeLambda("_", f000178, f001055);
-  private static final Expr f001057 = Expr.makeApplication(f000076, new Expr[] {f000002, f000003});
-  private static final Expr f001058 = Expr.makeApplication(f000063, new Expr[] {f001057});
-  private static final Expr f001059 = Expr.makeApplication(f000076, new Expr[] {f000003, f000002});
-  private static final Expr f001060 = Expr.makeApplication(f000063, new Expr[] {f001059});
-  private static final Expr f001061 = Expr.makeOperatorApplication(Operator.AND, f001058, f001060);
-  private static final Expr f001062 = Expr.makeLambda("_", f000178, f001061);
-  private static final Expr f001063 = Expr.makeLambda("_", f000178, f001062);
-  private static final Expr f001064 = Expr.makeBuiltIn("Natural/even");
-  private static final Expr f001065 =
-      Expr.makeOperatorApplication(Operator.EQUALS, f001058, f000012);
-  private static final Expr f001066 = Expr.makeLambda("_", f000178, f001065);
-  private static final Expr f001067 = Expr.makeLambda("_", f000178, f001066);
-  private static final Expr f001068 = Expr.makeLambda("_", f000178, f001060);
-  private static final Expr f001069 = Expr.makeLambda("_", f000178, f001068);
-  private static final Expr f001070 =
-      Expr.makeOperatorApplication(Operator.EQUALS, f001060, f000012);
-  private static final Expr f001071 = Expr.makeLambda("_", f000178, f001070);
-  private static final Expr f001072 = Expr.makeLambda("_", f000178, f001071);
-  private static final Expr f001073 = Expr.makeLambda("_", f000178, f001058);
-  private static final Expr f001074 = Expr.makeLambda("_", f000178, f001073);
-  private static final Expr f001075 = Expr.makeIf(f001058, f000002, f000003);
+  private static final Expr f001068 = Expr.makeApplication(f000784, new Expr[] {f000805, f001067});
+  private static final Expr f001069 = Expr.makeApplication(f000009, new Expr[] {f000178});
+  private static final Expr f001070 = Expr.makeNonEmptyListLiteral(new Expr[] {f000786});
+  private static final Expr f001071 =
+      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001070, f000002);
+  private static final Expr f001072 = Expr.makeLambda("_", f001069, f001071);
+  private static final Expr f001073 = Expr.makeLambda("_", f000806, f001072);
+  private static final Expr f001074 = Expr.makeEmptyListLiteral(f001069);
+  private static final Expr f001075 =
+      Expr.makeApplication(f000000, new Expr[] {f000806, f001068, f001069, f001073, f001074});
   private static final Expr f001076 = Expr.makeLambda("_", f000178, f001075);
-  private static final Expr f001077 = Expr.makeLambda("_", f000178, f001076);
-  private static final Expr f001078 =
-      Expr.makeApplication(f000000, new Expr[] {f000178, f000003, f000178, f001077, f000002});
-  private static final Expr f001079 = Expr.makeApplication(f000175, new Expr[] {f001078});
-  private static final Expr f001080 = Expr.makeLambda("_", f000178, f001079);
-  private static final Expr f001081 =
-      Expr.makeRecordLiteral(
-          new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("None", f000179),
-            new SimpleImmutableEntry<String, Expr>("Some", f001080)
-          });
-  private static final Expr f001082 = Expr.makeApplication(f000826, new Expr[] {f000178, f000002});
-  private static final Expr f001083 = Expr.makeMerge(f001081, f001082, null);
-  private static final Expr f001084 = Expr.makeLambda("_", f001049, f001083);
-  private static final Expr f001085 = Expr.makeApplication(f000063, new Expr[] {f000002});
-  private static final Expr f001086 = Expr.makeIf(f001058, f000003, f000002);
+  private static final Expr f001077 = Expr.makeApplication(f000076, new Expr[] {f000002, f000003});
+  private static final Expr f001078 = Expr.makeApplication(f000063, new Expr[] {f001077});
+  private static final Expr f001079 = Expr.makeApplication(f000076, new Expr[] {f000003, f000002});
+  private static final Expr f001080 = Expr.makeApplication(f000063, new Expr[] {f001079});
+  private static final Expr f001081 = Expr.makeOperatorApplication(Operator.AND, f001078, f001080);
+  private static final Expr f001082 = Expr.makeLambda("_", f000178, f001081);
+  private static final Expr f001083 = Expr.makeLambda("_", f000178, f001082);
+  private static final Expr f001084 = Expr.makeBuiltIn("Natural/even");
+  private static final Expr f001085 =
+      Expr.makeOperatorApplication(Operator.EQUALS, f001078, f000012);
+  private static final Expr f001086 = Expr.makeLambda("_", f000178, f001085);
   private static final Expr f001087 = Expr.makeLambda("_", f000178, f001086);
-  private static final Expr f001088 = Expr.makeLambda("_", f000178, f001087);
-  private static final Expr f001089 =
-      Expr.makeApplication(f000000, new Expr[] {f000178, f000003, f000178, f001088, f000002});
-  private static final Expr f001090 = Expr.makeIf(f001085, f000002, f001089);
-  private static final Expr f001091 = Expr.makeApplication(f000175, new Expr[] {f001090});
+  private static final Expr f001088 = Expr.makeLambda("_", f000178, f001080);
+  private static final Expr f001089 = Expr.makeLambda("_", f000178, f001088);
+  private static final Expr f001090 =
+      Expr.makeOperatorApplication(Operator.EQUALS, f001080, f000012);
+  private static final Expr f001091 = Expr.makeLambda("_", f000178, f001090);
   private static final Expr f001092 = Expr.makeLambda("_", f000178, f001091);
-  private static final Expr f001093 =
+  private static final Expr f001093 = Expr.makeLambda("_", f000178, f001078);
+  private static final Expr f001094 = Expr.makeLambda("_", f000178, f001093);
+  private static final Expr f001095 = Expr.makeIf(f001078, f000002, f000003);
+  private static final Expr f001096 = Expr.makeLambda("_", f000178, f001095);
+  private static final Expr f001097 = Expr.makeLambda("_", f000178, f001096);
+  private static final Expr f001098 =
+      Expr.makeApplication(f000000, new Expr[] {f000178, f000003, f000178, f001097, f000002});
+  private static final Expr f001099 = Expr.makeApplication(f000175, new Expr[] {f001098});
+  private static final Expr f001100 = Expr.makeLambda("_", f000178, f001099);
+  private static final Expr f001101 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000179),
-            new SimpleImmutableEntry<String, Expr>("Some", f001092)
+            new SimpleImmutableEntry<String, Expr>("Some", f001100)
           });
-  private static final Expr f001094 = Expr.makeMerge(f001093, f001082, null);
-  private static final Expr f001095 = Expr.makeLambda("_", f001049, f001094);
-  private static final Expr f001096 = Expr.makeBuiltIn("Natural/odd");
-  private static final Expr f001097 =
-      Expr.makeOperatorApplication(Operator.TIMES, f000003, f000002);
-  private static final Expr f001098 = Expr.makeLambda("_", f000178, f001097);
-  private static final Expr f001099 = Expr.makeLambda("_", f000178, f001098);
-  private static final Expr f001100 = Expr.makeNaturalLiteral(new BigInteger("1"));
-  private static final Expr f001101 =
-      Expr.makeApplication(f000000, new Expr[] {f000178, f000002, f000178, f001099, f001100});
-  private static final Expr f001102 = Expr.makeLambda("_", f001049, f001101);
-  private static final Expr f001103 = Expr.makeApplication(f000845, new Expr[] {f000178, f000002});
-  private static final Expr f001104 =
-      Expr.makeRecordType(
-          new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("rest", f001049),
-            new SimpleImmutableEntry<String, Expr>("sorted", f001049)
-          });
-  private static final Expr f001105 =
-      Expr.makeRecordLiteral(
-          new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("false", f001054),
-            new SimpleImmutableEntry<String, Expr>("true", f001054)
-          });
-  private static final Expr f001106 = Expr.makeFieldAccess(f000003, "rest");
-  private static final Expr f001107 =
-      Expr.makeRecordType(
-          new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("false", f001049),
-            new SimpleImmutableEntry<String, Expr>("true", f001049)
-          });
-  private static final Expr f001108 = Expr.makeApplication(f000076, new Expr[] {f000014, f000003});
-  private static final Expr f001109 = Expr.makeApplication(f000063, new Expr[] {f001108});
-  private static final Expr f001110 = Expr.makeIf(f001109, f000864, f000866);
-  private static final Expr f001111 = Expr.makeLambda("_", f001107, f001110);
+  private static final Expr f001102 = Expr.makeApplication(f000826, new Expr[] {f000178, f000002});
+  private static final Expr f001103 = Expr.makeMerge(f001101, f001102, null);
+  private static final Expr f001104 = Expr.makeLambda("_", f001069, f001103);
+  private static final Expr f001105 = Expr.makeApplication(f000063, new Expr[] {f000002});
+  private static final Expr f001106 = Expr.makeIf(f001078, f000003, f000002);
+  private static final Expr f001107 = Expr.makeLambda("_", f000178, f001106);
+  private static final Expr f001108 = Expr.makeLambda("_", f000178, f001107);
+  private static final Expr f001109 =
+      Expr.makeApplication(f000000, new Expr[] {f000178, f000003, f000178, f001108, f000002});
+  private static final Expr f001110 = Expr.makeIf(f001105, f000002, f001109);
+  private static final Expr f001111 = Expr.makeApplication(f000175, new Expr[] {f001110});
   private static final Expr f001112 = Expr.makeLambda("_", f000178, f001111);
   private static final Expr f001113 =
-      Expr.makeApplication(f000000, new Expr[] {f000178, f001106, f001107, f001112, f001105});
-  private static final Expr f001114 = Expr.makeLambda("_", f000178, f001113);
-  private static final Expr f001115 =
-      Expr.makeRecordLiteral(
-          new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("None", f001105),
-            new SimpleImmutableEntry<String, Expr>("Some", f001114)
-          });
-  private static final Expr f001116 =
-      Expr.makeApplication(f000000, new Expr[] {f000178, f001106, f000178, f001088, f000002});
-  private static final Expr f001117 = Expr.makeIf(f001085, f000002, f001116);
-  private static final Expr f001118 = Expr.makeApplication(f000175, new Expr[] {f001117});
-  private static final Expr f001119 = Expr.makeLambda("_", f000178, f001118);
-  private static final Expr f001120 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000179),
-            new SimpleImmutableEntry<String, Expr>("Some", f001119)
+            new SimpleImmutableEntry<String, Expr>("Some", f001112)
           });
-  private static final Expr f001121 = Expr.makeFieldAccess(f000002, "rest");
-  private static final Expr f001122 = Expr.makeApplication(f000826, new Expr[] {f000178, f001121});
-  private static final Expr f001123 = Expr.makeMerge(f001120, f001122, null);
-  private static final Expr f001124 = Expr.makeMerge(f001115, f001123, null);
-  private static final Expr f001125 = Expr.makeFieldAccess(f001124, "false");
-  private static final Expr f001126 = Expr.makeFieldAccess(f000002, "sorted");
-  private static final Expr f001127 = Expr.makeFieldAccess(f001124, "true");
-  private static final Expr f001128 =
-      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001126, f001127);
-  private static final Expr f001129 =
+  private static final Expr f001114 = Expr.makeMerge(f001113, f001102, null);
+  private static final Expr f001115 = Expr.makeLambda("_", f001069, f001114);
+  private static final Expr f001116 = Expr.makeBuiltIn("Natural/odd");
+  private static final Expr f001117 =
+      Expr.makeOperatorApplication(Operator.TIMES, f000003, f000002);
+  private static final Expr f001118 = Expr.makeLambda("_", f000178, f001117);
+  private static final Expr f001119 = Expr.makeLambda("_", f000178, f001118);
+  private static final Expr f001120 = Expr.makeNaturalLiteral(new BigInteger("1"));
+  private static final Expr f001121 =
+      Expr.makeApplication(f000000, new Expr[] {f000178, f000002, f000178, f001119, f001120});
+  private static final Expr f001122 = Expr.makeLambda("_", f001069, f001121);
+  private static final Expr f001123 = Expr.makeApplication(f000845, new Expr[] {f000178, f000002});
+  private static final Expr f001124 =
+      Expr.makeRecordType(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("rest", f001069),
+            new SimpleImmutableEntry<String, Expr>("sorted", f001069)
+          });
+  private static final Expr f001125 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("rest", f001125),
-            new SimpleImmutableEntry<String, Expr>("sorted", f001128)
+            new SimpleImmutableEntry<String, Expr>("false", f001074),
+            new SimpleImmutableEntry<String, Expr>("true", f001074)
           });
-  private static final Expr f001130 = Expr.makeLambda("_", f001104, f001129);
-  private static final Expr f001131 =
+  private static final Expr f001126 = Expr.makeFieldAccess(f000003, "rest");
+  private static final Expr f001127 =
+      Expr.makeRecordType(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("false", f001069),
+            new SimpleImmutableEntry<String, Expr>("true", f001069)
+          });
+  private static final Expr f001128 = Expr.makeApplication(f000076, new Expr[] {f000014, f000003});
+  private static final Expr f001129 = Expr.makeApplication(f000063, new Expr[] {f001128});
+  private static final Expr f001130 = Expr.makeIf(f001129, f000864, f000866);
+  private static final Expr f001131 = Expr.makeLambda("_", f001127, f001130);
+  private static final Expr f001132 = Expr.makeLambda("_", f000178, f001131);
+  private static final Expr f001133 =
+      Expr.makeApplication(f000000, new Expr[] {f000178, f001126, f001127, f001132, f001125});
+  private static final Expr f001134 = Expr.makeLambda("_", f000178, f001133);
+  private static final Expr f001135 =
+      Expr.makeRecordLiteral(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("None", f001125),
+            new SimpleImmutableEntry<String, Expr>("Some", f001134)
+          });
+  private static final Expr f001136 =
+      Expr.makeApplication(f000000, new Expr[] {f000178, f001126, f000178, f001108, f000002});
+  private static final Expr f001137 = Expr.makeIf(f001105, f000002, f001136);
+  private static final Expr f001138 = Expr.makeApplication(f000175, new Expr[] {f001137});
+  private static final Expr f001139 = Expr.makeLambda("_", f000178, f001138);
+  private static final Expr f001140 =
+      Expr.makeRecordLiteral(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("None", f000179),
+            new SimpleImmutableEntry<String, Expr>("Some", f001139)
+          });
+  private static final Expr f001141 = Expr.makeFieldAccess(f000002, "rest");
+  private static final Expr f001142 = Expr.makeApplication(f000826, new Expr[] {f000178, f001141});
+  private static final Expr f001143 = Expr.makeMerge(f001140, f001142, null);
+  private static final Expr f001144 = Expr.makeMerge(f001135, f001143, null);
+  private static final Expr f001145 = Expr.makeFieldAccess(f001144, "false");
+  private static final Expr f001146 = Expr.makeFieldAccess(f000002, "sorted");
+  private static final Expr f001147 = Expr.makeFieldAccess(f001144, "true");
+  private static final Expr f001148 =
+      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001146, f001147);
+  private static final Expr f001149 =
+      Expr.makeRecordLiteral(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("rest", f001145),
+            new SimpleImmutableEntry<String, Expr>("sorted", f001148)
+          });
+  private static final Expr f001150 = Expr.makeLambda("_", f001124, f001149);
+  private static final Expr f001151 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("rest", f000002),
-            new SimpleImmutableEntry<String, Expr>("sorted", f001054)
+            new SimpleImmutableEntry<String, Expr>("sorted", f001074)
           });
-  private static final Expr f001132 =
-      Expr.makeApplication(f000807, new Expr[] {f001103, f001104, f001130, f001131});
-  private static final Expr f001133 = Expr.makeFieldAccess(f001132, "sorted");
-  private static final Expr f001134 = Expr.makeLambda("_", f001049, f001133);
-  private static final Expr f001135 = Expr.makeOperatorApplication(Operator.PLUS, f000003, f000002);
-  private static final Expr f001136 = Expr.makeLambda("_", f000178, f001135);
-  private static final Expr f001137 = Expr.makeLambda("_", f000178, f001136);
-  private static final Expr f001138 =
-      Expr.makeApplication(f000000, new Expr[] {f000178, f000002, f000178, f001137, f000913});
-  private static final Expr f001139 = Expr.makeLambda("_", f001049, f001138);
-  private static final Expr f001140 = Expr.makeApplication(f000081, new Expr[] {f000002});
-  private static final Expr f001141 = Expr.makeApplication(f000174, new Expr[] {f001140});
-  private static final Expr f001142 = Expr.makeLambda("_", f000178, f001141);
-  private static final Expr f001143 =
+  private static final Expr f001152 =
+      Expr.makeApplication(f000807, new Expr[] {f001123, f001124, f001150, f001151});
+  private static final Expr f001153 = Expr.makeFieldAccess(f001152, "sorted");
+  private static final Expr f001154 = Expr.makeLambda("_", f001069, f001153);
+  private static final Expr f001155 = Expr.makeOperatorApplication(Operator.PLUS, f000003, f000002);
+  private static final Expr f001156 = Expr.makeLambda("_", f000178, f001155);
+  private static final Expr f001157 = Expr.makeLambda("_", f000178, f001156);
+  private static final Expr f001158 =
+      Expr.makeApplication(f000000, new Expr[] {f000178, f000002, f000178, f001157, f000913});
+  private static final Expr f001159 = Expr.makeLambda("_", f001069, f001158);
+  private static final Expr f001160 = Expr.makeApplication(f000081, new Expr[] {f000002});
+  private static final Expr f001161 = Expr.makeApplication(f000174, new Expr[] {f001160});
+  private static final Expr f001162 = Expr.makeLambda("_", f000178, f001161);
+  private static final Expr f001163 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("build", f001046),
-            new SimpleImmutableEntry<String, Expr>("enumerate", f001056),
-            new SimpleImmutableEntry<String, Expr>("equal", f001063),
-            new SimpleImmutableEntry<String, Expr>("even", f001064),
+            new SimpleImmutableEntry<String, Expr>("build", f001066),
+            new SimpleImmutableEntry<String, Expr>("enumerate", f001076),
+            new SimpleImmutableEntry<String, Expr>("equal", f001083),
+            new SimpleImmutableEntry<String, Expr>("even", f001084),
             new SimpleImmutableEntry<String, Expr>("fold", f000807),
-            new SimpleImmutableEntry<String, Expr>("greaterThan", f001067),
-            new SimpleImmutableEntry<String, Expr>("greaterThanEqual", f001069),
+            new SimpleImmutableEntry<String, Expr>("greaterThan", f001087),
+            new SimpleImmutableEntry<String, Expr>("greaterThanEqual", f001089),
             new SimpleImmutableEntry<String, Expr>("isZero", f000063),
-            new SimpleImmutableEntry<String, Expr>("lessThan", f001072),
-            new SimpleImmutableEntry<String, Expr>("lessThanEqual", f001074),
-            new SimpleImmutableEntry<String, Expr>("listMax", f001084),
-            new SimpleImmutableEntry<String, Expr>("listMin", f001095),
-            new SimpleImmutableEntry<String, Expr>("max", f001077),
-            new SimpleImmutableEntry<String, Expr>("min", f001088),
-            new SimpleImmutableEntry<String, Expr>("odd", f001096),
-            new SimpleImmutableEntry<String, Expr>("product", f001102),
+            new SimpleImmutableEntry<String, Expr>("lessThan", f001092),
+            new SimpleImmutableEntry<String, Expr>("lessThanEqual", f001094),
+            new SimpleImmutableEntry<String, Expr>("listMax", f001104),
+            new SimpleImmutableEntry<String, Expr>("listMin", f001115),
+            new SimpleImmutableEntry<String, Expr>("max", f001097),
+            new SimpleImmutableEntry<String, Expr>("min", f001108),
+            new SimpleImmutableEntry<String, Expr>("odd", f001116),
+            new SimpleImmutableEntry<String, Expr>("product", f001122),
             new SimpleImmutableEntry<String, Expr>("show", f000504),
-            new SimpleImmutableEntry<String, Expr>("sort", f001134),
+            new SimpleImmutableEntry<String, Expr>("sort", f001154),
             new SimpleImmutableEntry<String, Expr>("subtract", f000076),
-            new SimpleImmutableEntry<String, Expr>("sum", f001139),
-            new SimpleImmutableEntry<String, Expr>("toDouble", f001142),
+            new SimpleImmutableEntry<String, Expr>("sum", f001159),
+            new SimpleImmutableEntry<String, Expr>("toDouble", f001162),
             new SimpleImmutableEntry<String, Expr>("toInteger", f000081)
           });
-  private static final Expr f001144 =
+  private static final Expr f001164 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000007),
             new SimpleImmutableEntry<String, Expr>("Some", f000003)
           });
-  private static final Expr f001145 = Expr.makeMerge(f001144, f000002, null);
-  private static final Expr f001146 = Expr.makeLambda("_", f000933, f001145);
-  private static final Expr f001147 = Expr.makeLambda("_", f000748, f001146);
-  private static final Expr f001148 = Expr.makeLambda("_", f000017, f001147);
-  private static final Expr f001149 =
+  private static final Expr f001165 = Expr.makeMerge(f001164, f000002, null);
+  private static final Expr f001166 = Expr.makeLambda("_", f000933, f001165);
+  private static final Expr f001167 = Expr.makeLambda("_", f000748, f001166);
+  private static final Expr f001168 = Expr.makeLambda("_", f000017, f001167);
+  private static final Expr f001169 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000012),
             new SimpleImmutableEntry<String, Expr>("Some", f000003)
           });
-  private static final Expr f001150 = Expr.makeMerge(f001149, f000002, null);
-  private static final Expr f001151 = Expr.makeLambda("_", f000933, f001150);
-  private static final Expr f001152 = Expr.makeLambda("_", f000748, f001151);
-  private static final Expr f001153 = Expr.makeLambda("_", f000017, f001152);
-  private static final Expr f001154 = Expr.makeApplication(f000175, new Expr[] {f000002});
-  private static final Expr f001155 = Expr.makeLambda("_", f000003, f001154);
-  private static final Expr f001156 = Expr.makeApplication(f000177, new Expr[] {f000003});
-  private static final Expr f001157 =
-      Expr.makeApplication(f000002, new Expr[] {f000933, f001155, f001156});
-  private static final Expr f001158 = Expr.makePi("_", f000852, f000015);
-  private static final Expr f001159 = Expr.makePi("_", f000017, f001158);
-  private static final Expr f001160 = Expr.makeLambda("_", f001159, f001157);
-  private static final Expr f001161 = Expr.makeLambda("_", f000017, f001160);
-  private static final Expr f001162 = Expr.makeLambda("_", f000933, f000002);
-  private static final Expr f001163 =
+  private static final Expr f001170 = Expr.makeMerge(f001169, f000002, null);
+  private static final Expr f001171 = Expr.makeLambda("_", f000933, f001170);
+  private static final Expr f001172 = Expr.makeLambda("_", f000748, f001171);
+  private static final Expr f001173 = Expr.makeLambda("_", f000017, f001172);
+  private static final Expr f001174 = Expr.makeApplication(f000175, new Expr[] {f000002});
+  private static final Expr f001175 = Expr.makeLambda("_", f000003, f001174);
+  private static final Expr f001176 = Expr.makeApplication(f000177, new Expr[] {f000003});
+  private static final Expr f001177 =
+      Expr.makeApplication(f000002, new Expr[] {f000933, f001175, f001176});
+  private static final Expr f001178 = Expr.makePi("_", f000852, f000015);
+  private static final Expr f001179 = Expr.makePi("_", f000017, f001178);
+  private static final Expr f001180 = Expr.makeLambda("_", f001179, f001177);
+  private static final Expr f001181 = Expr.makeLambda("_", f000017, f001180);
+  private static final Expr f001182 = Expr.makeLambda("_", f000933, f000002);
+  private static final Expr f001183 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("None", f001156),
-            new SimpleImmutableEntry<String, Expr>("Some", f001162)
+            new SimpleImmutableEntry<String, Expr>("None", f001176),
+            new SimpleImmutableEntry<String, Expr>("Some", f001182)
           });
-  private static final Expr f001164 = Expr.makeMerge(f001163, f000002, null);
-  private static final Expr f001165 = Expr.makeApplication(f000373, new Expr[] {f000943});
-  private static final Expr f001166 = Expr.makeLambda("_", f001165, f001164);
-  private static final Expr f001167 = Expr.makeLambda("_", f000017, f001166);
-  private static final Expr f001168 = Expr.makeLambda("_", f000014, f000002);
-  private static final Expr f001169 =
+  private static final Expr f001184 = Expr.makeMerge(f001183, f000002, null);
+  private static final Expr f001185 = Expr.makeApplication(f000373, new Expr[] {f000943});
+  private static final Expr f001186 = Expr.makeLambda("_", f001185, f001184);
+  private static final Expr f001187 = Expr.makeLambda("_", f000017, f001186);
+  private static final Expr f001188 = Expr.makeLambda("_", f000014, f000002);
+  private static final Expr f001189 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000003),
-            new SimpleImmutableEntry<String, Expr>("Some", f001168)
+            new SimpleImmutableEntry<String, Expr>("Some", f001188)
           });
-  private static final Expr f001170 = Expr.makeMerge(f001169, f000002, null);
-  private static final Expr f001171 = Expr.makeLambda("_", f000933, f001170);
-  private static final Expr f001172 = Expr.makeLambda("_", f000002, f001171);
-  private static final Expr f001173 = Expr.makeLambda("_", f000017, f001172);
-  private static final Expr f001174 = Expr.makeApplication(f000177, new Expr[] {f000014});
-  private static final Expr f001175 = Expr.makeApplication(f000177, new Expr[] {f000025});
-  private static final Expr f001176 = Expr.makeIf(f000050, f001154, f001175);
-  private static final Expr f001177 = Expr.makeLambda("_", f000014, f001176);
-  private static final Expr f001178 =
+  private static final Expr f001190 = Expr.makeMerge(f001189, f000002, null);
+  private static final Expr f001191 = Expr.makeLambda("_", f000933, f001190);
+  private static final Expr f001192 = Expr.makeLambda("_", f000002, f001191);
+  private static final Expr f001193 = Expr.makeLambda("_", f000017, f001192);
+  private static final Expr f001194 = Expr.makeApplication(f000177, new Expr[] {f000014});
+  private static final Expr f001195 = Expr.makeApplication(f000177, new Expr[] {f000025});
+  private static final Expr f001196 = Expr.makeIf(f000050, f001174, f001195);
+  private static final Expr f001197 = Expr.makeLambda("_", f000014, f001196);
+  private static final Expr f001198 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("None", f001174),
-            new SimpleImmutableEntry<String, Expr>("Some", f001177)
+            new SimpleImmutableEntry<String, Expr>("None", f001194),
+            new SimpleImmutableEntry<String, Expr>("Some", f001197)
           });
-  private static final Expr f001179 = Expr.makeMerge(f001178, f000002, null);
-  private static final Expr f001180 = Expr.makeLambda("_", f000933, f001179);
-  private static final Expr f001181 = Expr.makeLambda("_", f000748, f001180);
-  private static final Expr f001182 = Expr.makeLambda("_", f000017, f001181);
-  private static final Expr f001183 =
+  private static final Expr f001199 = Expr.makeMerge(f001198, f000002, null);
+  private static final Expr f001200 = Expr.makeLambda("_", f000933, f001199);
+  private static final Expr f001201 = Expr.makeLambda("_", f000748, f001200);
+  private static final Expr f001202 = Expr.makeLambda("_", f000017, f001201);
+  private static final Expr f001203 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000002),
             new SimpleImmutableEntry<String, Expr>("Some", f000003)
           });
-  private static final Expr f001184 = Expr.makeMerge(f001183, f000025, null);
-  private static final Expr f001185 = Expr.makeLambda("_", f000003, f001184);
-  private static final Expr f001186 = Expr.makePi("_", f000014, f000003);
-  private static final Expr f001187 = Expr.makeLambda("_", f001186, f001185);
-  private static final Expr f001188 = Expr.makeLambda("_", f000017, f001187);
-  private static final Expr f001189 = Expr.makeLambda("_", f000943, f001188);
-  private static final Expr f001190 = Expr.makeLambda("_", f000017, f001189);
-  private static final Expr f001191 = Expr.makeLambda("_", f000025, f001154);
-  private static final Expr f001192 =
+  private static final Expr f001204 = Expr.makeMerge(f001203, f000025, null);
+  private static final Expr f001205 = Expr.makeLambda("_", f000003, f001204);
+  private static final Expr f001206 = Expr.makePi("_", f000014, f000003);
+  private static final Expr f001207 = Expr.makeLambda("_", f001206, f001205);
+  private static final Expr f001208 = Expr.makeLambda("_", f000017, f001207);
+  private static final Expr f001209 = Expr.makeLambda("_", f000943, f001208);
+  private static final Expr f001210 = Expr.makeLambda("_", f000017, f001209);
+  private static final Expr f001211 = Expr.makeLambda("_", f000025, f001174);
+  private static final Expr f001212 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000002),
-            new SimpleImmutableEntry<String, Expr>("Some", f001191)
+            new SimpleImmutableEntry<String, Expr>("Some", f001211)
           });
-  private static final Expr f001193 = Expr.makeMerge(f001192, f000003, null);
-  private static final Expr f001194 = Expr.makeApplication(f000373, new Expr[] {f000014});
-  private static final Expr f001195 = Expr.makeLambda("_", f001194, f001193);
-  private static final Expr f001196 = Expr.makeLambda("_", f000933, f001195);
-  private static final Expr f001197 =
-      Expr.makeApplication(f000000, new Expr[] {f000933, f000002, f000933, f001196, f001156});
-  private static final Expr f001198 = Expr.makeLambda("_", f000944, f001197);
-  private static final Expr f001199 = Expr.makeLambda("_", f000017, f001198);
-  private static final Expr f001200 =
+  private static final Expr f001213 = Expr.makeMerge(f001212, f000003, null);
+  private static final Expr f001214 = Expr.makeApplication(f000373, new Expr[] {f000014});
+  private static final Expr f001215 = Expr.makeLambda("_", f001214, f001213);
+  private static final Expr f001216 = Expr.makeLambda("_", f000933, f001215);
+  private static final Expr f001217 =
+      Expr.makeApplication(f000000, new Expr[] {f000933, f000002, f000933, f001216, f001176});
+  private static final Expr f001218 = Expr.makeLambda("_", f000944, f001217);
+  private static final Expr f001219 = Expr.makeLambda("_", f000017, f001218);
+  private static final Expr f001220 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000003),
-            new SimpleImmutableEntry<String, Expr>("Some", f001191)
+            new SimpleImmutableEntry<String, Expr>("Some", f001211)
           });
-  private static final Expr f001201 = Expr.makeMerge(f001200, f000002, null);
-  private static final Expr f001202 = Expr.makeLambda("_", f001194, f001201);
-  private static final Expr f001203 = Expr.makeLambda("_", f000933, f001202);
-  private static final Expr f001204 =
-      Expr.makeApplication(f000000, new Expr[] {f000933, f000002, f000933, f001203, f001156});
-  private static final Expr f001205 = Expr.makeLambda("_", f000944, f001204);
-  private static final Expr f001206 = Expr.makeLambda("_", f000017, f001205);
-  private static final Expr f001207 = Expr.makeLambda("_", f000003, f001100);
-  private static final Expr f001208 =
+  private static final Expr f001221 = Expr.makeMerge(f001220, f000002, null);
+  private static final Expr f001222 = Expr.makeLambda("_", f001214, f001221);
+  private static final Expr f001223 = Expr.makeLambda("_", f000933, f001222);
+  private static final Expr f001224 =
+      Expr.makeApplication(f000000, new Expr[] {f000933, f000002, f000933, f001223, f001176});
+  private static final Expr f001225 = Expr.makeLambda("_", f000944, f001224);
+  private static final Expr f001226 = Expr.makeLambda("_", f000017, f001225);
+  private static final Expr f001227 = Expr.makeLambda("_", f000003, f001120);
+  private static final Expr f001228 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000913),
-            new SimpleImmutableEntry<String, Expr>("Some", f001207)
+            new SimpleImmutableEntry<String, Expr>("Some", f001227)
           });
-  private static final Expr f001209 = Expr.makeMerge(f001208, f000002, null);
-  private static final Expr f001210 = Expr.makeLambda("_", f000943, f001209);
-  private static final Expr f001211 = Expr.makeLambda("_", f000017, f001210);
-  private static final Expr f001212 = Expr.makeApplication(f000175, new Expr[] {f000050});
-  private static final Expr f001213 = Expr.makeLambda("_", f000025, f001212);
-  private static final Expr f001214 =
+  private static final Expr f001229 = Expr.makeMerge(f001228, f000002, null);
+  private static final Expr f001230 = Expr.makeLambda("_", f000943, f001229);
+  private static final Expr f001231 = Expr.makeLambda("_", f000017, f001230);
+  private static final Expr f001232 = Expr.makeApplication(f000175, new Expr[] {f000050});
+  private static final Expr f001233 = Expr.makeLambda("_", f000025, f001232);
+  private static final Expr f001234 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("None", f001174),
-            new SimpleImmutableEntry<String, Expr>("Some", f001213)
+            new SimpleImmutableEntry<String, Expr>("None", f001194),
+            new SimpleImmutableEntry<String, Expr>("Some", f001233)
           });
-  private static final Expr f001215 = Expr.makeMerge(f001214, f000002, null);
-  private static final Expr f001216 = Expr.makeLambda("_", f001194, f001215);
-  private static final Expr f001217 = Expr.makeLambda("_", f000852, f001216);
-  private static final Expr f001218 = Expr.makeLambda("_", f000017, f001217);
-  private static final Expr f001219 = Expr.makeLambda("_", f000017, f001218);
-  private static final Expr f001220 = Expr.makeLambda("_", f000003, f000012);
-  private static final Expr f001221 =
+  private static final Expr f001235 = Expr.makeMerge(f001234, f000002, null);
+  private static final Expr f001236 = Expr.makeLambda("_", f001214, f001235);
+  private static final Expr f001237 = Expr.makeLambda("_", f000852, f001236);
+  private static final Expr f001238 = Expr.makeLambda("_", f000017, f001237);
+  private static final Expr f001239 = Expr.makeLambda("_", f000017, f001238);
+  private static final Expr f001240 = Expr.makeLambda("_", f000003, f000012);
+  private static final Expr f001241 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000007),
-            new SimpleImmutableEntry<String, Expr>("Some", f001220)
+            new SimpleImmutableEntry<String, Expr>("Some", f001240)
           });
-  private static final Expr f001222 = Expr.makeMerge(f001221, f000002, null);
-  private static final Expr f001223 = Expr.makeLambda("_", f000943, f001222);
-  private static final Expr f001224 = Expr.makeLambda("_", f000017, f001223);
-  private static final Expr f001225 = Expr.makeLambda("_", f000003, f000934);
-  private static final Expr f001226 =
+  private static final Expr f001242 = Expr.makeMerge(f001241, f000002, null);
+  private static final Expr f001243 = Expr.makeLambda("_", f000943, f001242);
+  private static final Expr f001244 = Expr.makeLambda("_", f000017, f001243);
+  private static final Expr f001245 = Expr.makeLambda("_", f000003, f000934);
+  private static final Expr f001246 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000208),
-            new SimpleImmutableEntry<String, Expr>("Some", f001225)
+            new SimpleImmutableEntry<String, Expr>("Some", f001245)
           });
-  private static final Expr f001227 = Expr.makeMerge(f001226, f000002, null);
-  private static final Expr f001228 = Expr.makeLambda("_", f000943, f001227);
-  private static final Expr f001229 = Expr.makeLambda("_", f000017, f001228);
-  private static final Expr f001230 = Expr.makeFieldAccess(f000002, "_1");
-  private static final Expr f001231 = Expr.makeApplication(f000175, new Expr[] {f001230});
-  private static final Expr f001232 = Expr.makeLambda("_", f000947, f001231);
-  private static final Expr f001233 =
+  private static final Expr f001247 = Expr.makeMerge(f001246, f000002, null);
+  private static final Expr f001248 = Expr.makeLambda("_", f000943, f001247);
+  private static final Expr f001249 = Expr.makeLambda("_", f000017, f001248);
+  private static final Expr f001250 = Expr.makeFieldAccess(f000002, "_1");
+  private static final Expr f001251 = Expr.makeApplication(f000175, new Expr[] {f001250});
+  private static final Expr f001252 = Expr.makeLambda("_", f000947, f001251);
+  private static final Expr f001253 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("None", f001174),
-            new SimpleImmutableEntry<String, Expr>("Some", f001232)
+            new SimpleImmutableEntry<String, Expr>("None", f001194),
+            new SimpleImmutableEntry<String, Expr>("Some", f001252)
           });
-  private static final Expr f001234 = Expr.makeMerge(f001233, f000002, null);
-  private static final Expr f001235 = Expr.makeFieldAccess(f000002, "_2");
-  private static final Expr f001236 = Expr.makeApplication(f000175, new Expr[] {f001235});
-  private static final Expr f001237 = Expr.makeLambda("_", f000947, f001236);
-  private static final Expr f001238 =
+  private static final Expr f001254 = Expr.makeMerge(f001253, f000002, null);
+  private static final Expr f001255 = Expr.makeFieldAccess(f000002, "_2");
+  private static final Expr f001256 = Expr.makeApplication(f000175, new Expr[] {f001255});
+  private static final Expr f001257 = Expr.makeLambda("_", f000947, f001256);
+  private static final Expr f001258 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("None", f001156),
-            new SimpleImmutableEntry<String, Expr>("Some", f001237)
+            new SimpleImmutableEntry<String, Expr>("None", f001176),
+            new SimpleImmutableEntry<String, Expr>("Some", f001257)
           });
-  private static final Expr f001239 = Expr.makeMerge(f001238, f000002, null);
-  private static final Expr f001240 =
-      Expr.makeRecordLiteral(
-          new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("_1", f001234),
-            new SimpleImmutableEntry<String, Expr>("_2", f001239)
-          });
-  private static final Expr f001241 = Expr.makeApplication(f000373, new Expr[] {f000961});
-  private static final Expr f001242 = Expr.makeLambda("_", f001241, f001240);
-  private static final Expr f001243 = Expr.makeLambda("_", f000017, f001242);
-  private static final Expr f001244 = Expr.makeLambda("_", f000017, f001243);
-  private static final Expr f001245 =
-      Expr.makeRecordLiteral(
-          new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("all", f001148),
-            new SimpleImmutableEntry<String, Expr>("any", f001153),
-            new SimpleImmutableEntry<String, Expr>("build", f001161),
-            new SimpleImmutableEntry<String, Expr>("concat", f001167),
-            new SimpleImmutableEntry<String, Expr>("default", f001173),
-            new SimpleImmutableEntry<String, Expr>("filter", f001182),
-            new SimpleImmutableEntry<String, Expr>("fold", f001190),
-            new SimpleImmutableEntry<String, Expr>("head", f001199),
-            new SimpleImmutableEntry<String, Expr>("last", f001206),
-            new SimpleImmutableEntry<String, Expr>("length", f001211),
-            new SimpleImmutableEntry<String, Expr>("map", f001219),
-            new SimpleImmutableEntry<String, Expr>("null", f001224),
-            new SimpleImmutableEntry<String, Expr>("toList", f001229),
-            new SimpleImmutableEntry<String, Expr>("unzip", f001244)
-          });
-  private static final Expr f001246 =
-      Expr.makeTextLiteral(new String[] {"", "", ""}, new Expr[] {f000003, f000002});
-  private static final Expr f001247 = Expr.makeLambda("_", f000183, f001246);
-  private static final Expr f001248 = Expr.makeLambda("_", f000183, f001247);
-  private static final Expr f001249 =
-      Expr.makeApplication(f000000, new Expr[] {f000183, f000002, f000183, f001248, f000643});
-  private static final Expr f001250 = Expr.makeLambda("_", f000331, f001249);
-  private static final Expr f001251 =
-      Expr.makeTextLiteral(new String[] {"", "", ""}, new Expr[] {f000742, f000002});
-  private static final Expr f001252 = Expr.makeLambda("_", f000183, f001251);
-  private static final Expr f001253 = Expr.makeLambda("_", f000014, f001252);
-  private static final Expr f001254 =
-      Expr.makeApplication(f000000, new Expr[] {f000014, f000002, f000183, f001253, f000643});
-  private static final Expr f001255 = Expr.makeLambda("_", f000201, f001254);
-  private static final Expr f001256 = Expr.makePi("_", f000002, f000183);
-  private static final Expr f001257 = Expr.makeLambda("_", f001256, f001255);
-  private static final Expr f001258 = Expr.makeLambda("_", f000017, f001257);
-  private static final Expr f001259 = Expr.makeLambda("_", f000183, f000002);
+  private static final Expr f001259 = Expr.makeMerge(f001258, f000002, null);
   private static final Expr f001260 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("Empty", f000643),
-            new SimpleImmutableEntry<String, Expr>("NonEmpty", f001259)
+            new SimpleImmutableEntry<String, Expr>("_1", f001254),
+            new SimpleImmutableEntry<String, Expr>("_2", f001259)
           });
-  private static final Expr f001261 =
+  private static final Expr f001261 = Expr.makeApplication(f000373, new Expr[] {f000961});
+  private static final Expr f001262 = Expr.makeLambda("_", f001261, f001260);
+  private static final Expr f001263 = Expr.makeLambda("_", f000017, f001262);
+  private static final Expr f001264 = Expr.makeLambda("_", f000017, f001263);
+  private static final Expr f001265 =
+      Expr.makeRecordLiteral(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("all", f001168),
+            new SimpleImmutableEntry<String, Expr>("any", f001173),
+            new SimpleImmutableEntry<String, Expr>("build", f001181),
+            new SimpleImmutableEntry<String, Expr>("concat", f001187),
+            new SimpleImmutableEntry<String, Expr>("default", f001193),
+            new SimpleImmutableEntry<String, Expr>("filter", f001202),
+            new SimpleImmutableEntry<String, Expr>("fold", f001210),
+            new SimpleImmutableEntry<String, Expr>("head", f001219),
+            new SimpleImmutableEntry<String, Expr>("last", f001226),
+            new SimpleImmutableEntry<String, Expr>("length", f001231),
+            new SimpleImmutableEntry<String, Expr>("map", f001239),
+            new SimpleImmutableEntry<String, Expr>("null", f001244),
+            new SimpleImmutableEntry<String, Expr>("toList", f001249),
+            new SimpleImmutableEntry<String, Expr>("unzip", f001264)
+          });
+  private static final Expr f001266 =
+      Expr.makeTextLiteral(new String[] {"", "", ""}, new Expr[] {f000003, f000002});
+  private static final Expr f001267 = Expr.makeLambda("_", f000183, f001266);
+  private static final Expr f001268 = Expr.makeLambda("_", f000183, f001267);
+  private static final Expr f001269 =
+      Expr.makeApplication(f000000, new Expr[] {f000183, f000002, f000183, f001268, f000643});
+  private static final Expr f001270 = Expr.makeLambda("_", f000331, f001269);
+  private static final Expr f001271 =
+      Expr.makeTextLiteral(new String[] {"", "", ""}, new Expr[] {f000742, f000002});
+  private static final Expr f001272 = Expr.makeLambda("_", f000183, f001271);
+  private static final Expr f001273 = Expr.makeLambda("_", f000014, f001272);
+  private static final Expr f001274 =
+      Expr.makeApplication(f000000, new Expr[] {f000014, f000002, f000183, f001273, f000643});
+  private static final Expr f001275 = Expr.makeLambda("_", f000201, f001274);
+  private static final Expr f001276 = Expr.makePi("_", f000002, f000183);
+  private static final Expr f001277 = Expr.makeLambda("_", f001276, f001275);
+  private static final Expr f001278 = Expr.makeLambda("_", f000017, f001277);
+  private static final Expr f001279 = Expr.makeLambda("_", f000183, f000002);
+  private static final Expr f001280 =
+      Expr.makeRecordLiteral(
+          new Entry[] {
+            new SimpleImmutableEntry<String, Expr>("Empty", f000643),
+            new SimpleImmutableEntry<String, Expr>("NonEmpty", f001279)
+          });
+  private static final Expr f001281 =
       Expr.makeUnionType(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("Empty", null),
             new SimpleImmutableEntry<String, Expr>("NonEmpty", f000183)
           });
-  private static final Expr f001262 = Expr.makeFieldAccess(f001261, "NonEmpty");
-  private static final Expr f001263 = Expr.makeApplication(f001262, new Expr[] {f000742});
-  private static final Expr f001264 = Expr.makeApplication(f000052, new Expr[] {f000014});
-  private static final Expr f001265 = Expr.makeIdentifier("_", 6);
-  private static final Expr f001266 =
-      Expr.makeTextLiteral(new String[] {"", "", "", ""}, new Expr[] {f001264, f001265, f000002});
-  private static final Expr f001267 = Expr.makeApplication(f001262, new Expr[] {f001266});
-  private static final Expr f001268 = Expr.makeLambda("_", f000183, f001267);
-  private static final Expr f001269 =
+  private static final Expr f001282 = Expr.makeFieldAccess(f001281, "NonEmpty");
+  private static final Expr f001283 = Expr.makeApplication(f001282, new Expr[] {f000742});
+  private static final Expr f001284 = Expr.makeApplication(f000052, new Expr[] {f000014});
+  private static final Expr f001285 = Expr.makeIdentifier("_", 6);
+  private static final Expr f001286 =
+      Expr.makeTextLiteral(new String[] {"", "", "", ""}, new Expr[] {f001284, f001285, f000002});
+  private static final Expr f001287 = Expr.makeApplication(f001282, new Expr[] {f001286});
+  private static final Expr f001288 = Expr.makeLambda("_", f000183, f001287);
+  private static final Expr f001289 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("Empty", f001263),
-            new SimpleImmutableEntry<String, Expr>("NonEmpty", f001268)
+            new SimpleImmutableEntry<String, Expr>("Empty", f001283),
+            new SimpleImmutableEntry<String, Expr>("NonEmpty", f001288)
           });
-  private static final Expr f001270 = Expr.makeMerge(f001269, f000002, null);
-  private static final Expr f001271 = Expr.makeLambda("_", f001261, f001270);
-  private static final Expr f001272 = Expr.makeLambda("_", f000014, f001271);
-  private static final Expr f001273 = Expr.makeFieldAccess(f001261, "Empty");
-  private static final Expr f001274 =
-      Expr.makeApplication(f000000, new Expr[] {f000014, f000002, f001261, f001272, f001273});
-  private static final Expr f001275 = Expr.makeMerge(f001260, f001274, null);
-  private static final Expr f001276 = Expr.makeLambda("_", f000201, f001275);
-  private static final Expr f001277 = Expr.makeLambda("_", f001256, f001276);
-  private static final Expr f001278 = Expr.makeLambda("_", f000017, f001277);
-  private static final Expr f001279 = Expr.makeLambda("_", f000183, f001278);
-  private static final Expr f001280 = Expr.makeApplication(f001262, new Expr[] {f000003});
-  private static final Expr f001281 =
+  private static final Expr f001290 = Expr.makeMerge(f001289, f000002, null);
+  private static final Expr f001291 = Expr.makeLambda("_", f001281, f001290);
+  private static final Expr f001292 = Expr.makeLambda("_", f000014, f001291);
+  private static final Expr f001293 = Expr.makeFieldAccess(f001281, "Empty");
+  private static final Expr f001294 =
+      Expr.makeApplication(f000000, new Expr[] {f000014, f000002, f001281, f001292, f001293});
+  private static final Expr f001295 = Expr.makeMerge(f001280, f001294, null);
+  private static final Expr f001296 = Expr.makeLambda("_", f000201, f001295);
+  private static final Expr f001297 = Expr.makeLambda("_", f001276, f001296);
+  private static final Expr f001298 = Expr.makeLambda("_", f000017, f001297);
+  private static final Expr f001299 = Expr.makeLambda("_", f000183, f001298);
+  private static final Expr f001300 = Expr.makeApplication(f001282, new Expr[] {f000003});
+  private static final Expr f001301 =
       Expr.makeTextLiteral(new String[] {"", "", "", ""}, new Expr[] {f000014, f000052, f000002});
-  private static final Expr f001282 = Expr.makeApplication(f001262, new Expr[] {f001281});
-  private static final Expr f001283 = Expr.makeLambda("_", f000183, f001282);
-  private static final Expr f001284 =
+  private static final Expr f001302 = Expr.makeApplication(f001282, new Expr[] {f001301});
+  private static final Expr f001303 = Expr.makeLambda("_", f000183, f001302);
+  private static final Expr f001304 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("Empty", f001280),
-            new SimpleImmutableEntry<String, Expr>("NonEmpty", f001283)
+            new SimpleImmutableEntry<String, Expr>("Empty", f001300),
+            new SimpleImmutableEntry<String, Expr>("NonEmpty", f001303)
           });
-  private static final Expr f001285 = Expr.makeMerge(f001284, f000002, null);
-  private static final Expr f001286 = Expr.makeLambda("_", f001261, f001285);
-  private static final Expr f001287 = Expr.makeLambda("_", f000183, f001286);
-  private static final Expr f001288 =
-      Expr.makeApplication(f000000, new Expr[] {f000183, f000002, f001261, f001287, f001273});
-  private static final Expr f001289 = Expr.makeMerge(f001260, f001288, null);
-  private static final Expr f001290 = Expr.makeLambda("_", f000331, f001289);
-  private static final Expr f001291 = Expr.makeLambda("_", f000183, f001290);
-  private static final Expr f001292 =
+  private static final Expr f001305 = Expr.makeMerge(f001304, f000002, null);
+  private static final Expr f001306 = Expr.makeLambda("_", f001281, f001305);
+  private static final Expr f001307 = Expr.makeLambda("_", f000183, f001306);
+  private static final Expr f001308 =
+      Expr.makeApplication(f000000, new Expr[] {f000183, f000002, f001281, f001307, f001293});
+  private static final Expr f001309 = Expr.makeMerge(f001280, f001308, null);
+  private static final Expr f001310 = Expr.makeLambda("_", f000331, f001309);
+  private static final Expr f001311 = Expr.makeLambda("_", f000183, f001310);
+  private static final Expr f001312 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000643),
-            new SimpleImmutableEntry<String, Expr>("Some", f001259)
+            new SimpleImmutableEntry<String, Expr>("Some", f001279)
           });
-  private static final Expr f001293 = Expr.makeMerge(f001292, f000002, null);
-  private static final Expr f001294 = Expr.makeApplication(f000373, new Expr[] {f000183});
-  private static final Expr f001295 = Expr.makeLambda("_", f001294, f001293);
-  private static final Expr f001296 =
+  private static final Expr f001313 = Expr.makeMerge(f001312, f000002, null);
+  private static final Expr f001314 = Expr.makeApplication(f000373, new Expr[] {f000183});
+  private static final Expr f001315 = Expr.makeLambda("_", f001314, f001313);
+  private static final Expr f001316 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("None", f000643),
             new SimpleImmutableEntry<String, Expr>("Some", f000003)
           });
-  private static final Expr f001297 = Expr.makeMerge(f001296, f000002, null);
-  private static final Expr f001298 = Expr.makeLambda("_", f000933, f001297);
-  private static final Expr f001299 = Expr.makeLambda("_", f001256, f001298);
-  private static final Expr f001300 = Expr.makeLambda("_", f000017, f001299);
-  private static final Expr f001301 =
+  private static final Expr f001317 = Expr.makeMerge(f001316, f000002, null);
+  private static final Expr f001318 = Expr.makeLambda("_", f000933, f001317);
+  private static final Expr f001319 = Expr.makeLambda("_", f001276, f001318);
+  private static final Expr f001320 = Expr.makeLambda("_", f000017, f001319);
+  private static final Expr f001321 =
       Expr.makeApplication(f000807, new Expr[] {f000003, f000331, f000464, f000334});
-  private static final Expr f001302 =
-      Expr.makeApplication(f000000, new Expr[] {f000183, f001301, f000183, f001248, f000643});
-  private static final Expr f001303 = Expr.makeLambda("_", f000183, f001302);
-  private static final Expr f001304 = Expr.makeLambda("_", f000178, f001303);
-  private static final Expr f001305 = Expr.makeTextLiteral(" ");
-  private static final Expr f001306 = Expr.makeNonEmptyListLiteral(new Expr[] {f001305});
-  private static final Expr f001307 =
-      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001306, f000002);
-  private static final Expr f001308 = Expr.makeLambda("_", f000331, f001307);
-  private static final Expr f001309 =
-      Expr.makeApplication(f000807, new Expr[] {f000002, f000331, f001308, f000334});
-  private static final Expr f001310 =
-      Expr.makeApplication(f000000, new Expr[] {f000183, f001309, f000183, f001248, f000643});
-  private static final Expr f001311 = Expr.makeLambda("_", f000178, f001310);
-  private static final Expr f001312 =
+  private static final Expr f001322 =
+      Expr.makeApplication(f000000, new Expr[] {f000183, f001321, f000183, f001268, f000643});
+  private static final Expr f001323 = Expr.makeLambda("_", f000183, f001322);
+  private static final Expr f001324 = Expr.makeLambda("_", f000178, f001323);
+  private static final Expr f001325 = Expr.makeTextLiteral(" ");
+  private static final Expr f001326 = Expr.makeNonEmptyListLiteral(new Expr[] {f001325});
+  private static final Expr f001327 =
+      Expr.makeOperatorApplication(Operator.LIST_APPEND, f001326, f000002);
+  private static final Expr f001328 = Expr.makeLambda("_", f000331, f001327);
+  private static final Expr f001329 =
+      Expr.makeApplication(f000807, new Expr[] {f000002, f000331, f001328, f000334});
+  private static final Expr f001330 =
+      Expr.makeApplication(f000000, new Expr[] {f000183, f001329, f000183, f001268, f000643});
+  private static final Expr f001331 = Expr.makeLambda("_", f000178, f001330);
+  private static final Expr f001332 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("concat", f001250),
-            new SimpleImmutableEntry<String, Expr>("concatMap", f001258),
-            new SimpleImmutableEntry<String, Expr>("concatMapSep", f001279),
-            new SimpleImmutableEntry<String, Expr>("concatSep", f001291),
-            new SimpleImmutableEntry<String, Expr>("default", f001295),
-            new SimpleImmutableEntry<String, Expr>("defaultMap", f001300),
-            new SimpleImmutableEntry<String, Expr>("replicate", f001304),
+            new SimpleImmutableEntry<String, Expr>("concat", f001270),
+            new SimpleImmutableEntry<String, Expr>("concatMap", f001278),
+            new SimpleImmutableEntry<String, Expr>("concatMapSep", f001299),
+            new SimpleImmutableEntry<String, Expr>("concatSep", f001311),
+            new SimpleImmutableEntry<String, Expr>("default", f001315),
+            new SimpleImmutableEntry<String, Expr>("defaultMap", f001320),
+            new SimpleImmutableEntry<String, Expr>("replicate", f001324),
             new SimpleImmutableEntry<String, Expr>("show", f000516),
-            new SimpleImmutableEntry<String, Expr>("spaces", f001311)
+            new SimpleImmutableEntry<String, Expr>("spaces", f001331)
           });
-  private static final Expr f001313 =
+  private static final Expr f001333 =
       Expr.makeRecordType(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("mapKey", f000183),
             new SimpleImmutableEntry<String, Expr>("mapValue", f000183)
           });
-  private static final Expr f001314 = Expr.makeApplication(f000009, new Expr[] {f001313});
-  private static final Expr f001315 =
+  private static final Expr f001334 = Expr.makeApplication(f000009, new Expr[] {f001333});
+  private static final Expr f001335 =
       Expr.makeRecordType(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("attributes", f001314),
+            new SimpleImmutableEntry<String, Expr>("attributes", f001334),
             new SimpleImmutableEntry<String, Expr>("content", f000187),
             new SimpleImmutableEntry<String, Expr>("name", f000183)
           });
-  private static final Expr f001316 = Expr.makePi("_", f001315, f000003);
-  private static final Expr f001317 =
+  private static final Expr f001336 = Expr.makePi("_", f001335, f000003);
+  private static final Expr f001337 =
       Expr.makeRecordType(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("element", f001316),
+            new SimpleImmutableEntry<String, Expr>("element", f001336),
             new SimpleImmutableEntry<String, Expr>("text", f000196)
           });
-  private static final Expr f001318 = Expr.makePi("_", f001317, f000003);
-  private static final Expr f001319 = Expr.makePi("_", f000017, f001318);
-  private static final Expr f001320 = Expr.makeFieldAccess(f000002, "element");
-  private static final Expr f001321 = Expr.makeFieldAccess(f000014, "attributes");
-  private static final Expr f001322 = Expr.makeFieldAccess(f000014, "content");
-  private static final Expr f001323 = Expr.makeLambda("_", f001319, f000206);
-  private static final Expr f001324 =
-      Expr.makeApplication(f000000, new Expr[] {f001319, f001322, f000201, f001323, f000208});
-  private static final Expr f001325 = Expr.makeFieldAccess(f000014, "name");
-  private static final Expr f001326 =
+  private static final Expr f001338 = Expr.makePi("_", f001337, f000003);
+  private static final Expr f001339 = Expr.makePi("_", f000017, f001338);
+  private static final Expr f001340 = Expr.makeFieldAccess(f000002, "element");
+  private static final Expr f001341 = Expr.makeFieldAccess(f000014, "attributes");
+  private static final Expr f001342 = Expr.makeFieldAccess(f000014, "content");
+  private static final Expr f001343 = Expr.makeLambda("_", f001339, f000206);
+  private static final Expr f001344 =
+      Expr.makeApplication(f000000, new Expr[] {f001339, f001342, f000201, f001343, f000208});
+  private static final Expr f001345 = Expr.makeFieldAccess(f000014, "name");
+  private static final Expr f001346 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("attributes", f001321),
-            new SimpleImmutableEntry<String, Expr>("content", f001324),
-            new SimpleImmutableEntry<String, Expr>("name", f001325)
+            new SimpleImmutableEntry<String, Expr>("attributes", f001341),
+            new SimpleImmutableEntry<String, Expr>("content", f001344),
+            new SimpleImmutableEntry<String, Expr>("name", f001345)
           });
-  private static final Expr f001327 = Expr.makeApplication(f001320, new Expr[] {f001326});
-  private static final Expr f001328 = Expr.makeLambda("_", f001317, f001327);
-  private static final Expr f001329 = Expr.makeLambda("_", f000017, f001328);
-  private static final Expr f001330 = Expr.makeApplication(f000009, new Expr[] {f001319});
-  private static final Expr f001331 =
+  private static final Expr f001347 = Expr.makeApplication(f001340, new Expr[] {f001346});
+  private static final Expr f001348 = Expr.makeLambda("_", f001337, f001347);
+  private static final Expr f001349 = Expr.makeLambda("_", f000017, f001348);
+  private static final Expr f001350 = Expr.makeApplication(f000009, new Expr[] {f001339});
+  private static final Expr f001351 =
       Expr.makeRecordType(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("attributes", f001314),
-            new SimpleImmutableEntry<String, Expr>("content", f001330),
+            new SimpleImmutableEntry<String, Expr>("attributes", f001334),
+            new SimpleImmutableEntry<String, Expr>("content", f001350),
             new SimpleImmutableEntry<String, Expr>("name", f000183)
           });
-  private static final Expr f001332 = Expr.makeLambda("_", f001331, f001329);
-  private static final Expr f001333 = Expr.makeEmptyListLiteral(f001314);
-  private static final Expr f001334 =
+  private static final Expr f001352 = Expr.makeLambda("_", f001351, f001349);
+  private static final Expr f001353 = Expr.makeEmptyListLiteral(f001334);
+  private static final Expr f001354 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("attributes", f001321),
+            new SimpleImmutableEntry<String, Expr>("attributes", f001341),
             new SimpleImmutableEntry<String, Expr>("content", f000208),
-            new SimpleImmutableEntry<String, Expr>("name", f001325)
+            new SimpleImmutableEntry<String, Expr>("name", f001345)
           });
-  private static final Expr f001335 = Expr.makeApplication(f001320, new Expr[] {f001334});
-  private static final Expr f001336 = Expr.makeLambda("_", f001317, f001335);
-  private static final Expr f001337 = Expr.makeLambda("_", f000017, f001336);
-  private static final Expr f001338 =
+  private static final Expr f001355 = Expr.makeApplication(f001340, new Expr[] {f001354});
+  private static final Expr f001356 = Expr.makeLambda("_", f001337, f001355);
+  private static final Expr f001357 = Expr.makeLambda("_", f000017, f001356);
+  private static final Expr f001358 =
       Expr.makeRecordType(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("attributes", f001314),
+            new SimpleImmutableEntry<String, Expr>("attributes", f001334),
             new SimpleImmutableEntry<String, Expr>("name", f000183)
           });
-  private static final Expr f001339 = Expr.makeLambda("_", f001338, f001337);
-  private static final Expr f001340 = Expr.makeFieldAccess(f000002, "name");
-  private static final Expr f001341 = Expr.makeFieldAccess(f000002, "attributes");
-  private static final Expr f001342 =
+  private static final Expr f001359 = Expr.makeLambda("_", f001358, f001357);
+  private static final Expr f001360 = Expr.makeFieldAccess(f000002, "name");
+  private static final Expr f001361 = Expr.makeFieldAccess(f000002, "attributes");
+  private static final Expr f001362 =
       Expr.makeTextLiteral(
           new String[] {" ", "=\"", "\"", ""}, new Expr[] {f000248, f000249, f000002});
-  private static final Expr f001343 = Expr.makeLambda("_", f000183, f001342);
-  private static final Expr f001344 = Expr.makeLambda("_", f001313, f001343);
-  private static final Expr f001345 =
-      Expr.makeApplication(f000000, new Expr[] {f001313, f001341, f000183, f001344, f000643});
-  private static final Expr f001346 = Expr.makeFieldAccess(f000002, "content");
-  private static final Expr f001347 = Expr.makeApplication(f000845, new Expr[] {f000183, f001346});
-  private static final Expr f001348 = Expr.makeApplication(f000063, new Expr[] {f001347});
-  private static final Expr f001349 = Expr.makeTextLiteral("/>");
-  private static final Expr f001350 =
-      Expr.makeApplication(f000000, new Expr[] {f000183, f001346, f000183, f001248, f000643});
-  private static final Expr f001351 =
-      Expr.makeTextLiteral(new String[] {">", "</", ">"}, new Expr[] {f001350, f001340});
-  private static final Expr f001352 = Expr.makeIf(f001348, f001349, f001351);
-  private static final Expr f001353 =
-      Expr.makeTextLiteral(new String[] {"<", "", "", ""}, new Expr[] {f001340, f001345, f001352});
-  private static final Expr f001354 =
+  private static final Expr f001363 = Expr.makeLambda("_", f000183, f001362);
+  private static final Expr f001364 = Expr.makeLambda("_", f001333, f001363);
+  private static final Expr f001365 =
+      Expr.makeApplication(f000000, new Expr[] {f001333, f001361, f000183, f001364, f000643});
+  private static final Expr f001366 = Expr.makeFieldAccess(f000002, "content");
+  private static final Expr f001367 = Expr.makeApplication(f000845, new Expr[] {f000183, f001366});
+  private static final Expr f001368 = Expr.makeApplication(f000063, new Expr[] {f001367});
+  private static final Expr f001369 = Expr.makeTextLiteral("/>");
+  private static final Expr f001370 =
+      Expr.makeApplication(f000000, new Expr[] {f000183, f001366, f000183, f001268, f000643});
+  private static final Expr f001371 =
+      Expr.makeTextLiteral(new String[] {">", "</", ">"}, new Expr[] {f001370, f001360});
+  private static final Expr f001372 = Expr.makeIf(f001368, f001369, f001371);
+  private static final Expr f001373 =
+      Expr.makeTextLiteral(new String[] {"<", "", "", ""}, new Expr[] {f001360, f001365, f001372});
+  private static final Expr f001374 =
       Expr.makeRecordType(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("attributes", f001314),
+            new SimpleImmutableEntry<String, Expr>("attributes", f001334),
             new SimpleImmutableEntry<String, Expr>("content", f000331),
             new SimpleImmutableEntry<String, Expr>("name", f000183)
           });
-  private static final Expr f001355 = Expr.makeLambda("_", f001354, f001353);
-  private static final Expr f001356 =
+  private static final Expr f001375 = Expr.makeLambda("_", f001374, f001373);
+  private static final Expr f001376 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("element", f001355),
-            new SimpleImmutableEntry<String, Expr>("text", f001259)
+            new SimpleImmutableEntry<String, Expr>("element", f001375),
+            new SimpleImmutableEntry<String, Expr>("text", f001279)
           });
-  private static final Expr f001357 = Expr.makeApplication(f000002, new Expr[] {f000183, f001356});
-  private static final Expr f001358 = Expr.makeLambda("_", f001319, f001357);
-  private static final Expr f001359 = Expr.makeFieldAccess(f000002, "text");
-  private static final Expr f001360 = Expr.makeApplication(f001359, new Expr[] {f000014});
-  private static final Expr f001361 = Expr.makeLambda("_", f001317, f001360);
-  private static final Expr f001362 = Expr.makeLambda("_", f000017, f001361);
-  private static final Expr f001363 = Expr.makeLambda("_", f000183, f001362);
-  private static final Expr f001364 =
+  private static final Expr f001377 = Expr.makeApplication(f000002, new Expr[] {f000183, f001376});
+  private static final Expr f001378 = Expr.makeLambda("_", f001339, f001377);
+  private static final Expr f001379 = Expr.makeFieldAccess(f000002, "text");
+  private static final Expr f001380 = Expr.makeApplication(f001379, new Expr[] {f000014});
+  private static final Expr f001381 = Expr.makeLambda("_", f001337, f001380);
+  private static final Expr f001382 = Expr.makeLambda("_", f000017, f001381);
+  private static final Expr f001383 = Expr.makeLambda("_", f000183, f001382);
+  private static final Expr f001384 =
       Expr.makeRecordLiteral(
           new Entry[] {
-            new SimpleImmutableEntry<String, Expr>("Type", f001319),
+            new SimpleImmutableEntry<String, Expr>("Type", f001339),
             new SimpleImmutableEntry<String, Expr>("attribute", f000232),
-            new SimpleImmutableEntry<String, Expr>("element", f001332),
-            new SimpleImmutableEntry<String, Expr>("emptyAttributes", f001333),
-            new SimpleImmutableEntry<String, Expr>("leaf", f001339),
-            new SimpleImmutableEntry<String, Expr>("render", f001358),
-            new SimpleImmutableEntry<String, Expr>("text", f001363)
+            new SimpleImmutableEntry<String, Expr>("element", f001352),
+            new SimpleImmutableEntry<String, Expr>("emptyAttributes", f001353),
+            new SimpleImmutableEntry<String, Expr>("leaf", f001359),
+            new SimpleImmutableEntry<String, Expr>("render", f001378),
+            new SimpleImmutableEntry<String, Expr>("text", f001383)
           });
-  private static final Expr f001365 =
+  private static final Expr f001385 =
       Expr.makeRecordLiteral(
           new Entry[] {
             new SimpleImmutableEntry<String, Expr>("Bool", f000047),
@@ -2576,13 +2619,13 @@ public final class Prelude {
             new SimpleImmutableEntry<String, Expr>("JSON", f000741),
             new SimpleImmutableEntry<String, Expr>("List", f000995),
             new SimpleImmutableEntry<String, Expr>("Location", f000997),
-            new SimpleImmutableEntry<String, Expr>("Map", f001044),
-            new SimpleImmutableEntry<String, Expr>("Monoid", f001045),
-            new SimpleImmutableEntry<String, Expr>("Natural", f001143),
-            new SimpleImmutableEntry<String, Expr>("Optional", f001245),
-            new SimpleImmutableEntry<String, Expr>("Text", f001312),
-            new SimpleImmutableEntry<String, Expr>("XML", f001364)
+            new SimpleImmutableEntry<String, Expr>("Map", f001064),
+            new SimpleImmutableEntry<String, Expr>("Monoid", f001065),
+            new SimpleImmutableEntry<String, Expr>("Natural", f001163),
+            new SimpleImmutableEntry<String, Expr>("Optional", f001265),
+            new SimpleImmutableEntry<String, Expr>("Text", f001332),
+            new SimpleImmutableEntry<String, Expr>("XML", f001384)
           });
 
-  public static final Expr instance = f001365;
+  public static final Expr instance = f001385;
 }
