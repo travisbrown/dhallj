@@ -366,6 +366,23 @@ final class Constructors {
     }
   }
 
+  static final class With extends Expr {
+    final Expr base;
+    final String[] path;
+    final Expr value;
+
+    With(Expr base, String[] path, Expr value) {
+      super(Tags.WITH);
+      this.base = base;
+      this.path = path;
+      this.value = value;
+    }
+
+    public final <A> A accept(ExternalVisitor<A> visitor) {
+      return visitor.onWith(this.base, this.path, this.value);
+    }
+  }
+
   static final class MissingImport extends Expr {
     final Expr.ImportMode mode;
     final byte[] hash;

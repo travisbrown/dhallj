@@ -44,4 +44,6 @@ final class Tags {
   static final int LOCAL_IMPORT = 27;
   static final int REMOTE_IMPORT = 28;
   static final int CLASSPATH_IMPORT = 29;
+
+  static final int WITH = 30;
 }

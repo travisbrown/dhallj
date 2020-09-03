@@ -624,23 +624,7 @@ final class ParsingHelpers {
     // TODO: source isn't correct.
     Source source = sourceFromToken(first);
 
-    Expr current = arg;
-
-    for (int i = path.size() - 1; i >= 0; i--) {
-      String pathPart = path.get(i);
-
-      Expr selector = base;
-
-      for (int j = 0; j < i; j++) {
-        selector = Expr.makeFieldAccess(selector, path.get(j));
-      }
-
-      current =
-          Expr.makeOperatorApplication(
-              Operator.PREFER, selector, Expr.makeRecordLiteral(pathPart, current));
-    }
-
-    return new Expr.Parsed(current, source);
+    return new Expr.Parsed(Expr.makeWith(base, path.toArray(new String[path.size()]), arg), source);
   }
 
   static final Expr.Parsed makeNonEmptyListLiteral(

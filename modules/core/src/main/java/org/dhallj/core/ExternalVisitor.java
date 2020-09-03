@@ -61,6 +61,8 @@ public interface ExternalVisitor<A> {
 
   A onToMap(Expr base, Expr type);
 
+  A onWith(Expr base, String[] path, Expr value);
+
   A onMissingImport(Expr.ImportMode mode, byte[] hash);
 
   A onEnvImport(String value, Expr.ImportMode mode, byte[] hash);
@@ -214,6 +216,11 @@ public interface ExternalVisitor<A> {
 
     @Override
     public A onToMap(Expr base, Expr type) {
+      return this.getReturnValue();
+    }
+
+    @Override
+    public A onWith(Expr base, String[] path, Expr value) {
       return this.getReturnValue();
     }
 

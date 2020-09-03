@@ -387,6 +387,24 @@ public final class Encode implements Visitor<Void> {
     return null;
   }
 
+  public boolean prepareWith(String[] path) {
+    this.writer.writeArrayStart(4);
+    this.writer.writeLong(Label.WITH);
+    return true;
+  }
+
+  public boolean prepareWithValue(String[] path) {
+    this.writer.writeArrayStart(path.length);
+    for (int i = 0; i < path.length; i += 1) {
+      this.writer.writeString(path[i]);
+    }
+    return true;
+  }
+
+  public Void onWith(Void base, String[] path, Void value) {
+    return null;
+  }
+
   private final int modeLabel(Expr.ImportMode mode) {
     if (mode.equals(Expr.ImportMode.RAW_TEXT)) {
       return 1;

@@ -141,6 +141,10 @@ public final class BetaNormalize extends Visitor.NoPrepareEvents<Expr> {
     return BetaNormalizeToMap.apply(base, type);
   }
 
+  public Expr onWith(Expr base, String[] path, Expr value) {
+    return Expr.Util.desugarWith(base, path, value).accept(this);
+  }
+
   public Expr onMissingImport(Expr.ImportMode mode, byte[] hash) {
     return Expr.makeMissingImport(mode, hash);
   }

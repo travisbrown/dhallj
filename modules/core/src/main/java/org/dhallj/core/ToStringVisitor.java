@@ -15,6 +15,7 @@ final class ToStringState {
   static final int ASSERT = 100;
   static final int MERGE = 102;
   static final int TO_MAP = 102;
+  static final int WITH = 102;
   static final int APPLICATION_ARGUMENT = 102;
   static final int ANNOTATED = 104;
   static final int LAMBDA = 105;
@@ -370,6 +371,22 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
     }
 
     return new ToStringState(builder.toString(), ToStringState.TO_MAP);
+  }
+
+  public ToStringState onWith(ToStringState base, String[] path, ToStringState value) {
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(base.toString(ToStringState.WITH, true));
+    builder.append(" with ");
+    for (int i = 0; i < path.length - 2; i += 1) {
+      builder.append(path[i]);
+      builder.append(".");
+    }
+    builder.append(path[path.length - 1]);
+    builder.append(" = ");
+    builder.append(value.toString(ToStringState.WITH));
+
+    return new ToStringState(builder.toString(), ToStringState.WITH);
   }
 
   public ToStringState onMissingImport(Expr.ImportMode mode, byte[] hash) {

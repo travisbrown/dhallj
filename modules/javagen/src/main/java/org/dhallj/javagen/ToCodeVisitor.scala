@@ -157,6 +157,7 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
     }
 
   def onToMap(base: Code, tpe: Code): Code = unsupported
+  def onWith(base: Code, path: Array[String], value: Code): Code = unsupported
   def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
   def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
   def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
