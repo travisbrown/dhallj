@@ -49,11 +49,22 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
       F.map2(lhs, rhs)(Expr.makeOperatorApplication(operator, _, _))
     }
 
-  override def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    onImport(ImportContext.Local(path), mode, hash)
+  private def toPath(base: Expr.ImportBase, components: Array[String]): Path =
+    Paths.get(s"$base/${components.mkString("/")}")
 
-  override def onClasspathImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    onImport(ImportContext.Classpath(path), mode, hash)
+  override def onLocalImport(base: Expr.ImportBase,
+                             components: Array[String],
+                             mode: Expr.ImportMode,
+                             hash: Array[Byte]
+  ): F[Expr] =
+    onImport(ImportContext.Local(toPath(base, components)), mode, hash)
+
+  override def onClasspathImport(base: Expr.ImportBase,
+                                 components: Array[String],
+                                 mode: Expr.ImportMode,
+                                 hash: Array[Byte]
+  ): F[Expr] =
+    onImport(ImportContext.Classpath(toPath(base, components)), mode, hash)
 
   override def onRemoteImport(url: URI, using: F[Expr], mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     if (using.ne(null)) using >>= (u => onImport(ImportContext.Remote(url, u), mode, hash))

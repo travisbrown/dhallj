@@ -111,6 +111,7 @@ val root = project
     jawn,
     yaml,
     cats,
+    http4s,
     imports,
     importsMini,
     testing,
@@ -256,14 +257,24 @@ lazy val cats = project
   )
   .dependsOn(core, testing % Test)
 
-lazy val imports = project
-  .in(file("modules/imports"))
+lazy val http4s = project
+  .in(file("modules/http4s"))
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
-  .settings(moduleName := "dhall-imports", name := "dhall-imports", description := "DhallJ import resolution")
+  .settings(moduleName := "dhall-http4s", name := "dhall-http4s", description := "DhallJ import resolution built on http4s")
   .settings(
     libraryDependencies ++= http4sDependencies :+ (http4sBlazeClient % Test)
   )
   .dependsOn(parser, cats)
+
+lazy val imports = project
+  .in(file("modules/imports"))
+  .settings(baseSettings ++ javaSettings ++ publishSettings)
+  .settings(
+    moduleName := "dhall-imports",
+    name := "dhall-imports",
+    description := "DhallJ import resolution for Java"
+  )
+  .dependsOn(parser, core)
 
 lazy val importsMini = project
   .in(file("modules/imports-mini"))
@@ -271,7 +282,7 @@ lazy val importsMini = project
   .settings(
     moduleName := "dhall-imports-mini",
     name := "dhall-imports-mini",
-    description := "DhallJ import resolution for Java"
+    description := "DhallJ local import resolution for Java"
   )
   .dependsOn(parser, core)
 
@@ -294,7 +305,7 @@ lazy val tests = project
     testOptions.in(Slow) -= Tests.Argument("--exclude-tags=Slow"),
     testOptions.in(Slow) += Tests.Argument("--include-tags=Slow")
   )
-  .dependsOn(scala, imports, importsMini, testing)
+  .dependsOn(scala, http4s, importsMini, testing)
 
 lazy val benchmarks = project
   .in(file("benchmarks"))

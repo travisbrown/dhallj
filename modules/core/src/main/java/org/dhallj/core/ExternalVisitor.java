@@ -2,7 +2,6 @@ package org.dhallj.core;
 
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.Map.Entry;
 
 /**
@@ -67,9 +66,9 @@ public interface ExternalVisitor<A> {
 
   A onEnvImport(String value, Expr.ImportMode mode, byte[] hash);
 
-  A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash);
+  A onLocalImport(Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash);
 
-  A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash);
+  A onClasspathImport(Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash);
 
   A onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash);
 
@@ -235,12 +234,14 @@ public interface ExternalVisitor<A> {
     }
 
     @Override
-    public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    public A onLocalImport(
+        Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
     @Override
-    public A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    public A onClasspathImport(
+        Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 

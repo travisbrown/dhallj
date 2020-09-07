@@ -81,8 +81,18 @@ abstract class ResolutionVisitor extends Visitor.Identity {
   }
 
   @Override
-  public Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
+  public Expr onLocalImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
     Expr result;
+
+    StringBuilder builder = new StringBuilder(base.toString());
+
+    for (String component : components) {
+      builder.append("/");
+      builder.append(component);
+    }
+
+    Path path = Paths.get(builder.toString());
 
     if (mode.equals(Expr.ImportMode.LOCATION)) {
       result =

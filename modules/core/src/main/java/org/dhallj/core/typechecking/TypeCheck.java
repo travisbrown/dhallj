@@ -2,7 +2,6 @@ package org.dhallj.core.typechecking;
 
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -690,12 +689,14 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   }
 
   @Override
-  public final Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
+  public final Expr onLocalImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 
   @Override
-  public final Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+  public final Expr onClasspathImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
     throw TypeCheckFailure.makeUnresolvedImportError();
   }
 

@@ -1,18 +1,19 @@
 package org.dhallj.core;
 
 import java.net.URI;
-import java.nio.file.Path;
 
 final class IsResolved extends Visitor.Property {
   public static final Visitor<Boolean> instance = new IsResolved();
 
   @Override
-  public Boolean onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
+  public Boolean onLocalImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
     return false;
   }
 
   @Override
-  public Boolean onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+  public Boolean onClasspathImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
     return false;
   }
 

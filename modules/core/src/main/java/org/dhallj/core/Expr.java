@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -125,6 +124,11 @@ public abstract class Expr {
   /** Check whether all imports in this expression have been resolved. */
   public final boolean isResolved() {
     return this.accept(IsResolved.instance);
+  }
+
+  /** Canonicalize all imports in this expression. */
+  public final Expr canonicalizeImports() {
+    return this.accept(ImportCanonicalize.instance);
   }
 
   /**
@@ -559,6 +563,24 @@ public abstract class Expr {
     }
   }
 
+  public static enum ImportBase {
+    ABSOLUTE(""),
+    RELATIVE("."),
+    PARENT(".."),
+    HOME("~");
+
+    private final String value;
+
+    ImportBase(String value) {
+      this.value = value;
+    }
+
+    @Override
+    public final String toString() {
+      return this.value;
+    }
+  }
+
   /** Definitions of Dhall built-ins and other frequently-used expressions. */
   public static final class Constants {
     private static final Entry[] emptyFields = {};
@@ -872,12 +894,14 @@ public abstract class Expr {
     return makeMerge(left, right, null);
   }
 
-  public static final Expr makeLocalImport(Path path, ImportMode mode, byte[] hash) {
-    return new Constructors.LocalImport(path, mode, hash);
+  public static final Expr makeLocalImport(
+      ImportBase base, String[] components, ImportMode mode, byte[] hash) {
+    return new Constructors.LocalImport(base, components, mode, hash);
   }
 
-  public static final Expr makeClasspathImport(Path path, ImportMode mode, byte[] hash) {
-    return new Constructors.ClasspathImport(path, mode, hash);
+  public static final Expr makeClasspathImport(
+      ImportBase base, String[] components, ImportMode mode, byte[] hash) {
+    return new Constructors.ClasspathImport(base, components, mode, hash);
   }
 
   public static final Expr makeRemoteImport(URI url, Expr using, ImportMode mode, byte[] hash) {
@@ -1545,7 +1569,22 @@ public abstract class Expr {
           Constructors.LocalImport tmpLocalImport = (Constructors.LocalImport) current.expr;
 
           valueStack.push(
-              visitor.onLocalImport(tmpLocalImport.path, tmpLocalImport.mode, tmpLocalImport.hash));
+              visitor.onLocalImport(
+                  tmpLocalImport.base,
+                  tmpLocalImport.components,
+                  tmpLocalImport.mode,
+                  tmpLocalImport.hash));
+          break;
+        case Tags.CLASSPATH_IMPORT:
+          Constructors.ClasspathImport tmpClasspathImport =
+              (Constructors.ClasspathImport) current.expr;
+
+          valueStack.push(
+              visitor.onClasspathImport(
+                  tmpClasspathImport.base,
+                  tmpClasspathImport.components,
+                  tmpClasspathImport.mode,
+                  tmpClasspathImport.hash));
           break;
         case Tags.REMOTE_IMPORT:
           Constructors.RemoteImport tmpRemoteImport = (Constructors.RemoteImport) current.expr;
@@ -1576,14 +1615,6 @@ public abstract class Expr {
 
               break;
           }
-          break;
-        case Tags.CLASSPATH_IMPORT:
-          Constructors.ClasspathImport tmpClasspathImport =
-              (Constructors.ClasspathImport) current.expr;
-
-          valueStack.push(
-              visitor.onClasspathImport(
-                  tmpClasspathImport.path, tmpClasspathImport.mode, tmpClasspathImport.hash));
           break;
       }
       current = stack.poll();
@@ -1955,9 +1986,21 @@ public abstract class Expr {
       } else if (currentA.tag == Tags.LOCAL_IMPORT) {
         Constructors.LocalImport localImportA = (Constructors.LocalImport) currentA;
         Constructors.LocalImport localImportB = (Constructors.LocalImport) currentB;
-        if (localImportA.path.equals(localImportB.path)
+        if (localImportA.base.equals(localImportB.base)
+            && Arrays.equals(localImportA.components, localImportB.components)
             && localImportA.mode.equals(localImportB.mode)
             && Arrays.equals(localImportA.hash, localImportB.hash)) {
+          continue;
+        } else {
+          break;
+        }
+      } else if (currentA.tag == Tags.CLASSPATH_IMPORT) {
+        Constructors.ClasspathImport classpathImportA = (Constructors.ClasspathImport) currentA;
+        Constructors.ClasspathImport classpathImportB = (Constructors.ClasspathImport) currentB;
+        if (classpathImportA.base.equals(classpathImportB.base)
+            && Arrays.equals(classpathImportA.components, classpathImportB.components)
+            && classpathImportA.mode.equals(classpathImportB.mode)
+            && Arrays.equals(classpathImportA.hash, classpathImportB.hash)) {
           continue;
         } else {
           break;

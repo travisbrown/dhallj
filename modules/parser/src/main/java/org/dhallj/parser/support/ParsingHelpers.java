@@ -3,10 +3,9 @@ package org.dhallj.parser.support;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -648,6 +647,28 @@ final class ParsingHelpers {
     return new Expr.Parsed(value, source);
   }
 
+  static final Expr.ImportBase parseBase(String path) {
+    switch (path.charAt(0)) {
+      case '/':
+        return Expr.ImportBase.ABSOLUTE;
+      case '.':
+        if (path.charAt(1) == '.') {
+          return Expr.ImportBase.PARENT;
+        } else {
+          return Expr.ImportBase.RELATIVE;
+        }
+      case '~':
+        return Expr.ImportBase.HOME;
+      default:
+        return null;
+    }
+  }
+
+  static final String[] parsePathComponents(String path) {
+    String[] parts = path.split("/");
+    return Arrays.copyOfRange(parts, 1, parts.length);
+  }
+
   static final Expr.Parsed makeImport(
       Token type, Token hashToken, Token modeToken, Expr.Parsed using) {
     // TODO: fix.
@@ -673,10 +694,13 @@ final class ParsingHelpers {
     } else if (type.image.startsWith("env:")) {
       value = Expr.makeEnvImport(type.image.substring(4), mode, hash);
     } else if (type.image.startsWith("classpath:")) {
-      value = Expr.makeClasspathImport(Paths.get(type.image.substring(10)), mode, hash);
+      String path = type.image.substring(10);
+      value = Expr.makeClasspathImport(parseBase(path), parsePathComponents(path), mode, hash);
     } else {
       try {
-        value = Expr.makeLocalImport(Paths.get(type.image), mode, hash);
+        value =
+            Expr.makeLocalImport(
+                parseBase(type.image), parsePathComponents(type.image), mode, hash);
       } catch (java.nio.file.InvalidPathException e) {
         throw new ParsingFailure("Invalid path", e);
       }

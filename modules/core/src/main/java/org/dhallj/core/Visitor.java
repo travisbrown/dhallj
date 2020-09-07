@@ -2,7 +2,6 @@ package org.dhallj.core;
 
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -71,9 +70,9 @@ public interface Visitor<A> {
 
   A onEnvImport(String value, Expr.ImportMode mode, byte[] hash);
 
-  A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash);
+  A onLocalImport(Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash);
 
-  A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash);
+  A onClasspathImport(Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash);
 
   A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash);
 
@@ -278,23 +277,6 @@ public interface Visitor<A> {
     public boolean prepareRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
       return true;
     }
-
-    /*
-    public A onMissingImport(Expr.ImportMode mode, byte[] hash) {
-      return this.getReturnValue();
-    }
-
-    public A onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
-      return this.getReturnValue();
-    }
-
-    public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
-      return this.getReturnValue();
-    }
-
-    public A onRemoteImport(URI url, A using, Expr.ImportMode mode, byte[] hash) {
-      return this.getReturnValue();
-    }*/
   }
 
   /**
@@ -461,12 +443,14 @@ public interface Visitor<A> {
     }
 
     @Override
-    public A onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    public A onLocalImport(
+        Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
     @Override
-    public A onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    public A onClasspathImport(
+        Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
       return this.getReturnValue();
     }
 
@@ -604,22 +588,6 @@ public interface Visitor<A> {
     public Boolean onToMap(Boolean base, String[] path, Boolean value) {
       return base && value;
     }
-
-    public Boolean onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
-      return true;
-    }
-
-    public Boolean onRemoteImport(URI url, Boolean using, Expr.ImportMode mode, byte[] hash) {
-      return true;
-    }
-
-    public Boolean onEnvImport(String value, Expr.ImportMode mode, byte[] hash) {
-      return true;
-    }
-
-    public Boolean onMissingImport(Expr.ImportMode mode, byte[] hash) {
-      return true;
-    }
   }
 
   /**
@@ -741,12 +709,14 @@ public interface Visitor<A> {
       return Expr.makeEnvImport(value, mode, hash);
     }
 
-    public Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
-      return Expr.makeLocalImport(path, mode, hash);
+    public Expr onLocalImport(
+        Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
+      return Expr.makeLocalImport(base, components, mode, hash);
     }
 
-    public Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
-      return Expr.makeClasspathImport(path, mode, hash);
+    public Expr onClasspathImport(
+        Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
+      return Expr.makeClasspathImport(base, components, mode, hash);
     }
 
     public Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {

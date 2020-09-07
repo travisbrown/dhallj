@@ -2,7 +2,6 @@ package org.dhallj.core;
 
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.Map.Entry;
 
 /**
@@ -416,36 +415,40 @@ final class Constructors {
   }
 
   static final class LocalImport extends Expr {
-    final Path path;
+    final Expr.ImportBase base;
+    final String[] components;
     final Expr.ImportMode mode;
     final byte[] hash;
 
-    LocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    LocalImport(Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
       super(Tags.LOCAL_IMPORT);
-      this.path = path;
+      this.base = base;
+      this.components = components;
       this.mode = mode;
       this.hash = hash;
     }
 
     public final <A> A accept(ExternalVisitor<A> visitor) {
-      return visitor.onLocalImport(this.path, this.mode, this.hash);
+      return visitor.onLocalImport(this.base, this.components, this.mode, this.hash);
     }
   }
 
   static final class ClasspathImport extends Expr {
-    final Path path;
+    final Expr.ImportBase base;
+    final String[] components;
     final Expr.ImportMode mode;
     final byte[] hash;
 
-    ClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+    ClasspathImport(Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
       super(Tags.CLASSPATH_IMPORT);
-      this.path = path;
+      this.base = base;
+      this.components = components;
       this.mode = mode;
       this.hash = hash;
     }
 
     public final <A> A accept(ExternalVisitor<A> visitor) {
-      return visitor.onClasspathImport(this.path, this.mode, this.hash);
+      return visitor.onClasspathImport(this.base, this.components, this.mode, this.hash);
     }
   }
 

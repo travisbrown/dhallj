@@ -445,19 +445,19 @@ final class CborDecodingVisitor implements Visitor<Expr> {
         Expr httpsUsing = readExpr();
         return readRemoteImport(length, mode, hash, "https:/", httpsUsing);
       case Label.IMPORT_TYPE_LOCAL_ABSOLUTE:
-        return readLocalImport(length, mode, hash, "/");
-      case Label.IMPORT_TYPE_LOCAL_HERE:
-        return readLocalImport(length, mode, hash, "./");
+        return readLocalImport(length, mode, hash, Expr.ImportBase.ABSOLUTE);
+      case Label.IMPORT_TYPE_LOCAL_RELATIVE:
+        return readLocalImport(length, mode, hash, Expr.ImportBase.RELATIVE);
       case Label.IMPORT_TYPE_LOCAL_PARENT:
-        return readLocalImport(length, mode, hash, "../");
+        return readLocalImport(length, mode, hash, Expr.ImportBase.PARENT);
       case Label.IMPORT_TYPE_LOCAL_HOME:
-        return readLocalImport(length, mode, hash, "~");
+        return readLocalImport(length, mode, hash, Expr.ImportBase.HOME);
       case Label.IMPORT_TYPE_ENV:
         return readEnvImport(length, mode, hash);
       case Label.IMPORT_TYPE_MISSING:
         return Expr.makeMissingImport(mode, hash);
       case Label.IMPORT_TYPE_CLASSPATH:
-        return readClasspathImport(length, mode, hash, "/");
+        return readClasspathImport(length, mode, hash, Expr.ImportBase.ABSOLUTE);
       default:
         throw new DecodingException("Import type " + Integer.toString(tag) + " is undefined");
     }
@@ -477,23 +477,23 @@ final class CborDecodingVisitor implements Visitor<Expr> {
   }
 
   private Expr readLocalImport(
-      BigInteger length, Expr.ImportMode mode, byte[] hash, String prefix) {
-    Path path = Paths.get(prefix);
+      BigInteger length, Expr.ImportMode mode, byte[] hash, Expr.ImportBase base) {
     int len = length.intValue();
-    for (int i = 4; i < len; i++) {
-      path = path.resolve(this.reader.readNullableTextString());
+    String[] components = new String[len - 4];
+    for (int i = 0; i < len - 4; i += 1) {
+      components[i] = this.reader.readNullableTextString();
     }
-    return Expr.makeLocalImport(path, mode, hash);
+    return Expr.makeLocalImport(base, components, mode, hash);
   }
 
   private Expr readClasspathImport(
-      BigInteger length, Expr.ImportMode mode, byte[] hash, String prefix) {
-    Path path = Paths.get(prefix);
+      BigInteger length, Expr.ImportMode mode, byte[] hash, Expr.ImportBase base) {
     int len = length.intValue();
-    for (int i = 4; i < len; i++) {
-      path = path.resolve(this.reader.readNullableTextString());
+    String[] components = new String[len - 4];
+    for (int i = 0; i < len - 4; i += 1) {
+      components[i] = this.reader.readNullableTextString();
     }
-    return Expr.makeClasspathImport(path, mode, hash);
+    return Expr.makeClasspathImport(base, components, mode, hash);
   }
 
   private Expr readRemoteImport(

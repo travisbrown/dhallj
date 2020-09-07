@@ -2,7 +2,6 @@ package org.dhallj.core.binary;
 
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -452,24 +451,26 @@ public final class Encode implements Visitor<Void> {
     return null;
   }
 
-  private static final int pathLabel(Path path) {
-    if (path.isAbsolute()) {
-      return Label.IMPORT_TYPE_LOCAL_ABSOLUTE;
-    } else {
-      String first = path.iterator().next().toString();
-      if (first.equals(".")) {
-        return Label.IMPORT_TYPE_LOCAL_HERE;
-      } else if (first.equals("..")) {
+  private static final int baseLabel(Expr.ImportBase base) {
+    switch (base) {
+      case ABSOLUTE:
+        return Label.IMPORT_TYPE_LOCAL_ABSOLUTE;
+      case RELATIVE:
+        return Label.IMPORT_TYPE_LOCAL_RELATIVE;
+      case PARENT:
         return Label.IMPORT_TYPE_LOCAL_PARENT;
-      } else if (first.equals("~")) {
+      case HOME:
         return Label.IMPORT_TYPE_LOCAL_HOME;
-      }
     }
     return -1;
   }
 
-  public Void onLocalImport(final Path path, final Expr.ImportMode mode, final byte[] hash) {
-    int size = 4 + path.getNameCount() - (path.isAbsolute() ? 0 : 1);
+  public Void onLocalImport(
+      final Expr.ImportBase base,
+      final String[] components,
+      final Expr.ImportMode mode,
+      final byte[] hash) {
+    int size = 4 + components.length;
     this.writer.writeArrayStart(size);
     this.writer.writeLong(Label.IMPORT);
     if (hash == null) {
@@ -478,21 +479,18 @@ public final class Encode implements Visitor<Void> {
       this.writer.writeByteString(multihash(hash));
     }
     this.writer.writeLong(modeLabel(mode));
-    this.writer.writeLong(pathLabel(path));
+    this.writer.writeLong(baseLabel(base));
 
-    Iterator<Path> parts = path.iterator();
-    if (!path.isAbsolute()) {
-      parts.next();
-    }
-    while (parts.hasNext()) {
-      this.writer.writeString(parts.next().toString());
+    for (String component : components) {
+      this.writer.writeString(component);
     }
     return null;
   }
 
   @Override
-  public Void onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
-    int size = 4 + path.getNameCount();
+  public Void onClasspathImport(
+      final Expr.ImportBase base, final String[] components, Expr.ImportMode mode, byte[] hash) {
+    int size = 4 + components.length;
     this.writer.writeArrayStart(size);
     this.writer.writeLong(Label.IMPORT);
     if (hash == null) {
@@ -503,9 +501,8 @@ public final class Encode implements Visitor<Void> {
     this.writer.writeLong(modeLabel(mode));
     this.writer.writeLong(Label.IMPORT_TYPE_CLASSPATH);
 
-    Iterator<Path> parts = path.iterator();
-    while (parts.hasNext()) {
-      this.writer.writeString(parts.next().toString());
+    for (String component : components) {
+      this.writer.writeString(component);
     }
     return null;
   }

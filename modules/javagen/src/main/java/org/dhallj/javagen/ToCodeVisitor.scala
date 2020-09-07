@@ -2,7 +2,6 @@ package org.dhallj.javagen
 
 import java.math.BigInteger
 import java.net.URI
-import java.nio.file.Path
 import java.util.{List => JList}
 import java.util.Map.Entry
 import org.dhallj.core.Expr
@@ -160,7 +159,12 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
   def onWith(base: Code, path: Array[String], value: Code): Code = unsupported
   def onMissingImport(mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
   def onEnvImport(value: String, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
-  def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
-  def onClasspathImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
+  def onLocalImport(base: Expr.ImportBase, components: Array[String], mode: Expr.ImportMode, hash: Array[Byte]): Code =
+    unsupported
+  def onClasspathImport(base: Expr.ImportBase,
+                        components: Array[String],
+                        mode: Expr.ImportMode,
+                        hash: Array[Byte]
+  ): Code = unsupported
   def onRemoteImport(url: URI, `using`: Code, mode: Expr.ImportMode, hash: Array[Byte]): Code = unsupported
 }

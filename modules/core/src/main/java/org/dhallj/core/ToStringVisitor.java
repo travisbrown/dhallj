@@ -3,7 +3,6 @@ package org.dhallj.core;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -422,8 +421,14 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
     return new ToStringState(builder.toString(), ToStringState.BASE);
   }
 
-  public ToStringState onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
-    StringBuilder builder = new StringBuilder(path.toString());
+  public ToStringState onLocalImport(
+      Expr.ImportBase base, final String[] components, Expr.ImportMode mode, byte[] hash) {
+    StringBuilder builder = new StringBuilder(base.toString());
+
+    for (String component : components) {
+      builder.append("/");
+      builder.append(component);
+    }
 
     if (hash != null) {
       builder.append(" ");
@@ -439,10 +444,14 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
   }
 
   @Override
-  public ToStringState onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
+  public ToStringState onClasspathImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
     StringBuilder builder = new StringBuilder("classpath:");
+    builder.append(base.toString());
 
-    builder.append(path.toString());
+    for (String component : components) {
+      builder.append(component);
+    }
 
     if (hash != null) {
       builder.append(" ");

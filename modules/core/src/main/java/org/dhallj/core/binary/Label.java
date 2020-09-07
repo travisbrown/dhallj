@@ -28,7 +28,7 @@ final class Label {
   public static final int IMPORT_TYPE_REMOTE_HTTP = 0;
   public static final int IMPORT_TYPE_REMOTE_HTTPS = 1;
   public static final int IMPORT_TYPE_LOCAL_ABSOLUTE = 2;
-  public static final int IMPORT_TYPE_LOCAL_HERE = 3;
+  public static final int IMPORT_TYPE_LOCAL_RELATIVE = 3;
   public static final int IMPORT_TYPE_LOCAL_PARENT = 4;
   public static final int IMPORT_TYPE_LOCAL_HOME = 5;
   public static final int IMPORT_TYPE_ENV = 6;

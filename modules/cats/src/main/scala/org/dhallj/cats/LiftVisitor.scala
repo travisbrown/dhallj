@@ -3,7 +3,6 @@ package org.dhallj.cats
 import cats.Applicative
 import java.math.BigInteger
 import java.net.URI
-import java.nio.file.Path
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.ArrayList
 import java.util.{List => JList, Map => JMap}
@@ -97,11 +96,19 @@ class LiftVisitor[F[_] <: AnyRef](
   def onEnvImport(name: String, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     F.pure(Expr.makeEnvImport(name, mode, hash))
 
-  def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    F.pure(Expr.makeLocalImport(path, mode, hash))
+  def onLocalImport(base: Expr.ImportBase,
+                    components: Array[String],
+                    mode: Expr.ImportMode,
+                    hash: Array[Byte]
+  ): F[Expr] =
+    F.pure(Expr.makeLocalImport(base, components, mode, hash))
 
-  def onClasspathImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
-    F.pure(Expr.makeClasspathImport(path, mode, hash))
+  def onClasspathImport(base: Expr.ImportBase,
+                        components: Array[String],
+                        mode: Expr.ImportMode,
+                        hash: Array[Byte]
+  ): F[Expr] =
+    F.pure(Expr.makeClasspathImport(base, components, mode, hash))
 
   def onRemoteImport(url: URI, headers: F[Expr], mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] =
     if (headers.eq(null)) {

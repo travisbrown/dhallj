@@ -321,20 +321,26 @@ object EnvImport extends Constructor[(String, Expr.ImportMode, Option[String])] 
     }
 }
 
-object LocalImport extends Constructor[(Path, Expr.ImportMode, Option[String])] {
+object LocalImport extends Constructor[(Expr.ImportBase, Vector[String], Expr.ImportMode, Option[String])] {
 
   /**
    * Note that this constructor does not verify that the input is a hex-encoded SHA-256 hash.
    */
-  def apply(path: Path, mode: Expr.ImportMode, hash: String): Expr =
-    Expr.makeLocalImport(path, mode, Expr.Util.decodeHashBytes(hash))
-  def apply(path: Path, mode: Expr.ImportMode): Expr = Expr.makeLocalImport(path, mode, null)
-  def apply(path: Path): Expr = Expr.makeLocalImport(path, Expr.ImportMode.CODE, null)
+  def apply(base: Expr.ImportBase, components: Vector[String], mode: Expr.ImportMode, hash: String): Expr =
+    Expr.makeLocalImport(base, components.toArray, mode, Expr.Util.decodeHashBytes(hash))
+  def apply(base: Expr.ImportBase, components: Vector[String], mode: Expr.ImportMode): Expr =
+    Expr.makeLocalImport(base, components.toArray, mode, null)
+  def apply(base: Expr.ImportBase, components: Vector[String]): Expr =
+    Expr.makeLocalImport(base, components.toArray, Expr.ImportMode.CODE, null)
 
   protected[this] val extractor: ExternalVisitor[Option[Result]] =
     new OptionVisitor[Result] {
-      override def onLocalImport(path: Path, mode: Expr.ImportMode, hash: Array[Byte]): Option[Result] =
-        Some((path, mode, Option(hash).map(Expr.Util.encodeHashBytes)))
+      override def onLocalImport(base: Expr.ImportBase,
+                                 components: Array[String],
+                                 mode: Expr.ImportMode,
+                                 hash: Array[Byte]
+      ): Option[Result] =
+        Some((base, components.toVector, mode, Option(hash).map(Expr.Util.encodeHashBytes)))
     }
 }
 

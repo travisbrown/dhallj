@@ -2,7 +2,6 @@ package org.dhallj.core.normalization;
 
 import java.math.BigInteger;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
@@ -153,13 +152,15 @@ public final class BetaNormalize extends Visitor.NoPrepareEvents<Expr> {
     return Expr.makeEnvImport(value, mode, hash);
   }
 
-  public Expr onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
-    return Expr.makeLocalImport(path, mode, hash);
+  public Expr onLocalImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
+    return Expr.makeLocalImport(base, components, mode, hash);
   }
 
   @Override
-  public Expr onClasspathImport(Path path, Expr.ImportMode mode, byte[] hash) {
-    return Expr.makeClasspathImport(path, mode, hash);
+  public Expr onClasspathImport(
+      Expr.ImportBase base, String[] components, Expr.ImportMode mode, byte[] hash) {
+    return Expr.makeClasspathImport(base, components, mode, hash);
   }
 
   public Expr onRemoteImport(URI url, Expr using, Expr.ImportMode mode, byte[] hash) {
