@@ -468,7 +468,11 @@ public interface Visitor<A> {
    */
   public class Property extends Constant<Boolean> {
     public Property() {
-      super(true);
+      this(true);
+    }
+
+    public Property(boolean value) {
+      super(value);
     }
 
     public Boolean onLambda(String name, Boolean type, Boolean result) {

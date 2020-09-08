@@ -131,6 +131,11 @@ public abstract class Expr {
     return this.accept(ImportCanonicalize.instance);
   }
 
+  /** Check whether this expression contains no local file or environmental variable imports. */
+  public final boolean isReferentiallyTransparent() {
+    return this.accept(IsReferentiallyTransparent.instance);
+  }
+
   /**
    * Check whether this expression has the same structure as another.
    *
