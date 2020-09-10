@@ -36,9 +36,8 @@ object Converter {
     }
     def onString(value: String): Expr = Expr.makeTextLiteral(value)
     def onObject(value: JsonObject): Expr = Expr.makeRecordLiteral(
-      value.toMap.map {
-        case (k, v) =>
-          new SimpleImmutableEntry(k, v.foldWith(this)): Entry[String, Expr]
+      value.toMap.map { case (k, v) =>
+        new SimpleImmutableEntry(k, v.foldWith(this)): Entry[String, Expr]
       }.toArray
     )
     def onArray(value: Vector[Json]): Expr =

@@ -37,15 +37,13 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
   def onIdentifier(self: Expr, name: String, index: Long): Code = Code(s"""Expr.makeIdentifier("$name", $index)""")
 
   def onLambda(name: String, tpe: Code, result: Code): Code =
-    result.merge(tpe) {
-      case (resultContent, tpeContent) =>
-        s"""Expr.makeLambda("$name", $tpeContent, $resultContent)"""
+    result.merge(tpe) { case (resultContent, tpeContent) =>
+      s"""Expr.makeLambda("$name", $tpeContent, $resultContent)"""
     }
 
   def onPi(name: String, tpe: Code, result: Code): Code =
-    result.merge(tpe) {
-      case (resultContent, tpeContent) =>
-        s"""Expr.makePi("$name", $tpeContent, $resultContent)"""
+    result.merge(tpe) { case (resultContent, tpeContent) =>
+      s"""Expr.makePi("$name", $tpeContent, $resultContent)"""
     }
 
   def onLet(bindings: JList[Expr.LetBinding[Code]], body: Code): Code = unsupported
@@ -80,9 +78,8 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
     } else {
       Code.mergeAll(fields.asScala.toVector)(entry => Option(entry.getValue)) { pairs =>
         val entries = pairs
-          .map {
-            case (entry, id) =>
-              s"""new SimpleImmutableEntry<String, Expr>("${entry.getKey}", $id)"""
+          .map { case (entry, id) =>
+            s"""new SimpleImmutableEntry<String, Expr>("${entry.getKey}", $id)"""
           }
           .mkString(", ")
 
@@ -104,15 +101,13 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
   }
 
   def onProjectionByType(base: Code, tpe: Code): Code =
-    base.merge(tpe) {
-      case (baseContent, tpeContent) =>
-        s"""Expr.makeProjectionByType($baseContent, $tpeContent)"""
+    base.merge(tpe) { case (baseContent, tpeContent) =>
+      s"""Expr.makeProjectionByType($baseContent, $tpeContent)"""
     }
 
   def onApplication(base: Code, args: JList[Code]): Code =
-    Code.mergeAll(base +: args.asScala.toVector) {
-      case head +: tail =>
-        s"Expr.makeApplication($head, new Expr[] {${tail.mkString(", ")}})"
+    Code.mergeAll(base +: args.asScala.toVector) { case head +: tail =>
+      s"Expr.makeApplication($head, new Expr[] {${tail.mkString(", ")}})"
     }
 
   def onOperatorApplication(operator: Operator, lhs: Code, rhs: Code): Code = {
@@ -133,26 +128,23 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
       case Operator.COMPLETE      => "Operator.COMPLETE"
     }
 
-    lhs.merge(rhs) {
-      case (lhsContent, rhsContent) =>
-        s"Expr.makeOperatorApplication($operatorCode, $lhsContent, $rhsContent)"
+    lhs.merge(rhs) { case (lhsContent, rhsContent) =>
+      s"Expr.makeOperatorApplication($operatorCode, $lhsContent, $rhsContent)"
     }
   }
 
   def onIf(predicate: Code, thenValue: Code, elseValue: Code): Code = {
     if (elseValue == null) throw new RuntimeException(predicate.toString());
-    predicate.merge(thenValue, elseValue) {
-      case (predicateContent, thenValueContent, elseValueContent) =>
-        s"""Expr.makeIf($predicateContent, $thenValueContent, $elseValueContent)"""
+    predicate.merge(thenValue, elseValue) { case (predicateContent, thenValueContent, elseValueContent) =>
+      s"""Expr.makeIf($predicateContent, $thenValueContent, $elseValueContent)"""
     }
   }
 
   def onAnnotated(base: Code, tpe: Code): Code = unsupported
   def onAssert(base: Code): Code = unsupported
   def onMerge(handlers: Code, union: Code, tpe: Code): Code =
-    handlers.merge(union, tpe) {
-      case (handlersContent, unionContent, tpeContent) =>
-        s"""Expr.makeMerge($handlersContent, $unionContent, $tpeContent)"""
+    handlers.merge(union, tpe) { case (handlersContent, unionContent, tpeContent) =>
+      s"""Expr.makeMerge($handlersContent, $unionContent, $tpeContent)"""
 
     }
 

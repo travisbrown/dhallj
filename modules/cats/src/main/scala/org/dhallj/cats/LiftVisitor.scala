@@ -116,10 +116,9 @@ class LiftVisitor[F[_] <: AnyRef](
 
     while (i < values.size) {
       val index = i
-      result = F.map2(result, values.get(index)) {
-        case (acc, next) =>
-          acc(index) = next
-          acc
+      result = F.map2(result, values.get(index)) { case (acc, next) =>
+        acc(index) = next
+        acc
       }
       i += 1
     }
@@ -146,10 +145,9 @@ class LiftVisitor[F[_] <: AnyRef](
           acc
         }
       } else {
-        result = F.map2(result, value) {
-          case (acc, nextValue) =>
-            acc(index) = new SimpleImmutableEntry(fieldName, nextValue)
-            acc
+        result = F.map2(result, value) { case (acc, nextValue) =>
+          acc(index) = new SimpleImmutableEntry(fieldName, nextValue)
+          acc
         }
       }
 
@@ -171,16 +169,14 @@ class LiftVisitor[F[_] <: AnyRef](
       val binding = bindings.get(index)
 
       if (binding.hasType) {
-        result = F.map3(result, binding.getType, binding.getValue) {
-          case (acc, nextType, nextValue) =>
-            acc.add(new Expr.LetBinding(binding.getName, nextType, nextValue))
-            acc
+        result = F.map3(result, binding.getType, binding.getValue) { case (acc, nextType, nextValue) =>
+          acc.add(new Expr.LetBinding(binding.getName, nextType, nextValue))
+          acc
         }
       } else {
-        result = F.map2(result, binding.getValue) {
-          case (acc, nextValue) =>
-            acc.add(new Expr.LetBinding(binding.getName, null, nextValue))
-            acc
+        result = F.map2(result, binding.getValue) { case (acc, nextValue) =>
+          acc.add(new Expr.LetBinding(binding.getName, null, nextValue))
+          acc
         }
       }
 

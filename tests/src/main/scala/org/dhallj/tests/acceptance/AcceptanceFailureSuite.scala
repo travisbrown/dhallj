@@ -9,14 +9,13 @@ abstract class AcceptanceFailureSuite[A, E <: Throwable: ClassTag] extends Accep
   def loadInput(input: Array[Byte]): A
 
   testInputs
-    .map {
-      case (name, path) => (name, readBytes(path))
+    .map { case (name, path) =>
+      (name, readBytes(path))
     }
-    .foreach {
-      case (name, input) =>
-        test(name) {
-          intercept[E](loadInput(input))
-        }
+    .foreach { case (name, input) =>
+      test(name) {
+        intercept[E](loadInput(input))
+      }
     }
 }
 

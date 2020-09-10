@@ -34,11 +34,10 @@ trait AcceptanceSuite extends FunSuite {
     if (this.recurse) Files.walk(basePath) else Files.list(basePath)
   ).iterator.asScala
     .map(path => (basePath.relativize(path).toString, path))
-    .flatMap {
-      case (name, path) =>
-        if (isInputFileName(name)) {
-          Some((makeName(name), path))
-        } else None
+    .flatMap { case (name, path) =>
+      if (isInputFileName(name)) {
+        Some((makeName(name), path))
+      } else None
     }
     .toList
     .sortBy(_._2)

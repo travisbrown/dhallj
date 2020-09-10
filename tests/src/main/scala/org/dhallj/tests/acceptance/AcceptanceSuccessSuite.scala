@@ -24,16 +24,14 @@ trait SuccessSuite[A, B] extends AcceptanceSuite {
   def loadExpected(input: Array[Byte]): B
   def compare(result: B, expected: B): Boolean
 
-  def testPairs: List[(String, Path, (String, B))] = testInputs.map {
-    case (name, path) =>
-      (name, path, (readString(path), loadExpected(readBytes(makeExpectedPath(path)))))
+  def testPairs: List[(String, Path, (String, B))] = testInputs.map { case (name, path) =>
+    (name, path, (readString(path), loadExpected(readBytes(makeExpectedPath(path)))))
   }
 
-  testPairs.foreach {
-    case (name, path, (input, expected)) =>
-      test(name) {
-        assert(compare(clue(transform(parseInput(path.toString, clue(input)))), clue(expected)))
-      }
+  testPairs.foreach { case (name, path, (input, expected)) =>
+    test(name) {
+      assert(compare(clue(transform(parseInput(path.toString, clue(input)))), clue(expected)))
+    }
   }
 }
 
