@@ -15,8 +15,8 @@ class PreludeSuite extends FunSuite() {
     case "README.md"     => Nil
     case "package.dhall" => List("Prelude/package.dhall")
     case other =>
-      Source.fromResource(s"Prelude/$other").getLines.toList.sorted.map {
-        case file => s"Prelude/$other/$file"
+      Source.fromResource(s"Prelude/$other").getLines.toList.sorted.map { case file =>
+        s"Prelude/$other/$file"
       }
   }
 

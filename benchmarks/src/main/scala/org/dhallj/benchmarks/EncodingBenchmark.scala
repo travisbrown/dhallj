@@ -17,8 +17,8 @@ import org.dhallj.prelude.Prelude
 @OutputTimeUnit(TimeUnit.SECONDS)
 class EncodingBenchmark {
   val prelude: Expr = Prelude.instance
-  val deep: Expr = (0 to 100000).foldLeft(Expr.makeDoubleLiteral(0)) {
-    case (acc, i) => Expr.makeRecordLiteral(s"a$i", acc)
+  val deep: Expr = (0 to 100000).foldLeft(Expr.makeDoubleLiteral(0)) { case (acc, i) =>
+    Expr.makeRecordLiteral(s"a$i", acc)
   }
 
   @Benchmark

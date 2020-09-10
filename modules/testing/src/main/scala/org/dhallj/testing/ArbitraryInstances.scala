@@ -58,12 +58,11 @@ trait ArbitraryInstances {
     case RecordType(fields) =>
       Some(
         fields
-          .foldLeft(Gen.const(Map.empty[String, Expr])) {
-            case (acc, (name, tpe)) =>
-              genForType(tpe) match {
-                case Some(genFieldType) => acc.flatMap(m => genFieldType.map(m.updated(name, _)))
-                case None               => acc
-              }
+          .foldLeft(Gen.const(Map.empty[String, Expr])) { case (acc, (name, tpe)) =>
+            genForType(tpe) match {
+              case Some(genFieldType) => acc.flatMap(m => genFieldType.map(m.updated(name, _)))
+              case None               => acc
+            }
           }
           .map(RecordLiteral(_))
       )
@@ -159,8 +158,8 @@ trait ArbitraryInstances {
     case RecordType(fields)    => safeFieldsShrink.shrink(fields).map(RecordType(_))
     case UnionType(fields)     => safeOptionFieldsShrink.shrink(fields).map(UnionType(_))
     case TextLiteral(first, rest) =>
-      Shrink.shrink(first).zip(Shrink.shrink(rest)).map {
-        case (shrunkFirst, shrunkRest) => TextLiteral(shrunkFirst, shrunkRest)
+      Shrink.shrink(first).zip(Shrink.shrink(rest)).map { case (shrunkFirst, shrunkRest) =>
+        TextLiteral(shrunkFirst, shrunkRest)
       }
     case Application(Expr.Constants.SOME, arg) => Shrink.shrink(arg).map(Application(Expr.Constants.SOME, _))
     case NonEmptyListLiteral(values) =>

@@ -58,9 +58,8 @@ case class Code(content: String, defs: Vector[Code] = Vector.empty) {
 
     val fieldDefs = fields.values.toList
       .sortBy(_._1)
-      .map {
-        case (name, impl) =>
-          s"  private static final Expr $name = $impl;"
+      .map { case (name, impl) =>
+        s"  private static final Expr $name = $impl;"
       }
       .mkString("\n")
 

@@ -123,8 +123,8 @@ object Encoder {
         case None           => Encoder[A].dhallType(None, targetElementType)
         case Some(Vector()) => Encoder[A].dhallType(None, targetElementType)
         case Some(h +: t) =>
-          t.foldLeft(Encoder[A].dhallType(Some(h), targetElementType)) {
-            case (acc, a) => Encoder[A].dhallType(Some(a), Some(acc))
+          t.foldLeft(Encoder[A].dhallType(Some(h), targetElementType)) { case (acc, a) =>
+            Encoder[A].dhallType(Some(a), Some(acc))
           }
       }
     }
