@@ -20,6 +20,12 @@ class MiscSuite extends ScalaCheckSuite {
 
   def parsesTo(input: String, expected: Expr): Boolean = DhallParser.parse(input).equivalent(expected)
 
+  test("getFirstDiff should work for classpath imports") {
+    assert(
+      Option(Expr.Util.getFirstDiff(DhallParser.parse("classpath:/foo"), DhallParser.parse("classpath:/bar"))).nonEmpty
+    )
+  }
+
   property("doubles")(Prop.forAll((value: Double) => parsesTo(value.toString, DoubleLiteral(value))))
   property("naturals")(Prop.forAll((value: BigInt) => parsesTo(value.abs.toString, NaturalLiteral(value.abs).get)))
   property("strings")(
