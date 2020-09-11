@@ -1962,6 +1962,16 @@ public abstract class Expr {
         } else {
           break;
         }
+      } else if (currentA.tag == Tags.CLASSPATH_IMPORT) {
+        Constructors.ClasspathImport classpathImportA = (Constructors.ClasspathImport) currentA;
+        Constructors.ClasspathImport classpathImportB = (Constructors.ClasspathImport) currentB;
+        if (classpathImportA.path.equals(classpathImportB.path)
+            && classpathImportA.mode.equals(classpathImportB.mode)
+            && Arrays.equals(classpathImportA.hash, classpathImportB.hash)) {
+          continue;
+        } else {
+          break;
+        }
       } else if (currentA.tag == Tags.REMOTE_IMPORT) {
         Constructors.RemoteImport remoteImportA = (Constructors.RemoteImport) currentA;
         Constructors.RemoteImport remoteImportB = (Constructors.RemoteImport) currentB;
