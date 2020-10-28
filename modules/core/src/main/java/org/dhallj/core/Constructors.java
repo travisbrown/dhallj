@@ -3,6 +3,8 @@ package org.dhallj.core;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 
 /**
@@ -23,6 +25,10 @@ final class Constructors {
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onNatural(this.value);
     }
+
+    final <A> void VisitState<A> advance(VisitState<A> state) {
+      state.valueStack.push(state.visitor.onNatural(this, this.value));
+    }
   }
 
   static final class IntegerLiteral extends Expr {
@@ -36,6 +42,10 @@ final class Constructors {
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onInteger(this.value);
     }
+
+    final <A> void VisitState<A> advance(VisitState<A> state) {
+      state.valueStack.push(state.visitor.onInteger(this, this.value));
+    }
   }
 
   static final class DoubleLiteral extends Expr {
@@ -48,6 +58,10 @@ final class Constructors {
 
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onDouble(this.value);
+    }
+
+    final <A> void VisitState<A> advance(VisitState<A> state) {
+      state.valueStack.push(state.visitor.onDouble(this, this.value));
     }
   }
 
@@ -130,6 +144,27 @@ final class Constructors {
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onLambda(this.name, type, result);
     }
+
+    final <A> void VisitState<A> advance(VisitState<A> state) {
+      switch (state.current.state) {
+        case 0:
+          state.visitor.prepareLambda(this.name, this.type);
+          state.current.state = 1;
+          state.stack.push(state.current);
+          state.stack.push(new ExprState(this.type, 0));
+          break;
+        case 1:
+          state.visitor.bind(this.name, this.type);
+          state.current.state = 2;
+          state.stack.push(state.current);
+          state.stack.push(new ExprState(this.result, 0));
+          break;
+        case 2:
+          A v1 = state.valueStack.poll();
+          A v0 = state.valueStack.poll();
+          state.valueStack.push(state.visitor.onLambda(this.name, v0, v1));
+      }
+    }
   }
 
   static final class Pi extends Expr {
@@ -147,6 +182,27 @@ final class Constructors {
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onPi(this.name, type, result);
     }
+
+    final void advance(VisitState<A> state) {
+          switch (state.current.state) {
+            case 0:
+              state.visitor.preparePi(this.name, this.type);
+              state.current.state = 1;
+              state.stack.push(state.current);
+              state.stack.push(new ExprState(this.type, 0));
+              break;
+            case 1:
+              state.visitor.bind(this.name, this.type);
+              state.current.state = 2;
+              state.stack.push(state.current);
+              state.stack.push(new ExprState(this.result, 0));
+              break;
+            case 2:
+              A v1 = state.valueStack.poll();
+              A v0 = state.valueStack.poll();
+              state.valueStack.push(state.visitor.onPi(this.name, v0, v1));
+          }
+        }
   }
 
   static final class Assert extends Expr {
@@ -218,6 +274,10 @@ final class Constructors {
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onBuiltIn(this.name);
     }
+
+    final <A> void VisitState<A> advance(VisitState<A> state) {
+      state.valueStack.push(state.visitor.onBuiltIn(this, this.name));
+    }
   }
 
   static final class Identifier extends Expr {
@@ -232,6 +292,10 @@ final class Constructors {
 
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onIdentifier(this.name, this.index);
+    }
+
+    final <A> void VisitState<A> advance(VisitState<A> state) {
+      state.valueStack.push(state.visitor.onIdentifier(this, this.name, this.index));
     }
   }
 
@@ -316,6 +380,95 @@ final class Constructors {
 
     public final <A> A accept(ExternalVisitor<A> visitor) {
       return visitor.onLet(name, type, value, body);
+    }
+
+    final <A> void VisitState<A> advance(VisitState<A> state) {
+      List<LetBinding<Expr>> letBindings;
+
+      if (current.state == 0) {
+        letBindings = new ArrayList<LetBinding<Expr>>();
+        letBindings.add(new LetBinding(this.name, this.type, this.value));
+
+        Let.gatherLetBindings(this.body, letBindings);
+
+        state.current.state = 1;
+        state.current.size = letBindings.size();
+
+        List<String> letBindingNames = new ArrayList<>(state.current.size);
+
+        for (LetBinding<Expr> letBinding : letBindings) {
+          letBindingNames.add(letBinding.getName());
+        }
+
+        state.letBindingNamesStack.push(letBindingNames);
+
+        state.visitor.prepareLet(letBindings.size());
+      } else {
+        letBindings = state.letBindingsStack.poll();
+      }
+
+      if (letBindings.isEmpty()) {
+        if (state.current.state == 1) {
+          state.current.state = 3;
+          state.stack.push(state.current);
+          state.stack.push(new ExprState(Let.gatherLetBindings(this.body, null), 0));
+          state.letBindingsStack.push(letBindings);
+        } else {
+          List<String> letBindingNames = state.letBindingNamesStack.poll();
+          LinkedList<LetBinding<A>> valueBindings = new LinkedList<LetBinding<A>>();
+
+          A body = state.valueStack.poll();
+
+          for (int i = 0; i < state.current.size; i++) {
+            A v1 = state.valueStack.poll();
+            A v0 = state.valueStack.poll();
+
+            state.valueBindings.push(
+                new LetBinding(letBindingNames.get(state.current.size - 1 - i), v0, v1));
+          }
+
+          state.valueStack.push(state.visitor.onLet(valueBindings, body));
+        }
+      } else {
+        LetBinding<Expr> letBinding = letBindings.get(0);
+
+        switch (state.current.state) {
+          case 1:
+            state.current.state = 2;
+            state.visitor.prepareLetBinding(letBinding.getName(), letBinding.getType());
+            if (letBinding.hasType()) {
+              state.stack.push(state.current);
+              state.stack.push(new ExprState(letBinding.getType(), 0));
+              state.letBindingsStack.push(letBindings);
+              break;
+            } else {
+              state.valueStack.push(null);
+            }
+          case 2:
+            state.current.state = 1;
+            state.visitor.bind(letBinding.getName(), letBinding.getType());
+            state.stack.push(current);
+            state.stack.push(new ExprState(letBinding.getValue(), 0));
+            letBindings.remove(0);
+            state.letBindingsStack.push(letBindings);
+            break;
+        }
+      }
+    }
+
+    private static final Expr gatherLetBindings(Expr candidate, List<LetBinding<Expr>> args) {
+      Expr current = candidate.getNonNote();
+
+      while (current.tag == Tags.LET) {
+        Constructors.Let currentLet = (Constructors.Let) current;
+
+        if (args != null) {
+          args.add(new LetBinding(currentLet.name, currentLet.type, currentLet.value));
+        }
+        current = currentLet.body.getNonNote();
+      }
+
+      return current;
     }
   }
 

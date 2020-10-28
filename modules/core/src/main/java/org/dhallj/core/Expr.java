@@ -48,6 +48,8 @@ public abstract class Expr {
   /** Run the given external visitor on this expression. */
   public abstract <A> A accept(ExternalVisitor<A> visitor);
 
+  abstract void VisitState<A> advance(VisitState<A> state);
+
   /**
    * Beta-normalize this expression.
    *
