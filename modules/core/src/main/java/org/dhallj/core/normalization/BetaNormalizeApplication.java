@@ -44,14 +44,19 @@ final class BetaNormalizeApplication {
 
     if (builtIn != null) {
       if (builtIn.equals("Natural/fold") && args.size() >= 4) {
-        Expr result = naturalFold(base, args);
+        Expr result = naturalFold(args);
 
         if (result != null) {
           return result;
         }
-
       } else if (builtIn.equals("List/fold") && args.size() >= 5) {
-        Expr result = listFold(base, args);
+        Expr result = listFold(args);
+
+        if (result != null) {
+          return result;
+        }
+      } else if (builtIn.equals("Text/replace") && args.size() >= 3) {
+        Expr result = textReplace(args);
 
         if (result != null) {
           return result;
@@ -312,7 +317,7 @@ final class BetaNormalizeApplication {
     return result;
   }
 
-  private static final Expr naturalFold(Expr base, List<Expr> args) {
+  private static final Expr naturalFold(List<Expr> args) {
     BigInteger firstAsNaturalLiteral = Expr.Util.asNaturalLiteral(args.get(0));
 
     if (firstAsNaturalLiteral != null) {
@@ -349,7 +354,7 @@ final class BetaNormalizeApplication {
     return null;
   }
 
-  private static final Expr listFold(Expr base, List<Expr> args) {
+  private static final Expr listFold(List<Expr> args) {
     List<Expr> listArg = Expr.Util.asListLiteral(args.get(1));
 
     if (listArg != null) {
@@ -387,6 +392,33 @@ final class BetaNormalizeApplication {
         return applied;
       } else {
         return Expr.makeApplication(applied, drop(args, 5)).accept(BetaNormalize.instance);
+      }
+    }
+    return null;
+  }
+
+  private static final Expr textReplace(List<Expr> args) {
+    String needle = Expr.Util.asSimpleTextLiteral(args.get(0));
+
+    if (needle != null) {
+      if (needle.length() == 0) {
+        return args.get(2);
+      } else {
+        String haystack = Expr.Util.asSimpleTextLiteral(args.get(2));
+
+        if (haystack != null) {
+          String pattern = java.util.regex.Pattern.quote(needle);
+          String[] parts = haystack.split(pattern, -1);
+
+          Expr[] interpolated = new Expr[parts.length - 1];
+          Expr replacement = args.get(1);
+
+          for (int i = 0; i < parts.length - 1; i += 1) {
+            interpolated[i] = replacement;
+          }
+
+          return Expr.makeTextLiteral(parts, interpolated).accept(BetaNormalize.instance);
+        }
       }
     }
     return null;
