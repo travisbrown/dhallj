@@ -631,6 +631,7 @@ public abstract class Expr {
       builtIns.put("Some", SOME);
       builtIns.put("Sort", SORT);
       builtIns.put("Text", TEXT);
+      builtIns.put("Text/replace", new Constructors.BuiltIn("Text/replace"));
       builtIns.put("Text/show", new Constructors.BuiltIn("Text/show"));
       builtIns.put("True", TRUE);
       builtIns.put("Type", TYPE);
