@@ -82,6 +82,7 @@ TOKEN: {
     | "List/last"
     | "List/indexed"
     | "List/reverse"
+    | "Text/replace"
     | "Text/show"
     | "Bool"
     | "True"

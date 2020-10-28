@@ -41,6 +41,8 @@ final class BuiltInTypes {
                 Expr.makePi(_a, Expr.makePi(_list, _list)),
                 Expr.makePi("nil", _list, _list)));
 
+    Expr textToText = Expr.makePi(Constants.TEXT, Constants.TEXT);
+
     mappings.put("Kind", Constants.SORT);
     mappings.put("Type", Constants.KIND);
     mappings.put("Bool", Constants.TYPE);
@@ -58,7 +60,10 @@ final class BuiltInTypes {
             "A",
             Constants.TYPE,
             Expr.makeApplication(Constants.OPTIONAL, Expr.makeIdentifier("A"))));
-    mappings.put("Text/show", Expr.makePi(Constants.TEXT, Constants.TEXT));
+
+    mappings.put(
+        "Text/replace", Expr.makePi(Constants.TEXT, Expr.makePi(Constants.TEXT, textToText)));
+    mappings.put("Text/show", textToText);
 
     mappings.put("Natural/build", Expr.makePi(naturalType, Constants.NATURAL));
     mappings.put("Natural/fold", Expr.makePi(Constants.NATURAL, naturalType));
