@@ -467,35 +467,6 @@ public abstract class Expr {
           Expr.makeFieldAccess(lhs, "Type"));
     }
 
-    /** Desugar {@code with}. */
-    public static final Expr desugarWith(Expr base, String[] path, Expr value) {
-      if (path.length == 1) {
-        return Expr.makeOperatorApplication(
-            Operator.PREFER, base, Expr.makeRecordLiteral(path[0], value));
-      } else {
-        Expr[] accessors = new Expr[path.length - 1];
-        accessors[0] = Expr.makeFieldAccess(Constants.UNDERSCORE, path[0]);
-
-        for (int i = 1; i < path.length - 1; i += 1) {
-          accessors[i] = Expr.makeFieldAccess(accessors[i - 1], path[i]);
-        }
-
-        Expr incremented = value.increment("_");
-        Expr current = Expr.makeRecordLiteral(path[path.length - 1], incremented);
-
-        for (int i = path.length - 2; i >= 0; i -= 1) {
-          current =
-              Expr.makeRecordLiteral(
-                  path[i], Expr.makeOperatorApplication(Operator.PREFER, accessors[i], current));
-        }
-
-        return Expr.makeLet(
-            "_",
-            base,
-            Expr.makeOperatorApplication(Operator.PREFER, Constants.UNDERSCORE, current));
-      }
-    }
-
     /**
      * If the expression is a lambda, apply it to the given argument.
      *
