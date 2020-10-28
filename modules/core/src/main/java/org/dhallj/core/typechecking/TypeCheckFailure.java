@@ -207,4 +207,8 @@ public final class TypeCheckFailure extends DhallException {
   static final TypeCheckFailure makeToMapInvalidAnnotationError(Expr type) {
     return new TypeCheckFailure("An empty toMap was annotated with an invalid type");
   }
+
+  static final TypeCheckFailure makeWithTypeError(Expr type) {
+    return new TypeCheckFailure("with only works on records");
+  }
 }
