@@ -12,10 +12,6 @@ githubWorkflowJobSetup in ThisBuild := {
   }
 }
 githubWorkflowBuild in ThisBuild := Seq(
-  WorkflowStep.Run(
-    List("pip install --user codecov"),
-    name = Some("Install codecov")
-  ),
   WorkflowStep.Sbt(
     List(
       "clean",
@@ -31,9 +27,10 @@ githubWorkflowBuild in ThisBuild := Seq(
     id = None,
     name = Some("Test")
   ),
-  WorkflowStep.Run(
-    List("codecov"),
-    name = Some("Upload codecov")
+  WorkflowStep.Use(
+    "codecov",
+    "codecov-action",
+    "v1"
   )
 )
 

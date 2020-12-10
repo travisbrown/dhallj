@@ -52,11 +52,7 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt ++${{ matrix.scala }} githubWorkflowCheck
 
-      - name: Install codecov
-        run: pip install --user codecov
-
       - name: Test
         run: 'sbt ++${{ matrix.scala }} clean javacc coverage scalastyle scalafmtCheckAll scalafmtSbtCheck test slow:test coverageReport'
 
-      - name: Upload codecov
-        run: codecov
+      - uses: codecov/codecov-action@v1
