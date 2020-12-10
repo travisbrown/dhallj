@@ -177,7 +177,7 @@ class ImportResolutionSuite extends FunSuite {
         "let x = classpath:/does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x"
       )
 
-    assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
+    assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync() == expected)
   }
 
   test("Read from cache, incorrect hash".fail) {
@@ -196,7 +196,7 @@ class ImportResolutionSuite extends FunSuite {
         "let x = classpath:/does-not-exist sha256:4caf97e8c445d4d4b5c5b992973e098ed4ae88a355915f5a59db640a589bc9cb in x"
       )
 
-    assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync == expected)
+    assert((cache.put(hash, encoded) >> resolveWithCustomCache(cache, expr)).unsafeRunSync() == expected)
   }
 
   test("Write to cache") {
@@ -212,18 +212,20 @@ class ImportResolutionSuite extends FunSuite {
 
     val prog = resolveWithCustomCache(cache, expr) >> cache.get(hash)
 
-    assert(prog.unsafeRunSync match {
+    assert(prog.unsafeRunSync() match {
       case None     => false
       case Some(bs) => Decode.decode(bs) == expected
     })
   }
 
   private def resolve(e: Expr): Expr =
-    client.use { c =>
-      implicit val http: Client[IO] = c
+    client
+      .use { c =>
+        implicit val http: Client[IO] = c
 
-      e.resolveImports[IO].map(_.normalize)
-    }.unsafeRunSync
+        e.resolveImports[IO].map(_.normalize)
+      }
+      .unsafeRunSync()
 
   private def resolveWithCustomCache(cache: ImportCache[IO], e: Expr): IO[Expr] =
     client.use { c =>

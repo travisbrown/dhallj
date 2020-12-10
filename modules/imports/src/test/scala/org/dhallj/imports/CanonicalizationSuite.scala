@@ -18,149 +18,148 @@ class CanonicalizationSuite extends FunSuite {
   val headers2 = parse("/headers2.dhall")
 
   test("Imports - Local, empty path") {
-    assertEquals(canonicalize[IO](Local(Paths.get("/foo.dhall"))).unsafeRunSync, Local(Paths.get("/foo.dhall")))
+    assertEquals(canonicalize[IO](Local(Paths.get("/foo.dhall"))).unsafeRunSync(), Local(Paths.get("/foo.dhall")))
   }
 
   test("Imports - quoted") {
-    assertEquals(canonicalize[IO](Local(Paths.get("/\"foo\"/\"bar.dhall\""))).unsafeRunSync,
+    assertEquals(canonicalize[IO](Local(Paths.get("/\"foo\"/\"bar.dhall\""))).unsafeRunSync(),
                  Local(Paths.get("/foo/bar.dhall"))
     )
   }
 
   test("Paths - Trailing .") {
-    assertEquals(canonicalize[IO](Local(Paths.get("/foo/./bar.dhall"))).unsafeRunSync,
+    assertEquals(canonicalize[IO](Local(Paths.get("/foo/./bar.dhall"))).unsafeRunSync(),
                  Local(Paths.get("/foo/bar.dhall"))
     )
   }
 
   test("Paths - Trailing ..") {
-    assertEquals(canonicalize[IO](Local(Paths.get("/foo/bar/../baz.dhall"))).unsafeRunSync,
+    assertEquals(canonicalize[IO](Local(Paths.get("/foo/bar/../baz.dhall"))).unsafeRunSync(),
                  Local(Paths.get("/foo/baz.dhall"))
     )
   }
 
   //TODO determine whether spec is correct on this
   test("Paths - Root ..") {
-    assertEquals(canonicalize[IO](Local(Paths.get("/.."))).unsafeRunSync, Local(Paths.get("/..")))
+    assertEquals(canonicalize[IO](Local(Paths.get("/.."))).unsafeRunSync(), Local(Paths.get("/..")))
   }
 
   test("Chaining - local / , local /") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Local(Paths.get("/bar/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Local(Paths.get("/bar/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("/bar/baz.dhall"))
     )
   }
 
   test("Chaining - local / , local ~") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Local(Paths.get("~/bar/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Local(Paths.get("~/bar/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("~/bar/baz.dhall"))
     )
   }
 
   test("Chaining - local / , local .") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("/foo/baz.dhall"))
     )
   }
 
   test("Chaining - local / , local ..") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("./foo/x/bar.dhall")), Local(Paths.get("../bar/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("./foo/x/bar.dhall")), Local(Paths.get("../bar/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("./foo/bar/baz.dhall"))
     )
   }
 
   test("Chaining - local ~ , local /") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("/baz.dhall"))
     )
   }
 
   test("Chaining - local ~ , local ~") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("~/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("~/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("~/baz.dhall"))
     )
   }
 
   test("Chaining - local ~ , local .") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("~/foo/baz.dhall"))
     )
   }
 
   test("Chaining - local ~ , local ..") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("../baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("~/foo/bar.dhall")), Local(Paths.get("../baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("~/baz.dhall"))
     )
   }
 
   test("Chaining - local . , local /") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("/baz.dhall"))
     )
   }
 
   test("Chaining - local . , local ~") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("~/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("~/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("~/baz.dhall"))
     )
   }
 
   test("Chaining - local . , local .") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("./foo/baz.dhall"))
     )
   }
 
   test("Chaining - local . , local ..") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("../baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("./foo/bar.dhall")), Local(Paths.get("../baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("./baz.dhall"))
     )
   }
 
   test("Chaining - local .. , local /") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("/baz.dhall"))
     )
   }
 
   test("Chaining - local .. , local ~") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("~/baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("~/baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("~/baz.dhall"))
     )
   }
 
   test("Chaining - local .. , local .") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("./baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("../foo/baz.dhall"))
     )
   }
 
   test("Chaining - local .. , local ..") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("../baz.dhall"))).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("../foo/bar.dhall")), Local(Paths.get("../baz.dhall"))).unsafeRunSync(),
       Local(Paths.get("../baz.dhall"))
     )
   }
 
   test("Chaining - local / remote") {
     assertEquals(
-      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")),
-                       Remote(new URI("http://foo.org/bar.dhall"), headers1)
-      ).unsafeRunSync,
+      canonicalize[IO](Local(Paths.get("/foo/bar.dhall")), Remote(new URI("http://foo.org/bar.dhall"), headers1))
+        .unsafeRunSync(),
       Remote(new URI("http://foo.org/bar.dhall"), headers1)
     )
   }
@@ -169,16 +168,15 @@ class CanonicalizationSuite extends FunSuite {
     assertEquals(
       canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1),
                        Remote(new URI("https://bar.com/bar/baz.dhall"), headers2)
-      ).unsafeRunSync,
+      ).unsafeRunSync(),
       Remote((new URI("https://bar.com/bar/baz.dhall")), headers2)
     )
   }
 
   test("Chaining - remote / local relative") {
     assertEquals(
-      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1),
-                       Local(Paths.get("./baz.dhall"))
-      ).unsafeRunSync,
+      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1), Local(Paths.get("./baz.dhall")))
+        .unsafeRunSync(),
       Remote(new URI("http://foo.org/baz.dhall"), headers1)
     )
   }
@@ -186,9 +184,8 @@ class CanonicalizationSuite extends FunSuite {
   //This is actually prohibited by the sanity check but we don't worry about it here
   test("Chaining - remote / local absolute") {
     assertEquals(
-      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1),
-                       Local(Paths.get("/baz.dhall"))
-      ).unsafeRunSync,
+      canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1), Local(Paths.get("/baz.dhall")))
+        .unsafeRunSync(),
       Local(Paths.get("/baz.dhall"))
     )
   }

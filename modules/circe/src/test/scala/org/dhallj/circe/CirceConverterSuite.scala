@@ -3,7 +3,7 @@ package org.dhallj.circe
 import io.circe.Json
 import io.circe.syntax._
 import io.circe.testing.instances._
-import munit.{Ignore, ScalaCheckSuite}
+import munit.ScalaCheckSuite
 import org.dhallj.ast._
 import org.dhallj.core.Expr
 import org.dhallj.parser.DhallParser

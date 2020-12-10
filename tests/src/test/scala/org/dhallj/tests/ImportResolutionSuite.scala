@@ -27,10 +27,12 @@ class ImportResolutionSuite extends FunSuite {
   }
 
   private def resolveRelativeTo(relativeTo: Path)(e: Expr): Expr =
-    client.use { c =>
-      implicit val http: Client[IO] = c
+    client
+      .use { c =>
+        implicit val http: Client[IO] = c
 
-      e.resolveImportsRelativeTo[IO](relativeTo).map(_.normalize)
-    }.unsafeRunSync
+        e.resolveImportsRelativeTo[IO](relativeTo).map(_.normalize)
+      }
+      .unsafeRunSync()
 
 }
