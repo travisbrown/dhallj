@@ -1,6 +1,6 @@
 # Dhall for Java
 
-[![Build status](https://img.shields.io/travis/travisbrown/dhallj/main.svg)](https://travis-ci.org/travisbrown/dhallj)
+[![Build status](https://img.shields.io/github/workflow/status/travisbrown/dhallj/Continuous%20Integration.svg)](https://github.com/travisbrown/dhallj/actions)
 [![Gitter](https://img.shields.io/badge/gitter-join%20chat-green.svg)](https://gitter.im/dhallj/)
 [![Maven Central](https://img.shields.io/maven-central/v/org.dhallj/dhall-core.svg)](https://maven-badges.herokuapp.com/maven-central/org.dhallj/dhall-core)
 
