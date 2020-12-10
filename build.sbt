@@ -37,13 +37,13 @@ githubWorkflowBuild in ThisBuild := Seq(
 )
 
 val previousVersion = "0.3.0"
-val catsVersion = "2.2.0"
+val catsVersion = "2.3.0"
 val circeVersion = "0.13.0"
-val jawnVersion = "1.0.0"
-val munitVersion = "0.7.15"
-val scalaCheckVersion = "1.15.0"
+val jawnVersion = "1.0.2"
+val munitVersion = "0.7.19"
+val scalaCheckVersion = "1.15.1"
 val snakeYamlVersion = "1.27"
-val http4sVersion = "0.21.8"
+val http4sVersion = "0.21.13"
 
 val testDependencies = Seq(
   "co.nstant.in" % "cbor" % "0.9",
@@ -54,7 +54,7 @@ val testDependencies = Seq(
 
 val http4sDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.typelevel" %% "cats-effect" % "2.2.0",
+  "org.typelevel" %% "cats-effect" % "2.3.0",
   "org.http4s" %% "http4s-client" % http4sVersion
 )
 
