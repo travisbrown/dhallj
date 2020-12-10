@@ -79,7 +79,7 @@ class CirceHandler extends JsonHandler {
     }
   }
 
-  final def onObjectField(name: String) = stack.peek.add(name)
+  final def onObjectField(name: String): Unit = stack.peek.add(name)
 
   final def onObjectFieldGap(): Unit = ()
 }

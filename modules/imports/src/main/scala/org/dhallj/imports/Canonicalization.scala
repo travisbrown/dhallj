@@ -90,7 +90,7 @@ object Canonicalization {
   }
 
   private case class LocalDirs(ds: List[String]) {
-    def isRelative = ds.nonEmpty && (ds.head == "." || ds.head == "..")
+    def isRelative: Boolean = ds.nonEmpty && (ds.head == "." || ds.head == "..")
 
     def canonicalize: LocalDirs = LocalDirs.canonicalize(this)
 

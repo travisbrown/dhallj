@@ -47,7 +47,7 @@ class ImportResolutionSuite(val base: String)
     cache
   }
 
-  def setEnv(key: String, value: String) = {
+  def setEnv(key: String, value: String): Unit = {
     val field = System.getenv().getClass.getDeclaredField("m")
     field.setAccessible(true)
     val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]

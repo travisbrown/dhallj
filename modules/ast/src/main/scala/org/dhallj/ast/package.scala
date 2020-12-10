@@ -114,7 +114,7 @@ object Let extends Constructor[(String, Option[Expr], Expr, Expr)] {
 
 object TextLiteral extends Constructor[(String, Vector[(Expr, String)])] {
   def apply(value: String): Expr = Expr.makeTextLiteral(value)
-  def apply(first: String, rest: Vector[(Expr, String)]) = {
+  def apply(first: String, rest: Vector[(Expr, String)]): Expr = {
     val parts = first +: rest.map(_._2).toArray
     val interpolated = rest.map(_._1).toArray
 
