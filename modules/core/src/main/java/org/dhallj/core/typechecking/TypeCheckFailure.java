@@ -90,10 +90,6 @@ public final class TypeCheckFailure extends DhallException {
     return new TypeCheckFailure("if branches must have matching types");
   }
 
-  static final TypeCheckFailure makeIfBranchError(Expr type) {
-    return new TypeCheckFailure("if branch is not a term");
-  }
-
   static final TypeCheckFailure makeLambdaInputError(Expr type) {
     return new TypeCheckFailure("Invalid function input");
   }
