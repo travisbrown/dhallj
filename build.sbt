@@ -344,7 +344,7 @@ lazy val publishSettings = Seq(
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   releaseVcsSign := true,
-  homepage := Some(url("https://github.com/travisbrown/djallj")),
+  homepage := Some(url("https://github.com/travisbrown/dhallj")),
   licenses := Seq("BSD 3-Clause" -> url("http://opensource.org/licenses/BSD-3-Clause")),
   publishMavenStyle := true,
   publishArtifact in Test := false,
@@ -358,8 +358,8 @@ lazy val publishSettings = Seq(
   },
   scmInfo := Some(
     ScmInfo(
-      url("https://github.com/travisbrown/djallj"),
-      "scm:git:git@github.com:travisbrown/djallj.git"
+      url("https://github.com/travisbrown/dhallj"),
+      "scm:git:git@github.com:travisbrown/dhallj.git"
     )
   ),
   pomExtra := (
