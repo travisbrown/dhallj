@@ -8,9 +8,9 @@ target/
 .project
 .classpath
 tmp/
-
 .bloop/
 .metals/
+.bsp/
 project/metals.sbt
 bazel-bin
 bazel-dhallj
