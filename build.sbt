@@ -2,6 +2,34 @@ import ReleaseTransformations._
 
 organization in ThisBuild := "org.dhallj"
 
+githubWorkflowJavaVersions in ThisBuild := Seq("adopt@1.8")
+githubWorkflowPublishTargetBranches in ThisBuild := Nil
+githubWorkflowBuild in ThisBuild := Seq(
+  WorkflowStep.Run(
+    List("pip install --user codecov"),
+    name = Some("Install codecov")
+  ),
+  WorkflowStep.Sbt(
+    List(
+      "clean",
+      "javacc",
+      "coverage",
+      "scalastyle",
+      "scalafmtCheckAll",
+      "scalafmtSbtCheck",
+      "test",
+      "slow:test",
+      "coverageReport"
+    ),
+    id = None,
+    name = Some("Test")
+  ),
+  WorkflowStep.Run(
+    List("codecov"),
+    name = Some("Upload codecov")
+  )
+)
+
 val previousVersion = "0.3.0"
 val catsVersion = "2.2.0"
 val circeVersion = "0.13.0"
