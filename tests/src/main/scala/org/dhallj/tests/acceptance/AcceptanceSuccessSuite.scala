@@ -55,10 +55,12 @@ trait CachedResolvingInput extends Input[Expr] {
     if (parsed.isResolved) parsed
     else {
       implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-      BlazeClientBuilder[IO](ExecutionContext.global).resource.use { client =>
-        implicit val c: Client[IO] = client
-        Resolver.resolve[IO](parsed)
-      }.unsafeRunSync
+      BlazeClientBuilder[IO](ExecutionContext.global).resource
+        .use { client =>
+          implicit val c: Client[IO] = client
+          Resolver.resolve[IO](parsed)
+        }
+        .unsafeRunSync()
     }
   }
 
@@ -72,10 +74,12 @@ trait ResolvingInput extends Input[Expr] {
     if (parsed.isResolved) parsed
     else {
       implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-      BlazeClientBuilder[IO](ExecutionContext.global).resource.use { client =>
-        implicit val c: Client[IO] = client
-        Resolver.resolve[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
-      }.unsafeRunSync
+      BlazeClientBuilder[IO](ExecutionContext.global).resource
+        .use { client =>
+          implicit val c: Client[IO] = client
+          Resolver.resolve[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
+        }
+        .unsafeRunSync()
     }
   }
 }

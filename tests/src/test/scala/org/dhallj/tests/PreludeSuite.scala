@@ -9,13 +9,13 @@ import scala.io.Source
 class PreludeSuite extends FunSuite() {
   val haskellDhallIsAvailable = HaskellDhall.isAvailable()
 
-  val preludeFiles = Source.fromResource(s"Prelude").getLines.toList.sorted.flatMap {
+  val preludeFiles = Source.fromResource(s"Prelude").getLines().toList.sorted.flatMap {
     case "Monoid"        => Nil
     case "Monoid.dhall"  => List("Prelude/Monoid.dhall")
     case "README.md"     => Nil
     case "package.dhall" => List("Prelude/package.dhall")
     case other =>
-      Source.fromResource(s"Prelude/$other").getLines.toList.sorted.map { case file =>
+      Source.fromResource(s"Prelude/$other").getLines().toList.sorted.map { case file =>
         s"Prelude/$other/$file"
       }
   }
@@ -29,7 +29,7 @@ class PreludeSuite extends FunSuite() {
   )
 
   def checkHash(path: String)(implicit loc: munit.Location): Unit = {
-    val content = Source.fromResource(path).getLines.mkString("\n")
+    val content = Source.fromResource(path).getLines().mkString("\n")
     val parsed = DhallParser.parse(content)
 
     val resolved = Resolver.resolveFromResources(parsed, false, Paths.get(path), this.getClass.getClassLoader)

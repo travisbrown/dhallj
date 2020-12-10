@@ -27,19 +27,21 @@ class ImportResolutionSuite(val base: String)
     else {
       implicit val cs: ContextShift[IO] = IO.contextShift(global)
       val cache = initializeCache
-      BlazeClientBuilder[IO](global).resource.use { client =>
-        implicit val c: Client[IO] = client
-        Resolver.resolve[IO](cache, new ImportCache.NoopImportCache[IO])(parsed)
-      }.unsafeRunSync
+      BlazeClientBuilder[IO](global).resource
+        .use { client =>
+          implicit val c: Client[IO] = client
+          Resolver.resolve[IO](cache, new ImportCache.NoopImportCache[IO])(parsed)
+        }
+        .unsafeRunSync()
     }
   }
 
   private def initializeCache: ImportCache[IO] = {
     val dir = Files.createTempDirectory("dhallj")
-    val cache = ImportCache[IO](dir).unsafeRunSync.get
+    val cache = ImportCache[IO](dir).unsafeRunSync().get
     Source
       .fromResource("tests/import/cache/dhall")
-      .getLines
+      .getLines()
       .foreach { p =>
         val content = readBytes(Paths.get(s"dhall-lang/tests/import/cache/dhall/$p"))
         Files.write(dir.resolve(p), content)
