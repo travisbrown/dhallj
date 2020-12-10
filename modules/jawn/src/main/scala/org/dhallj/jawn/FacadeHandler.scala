@@ -58,7 +58,7 @@ class FacadeHandler[J](facade: Facade[J]) extends JsonHandler {
     }
   }
 
-  final def onObjectField(name: String) = stack.peek.add(name, position)
+  final def onObjectField(name: String): Unit = stack.peek.add(name, position)
 
   final def onObjectFieldGap(): Unit = ()
 }
