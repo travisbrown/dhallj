@@ -4,6 +4,13 @@ organization in ThisBuild := "org.dhallj"
 
 githubWorkflowJavaVersions in ThisBuild := Seq("adopt@1.8")
 githubWorkflowPublishTargetBranches in ThisBuild := Nil
+githubWorkflowJobSetup in ThisBuild := {
+  githubWorkflowJobSetup.in(ThisBuild).value.toList.map {
+    case step @ WorkflowStep.Use("actions", "checkout", "v2", _, _, _, _, _) =>
+      step.copy(params = step.params.updated("submodules", "recursive"))
+    case other => other
+  }
+}
 githubWorkflowBuild in ThisBuild := Seq(
   WorkflowStep.Run(
     List("pip install --user codecov"),
