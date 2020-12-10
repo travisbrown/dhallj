@@ -481,21 +481,10 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       Expr thenType = thenValue.accept(this);
       Expr elseType = elseValue.accept(this);
 
-      boolean thenValueIsTerm = isType(thenType.accept(this));
-      boolean elseValueIsTerm = isType(elseType.accept(this));
-
-      if (thenValueIsTerm && elseValueIsTerm) {
-        if (thenType.equivalent(elseType)) {
-          return thenType;
-        } else {
-          throw TypeCheckFailure.makeIfBranchTypeMismatchError(thenType, elseType);
-        }
+      if (thenType.equivalent(elseType)) {
+        return thenType;
       } else {
-        if (!thenValueIsTerm) {
-          throw TypeCheckFailure.makeIfBranchError(thenType);
-        } else {
-          throw TypeCheckFailure.makeIfBranchError(elseType);
-        }
+        throw TypeCheckFailure.makeIfBranchTypeMismatchError(thenType, elseType);
       }
     } else {
       throw TypeCheckFailure.makeIfPredicateError(predicateType);
