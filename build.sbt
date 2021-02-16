@@ -41,7 +41,7 @@ val catsVersion = "2.3.1"
 val circeVersion = "0.13.0"
 val jawnVersion = "1.0.3"
 val munitVersion = "0.7.20"
-val scalaCheckVersion = "1.15.2"
+val scalaCheckVersion = "1.15.3"
 val snakeYamlVersion = "1.27"
 val http4sVersion = "0.21.15"
 
