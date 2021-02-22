@@ -8,7 +8,7 @@ githubWorkflowJavaVersions in ThisBuild := Seq("adopt@1.8")
 githubWorkflowPublishTargetBranches in ThisBuild := Nil
 githubWorkflowJobSetup in ThisBuild := {
   githubWorkflowJobSetup.in(ThisBuild).value.toList.map {
-    case step @ WorkflowStep.Use("actions", "checkout", "v2", _, _, _, _, _) =>
+    case step @ WorkflowStep.Use(UseRef.Public("actions", "checkout", "v2"), _, _, _, _, _) =>
       step.copy(params = step.params.updated("submodules", "recursive"))
     case other => other
   }
@@ -30,9 +30,11 @@ githubWorkflowBuild in ThisBuild := Seq(
     name = Some("Test")
   ),
   WorkflowStep.Use(
-    "codecov",
-    "codecov-action",
-    "v1"
+    UseRef.Public(
+      "codecov",
+      "codecov-action",
+      "v1"
+    )
   )
 )
 
