@@ -54,7 +54,7 @@ val testDependencies = Seq(
 
 val http4sDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.typelevel" %% "cats-effect" % "2.3.0",
+  "org.typelevel" %% "cats-effect" % "2.3.3",
   "org.http4s" %% "http4s-client" % http4sVersion
 )
 
