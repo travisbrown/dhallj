@@ -8,7 +8,7 @@ githubWorkflowJavaVersions in ThisBuild := Seq("adopt@1.8")
 githubWorkflowPublishTargetBranches in ThisBuild := Nil
 githubWorkflowJobSetup in ThisBuild := {
   githubWorkflowJobSetup.in(ThisBuild).value.toList.map {
-    case step @ WorkflowStep.Use("actions", "checkout", "v2", _, _, _, _, _) =>
+    case step @ WorkflowStep.Use(UseRef.Public("actions", "checkout", "v2"), _, _, _, _, _) =>
       step.copy(params = step.params.updated("submodules", "recursive"))
     case other => other
   }
@@ -30,20 +30,22 @@ githubWorkflowBuild in ThisBuild := Seq(
     name = Some("Test")
   ),
   WorkflowStep.Use(
-    "codecov",
-    "codecov-action",
-    "v1"
+    UseRef.Public(
+      "codecov",
+      "codecov-action",
+      "v1"
+    )
   )
 )
 
 val previousVersion = "0.7.0-M1"
-val catsVersion = "2.3.1"
+val catsVersion = "2.4.2"
 val circeVersion = "0.13.0"
 val jawnVersion = "1.0.3"
-val munitVersion = "0.7.22"
-val scalaCheckVersion = "1.15.2"
-val snakeYamlVersion = "1.27"
-val http4sVersion = "0.21.15"
+val munitVersion = "0.7.20"
+val scalaCheckVersion = "1.15.3"
+val snakeYamlVersion = "1.28"
+val http4sVersion = "0.21.19"
 
 val testDependencies = Seq(
   "co.nstant.in" % "cbor" % "0.9",
@@ -54,7 +56,7 @@ val testDependencies = Seq(
 
 val http4sDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.typelevel" %% "cats-effect" % "2.3.0",
+  "org.typelevel" %% "cats-effect" % "2.3.3",
   "org.http4s" %% "http4s-client" % http4sVersion
 )
 
