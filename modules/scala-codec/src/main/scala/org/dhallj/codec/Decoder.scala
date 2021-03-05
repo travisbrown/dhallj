@@ -166,7 +166,7 @@ object Decoder {
     def decode(expr: Expr): Result[List[A]] = expr.normalize match {
       case NonEmptyListLiteral(values) =>
         Traverse[Vector].traverse(values)(Decoder[A].decode).map(_.toList)
-      case EmptyListLiteral(elementType) if Decoder[A].isValidType(elementType) =>
+      case EmptyListLiteral(Application(Expr.Constants.LIST, elementType)) if Decoder[A].isValidType(elementType) =>
         Right(Nil)
       case other => Left(new DecodingFailure("List", other))
     }
