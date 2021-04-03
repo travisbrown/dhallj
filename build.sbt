@@ -222,7 +222,6 @@ lazy val jawn = project
     description := "DhallJ Jawn integration",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-jawn" % circeVersion % Test,
-      "org.typelevel" %% "jawn-spray" % jawnVersion % Test,
       "org.typelevel" %% "jawn-parser" % jawnVersion
     )
   )
