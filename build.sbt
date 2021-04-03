@@ -39,13 +39,13 @@ githubWorkflowBuild in ThisBuild := Seq(
 )
 
 val previousVersion = "0.7.0-M1"
-val catsVersion = "2.4.2"
+val catsVersion = "2.5.0"
 val circeVersion = "0.13.0"
-val jawnVersion = "1.0.3"
-val munitVersion = "0.7.23"
+val jawnVersion = "1.1.1"
+val munitVersion = "0.7.20"
 val scalaCheckVersion = "1.15.3"
 val snakeYamlVersion = "1.28"
-val http4sVersion = "0.21.20"
+val http4sVersion = "0.21.21"
 
 val testDependencies = Seq(
   "co.nstant.in" % "cbor" % "0.9",
@@ -56,7 +56,7 @@ val testDependencies = Seq(
 
 val http4sDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.typelevel" %% "cats-effect" % "2.4.0",
+  "org.typelevel" %% "cats-effect" % "2.4.1",
   "org.http4s" %% "http4s-client" % http4sVersion
 )
 
@@ -222,7 +222,6 @@ lazy val jawn = project
     description := "DhallJ Jawn integration",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-jawn" % circeVersion % Test,
-      "org.typelevel" %% "jawn-spray" % jawnVersion % Test,
       "org.typelevel" %% "jawn-parser" % jawnVersion
     )
   )
