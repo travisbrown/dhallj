@@ -42,7 +42,7 @@ val previousVersion = "0.7.0-M1"
 val catsVersion = "2.5.0"
 val circeVersion = "0.13.0"
 val jawnVersion = "1.1.1"
-val munitVersion = "0.7.20"
+val munitVersion = "0.7.23"
 val scalaCheckVersion = "1.15.3"
 val snakeYamlVersion = "1.28"
 val http4sVersion = "0.21.22"
@@ -296,7 +296,8 @@ lazy val imports = project
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
   .settings(moduleName := "dhall-imports", name := "dhall-imports", description := "DhallJ import resolution")
   .settings(
-    libraryDependencies ++= http4sDependencies :+ (http4sBlazeClient % Test)
+    libraryDependencies ++= http4sDependencies :+ (http4sBlazeClient % Test),
+    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % Test
   )
   .dependsOn(parser, cats)
 
