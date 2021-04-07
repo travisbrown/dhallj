@@ -1,19 +1,19 @@
 import ReleaseTransformations._
 
-organization in ThisBuild := "org.dhallj"
-crossScalaVersions in ThisBuild := List("2.12.12", "2.13.5")
-scalaVersion in ThisBuild := crossScalaVersions.value.last
+ThisBuild / organization := "org.dhallj"
+ThisBuild / crossScalaVersions := List("2.12.12", "2.13.5")
+ThisBuild / scalaVersion := crossScalaVersions.value.last
 
-githubWorkflowJavaVersions in ThisBuild := Seq("adopt@1.8")
-githubWorkflowPublishTargetBranches in ThisBuild := Nil
-githubWorkflowJobSetup in ThisBuild := {
-  githubWorkflowJobSetup.in(ThisBuild).value.toList.map {
+ThisBuild / githubWorkflowJavaVersions := Seq("adopt@1.8")
+ThisBuild / githubWorkflowPublishTargetBranches := Nil
+ThisBuild / githubWorkflowJobSetup := {
+  (ThisBuild / githubWorkflowJobSetup).value.toList.map {
     case step @ WorkflowStep.Use(UseRef.Public("actions", "checkout", "v2"), _, _, _, _, _) =>
       step.copy(params = step.params.updated("submodules", "recursive"))
     case other => other
   }
 }
-githubWorkflowBuild in ThisBuild := Seq(
+ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(
     List(
       "clean",
@@ -91,8 +91,8 @@ val baseSettings = Seq(
 val javaSettings = Seq(
   autoScalaLibrary := false,
   crossPaths := false,
-  javacOptions in Compile ++= Seq("-source", "1.7"),
-  javacOptions in (Compile, compile) ++= Seq("-target", "1.7"),
+  Compile / javacOptions ++= Seq("-source", "1.7"),
+  Compile / compile / javacOptions ++= Seq("-target", "1.7"),
   mimaPreviousArtifacts := Set("org.dhallj" % moduleName.value % previousVersion)
 )
 
@@ -107,7 +107,7 @@ val scalaSettings = Seq(
         case other                  => Seq(other)
       }
   },
-  scalacOptions in (Compile, console) ~= {
+  Compile / console / scalacOptions ~= {
     _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports"))
   }
 )
@@ -117,9 +117,9 @@ val root = project
   .enablePlugins(ScalaUnidocPlugin)
   .settings(baseSettings ++ publishSettings)
   .settings(
-    skip in publish := true,
+    publish / skip := true,
     mimaPreviousArtifacts := Set.empty,
-    initialCommands in console := "import org.dhallj.parser.DhallParser.parse",
+    console / initialCommands := "import org.dhallj.parser.DhallParser.parse",
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -172,7 +172,7 @@ lazy val parser = project
     name := "dhall-parser",
     description := "DhallJ parser",
     // Temporarily necessary because JavaCC produces invalid Javadocs.
-    javacOptions in Compile ++= Seq("-Xdoclint:none")
+    Compile / javacOptions ++= Seq("-Xdoclint:none")
   )
   .enablePlugins(JavaCCPlugin)
   .dependsOn(core)
@@ -191,9 +191,9 @@ lazy val cli = project
   .in(file("cli"))
   .settings(baseSettings ++ javaSettings)
   .settings(
-    skip in publish := true,
+    publish / skip := true,
     mimaPreviousArtifacts := Set.empty,
-    name in GraalVMNativeImage := "dhall-cli"
+    GraalVMNativeImage / name := "dhall-cli"
   )
   .enablePlugins(GraalVMNativeImagePlugin)
   .dependsOn(parser, importsMini)
@@ -320,15 +320,15 @@ lazy val tests = project
   .settings(
     libraryDependencies ++= testDependencies,
     libraryDependencies ++= http4sDependencies :+ http4sBlazeClient,
-    skip in publish := true,
+    publish / skip := true,
     mimaPreviousArtifacts := Set.empty,
-    fork in Test := true,
-    baseDirectory in Test := (ThisBuild / baseDirectory).value,
-    testOptions.in(Test) += Tests.Argument("--exclude-tags=Slow"),
-    unmanagedResourceDirectories.in(Test) += (ThisBuild / baseDirectory).value / "dhall-lang",
+    Test / fork := true,
+    Test / baseDirectory := (ThisBuild / baseDirectory).value,
+    Test / testOptions += Tests.Argument("--exclude-tags=Slow"),
+    Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "dhall-lang",
     inConfig(Slow)(Defaults.testTasks),
-    testOptions.in(Slow) -= Tests.Argument("--exclude-tags=Slow"),
-    testOptions.in(Slow) += Tests.Argument("--include-tags=Slow")
+    Slow / testOptions -= Tests.Argument("--exclude-tags=Slow"),
+    Slow / testOptions += Tests.Argument("--include-tags=Slow")
   )
   .dependsOn(scala, imports, importsMini, testing)
 
@@ -336,7 +336,7 @@ lazy val benchmarks = project
   .in(file("benchmarks"))
   .settings(baseSettings ++ scalaSettings)
   .settings(
-    skip in publish := true,
+    publish / skip := true,
     mimaPreviousArtifacts := Set.empty
   )
   .enablePlugins(JmhPlugin)
@@ -349,7 +349,7 @@ lazy val publishSettings = Seq(
   homepage := Some(url("https://github.com/travisbrown/dhallj")),
   licenses := Seq("BSD 3-Clause" -> url("http://opensource.org/licenses/BSD-3-Clause")),
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ => false },
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
