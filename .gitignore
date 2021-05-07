@@ -16,3 +16,4 @@ bazel-bin
 bazel-dhallj
 bazel-out
 bazel-testlogs
+.vscode/
