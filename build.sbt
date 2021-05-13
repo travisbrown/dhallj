@@ -39,7 +39,7 @@ ThisBuild / githubWorkflowBuild := Seq(
 )
 
 val previousVersion = "0.7.0-M1"
-val catsVersion = "2.6.0"
+val catsVersion = "2.6.1"
 val circeVersion = "0.13.0"
 val jawnVersion = "1.1.2"
 val munitVersion = "0.7.25"
