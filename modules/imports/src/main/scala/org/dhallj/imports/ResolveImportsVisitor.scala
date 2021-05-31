@@ -40,7 +40,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
     this(semanticCache, semiSemanticCache, NonEmptyList.fromListUnsafe(parents))
   }
 
-  private var duplicateImportCache: MMap[ImportContext, Expr] = MMap.empty
+  private var duplicateImportCache: MMap[(ImportContext, ImportMode), Expr] = MMap.empty
 
   override def onOperatorApplication(operator: Operator, lhs: F[Expr], rhs: F[Expr]): F[Expr] =
     if (operator == Operator.IMPORT_ALT)
@@ -183,14 +183,16 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
         } yield expr
     }
 
-    def resolve(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] =
-      if (duplicateImportCache.contains(imp))
-        F.delay(duplicateImportCache.get(imp).get)
+    def resolve(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = {
+      val p = (imp, mode)
+      if (duplicateImportCache.contains(p))
+        F.delay(duplicateImportCache.get(p).get)
       else
         for {
           e <- loadWithSemanticCache(imp, mode, hash)
-          _ <- F.delay(duplicateImportCache.put(imp, e))
+          _ <- F.delay(duplicateImportCache.put(p, e))
         } yield e
+    }
 
     def importNonLocation(imp: ImportContext, mode: ImportMode, hash: Array[Byte]) =
       for {
