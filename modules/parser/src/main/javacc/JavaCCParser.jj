@@ -201,6 +201,7 @@ TOKEN: {
   | <#HERE_PATH: "." <PATH>>
   | <#HOME_PATH: "~" <PATH>>
   | <#URL_PATH: (<URL_PATH_COMPONENT> | ("/") <SEGMENT>)*>
+  | <SHEBANG: "#!" (<ASCII> | <VALID_NON_ASCII> | "\t")+ ("\n" | "\r\n")>
 }
 
 <WITHIN_DOUBLE_QUOTE> TOKEN: {
@@ -993,4 +994,4 @@ Expr.Parsed BASE_EXPRESSION(): { Expr.Parsed expr; } {
 
 Expr.Parsed COMPLETE_EXPRESSION(): { Expr.Parsed expr; } { ([<WHSP>] expr=BASE_EXPRESSION() [<WHSP>]) { return expr; }}
 
-Expr.Parsed TOP_LEVEL(): { Expr.Parsed expr; } { (expr=COMPLETE_EXPRESSION() <EOF>) { return expr; }}
+Expr.Parsed TOP_LEVEL(): { Expr.Parsed expr; } { ((<SHEBANG>)* expr=COMPLETE_EXPRESSION() <EOF>) { return expr; }}
