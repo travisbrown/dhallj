@@ -17,3 +17,4 @@ bazel-dhallj
 bazel-out
 bazel-testlogs
 .vscode/
+project/project/
