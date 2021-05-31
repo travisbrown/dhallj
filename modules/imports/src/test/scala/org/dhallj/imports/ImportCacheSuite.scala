@@ -5,7 +5,6 @@ import java.nio.file.{Files, Path}
 import cats.effect.IO
 import cats.implicits._
 import munit.FunSuite
-import scala.reflect.io.Directory
 
 class ImportCacheSuite extends FunSuite {
 
@@ -14,9 +13,7 @@ class ImportCacheSuite extends FunSuite {
       val rootDir = Files.createTempDirectory(test.name).resolve("dhall")
       ImportCache[IO](rootDir).unsafeRunSync().get -> rootDir
     },
-    teardown = { case (_, rootDir) =>
-      new Directory(rootDir.toFile).deleteRecursively()
-    }
+    teardown = { case (_, rootDir) => }
   )
 
   val key = "0f86d".getBytes
