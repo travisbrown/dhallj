@@ -14,4 +14,8 @@ object HaskellDhall {
     val stream = new ByteArrayInputStream(input.getBytes(UTF_8))
     Process("dhall hash").#<(stream).lineStream.head.substring(7)
   }
+
+  def hashFromPath(path: String): String = {
+    Process(s"dhall hash --file $path").lineStream.head.substring(7)
+  }
 }
