@@ -40,8 +40,10 @@ class PreludeSuite extends FunSuite() {
       if (slow(path)) name.tag(Slow) else name
     } else name.tag(Ignore)
 
-    test(testOptions)(assert(resolved.normalize.alphaNormalize.hash == clue(HaskellDhall.hash(content))))
+    lazy val expected = HaskellDhall.hashFromPath(s"dhall-lang/$path")
+
+    test(testOptions)(assert(resolved.normalize.alphaNormalize.hash == clue(expected)))
   }
 
-  preludeFiles.filterNot(_.endsWith("dhall")).foreach(checkHash)
+  preludeFiles.foreach(checkHash)
 }
