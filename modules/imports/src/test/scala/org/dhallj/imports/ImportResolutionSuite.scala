@@ -13,8 +13,6 @@ import org.dhallj.parser.DhallParser.parse
 import org.http4s.blaze.client._
 import org.http4s.client._
 
-//import scala.concurrent.ExecutionContext.global
-
 class ImportResolutionSuite extends FunSuite {
 
   implicit val client: Resource[IO, Client[IO]] =
