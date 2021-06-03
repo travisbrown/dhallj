@@ -2,24 +2,21 @@ package org.dhallj.imports
 
 import java.security.MessageDigest
 
-import cats.effect.concurrent.Ref
-import cats.effect.{ContextShift, IO, Resource}
+import cats.effect.{IO, Ref, Resource}
+import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import munit.FunSuite
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode
 import org.dhallj.imports.syntax._
 import org.dhallj.parser.DhallParser.parse
+import org.http4s.blaze.client._
 import org.http4s.client._
-import org.http4s.client.blaze._
-
-import scala.concurrent.ExecutionContext.global
 
 class ImportResolutionSuite extends FunSuite {
 
-  implicit val cs: ContextShift[IO] = IO.contextShift(global)
-
-  implicit val client: Resource[IO, Client[IO]] = BlazeClientBuilder[IO](global).resource
+  implicit val client: Resource[IO, Client[IO]] =
+    BlazeClientBuilder[IO](scala.concurrent.ExecutionContext.global).resource
 
   test("Classpath import") {
     val expr = parse("let x = classpath:/local/package.dhall in x")

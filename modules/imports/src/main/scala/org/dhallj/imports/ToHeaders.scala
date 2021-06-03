@@ -3,6 +3,7 @@ package org.dhallj.imports
 import org.dhallj.core.Expr
 import org.dhallj.core.Expr.Util.{asListLiteral, asRecordLiteral, asSimpleTextLiteral}
 import org.http4s.{Header, Headers}
+import org.typelevel.ci.CIString
 
 import scala.collection.JavaConverters._
 
@@ -19,7 +20,7 @@ object ToHeaders {
       if (l eq null) {
         Headers.empty
       } else {
-        val hs: List[Header] = l.asScala.toList.flatMap { e =>
+        val hs: List[Header.Raw] = l.asScala.toList.flatMap { e =>
           // e should have type `List { header : Text, value Text }`
           // or `List { mapKey : Text, mapValue Text }`
           val r = asRecordLiteral(e)
@@ -33,14 +34,14 @@ object ToHeaders {
                 val value = asSimpleTextLiteral(map("value"))
 
                 if ((key ne null) && (value ne null)) {
-                  Some(Header(key, value))
+                  Some(Header.Raw(CIString(key), value))
                 } else None
               } else if (map.contains("mapKey") && map.contains("mapValue")) {
                 val key = asSimpleTextLiteral(map("mapKey"))
                 val value = asSimpleTextLiteral(map("mapValue"))
 
                 if ((key ne null) && (value ne null)) {
-                  Some(Header(key, value))
+                  Some(Header.Raw(CIString(key), value))
                 } else None
               } else None
             } else None

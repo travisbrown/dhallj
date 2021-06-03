@@ -2,6 +2,7 @@ package org.dhallj.imports
 
 import java.nio.file.{Path, Paths}
 
+import cats.{ApplicativeError, MonadError}
 import cats.implicits._
 import cats.effect.Sync
 import org.dhallj.core.DhallException.ResolutionFailure
@@ -11,15 +12,15 @@ import scala.collection.JavaConverters._
 
 object Canonicalization {
 
-  def canonicalize[F[_]](imp: ImportContext)(implicit F: Sync[F]): F[ImportContext] = imp match {
-    case Remote(uri, headers) => F.delay(Remote(uri.normalize, headers))
+  def canonicalize[F[_]](imp: ImportContext)(implicit F: ApplicativeError[F, Throwable]): F[ImportContext] = imp match {
+    case Remote(uri, headers) => F.pure(Remote(uri.normalize, headers))
     case Local(path)          => LocalFile[F](path).map(_.canonicalize.toPath).map(Local)
     case Classpath(path)      => LocalFile[F](path).map(_.canonicalize.toPath).map(Classpath)
     case i                    => F.pure(i)
   }
 
   def canonicalize[F[_]](parent: ImportContext, child: ImportContext)(implicit
-    F: Sync[F]
+    F: MonadError[F, Throwable]
   ): F[ImportContext] =
     parent match {
       case Remote(uri, headers) =>
@@ -29,9 +30,9 @@ object Canonicalization {
           //need to resolve this as a remote import
           //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
           case Local(path) =>
-            if (path.isAbsolute) canonicalize(child)
-            else canonicalize(Remote(uri.resolve(path.toString), headers))
-          case _ => canonicalize(child)
+            if (path.isAbsolute) canonicalize[F](child)
+            else canonicalize[F](Remote(uri.resolve(path.toString), headers))
+          case _ => canonicalize[F](child)
         }
       case Local(path) =>
         child match {
@@ -40,7 +41,7 @@ object Canonicalization {
               parent <- LocalFile[F](path)
               c <- LocalFile[F](path2)
             } yield Local(parent.chain(c).canonicalize.toPath)
-          case _ => canonicalize(child)
+          case _ => canonicalize[F](child)
         }
       //TODO - determine semantics of classpath imports
       case Classpath(path) =>
@@ -51,9 +52,9 @@ object Canonicalization {
               parent <- LocalFile[F](path)
               c <- LocalFile[F](path2)
             } yield Classpath(parent.chain(c).canonicalize.toPath)
-          case _ => canonicalize(child)
+          case _ => canonicalize[F](child)
         }
-      case _ => canonicalize(child)
+      case _ => canonicalize[F](child)
     }
 
   private case class LocalFile(dirs: LocalDirs, filename: String) {
@@ -77,7 +78,7 @@ object Canonicalization {
   }
 
   private object LocalFile {
-    def apply[F[_]](path: Path)(implicit F: Sync[F]): F[LocalFile] =
+    def apply[F[_]](path: Path)(implicit F: ApplicativeError[F, Throwable]): F[LocalFile] =
       path.iterator().asScala.toList.map(_.toString) match {
         case Nil => F.raiseError(new ResolutionFailure("This shouldn't happen - / can't import a dhall expression"))
         case l   => F.pure(LocalFile(LocalDirs(l.take(l.length - 1)), l.last))

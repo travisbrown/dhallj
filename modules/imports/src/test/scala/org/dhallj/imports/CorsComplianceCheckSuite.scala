@@ -4,9 +4,11 @@ import java.net.URI
 import java.nio.file.Paths
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import munit.FunSuite
 import org.dhallj.imports.ImportContext._
 import org.http4s.{Header, Headers}
+import org.typelevel.ci._
 
 class CorsComplianceCheckSuite extends FunSuite {
 
@@ -24,14 +26,14 @@ class CorsComplianceCheckSuite extends FunSuite {
   test("Remote - different origin, allow *") {
     CorsComplianceCheck[IO](Remote(fooOrigin, null),
                             Remote(barOrigin, null),
-                            Headers.of(Header("Access-Control-Allow-Origin", "*"))
+                            Headers(Header.Raw(ci"Access-Control-Allow-Origin", "*"))
     ).unsafeRunSync()
   }
 
   test("Remote - different origin, allow parent authority") {
     CorsComplianceCheck[IO](Remote(fooOrigin, null),
                             Remote(barOrigin, null),
-                            Headers.of(Header("Access-Control-Allow-Origin", "http://foo.org"))
+                            Headers(Header.Raw(ci"Access-Control-Allow-Origin", "http://foo.org"))
     ).unsafeRunSync()
   }
 
@@ -42,28 +44,28 @@ class CorsComplianceCheckSuite extends FunSuite {
   test("Remote - different origin, cors parent different authority".fail) {
     CorsComplianceCheck[IO](Remote(fooOrigin, null),
                             Remote(barOrigin, null),
-                            Headers.of(Header("Access-Control-Allow-Origin", "http://bar.org"))
+                            Headers(Header.Raw(ci"Access-Control-Allow-Origin", "http://bar.org"))
     ).unsafeRunSync()
   }
 
   test("Remote - different origin, cors parent different scheme".fail) {
     CorsComplianceCheck[IO](Remote(fooOrigin, null),
                             Remote(barOrigin, null),
-                            Headers.of(Header("Access-Control-Allow-Origin", "https://foo.org"))
+                            Headers(Header.Raw(ci"Access-Control-Allow-Origin", "https://foo.org"))
     ).unsafeRunSync()
   }
 
   test("Remote - different origin, cors parent different port".fail) {
     CorsComplianceCheck[IO](Remote(fooOrigin, null),
                             Remote(barOrigin, null),
-                            Headers.of(Header("Access-Control-Allow-Origin", "http://foo.org:8080"))
+                            Headers(Header.Raw(ci"Access-Control-Allow-Origin", "http://foo.org:8080"))
     ).unsafeRunSync()
   }
 
   test("Remote - different origin, cors parent different port 2".fail) {
     CorsComplianceCheck[IO](Remote(fooOrigin8080, null),
                             Remote(barOrigin, null),
-                            Headers.of(Header("Access-Control-Allow-Origin", "http://foo.org"))
+                            Headers(Header.Raw(ci"Access-Control-Allow-Origin", "http://foo.org"))
     ).unsafeRunSync()
   }
 

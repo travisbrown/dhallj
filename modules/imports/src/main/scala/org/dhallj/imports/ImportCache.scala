@@ -2,7 +2,8 @@ package org.dhallj.imports
 
 import java.nio.file.{Files, Path, Paths}
 
-import cats.effect.Sync
+import cats.Applicative
+import cats.effect.Async
 import cats.implicits._
 
 trait ImportCache[F[_]] {
@@ -18,13 +19,13 @@ object ImportCache {
    * if the cache exists. So if we fail to construct an imports cache,
    * we warn and return this instead.
    */
-  class NoopImportCache[F[_]](implicit F: Sync[F]) extends ImportCache[F] {
+  class NoopImportCache[F[_]](implicit F: Applicative[F]) extends ImportCache[F] {
     override def get(key: Array[Byte]): F[Option[Array[Byte]]] = F.pure(None)
 
     override def put(key: Array[Byte], value: Array[Byte]): F[Unit] = F.unit
   }
 
-  private class Impl[F[_]](rootDir: Path)(implicit F: Sync[F]) extends ImportCache[F] {
+  private class Impl[F[_]](rootDir: Path)(implicit F: Async[F]) extends ImportCache[F] {
     override def get(key: Array[Byte]): F[Option[Array[Byte]]] = {
       val p = path(key)
       if (Files.exists(p)) {
@@ -48,13 +49,13 @@ object ImportCache {
     }
   }
 
-  def apply[F[_] <: AnyRef](rootDir: Path)(implicit F: Sync[F]): F[Option[ImportCache[F]]] =
+  def apply[F[_] <: AnyRef](rootDir: Path)(implicit F: Async[F]): F[Option[ImportCache[F]]] =
     for {
-      _ <- if (!Files.exists(rootDir)) F.delay(Files.createDirectories(rootDir)) else F.unit
+      _ <- if (!Files.exists(rootDir)) F.delay(Files.createDirectories(rootDir)).void else F.unit
       perms <- F.delay(Files.isReadable(rootDir) && Files.isWritable(rootDir))
     } yield (if (perms) Some(new Impl[F](rootDir)) else None)
 
-  def apply[F[_] <: AnyRef](cacheName: String)(implicit F: Sync[F]): F[ImportCache[F]] = {
+  def apply[F[_] <: AnyRef](cacheName: String)(implicit F: Async[F]): F[ImportCache[F]] = {
     def makeCacheFromEnvVar(env: String, relativePath: String): F[Option[ImportCache[F]]] =
       for {
         envValO <- F.delay(sys.env.get(env))

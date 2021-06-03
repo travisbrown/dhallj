@@ -2,21 +2,19 @@ package org.dhallj.tests
 
 import java.nio.file.{Path, Paths}
 
-import cats.effect.{ContextShift, IO, Resource}
+import cats.effect.{IO, Resource}
+import cats.effect.unsafe.implicits.global
 import munit.FunSuite
 import org.dhallj.core.Expr
 import org.dhallj.imports.syntax._
 import org.dhallj.parser.DhallParser.parse
 import org.http4s.client._
-import org.http4s.client.blaze._
-
-import scala.concurrent.ExecutionContext.global
+import org.http4s.blaze.client._
 
 class ImportResolutionSuite extends FunSuite {
 
-  implicit val cs: ContextShift[IO] = IO.contextShift(global)
-
-  implicit val client: Resource[IO, Client[IO]] = BlazeClientBuilder[IO](global).resource
+  implicit val client: Resource[IO, Client[IO]] =
+    BlazeClientBuilder[IO](scala.concurrent.ExecutionContext.global).resource
 
   test("Resolve with different base directory") {
     //Path inside dhall-lang submodule

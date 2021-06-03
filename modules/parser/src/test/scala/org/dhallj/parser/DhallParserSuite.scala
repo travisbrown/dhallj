@@ -48,7 +48,7 @@ class DhallParserSuite extends FunSuite() {
       -10, 97, 97, -125, 24, 26, 103, 78, 97, 116, 117, 114, 97, 108, 100, 84, 121, 112, 101)
     val parsed = DhallParser.parse("merge {a=1} <a>.a: Natural: Type")
 
-    assert(clue(parsed.getEncodedBytes).sameElements(clue(expectedBytes)))
+    assert(parsed.getEncodedBytes.sameElements(expectedBytes))
   }
 
   test("parse IPv6 address") {

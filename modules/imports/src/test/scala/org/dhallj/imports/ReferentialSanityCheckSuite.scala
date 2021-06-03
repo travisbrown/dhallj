@@ -4,6 +4,7 @@ import java.net.URI
 import java.nio.file.Paths
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import munit.FunSuite
 import org.dhallj.imports.ImportContext._
 

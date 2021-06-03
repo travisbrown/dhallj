@@ -4,8 +4,9 @@ import java.net.URI
 import java.nio.file.{Path, Paths}
 import java.security.MessageDigest
 
+import cats.Apply
 import cats.data.NonEmptyList
-import cats.effect.Sync
+import cats.effect.{Async, Concurrent}
 import cats.implicits._
 import org.dhallj.cats.LiftVisitor
 import org.dhallj.core.DhallException.ResolutionFailure
@@ -30,13 +31,13 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
   parents: NonEmptyList[ImportContext]
 )(implicit
   Client: Client[F],
-  F: Sync[F]
+  F: Async[F]
 ) extends LiftVisitor[F](F) {
   def this(
     semanticCache: ImportCache[F],
     semiSemanticCache: ImportCache[F],
     parents: List[ImportContext]
-  )(implicit Client: Client[F], F: Sync[F]) {
+  )(implicit Client: Client[F], F: Async[F]) = {
     this(semanticCache, semiSemanticCache, NonEmptyList.fromListUnsafe(parents))
   }
 
@@ -136,12 +137,12 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
         } yield v
       case ImportContext.Remote(uri, using) =>
         for {
-          headers <- F.pure(ToHeaders(using))
+          headers <- F.pure(ToHeaders(`using`))
           req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
           resp <- Client.fetch[String](req) {
             case Successful(resp) =>
               for {
-                s <- EntityDecoder.decodeString(resp)
+                s <- EntityDecoder.decodeText[F](resp)
                 _ <- if (parents.nonEmpty) CorsComplianceCheck(parents.head, imp, resp.headers) else F.unit
               } yield s
             case _ =>
@@ -202,38 +203,38 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
       } yield r
 
     for {
-      imp <- canonicalize(parents.head, i)
+      imp <- canonicalize[F](parents.head, i)(F)
       result <- if (mode == ImportMode.LOCATION) importLocation(imp) else importNonLocation(imp, mode, hash)
     } yield result
   }
 }
 
 private object ResolveImportsVisitor {
-  def apply[F[_] <: AnyRef: Sync: Client](relativeTo: Path): F[ResolveImportsVisitor[F]] =
-    Sync[F].map2(ImportCache[F]("dhall"), ImportCache[F]("dhallj"))(apply[F](_, _, relativeTo))
+  def apply[F[_] <: AnyRef: Async: Client](relativeTo: Path): F[ResolveImportsVisitor[F]] =
+    Apply[F].map2(ImportCache[F]("dhall"), ImportCache[F]("dhallj"))(apply[F](_, _, relativeTo))
 
-  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F],
-                                          semiSemanticCache: ImportCache[F],
-                                          relativeTo: Path
+  def apply[F[_] <: AnyRef: Async: Client](semanticCache: ImportCache[F],
+                                           semiSemanticCache: ImportCache[F],
+                                           relativeTo: Path
   ): ResolveImportsVisitor[F] =
     //We add a placeholder filename "package.dhall" for the base directory as a Local import must have a filename
-    new ResolveImportsVisitor(semanticCache,
-                              semiSemanticCache,
-                              NonEmptyList.one(Local(relativeTo.resolve("package.dhall")))
+    new ResolveImportsVisitor[F](semanticCache,
+                                 semiSemanticCache,
+                                 NonEmptyList.one(Local(relativeTo.resolve("package.dhall")))
     )
 
-  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F], relativeTo: Path): ResolveImportsVisitor[F] =
-    apply[F](semanticCache, new ImportCache.NoopImportCache, relativeTo)
+  def apply[F[_] <: AnyRef: Async: Client](semanticCache: ImportCache[F], relativeTo: Path): ResolveImportsVisitor[F] =
+    apply[F](semanticCache, new ImportCache.NoopImportCache[F], relativeTo)
 
   private def cwd: Path = Paths.get(".")
 
-  def apply[F[_] <: AnyRef: Sync: Client]: F[ResolveImportsVisitor[F]] = apply[F](cwd)
+  def apply[F[_] <: AnyRef: Async: Client]: F[ResolveImportsVisitor[F]] = apply[F](cwd)
 
-  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F],
-                                          semiSemanticCache: ImportCache[F]
+  def apply[F[_] <: AnyRef: Async: Client](semanticCache: ImportCache[F],
+                                           semiSemanticCache: ImportCache[F]
   ): ResolveImportsVisitor[F] =
     apply[F](semanticCache, semiSemanticCache, cwd)
 
-  def apply[F[_] <: AnyRef: Sync: Client](semanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
+  def apply[F[_] <: AnyRef: Async: Client](semanticCache: ImportCache[F]): ResolveImportsVisitor[F] =
     apply[F](semanticCache, cwd)
 }

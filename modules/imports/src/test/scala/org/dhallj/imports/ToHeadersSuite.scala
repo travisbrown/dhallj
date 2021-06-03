@@ -3,6 +3,7 @@ package org.dhallj.imports
 import munit.FunSuite
 import org.dhallj.core.Expr
 import org.http4s.{Header, Headers}
+import org.typelevel.ci._
 
 import scala.collection.JavaConverters._
 
@@ -22,8 +23,8 @@ class ToHeadersSuite extends FunSuite {
 
     val expected = Headers(
       List(
-        Header("foo", "bar"),
-        Header("baz", "x")
+        Header.Raw(ci"foo", "bar"),
+        Header.Raw(ci"baz", "x")
       )
     )
 
@@ -44,8 +45,8 @@ class ToHeadersSuite extends FunSuite {
 
     val expected = Headers(
       List(
-        Header("foo", "bar"),
-        Header("baz", "x")
+        Header.Raw(ci"foo", "bar"),
+        Header.Raw(ci"baz", "x")
       )
     )
 
