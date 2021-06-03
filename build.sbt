@@ -85,7 +85,8 @@ def priorTo2_13(scalaVersion: String): Boolean =
 
 val baseSettings = Seq(
   libraryDependencies ++= testDependencies.map(_ % Test),
-  testFrameworks += new TestFramework("munit.Framework")
+  testFrameworks += new TestFramework("munit.Framework"),
+  coverageEnabled := (if (scalaVersion.value.startsWith("3")) false else coverageEnabled.value)
 )
 
 val javaSettings = Seq(
