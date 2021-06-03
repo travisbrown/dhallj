@@ -5,7 +5,7 @@ import java.net.URI
 import cats.effect.Sync
 import org.dhallj.core.DhallException.ResolutionFailure
 import org.http4s.Headers
-import org.http4s.headers.`Access-Control-Allow-Origin`
+import org.typelevel.ci.CIString
 
 object CorsComplianceCheck {
 
@@ -18,7 +18,7 @@ object CorsComplianceCheck {
               F.unit
             else
               headers
-                .get(`Access-Control-Allow-Origin`)
+                .get(CIString("Access-Control-Allow-Origin"))
                 .fold(
                   F.raiseError[Unit](
                     new ResolutionFailure(
@@ -26,12 +26,12 @@ object CorsComplianceCheck {
                     )
                   )
                 ) { h =>
-                  if (h.value.trim == "*" || sameOrigin(new URI(h.value), uri))
+                  if (h.head.value.trim == "*" || sameOrigin(new URI(h.head.value), uri))
                     F.unit
                   else
                     F.raiseError(
                       new ResolutionFailure(
-                        s"CORS compliance failure - ${h.value.trim} is invalid for import $uri2 from $uri"
+                        s"CORS compliance failure - ${h.head.value.trim} is invalid for import $uri2 from $uri"
                       )
                     )
                 }

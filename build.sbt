@@ -1,7 +1,7 @@
 import ReleaseTransformations._
 
 ThisBuild / organization := "org.dhallj"
-ThisBuild / crossScalaVersions := List("2.12.14", "2.13.6")
+ThisBuild / crossScalaVersions := List("2.12.14", "2.13.6", "3.0.0")
 ThisBuild / scalaVersion := crossScalaVersions.value.last
 
 ThisBuild / githubWorkflowJavaVersions := Seq("adopt@1.8")
@@ -38,14 +38,14 @@ ThisBuild / githubWorkflowBuild := Seq(
   )
 )
 
-val previousVersion = "0.7.0-M1"
+val previousVersion = "0.8.0-M1"
 val catsVersion = "2.6.1"
 val circeVersion = "0.14.1"
 val jawnVersion = "1.1.2"
 val munitVersion = "0.7.26"
 val scalaCheckVersion = "1.15.4"
 val snakeYamlVersion = "1.28"
-val http4sVersion = "0.21.24"
+val http4sVersion = "0.23.0-RC1"
 
 val testDependencies = Seq(
   "co.nstant.in" % "cbor" % "0.9",
@@ -56,7 +56,7 @@ val testDependencies = Seq(
 
 val http4sDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.typelevel" %% "cats-effect" % "2.5.1",
+  "org.typelevel" %% "cats-effect" % "3.1.1",
   "org.http4s" %% "http4s-client" % http4sVersion
 )
 

@@ -2,14 +2,15 @@ package org.dhallj.tests.acceptance
 
 import java.nio.file.{Files, Paths}
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 
 import org.dhallj.core.Expr
 import org.dhallj.imports.{ImportCache, Resolver}
 import org.dhallj.parser.DhallParser
 
 import org.http4s.client._
-import org.http4s.client.blaze._
+import org.http4s.blaze.client._
 
 import scala.concurrent.ExecutionContext.global
 import scala.io.Source
@@ -25,7 +26,7 @@ class ImportResolutionSuite(val base: String)
 
     if (parsed.isResolved) parsed
     else {
-      implicit val cs: ContextShift[IO] = IO.contextShift(global)
+      implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
       val cache = initializeCache
       BlazeClientBuilder[IO](global).resource
         .use { client =>
@@ -37,6 +38,7 @@ class ImportResolutionSuite(val base: String)
   }
 
   private def initializeCache: ImportCache[IO] = {
+    implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
     val dir = Files.createTempDirectory("dhallj")
     val cache = ImportCache[IO](dir).unsafeRunSync().get
     Source

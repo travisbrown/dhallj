@@ -1,6 +1,7 @@
 package org.dhallj.tests.acceptance
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 import java.nio.file.{Path, Paths}
 
 import org.dhallj.core.Expr
@@ -9,7 +10,7 @@ import org.dhallj.parser.DhallParser
 
 import org.dhallj.imports.{ImportCache, Resolver}
 import org.http4s.client._
-import org.http4s.client.blaze._
+import org.http4s.blaze.client._
 
 import scala.concurrent.ExecutionContext
 
@@ -54,7 +55,7 @@ trait CachedResolvingInput extends Input[Expr] {
 
     if (parsed.isResolved) parsed
     else {
-      implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+      implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
       BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           implicit val c: Client[IO] = client
@@ -73,7 +74,7 @@ trait ResolvingInput extends Input[Expr] {
 
     if (parsed.isResolved) parsed
     else {
-      implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+      implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
       BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           implicit val c: Client[IO] = client

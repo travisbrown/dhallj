@@ -3,7 +3,7 @@ package org.dhallj.imports
 import java.nio.file.{Files, Path}
 
 import cats.effect.IO
-import cats.implicits._
+import cats.effect.unsafe.implicits.global
 import munit.FunSuite
 
 class ImportCacheSuite extends FunSuite {
