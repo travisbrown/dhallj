@@ -48,7 +48,7 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
 
   def onLet(bindings: JList[Expr.LetBinding[Code]], body: Code): Code = unsupported
 
-  private def escape(input: String): String = input.replace("\"", "\\\"")
+  private def escape(input: String): String = input.replace("\"", "\\\"").replace("\\\\", "\\\\\\\\")
 
   def onText(parts: Array[String], interpolated: JList[Code]): Code =
     if (parts.length == 1) {
