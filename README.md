@@ -14,20 +14,18 @@ into JVM build systems (see the [dhall-kubernetes] demonstration
 The core modules have no external dependencies, are Java 7-compatible, and are fairly minimal:
 
 ```bash
-$ du -h modules/core/target/dhall-core-0.4.1-SNAPSHOT.jar
-148K    modules/core/target/dhall-core-0.4.1-SNAPSHOT.jar
+$ du -h modules/core/target/dhall-core-0.9.0-M2.jar
+160K    modules/core/target/dhall-core-0.9.0-M2.jar
 
-$ du -h modules/parser/target/dhall-parser-0.4.1-SNAPSHOT.jar
-104K    modules/parser/target/dhall-parser-0.4.1-SNAPSHOT.jar
+$ du -h modules/parser/target/dhall-parser-0.9.0-M2.jar
+104K    modules/parser/target/dhall-parser-0.9.0-M2.jar
 ```
 
 There are also several [Scala][scala] modules that are published for Scala 2.12
 and 2.13. While most of the examples in this README are focused on Scala, you
 shouldn't need to know or care about Scala to use the core DhallJ modules.
 
-This project has been supported in part by [Permutive][permutive]. Please see our
-[monthly reports][permutive-medium] for updates on the work of the Permutive Community Engineering
-team.
+The initial development of this project was supported in part by [Permutive][permutive].
 
 ## Table of contents
 
@@ -43,10 +41,10 @@ team.
 
 ## Status
 
-The current release of this project supports [Dhall 17.0.0][dhall-17].
+The current release of this project supports [Dhall 20.2.0][dhall-20-2-0].
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization,
 [CBOR][cbor] encoding and decoding, hashing, and type inference, and
-currently all tests are passing.
+currently all tests are passing (with one exception; see the [0.9.0-M2 release notes for details](https://github.com/travisbrown/dhallj/releases/tag/v0.9.0-M2)).
 
 There are several known issues:
 
@@ -693,6 +691,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [circe]: https://github.com/circe/circe
 [code-of-conduct]: https://www.scala-lang.org/conduct/
 [dhall-17]: https://github.com/dhall-lang/dhall-lang/releases/tag/v17.0.0
+[dhall-20-2-0]: https://github.com/dhall-lang/dhall-lang/releases/tag/v20.2.0
 [dhall-haskell]: https://github.com/dhall-lang/dhall-haskell
 [dhall-imports]: https://github.com/dhall-lang/dhall-lang/blob/master/standard/imports.md
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
