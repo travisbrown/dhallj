@@ -7,7 +7,7 @@ import org.dhallj.core.Expr
 import org.dhallj.testing.instances._
 import org.scalacheck.Prop
 
-class ToStringSuite extends ScalaCheckSuite {
+class LiftVisitorSuite extends ScalaCheckSuite {
   property("LiftVisitor with no overrides is pure") {
     Prop.forAll { (expr: Expr) =>
       val lift = new LiftVisitor[Option](Applicative[Option])
