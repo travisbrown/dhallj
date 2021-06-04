@@ -21,8 +21,8 @@ $ du -h modules/parser/target/dhall-parser-0.9.0-M2.jar
 104K    modules/parser/target/dhall-parser-0.9.0-M2.jar
 ```
 
-There are also several [Scala][scala] modules that are published for Scala 2.12
-and 2.13. While most of the examples in this README are focused on Scala, you
+There are also several [Scala][scala] modules that are published for Scala 2.12,
+2.13, and 3.0. While most of the examples in this README are focused on Scala, you
 shouldn't need to know or care about Scala to use the core DhallJ modules.
 
 The initial development of this project was supported in part by [Permutive][permutive].
