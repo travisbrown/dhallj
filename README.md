@@ -62,7 +62,7 @@ The easiest way to try things out is to add the Scala wrapper module to your bui
 If you're using [sbt][sbt] that would look like this:
 
 ```scala
-libraryDependencies += "org.dhallj" %% "dhall-scala" % "0.4.0"
+libraryDependencies += "org.dhallj" %% "dhall-scala" % "0.9.0-M2"
 ```
 
 This dependency includes two packages: `org.dhallj.syntax` and `org.dhallj.ast`.
