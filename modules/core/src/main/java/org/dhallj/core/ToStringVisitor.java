@@ -188,13 +188,24 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
       Operator operator, ToStringState lhs, ToStringState rhs) {
     int operatorLevel = ToStringState.getOperatorLevel(operator);
 
-    return new ToStringState(
-        lhs.toString(operatorLevel)
-            + " "
-            + operator.toString()
-            + " "
-            + rhs.toString(operatorLevel + 1),
-        operatorLevel);
+    if (operatorLevel == ToStringState.COMPLETE) {
+      return new ToStringState(
+          lhs.toString(ToStringState.SELECTOR)
+              + " "
+              + operator.toString()
+              + " "
+              + rhs.toString(ToStringState.SELECTOR),
+          operatorLevel);
+
+    } else {
+      return new ToStringState(
+          lhs.toString(operatorLevel)
+              + " "
+              + operator.toString()
+              + " "
+              + rhs.toString(operatorLevel + 1),
+          operatorLevel);
+    }
   }
 
   public ToStringState onMissingImport(Expr.ImportMode mode, byte[] hash) {
