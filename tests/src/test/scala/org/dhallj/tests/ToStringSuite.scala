@@ -1,6 +1,6 @@
 package org.dhallj.tests
 
-import munit.{Ignore, ScalaCheckSuite, Slow}
+import munit.{ScalaCheckSuite, Slow}
 import org.dhallj.core.Expr
 import org.dhallj.parser.DhallParser
 import org.dhallj.testing.WellTypedExpr
@@ -12,7 +12,7 @@ class ToStringSuite extends ScalaCheckSuite() {
     Prop.forAll((expr: WellTypedExpr) => DhallParser.parse(clue(expr.value.toString)) == expr.value)
   }
 
-  property("toString produces parseable code".tag(Ignore)) {
+  property("toString produces parseable code") {
     Prop.forAll((expr: Expr) => DhallParser.parse(clue(expr.toString)) == expr)
   }
 
