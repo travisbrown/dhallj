@@ -138,7 +138,7 @@ HEX_DIGITS = {HEX_DIGIT}+
 EXPONENT = [Ee] {SIGN}? {DIGITS}
 
 ALPHA = [A-Za-z]
-QUOTED_LABEL = "`" ([\u0020-\u005f] | [\u0061-\u007e])+ "`"
+QUOTED_LABEL = "`" ([\u0020-\u005f] | [\u0061-\u007e])* "`"
 SIMPLE_LABEL = ({ALPHA} | "_") ({ALPHA} | [:digit:] | "_" | "-" | "/")*
 
 DOUBLE_LITERAL = ({SIGN}? {DIGITS} (("." {DIGITS} {EXPONENT}?) | {EXPONENT})) | ("-"? "Infinity") | "NaN"
