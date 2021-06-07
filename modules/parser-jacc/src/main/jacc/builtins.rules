@@ -33,6 +33,7 @@
 | "Natural/toInteger"
 | "Optional/build"
 | "Optional/fold"
+| "Text/replace"
 | "Text/show"
 {
   this.semantic = yytext();
