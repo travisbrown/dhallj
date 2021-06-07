@@ -381,25 +381,9 @@ list_entries
 
     for (Entry<List<String>, Expr> clause : (List<Entry<List<String>, Expr>>) clauses) {
       List<String> path = clause.getKey();
-
       Expr next = clause.getValue();
 
-      for (int i = path.size() - 1; i >= 0; i--) {
-        String pathPart = path.get(i);
-        Expr selector = current;
-
-        for (int j = 0; j < i; j++) {
-          selector = Expr.makeFieldAccess(selector, path.get(j));
-        }
-
-        next = Expr.makeOperatorApplication(
-          Operator.PREFER,
-          selector,
-          Expr.makeRecordLiteral(pathPart, next)
-        );
-      }
-
-      current = next;
+      current = Expr.makeWith(current, path.toArray(new String[path.size()]), next);
     }
 
     return current;
