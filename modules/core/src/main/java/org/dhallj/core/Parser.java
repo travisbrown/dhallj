@@ -50,11 +50,11 @@ public abstract class Parser {
 
     for (int i = 0; i < size; i += 1) {
       Entry<String, Expr> pair = pairs.get(i);
-      parts[i] = unescapeText(pair.getKey());
+      parts[i] = pair.getKey();
       interpolated[i] = pair.getValue();
     }
 
-    parts[size] = unescapeText(last);
+    parts[size] = last;
 
     dedentLines(parts);
     return Expr.makeTextLiteral(parts, interpolated);
@@ -195,6 +195,6 @@ public abstract class Parser {
   }
 
   private static final String escapeText(String input) {
-    return input.replace("\\", "\\\\").replace("\n", "\\n");
+    return input.replace("\\", "\\\\").replace("\n", "\\n").replace("\t", "\\t");
   }
 }
