@@ -31,7 +31,7 @@ class ToStringSuite extends ScalaCheckSuite() {
     Prop.forAll { (expr: Expr) =>
       val asString = expr.toString
 
-      DhallParser.parse(clue(expr.toString)) == expr && removeParentheses(asString).forall { smaller =>
+      removeParentheses(asString).forall { smaller =>
         !Try(DhallParser.parse(smaller)).toOption.exists(_ == expr)
       }
     }
