@@ -229,6 +229,10 @@ selector_expr
     List<String> fields = (List<String>) $4;
     $$ = Expr.makeProjection($1, fields.toArray(new String[fields.size()]));
   }
+  | selector_expr DOT BRACE_OPEN labels COMMA BRACE_CLOSE {
+    List<String> fields = (List<String>) $4;
+    $$ = Expr.makeProjection($1, fields.toArray(new String[fields.size()]));
+  }
   | selector_expr DOT PARENS_OPEN base_expr PARENS_CLOSE { $$ = Expr.makeProjectionByType($1, $4); }
   ;
 
@@ -245,17 +249,27 @@ primitive_expr
   | text_literal
   | BRACE_OPEN COMMA BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_TYPE; }
   | BRACE_OPEN BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_TYPE; }
+  | BRACE_OPEN COMMA EQUALS_SIGN COMMA BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
   | BRACE_OPEN COMMA EQUALS_SIGN BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
+  | BRACE_OPEN EQUALS_SIGN COMMA BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
   | BRACE_OPEN EQUALS_SIGN BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
   | ANGLE_OPEN BAR ANGLE_CLOSE { $$ = Expr.Constants.EMPTY_UNION_TYPE; }
   | ANGLE_OPEN ANGLE_CLOSE { $$ = Expr.Constants.EMPTY_UNION_TYPE; }
+  | BRACE_OPEN COMMA record_type_fields COMMA BRACE_CLOSE { $$ = makeRecordType($3); }
   | BRACE_OPEN COMMA record_type_fields BRACE_CLOSE { $$ = makeRecordType($3); }
+  | BRACE_OPEN record_type_fields COMMA BRACE_CLOSE { $$ = makeRecordType($2); }
   | BRACE_OPEN record_type_fields BRACE_CLOSE { $$ = makeRecordType($2); }
+  | BRACE_OPEN COMMA record_literal_fields COMMA BRACE_CLOSE { $$ = makeRecordLiteral($3); }
   | BRACE_OPEN COMMA record_literal_fields BRACE_CLOSE { $$ = makeRecordLiteral($3); }
+  | BRACE_OPEN record_literal_fields COMMA BRACE_CLOSE { $$ = makeRecordLiteral($2); }
   | BRACE_OPEN record_literal_fields BRACE_CLOSE { $$ = makeRecordLiteral($2); }
+  | ANGLE_OPEN BAR union_type_fields BAR ANGLE_CLOSE { $$ = makeUnionType($3); }
   | ANGLE_OPEN BAR union_type_fields ANGLE_CLOSE { $$ = makeUnionType($3); }
+  | ANGLE_OPEN union_type_fields BAR ANGLE_CLOSE { $$ = makeUnionType($2); }
   | ANGLE_OPEN union_type_fields ANGLE_CLOSE { $$ = makeUnionType($2); }
+  | BRACKET_OPEN COMMA list_entries COMMA BRACKET_CLOSE { $$ = makeNonEmptyList($3); }
   | BRACKET_OPEN COMMA list_entries BRACKET_CLOSE { $$ = makeNonEmptyList($3); }
+  | BRACKET_OPEN list_entries COMMA BRACKET_CLOSE { $$ = makeNonEmptyList($2); }
   | BRACKET_OPEN list_entries BRACKET_CLOSE { $$ = makeNonEmptyList($2); }
   | identifier
   | BUILT_IN { $$ = Expr.makeBuiltIn($1); }
