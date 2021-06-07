@@ -18,6 +18,7 @@ ThisBuild / githubWorkflowBuild := Seq(
     List(
       "clean",
       "javacc",
+      "parserJacc/jacc",
       "coverage",
       "scalastyle",
       "scalafmtCheckAll",
@@ -351,7 +352,7 @@ lazy val benchmarks = project
     mimaPreviousArtifacts := Set.empty
   )
   .enablePlugins(JmhPlugin)
-  .dependsOn(core, parser, prelude)
+  .dependsOn(core, parserJacc, prelude)
 
 lazy val publishSettings = Seq(
   releaseCrossBuild := true,
