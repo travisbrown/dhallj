@@ -28,7 +28,7 @@ import org.dhallj.core.Parser;
 %interface ParserTokens
 
 %semantic Object
-%type <Expr> base_expr lambda_expr if_expr let_expr forall_expr
+%type <Expr> top_level base_expr lambda_expr if_expr let_expr forall_expr
   identifier empty_list_literal import_expr
   assert_expr operator_expr annotated_expr application_expr
   primitive_expr text_literal import_or_completion_expr first_application_expr selector_expr
@@ -44,7 +44,7 @@ import org.dhallj.core.Parser;
 %type <Entry<String, Expr>> record_type_field union_type_field import_type
 %type <Expr.LetBinding<Expr>> let_binding
 
-%start base_expr
+%start top_level
 
 %token <String>
   IF THEN ELSE LET IN AS USING MERGE MISSING SOME TO_MAP ASSERT FORALL WITH TEXT LOCATION
@@ -62,6 +62,7 @@ import org.dhallj.core.Parser;
   LAMBDA ARROW COMPLETE
   OR AND EQUALS NOT_EQUALS PLUS TIMES TEXT_APPEND LIST_APPEND COMBINE PREFER COMBINE_TYPES IMPORT_ALT EQUIVALENT
   SHA256_HASH ENV HTTP LOCAL CLASSPATH
+  SHEBANG
 
 %left COMPLETE
 %left EQUIVALENT
@@ -91,6 +92,11 @@ identifier
 
     $$ = Expr.makeIdentifier($1, indexValue);
   }
+  ;
+
+top_level
+  : SHEBANG top_level { $$ = $2; }
+  | base_expr
   ;
 
 base_expr

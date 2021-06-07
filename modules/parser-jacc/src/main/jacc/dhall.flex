@@ -100,6 +100,8 @@ LINE_COMMENT_START = "--"
 LINE_COMMENT_CHAR = [\u0020-\u007f] | \t | {VALID_NON_ASCII}
 LINE_COMMENT = {LINE_COMMENT_START} {LINE_COMMENT_CHAR}* {END_OF_LINE}
 
+SHEBANG = "#!" {LINE_COMMENT_CHAR}* {END_OF_LINE}
+
 WHSP_CHUNK = [ \t] | {END_OF_LINE}
 VALID_NON_ASCII
   = [\u0080-\ud7ff] | [\ue000-\ufffd]
@@ -184,6 +186,7 @@ HOST = {DOMAIN} | {IPV4} | ("[" ({IPV6} | {IPVFUTURE}) "]")
 %include paths.macros
 
 %%
+{SHEBANG} { this.whitespaceHandler.onLineComment(this.yytext(), this.yychar); return SHEBANG; }
 {WHSP_CHUNK}+ { this.whitespaceHandler.onWhitespace(this.yytext(), this.yychar); }
 {LINE_COMMENT} { this.whitespaceHandler.onLineComment(this.yytext(), this.yychar); }
 {BLOCK_COMMENT_START} { this.startBlockComment(); }
