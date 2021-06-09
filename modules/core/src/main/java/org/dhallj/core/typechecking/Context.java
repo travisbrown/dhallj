@@ -2,7 +2,7 @@ package org.dhallj.core.typechecking;
 
 import org.dhallj.core.Expr;
 
-public final class Context {
+final class Context {
   private final String key;
   private final Expr value;
   private final Context tail;
