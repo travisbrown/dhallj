@@ -8,6 +8,6 @@ package object syntax {
   }
 
   implicit final class DhallCodecExprOps(val expr: Expr) extends AnyVal {
-    def as[A: Decoder]: Decoder.Result[A] = Decoder[A].decode(expr)
+    def as[A: Decoder]: Decoder.Result[A] = Decoder[A].decode(HCursor.fromExpr(expr))
   }
 }
