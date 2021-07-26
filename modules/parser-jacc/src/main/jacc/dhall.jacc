@@ -1,0 +1,509 @@
+%{
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import org.dhallj.core.DhallException.ParsingFailure;
+import org.dhallj.core.Expr;
+import org.dhallj.core.Operator;
+import org.dhallj.core.Parser;
+%}
+
+%package org.dhallj.parser
+
+%class JaccParser
+%interface ParserTokens
+
+%semantic Object
+%type <Expr> top_level base_expr lambda_expr if_expr let_expr forall_expr
+  identifier empty_list_literal import_expr
+  assert_expr operator_expr annotated_expr application_expr
+  primitive_expr text_literal import_or_completion_expr first_application_expr selector_expr
+%type <String> label any_label_or_some name_binding import_mode
+%type <List<String>> labels with_path record_literal_field_dotted_label
+%type <List<Expr>> list_entries
+
+%type <List<Expr.LetBinding<Expr>>> let_bindings
+%type <List<Entry<List<String>, Expr>>> record_literal_fields with_clauses
+%type <List<Entry<String, Expr>>> record_type_fields union_type_fields quote_pairs
+
+%type <Entry<List<String>, Expr>> record_literal_field with_clause
+%type <Entry<String, Expr>> record_type_field union_type_field import_type
+%type <Expr.LetBinding<Expr>> let_binding
+
+%start top_level
+
+%token <String>
+  IF THEN ELSE LET IN AS USING MERGE MISSING SOME TO_MAP ASSERT FORALL WITH TEXT LOCATION
+  BUILT_IN
+  DOUBLE_LITERAL NATURAL_LITERAL INTEGER_LITERAL LABEL
+  INTERPOLATION_START
+  DOUBLE_QUOTE_MARK
+  SINGLE_QUOTE_START SINGLE_QUOTE_END SINGLE_QUOTE_ESCAPED_PAIR SINGLE_QUOTE_ESCAPED_INTERPOLATION SINGLE_QUOTE_CHAR
+  BRACE_OPEN BRACE_CLOSE
+  ANGLE_OPEN ANGLE_CLOSE
+  PARENS_OPEN PARENS_CLOSE
+  BRACKET_OPEN BRACKET_CLOSE
+  DOT COLON COMMA BAR
+  EQUALS_SIGN AT_SIGN
+  LAMBDA ARROW COMPLETE
+  OR AND EQUALS NOT_EQUALS PLUS TIMES TEXT_APPEND LIST_APPEND COMBINE PREFER COMBINE_TYPES IMPORT_ALT EQUIVALENT
+  SHA256_HASH ENV HTTP LOCAL CLASSPATH
+  SHEBANG
+
+%left COMPLETE
+%left EQUIVALENT
+%left IMPORT_ALT
+%left OR
+%left PLUS
+%left TEXT_APPEND
+%left LIST_APPEND
+%left AND
+%left COMBINE
+%left PREFER
+%left COMBINE_TYPES
+%left TIMES
+%left EQUALS
+%left NOT_EQUALS
+
+%%
+
+label : LABEL | BUILT_IN;
+any_label_or_some : LABEL | TEXT | LOCATION | BUILT_IN | SOME;
+name_binding : LABEL | LOCATION;
+
+identifier
+  : name_binding { $$ = Expr.makeIdentifier($1); }
+  | name_binding AT_SIGN NATURAL_LITERAL {
+    long indexValue = Parser.parseBigInteger($3).longValue();
+
+    $$ = Expr.makeIdentifier($1, indexValue);
+  }
+  ;
+
+top_level
+  : SHEBANG top_level { $$ = $2; }
+  | base_expr
+  ;
+
+base_expr
+  : lambda_expr
+  | if_expr
+  | let_expr
+  | forall_expr
+  | operator_expr ARROW base_expr { $$ = Expr.makePi($1, $3); }
+  | import_or_completion_expr with_clauses { $$ = makeWith($1, $2); }
+  | MERGE import_or_completion_expr import_or_completion_expr COLON application_expr {
+    $$ = Expr.makeMerge($2, $3, $5);
+  }
+  | empty_list_literal
+  | TO_MAP import_or_completion_expr COLON application_expr {
+    $$ = Expr.makeToMap($2, $4);
+  }
+  | assert_expr
+  | operator_expr
+  | annotated_expr
+  ;
+
+lambda_expr
+  : LAMBDA PARENS_OPEN name_binding
+    COLON base_expr PARENS_CLOSE ARROW base_expr { $$ = Expr.makeLambda($3, $5, $8); };
+
+if_expr : IF base_expr THEN base_expr ELSE base_expr { $$ = Expr.makeIf($2, $4, $6); };
+
+let_expr : let_bindings IN base_expr { $$ = Expr.makeLet($1, $3); };
+
+let_bindings
+  : let_bindings let_binding {
+    $1.add($2);
+    $$ = $1;
+  }
+  | let_binding {
+    List<Expr.LetBinding<Expr>> bindings = new ArrayList<>();
+    bindings.add($1);
+    $$ = bindings;
+  }
+  ;
+
+let_binding
+  : LET name_binding EQUALS_SIGN base_expr { $$ = new Expr.LetBinding<Expr>($2, null, $4); }
+  | LET name_binding COLON base_expr EQUALS_SIGN base_expr { $$ = new Expr.LetBinding<Expr>($2, $4, $6); }
+  ;
+
+forall_expr
+  : FORALL PARENS_OPEN name_binding COLON base_expr PARENS_CLOSE ARROW base_expr {
+    $$ = Expr.makePi($3, $5, $8);
+  }
+  ;
+
+with_clauses
+  : with_clauses WITH with_clause { $1.add($3); $$ = $1; }
+  | WITH with_clause {
+    List<Entry<List<String>, Expr>> clauses = new ArrayList<>();
+    clauses.add($2);
+    $$ = clauses;
+  }
+  ;
+
+with_clause : with_path EQUALS_SIGN operator_expr { $$ = new SimpleImmutableEntry<>($1, $3); };
+
+with_path
+  : with_path DOT any_label_or_some { $1.add($3); $$ = $1; }
+  | any_label_or_some { List<String> path = new ArrayList<>(); path.add($1); $$ = path; }
+  ;
+
+assert_expr : ASSERT COLON base_expr { $$ = Expr.makeAssert($3); };
+
+empty_list_literal
+  : BRACKET_OPEN COMMA BRACKET_CLOSE COLON application_expr { $$ = Expr.makeEmptyListLiteral($5); }
+  | BRACKET_OPEN BRACKET_CLOSE COLON application_expr { $$ = Expr.makeEmptyListLiteral($4); }
+  ;
+
+annotated_expr : operator_expr COLON base_expr { $$ = Expr.makeAnnotated($1, $3); };
+
+operator_expr
+  : operator_expr EQUIVALENT operator_expr { $$ = Expr.makeOperatorApplication(Operator.EQUIVALENT, $1, $3); }
+  | operator_expr IMPORT_ALT operator_expr { $$ = Expr.makeOperatorApplication(Operator.IMPORT_ALT, $1, $3); }
+  | operator_expr OR operator_expr { $$ = Expr.makeOperatorApplication(Operator.OR, $1, $3); }
+  | operator_expr PLUS operator_expr { $$ = Expr.makeOperatorApplication(Operator.PLUS, $1, $3); }
+  | operator_expr TEXT_APPEND operator_expr { $$ = Expr.makeOperatorApplication(Operator.TEXT_APPEND, $1, $3); }
+  | operator_expr LIST_APPEND operator_expr { $$ = Expr.makeOperatorApplication(Operator.LIST_APPEND, $1, $3); }
+  | operator_expr AND operator_expr { $$ = Expr.makeOperatorApplication(Operator.AND, $1, $3); }
+  | operator_expr COMBINE operator_expr { $$ = Expr.makeOperatorApplication(Operator.COMBINE, $1, $3); }
+  | operator_expr PREFER operator_expr { $$ = Expr.makeOperatorApplication(Operator.PREFER, $1, $3); }
+  | operator_expr COMBINE_TYPES operator_expr { $$ = Expr.makeOperatorApplication(Operator.COMBINE_TYPES, $1, $3); }
+  | operator_expr TIMES operator_expr { $$ = Expr.makeOperatorApplication(Operator.TIMES, $1, $3); }
+  | operator_expr EQUALS operator_expr { $$ = Expr.makeOperatorApplication(Operator.EQUALS, $1, $3); }
+  | operator_expr NOT_EQUALS operator_expr { $$ = Expr.makeOperatorApplication(Operator.NOT_EQUALS, $1, $3); }
+  | application_expr
+  ;
+
+application_expr
+  : first_application_expr
+  | application_expr import_or_completion_expr { $$ = Expr.makeApplication($1, $2); }
+  ;
+
+first_application_expr
+  : MERGE import_or_completion_expr import_or_completion_expr { $$ = Expr.makeMerge($2, $3); }
+  | SOME import_or_completion_expr { $$ = Expr.makeApplication(Expr.Constants.SOME, $2); }
+  | TO_MAP import_or_completion_expr { $$ = Expr.makeToMap($2); }
+  | import_or_completion_expr
+  ;
+
+import_or_completion_expr : import_expr | completion_expr;
+
+import_type
+  : MISSING { $$ = new SimpleImmutableEntry<String, Expr>($1, null); }
+  | LOCAL { $$ = new SimpleImmutableEntry<String, Expr>($1, null); }
+  | HTTP { $$ = new SimpleImmutableEntry<String, Expr>($1, null); }
+  | HTTP USING import_or_completion_expr { $$ = new SimpleImmutableEntry<String, Expr>($1, $3); }
+  | ENV { $$ = new SimpleImmutableEntry<String, Expr>($1, null); }
+  | CLASSPATH { $$ = new SimpleImmutableEntry<String, Expr>($1, null); }
+  ;
+
+import_mode : TEXT | LOCATION;
+
+import_expr
+  : import_type { $$ = makeImport($1, null, null); }
+  | import_type AS import_mode { $$ = makeImport($1, null, $3); }
+  | import_type SHA256_HASH { $$ = makeImport($1, $2, null); }
+  | import_type SHA256_HASH AS import_mode { $$ = makeImport($1, $2, $4); }
+  ;
+
+completion_expr
+  : selector_expr
+  | selector_expr COMPLETE selector_expr { $$ = Expr.makeOperatorApplication(Operator.COMPLETE, $1, $3); }
+  ;
+
+selector_expr
+  : primitive_expr
+  | selector_expr DOT label { $$ = Expr.makeFieldAccess($1, $3); }
+  | selector_expr DOT BRACE_OPEN labels BRACE_CLOSE {
+    List<String> fields = (List<String>) $4;
+    $$ = Expr.makeProjection($1, fields.toArray(new String[fields.size()]));
+  }
+  | selector_expr DOT BRACE_OPEN labels COMMA BRACE_CLOSE {
+    List<String> fields = (List<String>) $4;
+    $$ = Expr.makeProjection($1, fields.toArray(new String[fields.size()]));
+  }
+  | selector_expr DOT PARENS_OPEN base_expr PARENS_CLOSE { $$ = Expr.makeProjectionByType($1, $4); }
+  ;
+
+labels
+  : labels COMMA any_label_or_some { $1.add($3); $$ = $1;  }
+  | any_label_or_some { List<String> fields = new ArrayList<String>(); fields.add($1); $$ = fields; }
+  | { $$ = new ArrayList<String>(); }
+  ;
+
+primitive_expr
+  : DOUBLE_LITERAL { $$ = Expr.makeDoubleLiteral(Double.parseDouble($1)); }
+  | NATURAL_LITERAL { $$ = Expr.makeNaturalLiteral(Parser.parseBigInteger($1)); }
+  | INTEGER_LITERAL { $$ = Expr.makeIntegerLiteral(Parser.parseBigInteger($1)); }
+  | text_literal
+  | BRACE_OPEN COMMA BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_TYPE; }
+  | BRACE_OPEN BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_TYPE; }
+  | BRACE_OPEN COMMA EQUALS_SIGN COMMA BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
+  | BRACE_OPEN COMMA EQUALS_SIGN BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
+  | BRACE_OPEN EQUALS_SIGN COMMA BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
+  | BRACE_OPEN EQUALS_SIGN BRACE_CLOSE { $$ = Expr.Constants.EMPTY_RECORD_LITERAL; }
+  | ANGLE_OPEN BAR ANGLE_CLOSE { $$ = Expr.Constants.EMPTY_UNION_TYPE; }
+  | ANGLE_OPEN ANGLE_CLOSE { $$ = Expr.Constants.EMPTY_UNION_TYPE; }
+  | BRACE_OPEN COMMA record_type_fields COMMA BRACE_CLOSE { $$ = makeRecordType($3); }
+  | BRACE_OPEN COMMA record_type_fields BRACE_CLOSE { $$ = makeRecordType($3); }
+  | BRACE_OPEN record_type_fields COMMA BRACE_CLOSE { $$ = makeRecordType($2); }
+  | BRACE_OPEN record_type_fields BRACE_CLOSE { $$ = makeRecordType($2); }
+  | BRACE_OPEN COMMA record_literal_fields COMMA BRACE_CLOSE { $$ = makeRecordLiteral($3); }
+  | BRACE_OPEN COMMA record_literal_fields BRACE_CLOSE { $$ = makeRecordLiteral($3); }
+  | BRACE_OPEN record_literal_fields COMMA BRACE_CLOSE { $$ = makeRecordLiteral($2); }
+  | BRACE_OPEN record_literal_fields BRACE_CLOSE { $$ = makeRecordLiteral($2); }
+  | ANGLE_OPEN BAR union_type_fields BAR ANGLE_CLOSE { $$ = makeUnionType($3); }
+  | ANGLE_OPEN BAR union_type_fields ANGLE_CLOSE { $$ = makeUnionType($3); }
+  | ANGLE_OPEN union_type_fields BAR ANGLE_CLOSE { $$ = makeUnionType($2); }
+  | ANGLE_OPEN union_type_fields ANGLE_CLOSE { $$ = makeUnionType($2); }
+  | BRACKET_OPEN COMMA list_entries COMMA BRACKET_CLOSE { $$ = makeNonEmptyList($3); }
+  | BRACKET_OPEN COMMA list_entries BRACKET_CLOSE { $$ = makeNonEmptyList($3); }
+  | BRACKET_OPEN list_entries COMMA BRACKET_CLOSE { $$ = makeNonEmptyList($2); }
+  | BRACKET_OPEN list_entries BRACKET_CLOSE { $$ = makeNonEmptyList($2); }
+  | identifier
+  | BUILT_IN { $$ = Expr.makeBuiltIn($1); }
+  | TEXT { $$ = Expr.makeBuiltIn($1); }
+  | PARENS_OPEN base_expr PARENS_CLOSE { $$ = $2; }
+  ;
+
+text_literal
+  : DOUBLE_QUOTE_MARK quote_pairs DOUBLE_QUOTE_MARK { $$ = Parser.makeTextLiteral($2, $3); }
+  | SINGLE_QUOTE_START quote_pairs SINGLE_QUOTE_END { $$ = Parser.makeSingleQuotedTextLiteral($2, $3); }
+  ;
+
+quote_pairs
+  : quote_pairs INTERPOLATION_START base_expr BRACE_CLOSE { $1.add(new SimpleImmutableEntry<String, Expr>($2, $3)); $$ = $1; }
+  | { $$ = new ArrayList<Entry<String, Expr>>(); }
+  ;
+
+record_type_fields
+  : record_type_fields COMMA record_type_field {
+    $1.add($3);
+    $$ = $1;
+  }
+  | record_type_field
+  {
+    List<Entry<String, Expr>> fields = new ArrayList<>();
+    fields.add($1);
+    $$ = fields;
+  }
+  ;
+
+record_type_field
+  : any_label_or_some COLON base_expr { $$ = new SimpleImmutableEntry<>($1, $3); }
+  ;
+
+union_type_fields
+  : union_type_fields BAR union_type_field {
+    $1.add($3);
+    $$ = $1;
+  }
+  | union_type_field
+  {
+    List<Entry<String, Expr>> fields = new ArrayList<>();
+    fields.add($1);
+    $$ = fields;
+  }
+  ;
+
+union_type_field
+  : any_label_or_some COLON base_expr { $$ = new SimpleImmutableEntry<String, Expr>($1, $3); }
+  | any_label_or_some { $$ = new SimpleImmutableEntry<String, Expr>($1, null); }
+  ;
+
+record_literal_fields
+  : record_literal_fields COMMA record_literal_field {
+    $1.add($3);
+    $$ = $1;
+  }
+  | record_literal_field
+  {
+    List<Entry<List<String>, Expr>> fields = new ArrayList<>();
+    fields.add($1);
+    $$ = fields;
+  }
+  ;
+
+record_literal_field
+  : record_literal_field_dotted_label EQUALS_SIGN base_expr {
+    $$ = new SimpleImmutableEntry<List<String>, Expr>($1, $3);
+  }
+  | any_label_or_some {
+    List<String> parts = new ArrayList<>();
+    parts.add($1);
+    $$ = new SimpleImmutableEntry<List<String>, Expr>(parts, null);
+  }
+  ;
+
+record_literal_field_dotted_label
+  : record_literal_field_dotted_label DOT any_label_or_some {
+    $1.add($3);
+    $$ = $1;
+  }
+  | any_label_or_some {
+    List<String> parts = new ArrayList<>();
+    parts.add($1);
+    $$ = parts;
+  }
+  ;
+
+list_entries
+  : list_entries COMMA base_expr { $1.add($3); $$ = $1; }
+  | base_expr { List<Expr> entries = new ArrayList<>(); entries.add($1); $$ = entries; }
+  ;
+
+%%
+  private final Lexer lexer;
+
+  public JaccParser(Reader reader) {
+    this.lexer = new Lexer(reader);
+  }
+
+  public void yyerror(String error) {
+    System.err.println("Error: " + error);
+  }
+
+  public static Expr parse(String input) {
+    JaccParser parser = new JaccParser(new StringReader(input));
+
+    parser.lexer.nextToken();
+    parser.parse();
+    return (Expr) parser.yyrv;
+  }
+
+  public static Expr parse(InputStream stream) {
+    JaccParser parser = new JaccParser(new InputStreamReader(stream));
+
+    parser.lexer.nextToken();
+    parser.parse();
+    return (Expr) parser.yyrv;
+  }
+
+  private final static Expr makeWith(Expr base, List clauses) {
+    Expr current = base;
+
+    for (Entry<List<String>, Expr> clause : (List<Entry<List<String>, Expr>>) clauses) {
+      List<String> path = clause.getKey();
+      Expr next = clause.getValue();
+
+      current = Expr.makeWith(current, path.toArray(new String[path.size()]), next);
+    }
+
+    return current;
+  }
+
+  private final static Expr makeImport(Entry<String, Expr> typeWithUsing, String hash, String mode) {
+    String type = typeWithUsing.getKey();
+    Expr using = typeWithUsing.getValue();
+
+    byte[] hashValue = (hash == null) ? null : Expr.Util.decodeHashBytes(hash.substring(7));
+
+    Expr.ImportMode modeValue = (mode == null)
+      ? Expr.ImportMode.CODE
+      : (mode.equals("Text") ? Expr.ImportMode.RAW_TEXT : Expr.ImportMode.LOCATION);
+
+    if (type.equals("missing")) {
+      return Expr.makeMissingImport(modeValue, hashValue);
+    } else if (type.startsWith("http")) {
+      try {
+        return Expr.makeRemoteImport(new URI(type), using, modeValue, hashValue);
+      } catch (URISyntaxException e) {
+        throw new ParsingFailure("Invalid URL", e);
+      }
+    } else if (type.startsWith("env:")) {
+      return Expr.makeEnvImport(type.substring(4), modeValue, hashValue);
+    } else if (type.startsWith("classpath:")) {
+      return Expr.makeClasspathImport(Paths.get(type.substring(10)), modeValue, hashValue);
+    } else {
+      try {
+        return Expr.makeLocalImport(Paths.get(type), modeValue, hashValue);
+      } catch (InvalidPathException e) {
+        throw new ParsingFailure("Invalid path", e);
+      }
+    }
+  }
+
+  private final static Expr makeNonEmptyList(List<Expr> entries) {
+    return Expr.makeNonEmptyListLiteral(entries.toArray(new Expr[entries.size()]));
+  }
+
+  private final static Expr makeRecordType(List<Entry<String, Expr>> fields) {
+    return Expr.makeRecordType(fields.toArray(new Entry[fields.size()]));
+  }
+
+  private final static Expr makeUnionType(List<Entry<String, Expr>> fields) {
+    return Expr.makeUnionType(fields.toArray(new Entry[fields.size()]));
+  }
+
+  private static final Expr makeRecordLiteral(List<Entry<List<String>, Expr>> fields) {
+    List<Entry<String, Expr>> dedotted = new ArrayList<>(fields.size());
+
+    for (Entry<List<String>, Expr> entry : fields) {
+      List<String> parts = entry.getKey();
+      String firstPart = parts.remove(0);
+
+      Expr maybePunnedValue = entry.getValue();
+      Expr value;
+      if (maybePunnedValue == null) {
+        // Record puns can't be dotted.
+        value = Expr.makeIdentifier(firstPart);
+      } else {
+        value = maybePunnedValue;
+      }
+
+      if (parts.isEmpty()) {
+        dedotted.add(new SimpleImmutableEntry<>(firstPart, value));
+      } else {
+        Collections.reverse(parts);
+        Expr current = value;
+
+        for (String part : parts) {
+          current = Expr.makeRecordLiteral(part, current);
+        }
+        dedotted.add(new SimpleImmutableEntry<>(firstPart, current));
+      }
+    }
+
+    List<Entry<String, Expr>> desugared = new ArrayList<>(dedotted.size());
+    Set<String> seen = new HashSet<>();
+
+    for (int i = 0; i < dedotted.size(); i++) {
+      Entry<String, Expr> entry = dedotted.get(i);
+      String key = entry.getKey();
+
+      if (!seen.contains(key)) {
+        Expr current = entry.getValue();
+
+        for (int j = i + 1; j < dedotted.size(); j++) {
+          Entry<String, Expr> other = dedotted.get(j);
+
+          if (other.getKey().equals(entry.getKey())) {
+            current = Expr.makeOperatorApplication(Operator.COMBINE, current, other.getValue());
+          }
+        }
+
+        desugared.add(new SimpleImmutableEntry<>(key, current));
+
+        seen.add(key);
+      }
+    }
+
+    return Expr.makeRecordLiteral(desugared);
+  }

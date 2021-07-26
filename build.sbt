@@ -18,6 +18,7 @@ ThisBuild / githubWorkflowBuild := Seq(
     List(
       "clean",
       "javacc",
+      "parserJacc/jacc",
       "coverage",
       "scalastyle",
       "scalafmtCheckAll",
@@ -165,6 +166,17 @@ lazy val core = project
     description := "DhallJ core"
   )
 
+lazy val parserJacc = project
+  .in(file("modules/parser-jacc"))
+  .settings(baseSettings ++ javaSettings ++ publishSettings)
+  .settings(
+    moduleName := "dhall-parser-jacc",
+    name := "dhall-parser-jacc",
+    description := "DhallJ parser"
+  )
+  .enablePlugins(JaccPlugin)
+  .dependsOn(core)
+
 lazy val parser = project
   .in(file("modules/parser"))
   .settings(baseSettings ++ javaSettings ++ publishSettings)
@@ -249,7 +261,7 @@ lazy val scala = project
   .in(file("modules/scala"))
   .settings(baseSettings ++ scalaSettings ++ publishSettings)
   .settings(moduleName := "dhall-scala", name := "dhall-scala", description := "DhallJ Scala wrapper")
-  .dependsOn(ast, parser, importsMini)
+  .dependsOn(ast, parserJacc, importsMini)
 
 lazy val codec = project
   .in(file("modules/scala-codec"))
@@ -299,7 +311,7 @@ lazy val imports = project
   .settings(
     libraryDependencies ++= http4sDependencies :+ (http4sBlazeClient % Test)
   )
-  .dependsOn(parser, cats)
+  .dependsOn(parserJacc, cats)
 
 lazy val importsMini = project
   .in(file("modules/imports-mini"))
@@ -309,7 +321,7 @@ lazy val importsMini = project
     name := "dhall-imports-mini",
     description := "DhallJ import resolution for Java"
   )
-  .dependsOn(parser, core)
+  .dependsOn(parserJacc, core)
 
 lazy val Slow = config("slow").extend(Test)
 
@@ -340,7 +352,7 @@ lazy val benchmarks = project
     mimaPreviousArtifacts := Set.empty
   )
   .enablePlugins(JmhPlugin)
-  .dependsOn(core, parser, prelude)
+  .dependsOn(core, parserJacc, prelude)
 
 lazy val publishSettings = Seq(
   releaseCrossBuild := true,
