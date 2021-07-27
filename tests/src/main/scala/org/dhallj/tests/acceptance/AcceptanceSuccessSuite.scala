@@ -2,7 +2,7 @@ package org.dhallj.tests.acceptance
 
 import cats.effect.IO
 import cats.effect.unsafe.IORuntime
-import java.nio.file.{Path, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
@@ -50,8 +50,7 @@ trait ParsingInput extends Input[Expr] {
 trait CachedResolvingInput extends Input[Expr] {
 
   override def parseInput(path: String, input: String): Expr = {
-    //TODO this should only be for import tests (I think)
-    val parsed = DhallParser.parse(s"./$path")
+    val parsed = DhallParser.parse(new String(Files.readAllBytes(Paths.get(path))))
 
     if (parsed.isResolved) parsed
     else {
@@ -69,8 +68,7 @@ trait CachedResolvingInput extends Input[Expr] {
 
 trait ResolvingInput extends Input[Expr] {
   def parseInput(path: String, input: String): Expr = {
-    //TODO this should only be for import tests (I think)
-    val parsed = DhallParser.parse(s"./$path")
+    val parsed = DhallParser.parse(new String(Files.readAllBytes(Paths.get(path))))
 
     if (parsed.isResolved) parsed
     else {
