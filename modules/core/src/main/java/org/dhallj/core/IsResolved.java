@@ -7,6 +7,15 @@ final class IsResolved extends Visitor.Property {
   public static final Visitor<Boolean> instance = new IsResolved();
 
   @Override
+  public Boolean onOperatorApplication(Operator operator, Boolean lhs, Boolean rhs) {
+    if (operator.equals(Operator.IMPORT_ALT)) {
+      return false;
+    } else {
+      return super.onOperatorApplication(operator, lhs, rhs);
+    }
+  }
+
+  @Override
   public Boolean onLocalImport(Path path, Expr.ImportMode mode, byte[] hash) {
     return false;
   }
