@@ -110,10 +110,11 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
             case _ =>
               for {
                 e <- loadWithSemiSemanticCache(imp, mode, hash)
-                bs = e.alphaNormalize.getEncodedBytes
+                n = e.normalize.alphaNormalize
+                bs = n.getEncodedBytes
                 _ <- checkHashesMatch(bs, hash)
                 _ <- semanticCache.put(hash, bs)
-              } yield e
+              } yield n
           }
         } yield e
 
