@@ -32,7 +32,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
 )(implicit
   Client: Client[F],
   F: Async[F]
-) extends LiftVisitor[F](F) {
+) extends LiftVisitor[F](F, true) {
   def this(
     semanticCache: ImportCache[F],
     semiSemanticCache: ImportCache[F],
