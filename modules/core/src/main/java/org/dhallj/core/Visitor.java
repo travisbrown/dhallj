@@ -496,12 +496,16 @@ public interface Visitor<A> {
     }
 
     public Boolean onLet(List<Expr.LetBinding<Boolean>> bindings, Boolean body) {
-      for (Expr.LetBinding<Boolean> binding : bindings) {
-        if (!binding.getValue() || (binding.hasType() && !binding.getType())) {
-          return false;
+      if (!body) {
+        return false;
+      } else {
+        for (Expr.LetBinding<Boolean> binding : bindings) {
+          if (!binding.getValue() || (binding.hasType() && !binding.getType())) {
+            return false;
+          }
         }
+        return true;
       }
-      return true;
     }
 
     public Boolean onText(String[] parts, List<Boolean> interpolated) {
