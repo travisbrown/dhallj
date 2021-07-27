@@ -8,7 +8,7 @@ import org.http4s.client.Client
 
 object Resolver {
   def resolve[F[_] <: AnyRef](expr: Expr)(implicit Client: Client[F], F: Async[F]): F[Expr] =
-    F.flatMap(ResolveImportsVisitor[F](cwd))(expr.accept(_))
+    resolveRelativeTo[F](cwd)(expr)
 
   def resolveRelativeTo[F[_] <: AnyRef](relativeTo: Path)(
     expr: Expr
@@ -19,12 +19,23 @@ object Resolver {
     semanticCache: ImportCache[F],
     semiSemanticCache: ImportCache[F]
   )(expr: Expr)(implicit Client: Client[F], F: Async[F]): F[Expr] =
-    expr.accept(ResolveImportsVisitor[F](semanticCache, semiSemanticCache, cwd))
+    resolveRelativeTo[F](semanticCache, semiSemanticCache)(cwd)(expr)
+
+  def resolveRelativeTo[F[_] <: AnyRef](
+    semanticCache: ImportCache[F],
+    semiSemanticCache: ImportCache[F]
+  )(relativeTo: Path)(expr: Expr)(implicit Client: Client[F], F: Async[F]): F[Expr] =
+    expr.accept(ResolveImportsVisitor[F](semanticCache, semiSemanticCache, relativeTo))
 
   def resolve[F[_] <: AnyRef](
     semanticCache: ImportCache[F]
   )(expr: Expr)(implicit Client: Client[F], F: Async[F]): F[Expr] =
-    expr.accept(ResolveImportsVisitor[F](semanticCache, new ImportCache.NoopImportCache[F], cwd))
+    resolveRelativeTo[F](semanticCache)(cwd)(expr)
+
+  def resolveRelativeTo[F[_] <: AnyRef](
+    semanticCache: ImportCache[F]
+  )(relativeTo: Path)(expr: Expr)(implicit Client: Client[F], F: Async[F]): F[Expr] =
+    expr.accept(ResolveImportsVisitor[F](semanticCache, new ImportCache.NoopImportCache[F], relativeTo))
 
   private def cwd: Path = Paths.get(".")
 
