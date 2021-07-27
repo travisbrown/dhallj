@@ -50,7 +50,8 @@ trait ParsingInput extends Input[Expr] {
 trait CachedResolvingInput extends Input[Expr] {
 
   override def parseInput(path: String, input: String): Expr = {
-    val parsed = DhallParser.parse(new String(Files.readAllBytes(Paths.get(path))))
+    val p = Paths.get(path)
+    val parsed = DhallParser.parse(new String(Files.readAllBytes(p)))
 
     if (parsed.isResolved) parsed
     else {
@@ -58,7 +59,7 @@ trait CachedResolvingInput extends Input[Expr] {
       BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           implicit val c: Client[IO] = client
-          Resolver.resolve[IO](parsed)
+          Resolver.resolveRelativeTo[IO](p.getParent)(parsed)
         }
         .unsafeRunSync()
     }
@@ -68,7 +69,8 @@ trait CachedResolvingInput extends Input[Expr] {
 
 trait ResolvingInput extends Input[Expr] {
   def parseInput(path: String, input: String): Expr = {
-    val parsed = DhallParser.parse(new String(Files.readAllBytes(Paths.get(path))))
+    val p = Paths.get(path)
+    val parsed = DhallParser.parse(new String(Files.readAllBytes(p)))
 
     if (parsed.isResolved) parsed
     else {
@@ -76,7 +78,9 @@ trait ResolvingInput extends Input[Expr] {
       BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           implicit val c: Client[IO] = client
-          Resolver.resolve[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
+          Resolver.resolveRelativeTo[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(
+            p.getParent
+          )(parsed)
         }
         .unsafeRunSync()
     }
