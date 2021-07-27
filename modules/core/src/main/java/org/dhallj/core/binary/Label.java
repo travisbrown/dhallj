@@ -25,6 +25,10 @@ final class Label {
   public static final int EMPTY_LIST_WITH_ABSTRACT_TYPE = 28;
   public static final int WITH = 29;
 
+  public static final int DATE = 30;
+  public static final int TIME = 31;
+  public static final int TIME_ZONE = 32;
+
   public static final int IMPORT_TYPE_REMOTE_HTTP = 0;
   public static final int IMPORT_TYPE_REMOTE_HTTPS = 1;
   public static final int IMPORT_TYPE_LOCAL_ABSOLUTE = 2;

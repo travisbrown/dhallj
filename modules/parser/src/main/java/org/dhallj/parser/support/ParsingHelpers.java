@@ -1,6 +1,7 @@
 package org.dhallj.parser.support;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -58,6 +59,107 @@ final class ParsingHelpers {
     }
 
     return new Expr.Parsed(Expr.makeIntegerLiteral(value), sourceFromToken(token));
+  }
+
+  static final Expr.Parsed makeDateLiteral(Token token) {
+    int year = Integer.parseInt(token.image.substring(0, 4));
+    int month = Integer.parseInt(token.image.substring(5, 7));
+    int day = Integer.parseInt(token.image.substring(8, 10));
+
+    // TODO: validation.
+    return new Expr.Parsed(Expr.makeDateLiteral(year, month, day), sourceFromToken(token));
+  }
+
+  static final Expr.Parsed makeTimeZoneLiteral(Token token) {
+    boolean positive = token.image.charAt(0) == '+';
+    int hour = Integer.parseInt(token.image.substring(1, 3));
+    int minute = Integer.parseInt(token.image.substring(4, 6));
+    int seconds = hour * 60 + minute;
+    int value = positive ? seconds : -seconds;
+
+    // TODO: validation.
+    return new Expr.Parsed(Expr.makeTimeZoneLiteral(value), sourceFromToken(token));
+  }
+
+  static final Expr.Parsed makeTimeLiteral(Token token, Token timeZone) {
+    // TODO: validation.
+    int hour = Integer.parseInt(token.image.substring(0, 2));
+    int minute = Integer.parseInt(token.image.substring(3, 5));
+    int second = Integer.parseInt(token.image.substring(6, 8));
+    BigDecimal fractional;
+
+    if (token.image.length() > 8) {
+      fractional = new BigDecimal(token.image.substring(8));
+    } else {
+      fractional = BigDecimal.ZERO;
+    }
+
+    Expr time = Expr.makeTimeLiteral(hour, minute, second, fractional);
+
+    if (timeZone != null) {
+      int value;
+
+      if (timeZone.equals("z") || timeZone.equals("Z")) {
+        value = 0;
+      } else {
+        boolean positive = timeZone.image.charAt(0) == '+';
+        int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
+        int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
+        int seconds = tzHour * 60 + tzMinute;
+        value = positive ? seconds : -seconds;
+      }
+
+      List<Entry<String, Expr>> fields = new ArrayList<Entry<String, Expr>>(2);
+      fields.add(new SimpleImmutableEntry<>("time", time));
+      fields.add(new SimpleImmutableEntry<>("timeZone", Expr.makeTimeZoneLiteral(value)));
+
+      // TODO: Add time zone to source if needed.
+      return new Expr.Parsed(Expr.makeRecordLiteral(fields), sourceFromToken(token));
+    } else {
+      return new Expr.Parsed(time, sourceFromToken(token));
+    }
+  }
+
+  static final Expr.Parsed makeDateTimeLiteral(Token token, Token timeZone) {
+    // TODO: validation.
+    int year = Integer.parseInt(token.image.substring(0, 4));
+    int month = Integer.parseInt(token.image.substring(5, 7));
+    int day = Integer.parseInt(token.image.substring(8, 10));
+
+    int hour = Integer.parseInt(token.image.substring(11, 13));
+    int minute = Integer.parseInt(token.image.substring(14, 16));
+    int second = Integer.parseInt(token.image.substring(17, 19));
+    BigDecimal fractional;
+
+    if (token.image.length() > 19) {
+      fractional = new BigDecimal(token.image.substring(19));
+    } else {
+      fractional = BigDecimal.ZERO;
+    }
+
+    List<Entry<String, Expr>> fields = new ArrayList<Entry<String, Expr>>(2);
+    fields.add(new SimpleImmutableEntry<>("date", Expr.makeDateLiteral(year, month, day)));
+    fields.add(
+        new SimpleImmutableEntry<>("time", Expr.makeTimeLiteral(hour, minute, second, fractional)));
+
+    if (timeZone != null) {
+      int value;
+
+      if (timeZone.equals("z") || timeZone.equals("Z")) {
+        value = 0;
+      } else {
+        boolean positive = timeZone.image.charAt(0) == '+';
+        int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
+        int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
+        int seconds = tzHour * 60 + tzMinute;
+        value = positive ? seconds : -seconds;
+      }
+
+      fields.add(new SimpleImmutableEntry<>("timeZone", Expr.makeTimeZoneLiteral(value)));
+    }
+
+    // TODO: Add time zone to source if needed.
+    return new Expr.Parsed(Expr.makeRecordLiteral(fields), sourceFromToken(token));
   }
 
   private static String unescapeText(String in) {

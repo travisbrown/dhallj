@@ -98,6 +98,9 @@ TOKEN: {
     | "Sort"
     | "Optional"
     | "List"
+    | "Date"
+    | "Time"
+    | "TimeZone"
   >
   | <QUOTED_LABEL: "`" (["\u0020"-"\u005f"] | ["\u0061"-"\u007e"])* "`">
   | <SIMPLE_LABEL: (<ALPHA> | "_") (<ALPHA> | <DIGIT> | "_" | "-" | "/" )*>
@@ -152,6 +155,8 @@ TOKEN: {
   | <LOCAL: <PARENT_PATH> | <HERE_PATH> | <HOME_PATH> | <PATH>>
   | <CLASSPATH: "classpath:" <PATH> >
   | <#DIGIT: ["0"-"9"]>
+  | <#DIGIT2: <DIGIT> <DIGIT>>
+  | <#DIGIT4: <DIGIT> <DIGIT> <DIGIT> <DIGIT>>
   | <#DIGITS: (<DIGIT>)+>
   | <#HEX_DIGIT: <DIGIT> | ["A"-"F"] | ["a"-"f"]>
   | <#HEX_DIGITS: (<HEX_DIGIT>)+>
@@ -187,7 +192,7 @@ TOKEN: {
     | ((<H16> (":" <H16>){0, 6})? "::")
     >
   | <#IPVFUTURE: "v" (<HEX_DIGIT>)+ "." (<UNRESERVED> | <SUB_DELIM> | ":")+>
-  | <#DEC_OCTET: ("25" ["0"-"5"]) | ("2" ["0"-"4"] <DIGIT>) | ("1" <DIGIT> <DIGIT>) | (["1"-"9"] <DIGIT>) | <DIGIT>>
+  | <#DEC_OCTET: ("25" ["0"-"5"]) | ("2" ["0"-"4"] <DIGIT>) | ("1" <DIGIT2>) | (["1"-"9"] <DIGIT>) | <DIGIT>>
   | <#HOST: <DOMAIN> | <IPV4> | ("[" (<IPV6> | <IPVFUTURE>) "]")>
   | <#PATH_CHARACTER:
       ["\u0021", "\u003d", "\u007c", "\u007e"]
@@ -202,6 +207,11 @@ TOKEN: {
   | <#HOME_PATH: "~" <PATH>>
   | <#URL_PATH: (<URL_PATH_COMPONENT> | ("/") <SEGMENT>)*>
   | <SHEBANG: "#!" (<ASCII> | <VALID_NON_ASCII> | "\t")+ ("\n" | "\r\n")>
+  | <TIME_NUMOFFSET: ("+" | "-") <DIGIT2> ":" <DIGIT2>>
+  | <TEMPORAL_Z: "Z" | "z">
+  | <FULL_DATE: <DIGIT4> "-" <DIGIT2> "-" <DIGIT2>>
+  | <PARTIAL_TIME: <DIGIT2> ":" <DIGIT2> ":" <DIGIT2> ("." (<DIGIT>)+)?>
+  | <DATE_TIME: <FULL_DATE> ("T" | "t") <PARTIAL_TIME>>
 }
 
 <WITHIN_DOUBLE_QUOTE> TOKEN: {
@@ -574,11 +584,41 @@ Expr.Parsed DOUBLE_LITERAL():  { Token token; } { token=<DOUBLE_LITERAL>  { retu
 Expr.Parsed INTEGER_LITERAL(): { Token token; } { token=<INTEGER_LITERAL> { return ParsingHelpers.makeIntegerLiteral(token); }}
 Expr.Parsed NATURAL_LITERAL(): { Token token; } { token=<NATURAL_LITERAL> { return ParsingHelpers.makeNaturalLiteral(token); }}
 
+Expr.Parsed DATE_LITERAL(): { Token token; } { token=<FULL_DATE> { return ParsingHelpers.makeDateLiteral(token); }}
+Expr.Parsed TIME_ZONE_LITERAL(): { Token token; } { token=<TIME_NUMOFFSET> { return ParsingHelpers.makeTimeZoneLiteral(token); }}
+Expr.Parsed TIME_LITERAL(): {
+  Token token;
+  Token timeZone = null;
+} {
+  (token=<PARTIAL_TIME> [(timeZone=<TIME_NUMOFFSET>) | (timeZone=<TEMPORAL_Z>)]) {
+    return ParsingHelpers.makeTimeLiteral(token, timeZone);
+  }
+}
+
+Expr.Parsed DATE_TIME_LITERAL(): {
+  Token token;
+  Token timeZone = null;
+} {
+  (token=<DATE_TIME> [(timeZone=<TIME_NUMOFFSET>) | (timeZone=<TEMPORAL_Z>)]) {
+    return ParsingHelpers.makeDateTimeLiteral(token, timeZone);
+  }
+}
+
+Expr.Parsed TEMPORAL_LITERAL(): { Expr.Parsed expr; } {
+  (
+      expr=DATE_LITERAL()
+    | expr=TIME_ZONE_LITERAL()
+    | expr=TIME_LITERAL()
+    | expr=DATE_TIME_LITERAL()
+  ) { return expr; }
+}
+
 Expr.Parsed PRIMITIVE_EXPRESSION(): { Expr.Parsed expr; } {
   (
       expr=DOUBLE_LITERAL()
     | expr=NATURAL_LITERAL()
     | expr=INTEGER_LITERAL()
+    | expr=TEMPORAL_LITERAL()
     | expr=DOUBLE_QUOTE_LITERAL()
     | expr=SINGLE_QUOTE_LITERAL()
     | expr=RECORD_LITERAL_OR_TYPE()

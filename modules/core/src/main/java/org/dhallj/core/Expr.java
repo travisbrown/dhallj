@@ -2,6 +2,7 @@ package org.dhallj.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -583,6 +584,11 @@ public abstract class Expr {
     public static final Expr TEXT = new Constructors.BuiltIn("Text");
     public static final Expr NONE = new Constructors.BuiltIn("None");
     public static final Expr SOME = new Constructors.BuiltIn("Some");
+
+    public static final Expr DATE = new Constructors.BuiltIn("Date");
+    public static final Expr TIME = new Constructors.BuiltIn("Time");
+    public static final Expr TIME_ZONE = new Constructors.BuiltIn("TimeZone");
+
     public static final Expr NATURAL_FOLD = new Constructors.BuiltIn("Natural/fold");
     public static final Expr LIST_FOLD = new Constructors.BuiltIn("List/fold");
     public static final Expr ZERO = makeNaturalLiteral(BigInteger.ZERO);
@@ -605,6 +611,7 @@ public abstract class Expr {
 
     static {
       builtIns.put("Bool", BOOL);
+      builtIns.put("Date", DATE);
       builtIns.put("Double", DOUBLE);
       builtIns.put("Double/show", new Constructors.BuiltIn("Double/show"));
       builtIns.put("False", FALSE);
@@ -638,6 +645,8 @@ public abstract class Expr {
       builtIns.put("Text", TEXT);
       builtIns.put("Text/replace", new Constructors.BuiltIn("Text/replace"));
       builtIns.put("Text/show", new Constructors.BuiltIn("Text/show"));
+      builtIns.put("Time", TIME);
+      builtIns.put("TimeZone", TIME_ZONE);
       builtIns.put("True", TRUE);
       builtIns.put("Type", TYPE);
 
@@ -706,6 +715,19 @@ public abstract class Expr {
 
   public static final Expr makeIntegerLiteral(BigInteger value) {
     return new Constructors.IntegerLiteral(value);
+  }
+
+  public static final Expr makeDateLiteral(int year, int month, int day) {
+    return new Constructors.DateLiteral(year, month, day);
+  }
+
+  public static final Expr makeTimeLiteral(
+      int hour, int minute, int second, BigDecimal fractional) {
+    return new Constructors.TimeLiteral(hour, minute, second, fractional);
+  }
+
+  public static final Expr makeTimeZoneLiteral(int seconds) {
+    return new Constructors.TimeZoneLiteral(seconds);
   }
 
   public static final Expr makeTextLiteral(String[] parts, Expr[] interpolated) {

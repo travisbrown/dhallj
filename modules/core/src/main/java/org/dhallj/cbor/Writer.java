@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -102,8 +103,11 @@ public abstract class Writer {
   }
 
   public final void writeLong(long value) {
-    this.writeTypeAndLength(
-        (value >= 0) ? MajorType.UNSIGNED_INTEGER.value : MajorType.NEGATIVE_INTEGER.value, value);
+    if (value >= 0) {
+      this.writeTypeAndLength(MajorType.UNSIGNED_INTEGER.value, value);
+    } else {
+      this.writeTypeAndLength(MajorType.NEGATIVE_INTEGER.value, -(value + 1));
+    }
   }
 
   public final void writeBigInteger(BigInteger value) {
@@ -112,6 +116,13 @@ public abstract class Writer {
     } else {
       this.writeTypeAndLength(MajorType.NEGATIVE_INTEGER.value, value.add(BigInteger.ONE).negate());
     }
+  }
+
+  public final void writeBigDecimal(BigDecimal value) {
+    this.writeTypeAndLength(MajorType.SEMANTIC_TAG.value, 4);
+    this.writeTypeAndLength(MajorType.ARRAY.value, 2);
+    this.writeBigInteger(value.unscaledValue());
+    this.writeLong(-((long) value.scale()));
   }
 
   public final void writeString(String value) {

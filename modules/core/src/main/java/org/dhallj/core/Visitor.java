@@ -1,5 +1,6 @@
 package org.dhallj.core;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -22,6 +23,12 @@ public interface Visitor<A> {
   A onInteger(Expr self, BigInteger value);
 
   A onDouble(Expr self, double value);
+
+  A onDate(Expr self, int year, int month, int day);
+
+  A onTime(Expr self, int hour, int minute, int second, BigDecimal fractional);
+
+  A onTimeZone(Expr self, int minutes);
 
   A onBuiltIn(Expr self, String value);
 
@@ -341,6 +348,21 @@ public interface Visitor<A> {
     }
 
     @Override
+    public A onDate(Expr self, int year, int month, int day) {
+      return this.getReturnValue();
+    }
+
+    @Override
+    public A onTime(Expr self, int hour, int minute, int second, BigDecimal fractional) {
+      return this.getReturnValue();
+    }
+
+    @Override
+    public A onTimeZone(Expr self, int minutes) {
+      return this.getReturnValue();
+    }
+
+    @Override
     public A onBuiltIn(Expr self, String value) {
       return this.getReturnValue();
     }
@@ -646,6 +668,18 @@ public interface Visitor<A> {
     }
 
     public Expr onDouble(Expr self, double value) {
+      return self;
+    }
+
+    public Expr onDate(Expr self, int year, int month, int day) {
+      return self;
+    }
+
+    public Expr onTime(Expr self, int hour, int minute, int second, BigDecimal fractional) {
+      return self;
+    }
+
+    public Expr onTimeZone(Expr self, int minutes) {
       return self;
     }
 

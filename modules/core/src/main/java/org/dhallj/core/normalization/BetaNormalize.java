@@ -1,5 +1,6 @@
 package org.dhallj.core.normalization;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -36,6 +37,18 @@ public final class BetaNormalize extends Visitor.NoPrepareEvents<Expr> {
   }
 
   public Expr onDouble(Expr self, double value) {
+    return self;
+  }
+
+  public Expr onDate(Expr self, int year, int month, int day) {
+    return self;
+  }
+
+  public Expr onTime(Expr self, int hour, int minute, int second, BigDecimal fractional) {
+    return self;
+  }
+
+  public Expr onTimeZone(Expr self, int minutes) {
     return self;
   }
 

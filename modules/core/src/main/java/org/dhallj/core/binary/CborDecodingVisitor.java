@@ -109,6 +109,12 @@ final class CborDecodingVisitor implements Visitor<Expr> {
         return readMap(length);
       case Label.EMPTY_LIST_WITH_ABSTRACT_TYPE:
         return readEmptyListAbstractType(length);
+      case Label.DATE:
+        return readDate(length);
+      case Label.TIME:
+        return readTime(length);
+      case Label.TIME_ZONE:
+        return readTimeZone(length);
       default:
         throw new DecodingException("Array tag " + Integer.toString(tag) + " undefined");
     }
@@ -551,6 +557,49 @@ final class CborDecodingVisitor implements Visitor<Expr> {
 
   private Expr readNatural(BigInteger length) {
     return Expr.makeNaturalLiteral(this.reader.readPositiveBigNum());
+  }
+
+  private Expr readDate(BigInteger length) {
+    long len = length.longValue();
+    if (len != 4) {
+      throw new DecodingException("Date must be encoded in array of length 4");
+    } else {
+      BigInteger year = this.reader.readUnsignedInteger();
+      BigInteger month = this.reader.readUnsignedInteger();
+      BigInteger day = this.reader.readUnsignedInteger();
+      return Expr.makeDateLiteral(year.intValue(), month.intValue(), day.intValue());
+    }
+  }
+
+  private Expr readTime(BigInteger length) {
+    long len = length.longValue();
+    if (len != 4) {
+      throw new DecodingException("Time zone must be encoded in array of length 4");
+    } else {
+      BigInteger hour = this.reader.readUnsignedInteger();
+      BigInteger minute = this.reader.readUnsignedInteger();
+      // TODO: read seconds.
+      return Expr.makeTimeLiteral(hour.intValue(), minute.intValue(), 0, java.math.BigDecimal.ZERO);
+    }
+  }
+
+  private Expr readTimeZone(BigInteger length) {
+    long len = length.longValue();
+    if (len != 4) {
+      throw new DecodingException("Time zone must be encoded in array of length 4");
+    } else {
+      boolean positive = readExpr() != Expr.Constants.FALSE;
+      BigInteger hour = this.reader.readUnsignedInteger();
+      BigInteger minute = this.reader.readUnsignedInteger();
+
+      int value = hour.intValue() * 60 + minute.intValue();
+
+      if (!positive) {
+        value = -value;
+      }
+
+      return Expr.makeTimeZoneLiteral(value);
+    }
   }
 
   private Expr readExpr() {

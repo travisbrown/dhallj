@@ -1,5 +1,6 @@
 package org.dhallj.core;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -68,6 +69,68 @@ final class Constructors {
 
     final <A> void advance(VisitState<A> state) {
       state.valueStack.push(state.visitor.onDouble(this, this.value));
+    }
+  }
+
+  static final class DateLiteral extends Expr {
+    final int year;
+    final int month;
+    final int day;
+
+    DateLiteral(int year, int month, int day) {
+      super(Tags.DATE);
+      this.year = year;
+      this.month = month;
+      this.day = day;
+    }
+
+    public final <A> A accept(ExternalVisitor<A> visitor) {
+      return visitor.onDate(this.year, this.month, this.day);
+    }
+
+    final <A> void advance(VisitState<A> state) {
+      state.valueStack.push(state.visitor.onDate(this, this.year, this.month, this.day));
+    }
+  }
+
+  static final class TimeLiteral extends Expr {
+    final int hour;
+    final int minute;
+    final int second;
+    final BigDecimal fractional;
+
+    TimeLiteral(int hour, int minute, int second, BigDecimal fractional) {
+      super(Tags.TIME);
+      this.hour = hour;
+      this.minute = minute;
+      this.second = second;
+      this.fractional = fractional;
+    }
+
+    public final <A> A accept(ExternalVisitor<A> visitor) {
+      return visitor.onTime(this.hour, this.minute, this.second, this.fractional);
+    }
+
+    final <A> void advance(VisitState<A> state) {
+      state.valueStack.push(
+          state.visitor.onTime(this, this.hour, this.minute, this.second, this.fractional));
+    }
+  }
+
+  static final class TimeZoneLiteral extends Expr {
+    final int minutes;
+
+    TimeZoneLiteral(int minutes) {
+      super(Tags.TIME_ZONE);
+      this.minutes = minutes;
+    }
+
+    public final <A> A accept(ExternalVisitor<A> visitor) {
+      return visitor.onTimeZone(this.minutes);
+    }
+
+    final <A> void advance(VisitState<A> state) {
+      state.valueStack.push(state.visitor.onTimeZone(this, this.minutes));
     }
   }
 
