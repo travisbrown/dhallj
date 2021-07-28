@@ -122,6 +122,9 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     Expr valueType = value.accept(this);
 
     if (type != null) {
+      // We must confirm that the annotation is well-typed.
+      type.accept(this);
+
       if (!type.equivalent(valueType)) {
         throw TypeCheckFailure.makeAnnotationError(type, valueType);
       }
