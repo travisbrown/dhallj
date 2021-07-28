@@ -1,6 +1,8 @@
 package org.dhallj.parser
 
 import java.net.URI
+import java.io.FileInputStream
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 
 import munit.{FunSuite, Ignore}
@@ -77,6 +79,12 @@ class DhallParserSuite extends FunSuite() {
 
   test("fail on URLs with quoted paths") {
     intercept[ParsingFailure](DhallParser.parse("https://example.com/foo/\"bar?baz\"?qux"))
+  }
+
+  test("fail on non-UTF-8 input") {
+    val stream = new FileInputStream("dhall-lang/tests/parser/failure/nonUtf8.dhall")
+
+    intercept[ParsingFailure](DhallParser.parse(stream, StandardCharsets.UTF_16))
   }
 
   test("handle single-quoted escape sequences") {
