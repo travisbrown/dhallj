@@ -490,6 +490,10 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
       Expr thenType = thenValue.accept(this);
       Expr elseType = elseValue.accept(this);
 
+      if (thenType.equals(Expr.Constants.SORT) || elseType.equals(Expr.Constants.SORT)) {
+        throw TypeCheckFailure.makeSortError();
+      }
+
       if (thenType.equivalent(elseType)) {
         return thenType;
       } else {
