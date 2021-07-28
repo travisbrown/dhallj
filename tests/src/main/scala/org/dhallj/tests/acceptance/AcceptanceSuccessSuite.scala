@@ -2,7 +2,7 @@ package org.dhallj.tests.acceptance
 
 import cats.effect.IO
 import cats.effect.unsafe.IORuntime
-import java.nio.file.{Path, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 import org.dhallj.core.Expr
 import org.dhallj.core.binary.Decode.decode
@@ -50,8 +50,8 @@ trait ParsingInput extends Input[Expr] {
 trait CachedResolvingInput extends Input[Expr] {
 
   override def parseInput(path: String, input: String): Expr = {
-    //TODO this should only be for import tests (I think)
-    val parsed = DhallParser.parse(s"./$path")
+    val p = Paths.get(path)
+    val parsed = DhallParser.parse(new String(Files.readAllBytes(p)))
 
     if (parsed.isResolved) parsed
     else {
@@ -59,7 +59,7 @@ trait CachedResolvingInput extends Input[Expr] {
       BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           implicit val c: Client[IO] = client
-          Resolver.resolve[IO](parsed)
+          Resolver.resolveRelativeTo[IO](p.getParent)(parsed)
         }
         .unsafeRunSync()
     }
@@ -69,8 +69,8 @@ trait CachedResolvingInput extends Input[Expr] {
 
 trait ResolvingInput extends Input[Expr] {
   def parseInput(path: String, input: String): Expr = {
-    //TODO this should only be for import tests (I think)
-    val parsed = DhallParser.parse(s"./$path")
+    val p = Paths.get(path)
+    val parsed = DhallParser.parse(new String(Files.readAllBytes(p)))
 
     if (parsed.isResolved) parsed
     else {
@@ -78,7 +78,9 @@ trait ResolvingInput extends Input[Expr] {
       BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           implicit val c: Client[IO] = client
-          Resolver.resolve[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(parsed)
+          Resolver.resolveRelativeTo[IO](new ImportCache.NoopImportCache[IO], new ImportCache.NoopImportCache[IO])(
+            p.getParent
+          )(parsed)
         }
         .unsafeRunSync()
     }

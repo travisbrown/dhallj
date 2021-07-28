@@ -592,10 +592,10 @@ public abstract class Expr {
     public static final Expr LOCATION_TYPE =
         makeUnionType(
             new Entry[] {
-              new SimpleImmutableEntry<>("Local", TEXT),
-              new SimpleImmutableEntry<>("Remote", TEXT),
               new SimpleImmutableEntry<>("Environment", TEXT),
-              new SimpleImmutableEntry<>("Missing", null)
+              new SimpleImmutableEntry<>("Local", TEXT),
+              new SimpleImmutableEntry<>("Missing", null),
+              new SimpleImmutableEntry<>("Remote", TEXT)
             });
     public static final String MAP_KEY_FIELD_NAME = "mapKey";
     public static final String MAP_VALUE_FIELD_NAME = "mapValue";

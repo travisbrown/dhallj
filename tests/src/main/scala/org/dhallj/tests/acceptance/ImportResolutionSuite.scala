@@ -15,14 +15,13 @@ import org.http4s.blaze.client._
 import scala.concurrent.ExecutionContext.global
 import scala.io.Source
 
-class ImportResolutionSuite(val base: String)
-    extends ExprOperationAcceptanceSuite(_.normalize)
-    with CachedResolvingInput {
+class ImportResolutionSuite(val base: String) extends ExprOperationAcceptanceSuite(identity) with CachedResolvingInput {
 
   setEnv("DHALL_TEST_VAR", "6 * 7") //Yes, this is SUPER hacky but the JVM doesn't really support setting env vars
 
   override def parseInput(path: String, input: String): Expr = {
-    val parsed = DhallParser.parse(s"./$path")
+    val p = Paths.get(path)
+    val parsed = DhallParser.parse(readString(p))
 
     if (parsed.isResolved) parsed
     else {
@@ -31,7 +30,7 @@ class ImportResolutionSuite(val base: String)
       BlazeClientBuilder[IO](global).resource
         .use { client =>
           implicit val c: Client[IO] = client
-          Resolver.resolve[IO](cache, new ImportCache.NoopImportCache[IO])(parsed)
+          Resolver.resolveRelativeTo[IO](cache, new ImportCache.NoopImportCache[IO])(p.getParent)(parsed)
         }
         .unsafeRunSync()
     }

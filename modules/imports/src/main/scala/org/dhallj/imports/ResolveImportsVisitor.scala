@@ -32,7 +32,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
 )(implicit
   Client: Client[F],
   F: Async[F]
-) extends LiftVisitor[F](F) {
+) extends LiftVisitor[F](F, true) {
   def this(
     semanticCache: ImportCache[F],
     semiSemanticCache: ImportCache[F],
@@ -110,10 +110,11 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
             case _ =>
               for {
                 e <- loadWithSemiSemanticCache(imp, mode, hash)
-                bs = e.alphaNormalize.getEncodedBytes
+                n = e.normalize.alphaNormalize
+                bs = n.getEncodedBytes
                 _ <- checkHashesMatch(bs, hash)
                 _ <- semanticCache.put(hash, bs)
-              } yield e
+              } yield n
           }
         } yield e
 

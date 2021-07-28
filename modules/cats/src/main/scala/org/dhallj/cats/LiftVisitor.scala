@@ -16,7 +16,8 @@ import org.dhallj.core.{Expr, Operator, Source, Visitor}
  * that don't need effects for most cases.
  */
 class LiftVisitor[F[_] <: AnyRef](
-  private[this] val F: Applicative[F]
+  private[this] val F: Applicative[F],
+  private[this] val sortFields: Boolean = false
 ) extends Visitor.NoPrepareEvents[F[Expr]] {
   def onNote(base: F[Expr], source: Source): F[Expr] = base
   def onNatural(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
@@ -43,13 +44,13 @@ class LiftVisitor[F[_] <: AnyRef](
   def onEmptyList(tpe: F[Expr]): F[Expr] = F.map(tpe)(Expr.makeEmptyListLiteral(_))
 
   def onRecord(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
-    F.map(sequenceFields(fields, false))(Expr.makeRecordLiteral(_))
+    F.map(sequenceFields(fields, false, sortFields))(Expr.makeRecordLiteral(_))
 
   def onRecordType(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
-    F.map(sequenceFields(fields, false))(Expr.makeRecordType(_))
+    F.map(sequenceFields(fields, false, sortFields))(Expr.makeRecordType(_))
 
   def onUnionType(fields: JList[JMap.Entry[String, F[Expr]]]): F[Expr] =
-    F.map(sequenceFields(fields, true))(Expr.makeUnionType(_))
+    F.map(sequenceFields(fields, true, sortFields))(Expr.makeUnionType(_))
 
   def onFieldAccess(base: F[Expr], fieldName: String): F[Expr] =
     F.map(base)(Expr.makeFieldAccess(_, fieldName))
@@ -128,7 +129,8 @@ class LiftVisitor[F[_] <: AnyRef](
 
   final private[this] def sequenceFields(
     fields: JList[JMap.Entry[String, F[Expr]]],
-    checkNull: Boolean
+    checkNull: Boolean,
+    sortFields: Boolean
   ): F[Array[JMap.Entry[String, Expr]]] = {
     var result = F.pure(new Array[JMap.Entry[String, Expr]](fields.size))
     var i = 0
@@ -154,7 +156,11 @@ class LiftVisitor[F[_] <: AnyRef](
       i += 1
     }
 
-    result
+    if (sortFields) {
+      F.map(result)(_.sortBy(_.getKey))
+    } else {
+      result
+    }
   }
 
   final private[this] def sequenceBindings(
