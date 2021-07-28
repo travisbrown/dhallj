@@ -26,8 +26,15 @@ final class ParsingHelpers {
   }
 
   static final Expr.Parsed makeDoubleLiteral(Token token) {
-    return new Expr.Parsed(
-        Expr.makeDoubleLiteral(Double.parseDouble(token.image)), sourceFromToken(token));
+    double parsed = Double.parseDouble(token.image);
+
+    if (Double.isInfinite(parsed)
+        && !token.image.equals("Infinity")
+        && !token.image.equals("-Infinity")) {
+      throw new ParsingFailure("double out of bounds");
+    }
+
+    return new Expr.Parsed(Expr.makeDoubleLiteral(parsed), sourceFromToken(token));
   }
 
   static final Expr.Parsed makeNaturalLiteral(Token token) {
