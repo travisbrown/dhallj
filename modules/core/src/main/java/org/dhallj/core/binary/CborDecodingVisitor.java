@@ -5,6 +5,7 @@ import org.dhallj.cbor.Visitor;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -578,8 +579,11 @@ final class CborDecodingVisitor implements Visitor<Expr> {
     } else {
       BigInteger hour = this.reader.readUnsignedInteger();
       BigInteger minute = this.reader.readUnsignedInteger();
-      // TODO: read seconds.
-      return Expr.makeTimeLiteral(hour.intValue(), minute.intValue(), 0, java.math.BigDecimal.ZERO);
+      BigDecimal rawSeconds = this.reader.readBigDecimal();
+      int seconds = rawSeconds.intValue();
+      BigDecimal fractional = rawSeconds.subtract(new BigDecimal(seconds));
+
+      return Expr.makeTimeLiteral(hour.intValue(), minute.intValue(), seconds, fractional);
     }
   }
 

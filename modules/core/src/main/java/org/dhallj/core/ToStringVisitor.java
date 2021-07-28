@@ -111,9 +111,9 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
   public ToStringState onTimeZone(Expr self, int minutes) {
     if (Long.signum(minutes) < 0) {
-      return new ToStringState("-" + pad2(-minutes / 60) + pad2(-minutes % 60));
+      return new ToStringState("-" + pad2(-minutes / 60) + ":" + pad2(-minutes % 60));
     } else {
-      return new ToStringState("+" + pad2(minutes / 60) + pad2(minutes % 60));
+      return new ToStringState("+" + pad2(minutes / 60) + ":" + pad2(minutes % 60));
     }
   }
 
