@@ -21,6 +21,10 @@ public class DhallException extends RuntimeException {
     public ParsingFailure(String message, Throwable cause) {
       super(message, cause);
     }
+
+    public ParsingFailure(String message) {
+      super(message);
+    }
   }
 
   public static final class ResolutionFailure extends DhallException {
