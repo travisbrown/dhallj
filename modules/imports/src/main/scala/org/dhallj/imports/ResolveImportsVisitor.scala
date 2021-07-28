@@ -1,7 +1,7 @@
 package org.dhallj.imports
 
 import java.net.URI
-import java.nio.file.{Path, Paths}
+import java.nio.file.{Files, Path, Paths}
 import java.security.MessageDigest
 
 import cats.Apply
@@ -45,7 +45,10 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
 
   override def onOperatorApplication(operator: Operator, lhs: F[Expr], rhs: F[Expr]): F[Expr] =
     if (operator == Operator.IMPORT_ALT)
-      lhs.handleErrorWith(_ => rhs)
+      lhs.handleErrorWith {
+        case e: ResolutionFailure if e.isAbsentImport => rhs
+        case other                                    => F.raiseError(other)
+      }
     else {
       F.map2(lhs, rhs)(Expr.makeOperatorApplication(operator, _, _))
     }
@@ -123,18 +126,29 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
         for {
           vO <- F.delay(sys.env.get(value))
           v <- vO.fold(
-            F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined"))
+            F.raiseError[String](new ResolutionFailure(s"Missing import - env import $value undefined", true))
           )(F.pure)
         } yield v
       case ImportContext.Local(path) =>
         for {
-          v <- F.delay(scala.io.Source.fromFile(path.toString).mkString)
+          v <- {
+            if (Files.exists(path)) {
+              F.delay(new String(Files.readAllBytes(path)))
+            } else {
+              F.raiseError(new ResolutionFailure(s"Missing import - file $path does not exist", true))
+            }
+          }
         } yield v
       case ImportContext.Classpath(path) =>
         for {
-          v <- F.delay(
-            scala.io.Source.fromInputStream(getClass.getResourceAsStream(path.toString)).mkString
-          )
+          v <-
+            F.delay(getClass.getResourceAsStream(path.toString)).flatMap { stream =>
+              if (stream.ne(null)) {
+                F.delay(scala.io.Source.fromInputStream(stream).mkString)
+              } else {
+                F.raiseError[String](new ResolutionFailure(s"Missing import - resource $path does not exist", true))
+              }
+            }
         } yield v
       case ImportContext.Remote(uri, using) =>
         for {
@@ -148,11 +162,11 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
               } yield s
             case _ =>
               F.raiseError[String](
-                new ResolutionFailure(s"Missing import - cannot resolve $uri")
+                new ResolutionFailure(s"Missing import - cannot resolve $uri", true)
               )
           }
         } yield resp
-      case ImportContext.Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing"))
+      case ImportContext.Missing => F.raiseError(new ResolutionFailure("Missing import - cannot resolve missing", true))
     }
 
     def loadWithSemiSemanticCache(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = mode match {
@@ -187,13 +201,19 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
 
     def resolve(imp: ImportContext, mode: ImportMode, hash: Array[Byte]): F[Expr] = {
       val p = (imp, mode)
-      if (duplicateImportCache.contains(p))
-        F.delay(duplicateImportCache.get(p).get)
-      else
+      if (duplicateImportCache.contains(p)) {
+        val cached = duplicateImportCache.get(p).get
+        if (hash == null) {
+          F.delay(cached)
+        } else {
+          checkHashesMatch(cached.getEncodedBytes, hash).as(cached)
+        }
+      } else {
         for {
           e <- loadWithSemanticCache(imp, mode, hash)
           _ <- F.delay(duplicateImportCache.put(p, e))
         } yield e
+      }
     }
 
     def importNonLocation(imp: ImportContext, mode: ImportMode, hash: Array[Byte]) =
