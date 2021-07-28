@@ -40,16 +40,21 @@ class MiscSuite extends ScalaCheckSuite {
       val parts = asString.split("-")
 
       // We need a reasonable four-digit year.
-      val cleaned = if (parts(0).isEmpty) {
-        // If it's negative we just make something up.
-        "2021" + "-" + parts.drop(2).mkString("-")
-      } else if (parts(0).size != 4) {
-        // If it's not four digits we just make something up.
-        "1999" + "-" + parts.drop(1).mkString("-")
-      } else {
-        asString
-      }
+      val cleaned = (
+        if (parts(0).isEmpty) {
+          // If it's negative we just make something up.
+          "2021" + "-" + parts.drop(2).mkString("-")
+        } else if (parts(0).size != 4) {
+          // If it's not four digits we just make something up.
+          "1999" + "-" + parts.drop(1).mkString("-")
+        } else {
+          asString
+        }
+        // The ScalaCheck instance produces instants that can't be parsed.
+      ).replaceAll("-02-29", "-02-28")
+
       val expected = Instant.parse(cleaned)
+
       val result = Decode.decode(DhallParser.parse(cleaned).getEncodedBytes).toString
 
       // Keep it low-tech.
