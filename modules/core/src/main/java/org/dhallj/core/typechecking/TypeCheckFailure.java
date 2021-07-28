@@ -94,6 +94,14 @@ public final class TypeCheckFailure extends DhallException {
     return new TypeCheckFailure("Invalid function input");
   }
 
+  static final TypeCheckFailure makePiInputError(Expr type) {
+    return new TypeCheckFailure("Invalid function input");
+  }
+
+  static final TypeCheckFailure makePiOutputError(Expr type) {
+    return new TypeCheckFailure("Invalid function output");
+  }
+
   static final TypeCheckFailure makeAssertError(Expr type) {
     return new TypeCheckFailure("Not an equivalence");
   }

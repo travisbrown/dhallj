@@ -47,6 +47,10 @@ public enum Universe {
   }
 
   public static Universe functionCheck(Universe input, Universe output) {
+    if (input == null || output == null) {
+      return null;
+    }
+
     if (output == Universe.TYPE) {
       return Universe.TYPE;
     } else {
