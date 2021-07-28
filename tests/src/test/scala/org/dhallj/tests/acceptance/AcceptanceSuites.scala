@@ -22,7 +22,8 @@ class TypeCheckingRegressionSuite extends TypeCheckingSuite("type-inference/succ
 class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success") {
   override def slow = Set("prelude")
   // Depends on http://csrng.net/, which is rate-limited (and also currently entirely down).
-  override def ignored = Set("CacheImports", "CacheImportsCanonicalize")
+  // Temporary workaround awaiting dhall-lang#1198 (prelude only).
+  override def ignored = Set("CacheImports", "CacheImportsCanonicalize", "prelude")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
 class TypeCheckingPreludeSuite extends TypeCheckingSuite("type-inference/success/prelude", true) {
