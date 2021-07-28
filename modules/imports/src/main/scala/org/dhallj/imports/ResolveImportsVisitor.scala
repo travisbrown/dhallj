@@ -138,7 +138,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
         } yield v
       case ImportContext.Remote(uri, using) =>
         for {
-          headers <- F.pure(ToHeaders(`using`))
+          headers <- F.fromOption(ToHeaders(`using`), new ResolutionFailure("Invalid using clause"))
           req <- F.pure(Request[F](uri = unsafeFromString(uri.toString), headers = headers))
           resp <- Client.fetch[String](req) {
             case Successful(resp) =>

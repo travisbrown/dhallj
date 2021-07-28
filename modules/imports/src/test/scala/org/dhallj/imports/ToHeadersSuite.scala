@@ -28,7 +28,7 @@ class ToHeadersSuite extends FunSuite {
       )
     )
 
-    assertEquals(ToHeaders(expr), expected)
+    assertEquals(ToHeaders(expr), Some(expected))
   }
 
   test("Success case 2") {
@@ -50,7 +50,7 @@ class ToHeadersSuite extends FunSuite {
       )
     )
 
-    assertEquals(ToHeaders(expr), expected)
+    assertEquals(ToHeaders(expr), Some(expected))
   }
 
   test("Failure case 1") {
@@ -65,17 +65,13 @@ class ToHeadersSuite extends FunSuite {
       )
     )
 
-    val expected = Headers(Nil)
-
-    assertEquals(ToHeaders(expr), expected)
+    assertEquals(ToHeaders(expr), None)
   }
 
   test("Failure case 2") {
     val expr = Expr.makeTextLiteral("foo")
 
-    val expected = Headers(Nil)
-
-    assertEquals(ToHeaders(expr), expected)
+    assertEquals(ToHeaders(expr), None)
   }
 
 }
