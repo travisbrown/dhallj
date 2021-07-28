@@ -2,7 +2,7 @@ import ReleaseTransformations._
 
 ThisBuild / organization := "org.dhallj"
 ThisBuild / crossScalaVersions := List("2.12.14", "2.13.6", "3.0.1")
-ThisBuild / scalaVersion := crossScalaVersions.value.last
+ThisBuild / scalaVersion := crossScalaVersions.value.filter(_.startsWith("2")).last
 
 ThisBuild / githubWorkflowJavaVersions := Seq("adopt@1.8")
 ThisBuild / githubWorkflowPublishTargetBranches := Nil
