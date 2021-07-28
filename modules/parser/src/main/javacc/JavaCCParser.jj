@@ -225,7 +225,7 @@ TOKEN: {
     | (("F" | "f") <HEX_DIGIT> <HEX_DIGIT> ("A" | "B" | "C" | "D" | "a" | "b" | "c" | "d"))
   > |
   <#BRACED_ESCAPE: ("0")* <BRACED_CODEPOINT>> |
-  <#BRACED_CODEPOINT: ((["0"-"9"] | ["A"-"F"] | ["a"-"f"] | "10") <UNICODE_SUFFIX>) | <UNBRACED_ESCAPE> | ((<HEX_DIGIT>){3})+> |
+  <#BRACED_CODEPOINT: ((["0"-"9"] | ["A"-"F"] | ["a"-"f"] | "10") <UNICODE_SUFFIX>) | <UNBRACED_ESCAPE> | (<HEX_DIGIT>){3}> |
   <#UNICODE_SUFFIX: ((<DIGIT> | ["A"-"E"] | ["a"-"e"]) (<HEX_DIGIT>){3}) | (("F" | "f") <HEX_DIGIT> <HEX_DIGIT> (<DIGIT> | ["A"-"D"] | ["a"-"d"]))>
 }
 <WITHIN_DOUBLE_QUOTE> TOKEN: { <DOUBLE_QUOTE_END: "\"">: DEFAULT }
