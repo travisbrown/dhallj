@@ -44,7 +44,7 @@ The initial development of this project was supported in part by [Permutive][per
 The current release of this project supports [Dhall 21.0.0][dhall-21-0-0].
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization,
 [CBOR][cbor] encoding and decoding, hashing, and type inference, and
-currently all tests are passing (with three exception; see the [0.10.0-M1 release notes for details](https://github.com/travisbrown/dhallj/releases/tag/v0.10.0-M1)).
+currently all tests are passing (with three exceptions; see the [0.10.0-M1 release notes for details](https://github.com/travisbrown/dhallj/releases/tag/v0.10.0-M1)).
 
 There are several known issues:
 
