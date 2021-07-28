@@ -70,12 +70,52 @@ final class ParsingHelpers {
     return new Expr.Parsed(Expr.makeIntegerLiteral(value), sourceFromToken(token));
   }
 
+  static final boolean isValidDate(int year, int month, int day) {
+    if (month > 0 && month <= 12) {
+      if (day > 0 && day < 29) {
+        return true;
+      } else if (day == 29) {
+        // Deal with leap days.
+        if (month == 2) {
+          if (year % 4 != 0) {
+            return false;
+          } else if (year % 100 != 0) {
+            return true;
+          } else if (year % 400 != 0) {
+            return false;
+          } else {
+            return true;
+          }
+        } else {
+          return true;
+        }
+      } else if (day == 30) {
+        return month != 2;
+      } else if (day == 31) {
+        return month == 1
+            || month == 3
+            || month == 5
+            || month == 7
+            || month == 8
+            || month == 10
+            || month == 12;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
   static final Expr.Parsed makeDateLiteral(Token token) {
     int year = Integer.parseInt(token.image.substring(0, 4));
     int month = Integer.parseInt(token.image.substring(5, 7));
     int day = Integer.parseInt(token.image.substring(8, 10));
 
-    // TODO: validation.
+    if (!isValidDate(year, month, day)) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
+
     return new Expr.Parsed(Expr.makeDateLiteral(year, month, day), sourceFromToken(token));
   }
 
@@ -83,19 +123,26 @@ final class ParsingHelpers {
     boolean positive = token.image.charAt(0) == '+';
     int hour = Integer.parseInt(token.image.substring(1, 3));
     int minute = Integer.parseInt(token.image.substring(4, 6));
+
+    if (hour > 23 || minute > 59) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
+
     int seconds = hour * 60 + minute;
     int value = positive ? seconds : -seconds;
 
-    // TODO: validation.
     return new Expr.Parsed(Expr.makeTimeZoneLiteral(value), sourceFromToken(token));
   }
 
   static final Expr.Parsed makeTimeLiteral(Token token, Token timeZone) {
-    // TODO: validation.
     int hour = Integer.parseInt(token.image.substring(0, 2));
     int minute = Integer.parseInt(token.image.substring(3, 5));
     int second = Integer.parseInt(token.image.substring(6, 8));
     BigDecimal fractional;
+
+    if (hour > 23 || minute > 59 || second > 59) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
 
     if (token.image.length() > 8) {
       fractional = new BigDecimal(token.image.substring(8));
@@ -125,15 +172,13 @@ final class ParsingHelpers {
       fields.add(new SimpleImmutableEntry<>("time", time));
       fields.add(new SimpleImmutableEntry<>("timeZone", Expr.makeTimeZoneLiteral(value)));
 
-      // TODO: Add time zone to source if needed.
-      return new Expr.Parsed(Expr.makeRecordLiteral(fields), sourceFromToken(token));
+      return new Expr.Parsed(Expr.makeRecordLiteral(fields), sourceFromTokens(token, timeZone));
     } else {
       return new Expr.Parsed(time, sourceFromToken(token));
     }
   }
 
   static final Expr.Parsed makeDateTimeLiteral(Token token, Token timeZone) {
-    // TODO: validation.
     int year = Integer.parseInt(token.image.substring(0, 4));
     int month = Integer.parseInt(token.image.substring(5, 7));
     int day = Integer.parseInt(token.image.substring(8, 10));
@@ -142,6 +187,10 @@ final class ParsingHelpers {
     int minute = Integer.parseInt(token.image.substring(14, 16));
     int second = Integer.parseInt(token.image.substring(17, 19));
     BigDecimal fractional;
+
+    if (!isValidDate(year, month, day) || hour > 23 || minute > 59 || second > 59) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
 
     if (token.image.length() > 19) {
       fractional = new BigDecimal(token.image.substring(19));

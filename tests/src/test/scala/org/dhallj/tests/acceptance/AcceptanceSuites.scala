@@ -42,6 +42,8 @@ class ParsingFailureUnitSuite extends ParsingFailureSuite("parser/failure/unit")
   override def ignored = Set("WithPrecedence2", "WithPrecedence3")
 }
 class ParsingFailureSpacingSuite extends ParsingFailureSuite("parser/failure/spacing")
+
+class ParsingFailureTimeSuite extends ParsingFailureSuite("parser/failure/time")
 class ParsingFailureOtherSuite extends ParsingFailureSuite("parser/failure") {
   // We ignore "nonUtf8" because by the time we see a string in Java any non-UTF-8 characters have
   // been replaced. See `DhallParserSuite` for a non-ignored test that covers the same ground.
