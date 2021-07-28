@@ -14,11 +14,11 @@ into JVM build systems (see the [dhall-kubernetes] demonstration
 The core modules have no external dependencies, are Java 7-compatible, and are fairly minimal:
 
 ```bash
-$ du -h modules/core/target/dhall-core-0.9.0-M2.jar
-160K    modules/core/target/dhall-core-0.9.0-M2.jar
+$ du -h modules/core/target/dhall-core-0.10.0-M1.jar
+168K    modules/core/target/dhall-core-0.10.0-M1.jar
 
-$ du -h modules/parser/target/dhall-parser-0.9.0-M2.jar
-104K    modules/parser/target/dhall-parser-0.9.0-M2.jar
+$ du -h modules/parser/target/dhall-parser-0.10.0-M1.jar
+108K    modules/parser/target/dhall-parser-0.10.0-M1.jar
 ```
 
 There are also several [Scala][scala] modules that are published for Scala 2.12,
@@ -41,10 +41,10 @@ The initial development of this project was supported in part by [Permutive][per
 
 ## Status
 
-The current release of this project supports [Dhall 20.2.0][dhall-20-2-0].
+The current release of this project supports [Dhall 21.0.0][dhall-21-0-0].
 We're running the [Dhall acceptance test suites][dhall-tests] for parsing, normalization,
 [CBOR][cbor] encoding and decoding, hashing, and type inference, and
-currently all tests are passing (with one exception; see the [0.9.0-M2 release notes for details](https://github.com/travisbrown/dhallj/releases/tag/v0.9.0-M2)).
+currently all tests are passing (with three exception; see the [0.10.0-M1 release notes for details](https://github.com/travisbrown/dhallj/releases/tag/v0.10.0-M1)).
 
 There are several known issues:
 
@@ -61,7 +61,7 @@ The easiest way to try things out is to add the Scala wrapper module to your bui
 If you're using [sbt][sbt] that would look like this:
 
 ```scala
-libraryDependencies += "org.dhallj" %% "dhall-scala" % "0.9.0-M2"
+libraryDependencies += "org.dhallj" %% "dhall-scala" % "0.10.0-M1"
 ```
 
 This dependency includes two packages: `org.dhallj.syntax` and `org.dhallj.ast`.
@@ -394,15 +394,13 @@ its HTTP client. This module is intended to be a complete implementation of the
 It requires a bit of ceremony to set up:
 
 ```scala
-import cats.effect.{ContextShift, IO, Resource}
+import cats.effect.{IO, Resource}
 import org.dhallj.core.Expr
 import org.dhallj.imports.syntax._
 import org.dhallj.parser.DhallParser
+import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.Client
-import org.http4s.client.blaze.BlazeClientBuilder
 import scala.concurrent.ExecutionContext
-
-implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
 val client: Resource[IO, Client[IO]] = BlazeClientBuilder[IO](ExecutionContext.global).resource
 ```
@@ -420,16 +418,19 @@ We can use them with a function from the Dhall Prelude like this:
 
 ```scala
 scala> val resolved = client.use { implicit c =>
-     |   concatSepImport.resolveImports[IO]()
+     |   concatSepImport.resolveImports[IO]
      | }
-resolved: cats.effect.IO[org.dhallj.core.Expr] = IO$-633277477
+resolved: cats.effect.IO[org.dhallj.core.Expr] = IO(...)
+
+scala> import cats.effect.unsafe.implicits.global
+import cats.effect.unsafe.implicits.global
 
 scala> val result = resolved.map { concatSep =>
      |   Expr.makeApplication(concatSep, Array(delimiter, parts)).normalize
      | }
-result: cats.effect.IO[org.dhallj.core.Expr] = <function1>
+result: cats.effect.IO[org.dhallj.core.Expr] = IO(...)
 
-scala> result.unsafeRunSync
+scala> result.unsafeRunSync()
 res0: org.dhallj.core.Expr = "foo-bar-baz"
 ```
 
@@ -689,8 +690,7 @@ Copyright [Travis Brown][travisbrown] and [Tim Spence][timspence], 2020.
 [cbor]: https://cbor.io/
 [circe]: https://github.com/circe/circe
 [code-of-conduct]: https://www.scala-lang.org/conduct/
-[dhall-17]: https://github.com/dhall-lang/dhall-lang/releases/tag/v17.0.0
-[dhall-20-2-0]: https://github.com/dhall-lang/dhall-lang/releases/tag/v20.2.0
+[dhall-21-0-0]: https://github.com/dhall-lang/dhall-lang/pull/1194
 [dhall-haskell]: https://github.com/dhall-lang/dhall-haskell
 [dhall-imports]: https://github.com/dhall-lang/dhall-lang/blob/master/standard/imports.md
 [dhall-json]: https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html
