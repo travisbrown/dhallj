@@ -76,7 +76,7 @@ object ImportCache {
         cache <- cacheO.fold[F[ImportCache[F]]](F.as(warnCacheNotCreated, new NoopImportCache[F]))(F.pure)
       } yield cache
 
-    def isWindows = System.getProperty("os.name").toLowerCase.contains("Windows")
+    def isWindows = System.getProperty("os.name").toLowerCase.contains("windows")
 
     def warnCacheNotCreated: F[Unit] =
       F.delay(
