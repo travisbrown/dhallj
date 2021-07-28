@@ -49,3 +49,5 @@ class ImportResolutionSuccessUnitSuite extends ImportResolutionSuite("import/suc
   override def ignored = Set("DontCacheIfHash")
 }
 class ImportResolutionSuccessUnitAsLocationSuite extends ImportResolutionSuite("import/success/unit/asLocation")
+class ImportResolutionFailureUnitSuite extends ImportResolutionFailureSuite("import/failure/unit")
+class ImportResolutionFailureOtherSuite extends ImportResolutionFailureSuite("import/failure")
