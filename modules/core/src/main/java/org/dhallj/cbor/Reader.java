@@ -1,5 +1,6 @@
 package org.dhallj.cbor;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.Map;
  * Dhall.
  */
 public abstract class Reader {
+  private static final BigInteger TWO = new BigInteger("2");
 
   /** Only allow symbols that correspond to entire encoded Dhall expressions. */
   public final <R> R nextSymbol(Visitor<R> visitor) {
@@ -84,6 +86,34 @@ public abstract class Reader {
         throw new CborException(
             "Not a valid major type for an Unsigned Integer: "
                 + MajorType.fromByte(next).toString());
+    }
+  }
+
+  public final BigDecimal readBigDecimal() {
+    skip55799();
+    byte next = read();
+    switch (MajorType.fromByte(next)) {
+      case SEMANTIC_TAG:
+        AdditionalInfo info = AdditionalInfo.fromByte(next);
+        BigInteger t = readBigInteger(info, next);
+        long tag = t.longValue();
+        if (tag == 4) {
+          BigInteger length = readArrayStart();
+          if (length.equals(TWO)) {
+            BigInteger rawScale = readBigNum();
+            int scale = -rawScale.intValue();
+            BigInteger unscaledValue = readBigNum();
+
+            return new BigDecimal(unscaledValue, scale);
+          } else {
+            throw new CborException("Invalid decimal fraction");
+          }
+        } else {
+          throw new CborException(
+              Long.toString(tag) + " is not a valid tag for a decimal fraction");
+        }
+      default:
+        throw new CborException("Next symbol is not a decimal fraction");
     }
   }
 
