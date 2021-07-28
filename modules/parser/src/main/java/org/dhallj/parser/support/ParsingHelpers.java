@@ -1,6 +1,7 @@
 package org.dhallj.parser.support;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -23,6 +24,15 @@ final class ParsingHelpers {
   private static Source sourceFromToken(Token token) {
     return Source.fromString(
         token.image, token.beginLine, token.beginColumn, token.endLine, token.endColumn);
+  }
+
+  private static Source sourceFromTokens(Token token1, Token token2) {
+    return Source.fromString(
+        token1.image + token2.image,
+        token1.beginLine,
+        token1.beginColumn,
+        token2.endLine,
+        token2.endColumn);
   }
 
   static final Expr.Parsed makeDoubleLiteral(Token token) {
@@ -58,6 +68,163 @@ final class ParsingHelpers {
     }
 
     return new Expr.Parsed(Expr.makeIntegerLiteral(value), sourceFromToken(token));
+  }
+
+  static final boolean isValidDate(int year, int month, int day) {
+    if (month > 0 && month <= 12) {
+      if (day > 0 && day < 29) {
+        return true;
+      } else if (day == 29) {
+        // Deal with leap days.
+        if (month == 2) {
+          if (year % 4 != 0) {
+            return false;
+          } else if (year % 100 != 0) {
+            return true;
+          } else if (year % 400 != 0) {
+            return false;
+          } else {
+            return true;
+          }
+        } else {
+          return true;
+        }
+      } else if (day == 30) {
+        return month != 2;
+      } else if (day == 31) {
+        return month == 1
+            || month == 3
+            || month == 5
+            || month == 7
+            || month == 8
+            || month == 10
+            || month == 12;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  static final Expr.Parsed makeDateLiteral(Token token) {
+    int year = Integer.parseInt(token.image.substring(0, 4));
+    int month = Integer.parseInt(token.image.substring(5, 7));
+    int day = Integer.parseInt(token.image.substring(8, 10));
+
+    if (!isValidDate(year, month, day)) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
+
+    return new Expr.Parsed(Expr.makeDateLiteral(year, month, day), sourceFromToken(token));
+  }
+
+  static final Expr.Parsed makeTimeZoneLiteral(Token token) {
+    boolean positive = token.image.charAt(0) == '+';
+    int hour = Integer.parseInt(token.image.substring(1, 3));
+    int minute = Integer.parseInt(token.image.substring(4, 6));
+
+    if (hour > 23 || minute > 59) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
+
+    int seconds = hour * 60 + minute;
+    int value = positive ? seconds : -seconds;
+
+    return new Expr.Parsed(Expr.makeTimeZoneLiteral(value), sourceFromToken(token));
+  }
+
+  static final Expr.Parsed makeTimeLiteral(Token token, Token timeZone) {
+    int hour = Integer.parseInt(token.image.substring(0, 2));
+    int minute = Integer.parseInt(token.image.substring(3, 5));
+    int second = Integer.parseInt(token.image.substring(6, 8));
+    BigDecimal fractional;
+
+    if (hour > 23 || minute > 59 || second > 59) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
+
+    if (token.image.length() > 8) {
+      fractional = new BigDecimal(token.image.substring(8));
+    } else {
+      fractional = BigDecimal.ZERO;
+    }
+
+    Expr time = Expr.makeTimeLiteral(hour, minute, second, fractional);
+
+    if (timeZone != null) {
+      int value;
+
+      if (timeZone.image.equals("z") || timeZone.image.equals("Z")) {
+        value = 0;
+      } else if (timeZone.image.startsWith("+") || timeZone.image.startsWith("-")) {
+        boolean positive = timeZone.image.charAt(0) == '+';
+        int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
+        int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
+        int seconds = tzHour * 60 + tzMinute;
+        value = positive ? seconds : -seconds;
+      } else {
+        // Necessary to work around generated code size limits.
+        throw new ParsingFailure("Invalid temporal offset: " + timeZone.image);
+      }
+
+      List<Entry<String, Expr>> fields = new ArrayList<Entry<String, Expr>>(2);
+      fields.add(new SimpleImmutableEntry<>("time", time));
+      fields.add(new SimpleImmutableEntry<>("timeZone", Expr.makeTimeZoneLiteral(value)));
+
+      return new Expr.Parsed(Expr.makeRecordLiteral(fields), sourceFromTokens(token, timeZone));
+    } else {
+      return new Expr.Parsed(time, sourceFromToken(token));
+    }
+  }
+
+  static final Expr.Parsed makeDateTimeLiteral(Token token, Token timeZone) {
+    int year = Integer.parseInt(token.image.substring(0, 4));
+    int month = Integer.parseInt(token.image.substring(5, 7));
+    int day = Integer.parseInt(token.image.substring(8, 10));
+
+    int hour = Integer.parseInt(token.image.substring(11, 13));
+    int minute = Integer.parseInt(token.image.substring(14, 16));
+    int second = Integer.parseInt(token.image.substring(17, 19));
+    BigDecimal fractional;
+
+    if (!isValidDate(year, month, day) || hour > 23 || minute > 59 || second > 59) {
+      throw new ParsingFailure("Invalid temporal literal");
+    }
+
+    if (token.image.length() > 19) {
+      fractional = new BigDecimal(token.image.substring(19));
+    } else {
+      fractional = BigDecimal.ZERO;
+    }
+
+    List<Entry<String, Expr>> fields = new ArrayList<Entry<String, Expr>>(2);
+    fields.add(new SimpleImmutableEntry<>("date", Expr.makeDateLiteral(year, month, day)));
+    fields.add(
+        new SimpleImmutableEntry<>("time", Expr.makeTimeLiteral(hour, minute, second, fractional)));
+
+    if (timeZone != null) {
+      int value;
+
+      if (timeZone.image.equals("z") || timeZone.image.equals("Z")) {
+        value = 0;
+      } else if (timeZone.image.startsWith("+") || timeZone.image.startsWith("-")) {
+        boolean positive = timeZone.image.charAt(0) == '+';
+        int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
+        int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
+        int seconds = tzHour * 60 + tzMinute;
+        value = positive ? seconds : -seconds;
+      } else {
+        // Necessary to work around generated code size limits.
+        throw new ParsingFailure("Invalid temporal offset: " + timeZone.image);
+      }
+
+      fields.add(new SimpleImmutableEntry<>("timeZone", Expr.makeTimeZoneLiteral(value)));
+    }
+
+    Source source = timeZone == null ? sourceFromToken(token) : sourceFromTokens(token, timeZone);
+
+    return new Expr.Parsed(Expr.makeRecordLiteral(fields), source);
   }
 
   private static String unescapeText(String in) {

@@ -1,5 +1,6 @@
 package org.dhallj.core.typechecking;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -52,6 +53,21 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
   @Override
   public final Expr onDouble(double value) {
     return Constants.DOUBLE;
+  }
+
+  @Override
+  public final Expr onDate(int year, int month, int day) {
+    return Constants.DATE;
+  }
+
+  @Override
+  public final Expr onTime(int hour, int minute, int second, BigDecimal fractional) {
+    return Constants.TIME;
+  }
+
+  @Override
+  public final Expr onTimeZone(int minutes) {
+    return Constants.TIME_ZONE;
   }
 
   @Override

@@ -1,5 +1,6 @@
 package org.dhallj.core.binary;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -48,6 +49,35 @@ public final class Encode implements Visitor<Void> {
 
   public Void onDouble(Expr self, double value) {
     this.writer.writeDouble(value);
+    return null;
+  }
+
+  public Void onDate(Expr self, int year, int month, int day) {
+    this.writer.writeArrayStart(4);
+    this.writer.writeLong(Label.DATE);
+    this.writer.writeLong(year);
+    this.writer.writeLong(month);
+    this.writer.writeLong(day);
+    return null;
+  }
+
+  public Void onTime(Expr self, int hour, int minute, int second, BigDecimal fractional) {
+    this.writer.writeArrayStart(4);
+    this.writer.writeLong(Label.TIME);
+    this.writer.writeLong(hour);
+    this.writer.writeLong(minute);
+    this.writer.writeBigDecimal(fractional.add(BigDecimal.valueOf(second)));
+    return null;
+  }
+
+  public Void onTimeZone(Expr self, int minutes) {
+    boolean sign = minutes >= 0;
+    this.writer.writeArrayStart(4);
+    this.writer.writeLong(Label.TIME_ZONE);
+    this.writer.writeBoolean(sign);
+    int m = Math.abs(minutes);
+    this.writer.writeLong(m / 60);
+    this.writer.writeLong(m % 60);
     return null;
   }
 

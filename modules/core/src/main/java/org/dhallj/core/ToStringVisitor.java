@@ -1,5 +1,6 @@
 package org.dhallj.core;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -75,6 +76,45 @@ final class ToStringVisitor extends Visitor.NoPrepareEvents<ToStringState> {
 
   public ToStringState onDouble(Expr self, double value) {
     return new ToStringState(Double.toString(value));
+  }
+
+  private static String pad2(int input) {
+    String asString = Integer.toString(input);
+    if (asString.length() == 1) {
+      return "0" + asString;
+    } else {
+      return asString;
+    }
+  }
+
+  private static String pad4(int input) {
+    String asString = Integer.toString(input);
+    for (int i = 0; i < asString.length() - 4; i += 1) {
+      asString = "0" + asString;
+    }
+    return asString;
+  }
+
+  public ToStringState onDate(Expr self, int year, int month, int day) {
+    return new ToStringState(pad4(year) + "-" + pad2(month) + "-" + pad2(day));
+  }
+
+  public ToStringState onTime(Expr self, int hour, int minute, int second, BigDecimal fractional) {
+    String result = pad2(hour) + ":" + pad2(minute) + ":" + pad2(second);
+
+    if (!fractional.equals(BigDecimal.ZERO)) {
+      result = result + fractional.toString().substring(1);
+    }
+
+    return new ToStringState(result);
+  }
+
+  public ToStringState onTimeZone(Expr self, int minutes) {
+    if (Long.signum(minutes) < 0) {
+      return new ToStringState("-" + pad2(-minutes / 60) + pad2(-minutes % 60));
+    } else {
+      return new ToStringState("+" + pad2(minutes / 60) + pad2(minutes % 60));
+    }
   }
 
   public ToStringState onBuiltIn(Expr self, String name) {

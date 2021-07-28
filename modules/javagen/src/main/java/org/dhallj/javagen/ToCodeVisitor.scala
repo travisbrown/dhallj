@@ -1,5 +1,6 @@
 package org.dhallj.javagen
 
+import java.math.BigDecimal
 import java.math.BigInteger
 import java.net.URI
 import java.nio.file.Path
@@ -26,6 +27,17 @@ final class ToCodeVisitor extends Visitor.NoPrepareEvents[Code] {
   def onNatural(self: Expr, value: BigInteger): Code = Code(s"""Expr.makeNaturalLiteral(new BigInteger("$value"))""")
   def onInteger(self: Expr, value: BigInteger): Code = Code(s"""Expr.makeIntegerLiteral(new BigInteger("$value"))""")
   def onDouble(self: Expr, value: Double): Code = Code(s"""Expr.makeDoubleLiteral($value)""")
+
+  def onDate(self: Expr, year: Int, month: Int, day: Int): Code = Code(s"Expr.makeDateLiteral($year, $month, $day)")
+  def onTime(self: Expr, hour: Int, minute: Int, second: Int, fractional: BigDecimal): Code = {
+    if (fractional.equals(BigDecimal.ZERO)) {
+      Code(s"Expr.makeTimeLiteral($hour, $minute, $second, BigDecimal.ZERO)")
+    } else {
+      Code(s"Expr.makeTimeLiteral($hour, $minute, $second, new BigDecimal($fractional))")
+    }
+  }
+  def onTimeZone(self: Expr, seconds: Int): Code = Code(s"Expr.makeTimeZoneLiteral($seconds)")
+
   def onBuiltIn(self: Expr, name: String): Code = Code(
     if (constants(name)) {
       s"""Expr.Constants.${name.toUpperCase}"""

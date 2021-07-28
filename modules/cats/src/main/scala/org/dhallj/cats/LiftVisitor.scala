@@ -1,6 +1,7 @@
 package org.dhallj.cats
 
 import cats.Applicative
+import java.math.BigDecimal
 import java.math.BigInteger
 import java.net.URI
 import java.nio.file.Path
@@ -23,6 +24,9 @@ class LiftVisitor[F[_] <: AnyRef](
   def onNatural(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
   def onInteger(self: Expr, value: BigInteger): F[Expr] = F.pure(self)
   def onDouble(self: Expr, value: Double): F[Expr] = F.pure(self)
+  def onDate(self: Expr, year: Int, month: Int, day: Int): F[Expr] = F.pure(self)
+  def onTime(self: Expr, hour: Int, minute: Int, second: Int, fractional: BigDecimal): F[Expr] = F.pure(self)
+  def onTimeZone(self: Expr, seconds: Int): F[Expr] = F.pure(self)
   def onBuiltIn(self: Expr, name: String): F[Expr] = F.pure(self)
   def onIdentifier(self: Expr, value: String, index: Long): F[Expr] = F.pure(self)
 

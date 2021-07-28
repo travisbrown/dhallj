@@ -1,5 +1,6 @@
 package org.dhallj.core;
 
+// Note that these are internal identifiers only.
 final class Tags {
   static final int NOTE = 0;
 
@@ -9,6 +10,9 @@ final class Tags {
   static final int DOUBLE = 3;
   static final int BUILT_IN = 4;
   static final int IDENTIFIER = 5;
+  static final int DATE = 31;
+  static final int TIME = 32;
+  static final int TIME_ZONE = 33;
 
   // Binding constructors.
   static final int LAMBDA = 6;

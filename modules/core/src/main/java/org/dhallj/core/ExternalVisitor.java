@@ -1,5 +1,6 @@
 package org.dhallj.core;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
@@ -18,6 +19,12 @@ public interface ExternalVisitor<A> {
   A onInteger(BigInteger value);
 
   A onDouble(double value);
+
+  A onDate(int year, int month, int day);
+
+  A onTime(int hour, int minute, int second, BigDecimal fractional);
+
+  A onTimeZone(int minutes);
 
   A onBuiltIn(String name);
 
@@ -111,6 +118,21 @@ public interface ExternalVisitor<A> {
 
     @Override
     public A onDouble(double value) {
+      return this.getReturnValue();
+    }
+
+    @Override
+    public A onDate(int year, int month, int day) {
+      return this.getReturnValue();
+    }
+
+    @Override
+    public A onTime(int hour, int minute, int second, BigDecimal fractional) {
+      return this.getReturnValue();
+    }
+
+    @Override
+    public A onTimeZone(int minutes) {
       return this.getReturnValue();
     }
 
