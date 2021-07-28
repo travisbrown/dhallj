@@ -26,6 +26,15 @@ final class ParsingHelpers {
         token.image, token.beginLine, token.beginColumn, token.endLine, token.endColumn);
   }
 
+  private static Source sourceFromTokens(Token token1, Token token2) {
+    return Source.fromString(
+        token1.image + token2.image,
+        token1.beginLine,
+        token1.beginColumn,
+        token2.endLine,
+        token2.endColumn);
+  }
+
   static final Expr.Parsed makeDoubleLiteral(Token token) {
     double parsed = Double.parseDouble(token.image);
 
@@ -158,8 +167,9 @@ final class ParsingHelpers {
       fields.add(new SimpleImmutableEntry<>("timeZone", Expr.makeTimeZoneLiteral(value)));
     }
 
-    // TODO: Add time zone to source if needed.
-    return new Expr.Parsed(Expr.makeRecordLiteral(fields), sourceFromToken(token));
+    Source source = timeZone == null ? sourceFromToken(token) : sourceFromTokens(token, timeZone);
+
+    return new Expr.Parsed(Expr.makeRecordLiteral(fields), source);
   }
 
   private static String unescapeText(String in) {
