@@ -13,6 +13,8 @@ public final class Parser {
       return new JavaCCParser(new StringProvider(input)).TOP_LEVEL();
     } catch (ParseException underlying) {
       throw new ParsingFailure(underlying.getMessage(), underlying);
+    } catch (TokenMgrException underlying) {
+      throw new ParsingFailure(underlying.getMessage(), underlying);
     }
   }
 
