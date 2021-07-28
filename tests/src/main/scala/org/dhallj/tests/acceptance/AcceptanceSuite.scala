@@ -18,7 +18,7 @@ trait AcceptanceSuite extends FunSuite {
   /**
    * Test names to ignore.
    */
-  def ignored: Set[String] = Set.empty
+  def ignored: String => Boolean = Set.empty
 
   /**
    * Names of tests that are slow.
