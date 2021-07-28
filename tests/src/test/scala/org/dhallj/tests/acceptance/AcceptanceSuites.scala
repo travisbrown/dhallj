@@ -25,7 +25,10 @@ class TypeCheckingOtherSuite extends TypeCheckingSuite("type-inference/success")
   override def ignored = Set("CacheImports", "CacheImportsCanonicalize")
 }
 class TypeCheckingFailureUnitSuite extends TypeCheckingFailureSuite("type-inference/failure/unit")
-class TypeCheckingPreludeSuite extends TypeCheckingSuite("type-inference/success/prelude", true)
+class TypeCheckingPreludeSuite extends TypeCheckingSuite("type-inference/success/prelude", true) {
+  // Temporary workaround awaiting dhall-lang#1198.
+  override def ignored = _.startsWith("Monoid/")
+}
 
 class ParsingUnitSuite extends ParsingSuite("parser/success/unit")
 class ParsingTextSuite extends ParsingSuite("parser/success/text")
