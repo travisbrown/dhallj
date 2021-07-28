@@ -6,6 +6,9 @@ import org.dhallj.parser.DhallParser
 import scala.reflect.ClassTag
 
 abstract class AcceptanceFailureSuite[A, E <: Throwable: ClassTag] extends AcceptanceSuite {
+  override def isInputFileName(fileName: String): Boolean = fileName.endsWith(".dhall")
+  override def makeName(inputFileName: String): String = inputFileName.dropRight(6)
+
   def loadInput(input: Array[Byte]): A
 
   testInputs
