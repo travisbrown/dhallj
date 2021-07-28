@@ -108,14 +108,17 @@ final class ParsingHelpers {
     if (timeZone != null) {
       int value;
 
-      if (timeZone.equals("z") || timeZone.equals("Z")) {
+      if (timeZone.image.equals("z") || timeZone.image.equals("Z")) {
         value = 0;
-      } else {
+      } else if (timeZone.image.startsWith("+") || timeZone.image.startsWith("-")) {
         boolean positive = timeZone.image.charAt(0) == '+';
         int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
         int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
         int seconds = tzHour * 60 + tzMinute;
         value = positive ? seconds : -seconds;
+      } else {
+        // Necessary to work around generated code size limits.
+        throw new ParsingFailure("Invalid temporal offset: " + timeZone.image);
       }
 
       List<Entry<String, Expr>> fields = new ArrayList<Entry<String, Expr>>(2);
@@ -154,14 +157,17 @@ final class ParsingHelpers {
     if (timeZone != null) {
       int value;
 
-      if (timeZone.equals("z") || timeZone.equals("Z")) {
+      if (timeZone.image.equals("z") || timeZone.image.equals("Z")) {
         value = 0;
-      } else {
+      } else if (timeZone.image.startsWith("+") || timeZone.image.startsWith("-")) {
         boolean positive = timeZone.image.charAt(0) == '+';
         int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
         int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
         int seconds = tzHour * 60 + tzMinute;
         value = positive ? seconds : -seconds;
+      } else {
+        // Necessary to work around generated code size limits.
+        throw new ParsingFailure("Invalid temporal offset: " + timeZone.image);
       }
 
       fields.add(new SimpleImmutableEntry<>("timeZone", Expr.makeTimeZoneLiteral(value)));

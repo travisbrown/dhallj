@@ -75,8 +75,9 @@ public final class Encode implements Visitor<Void> {
     this.writer.writeArrayStart(4);
     this.writer.writeLong(Label.TIME_ZONE);
     this.writer.writeBoolean(sign);
-    this.writer.writeLong(minutes / 60);
-    this.writer.writeLong(minutes % 60);
+    int m = Math.abs(minutes);
+    this.writer.writeLong(m / 60);
+    this.writer.writeLong(m % 60);
     return null;
   }
 

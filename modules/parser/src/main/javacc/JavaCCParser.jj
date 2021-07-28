@@ -208,7 +208,6 @@ TOKEN: {
   | <#URL_PATH: (<URL_PATH_COMPONENT> | ("/") <SEGMENT>)*>
   | <SHEBANG: "#!" (<ASCII> | <VALID_NON_ASCII> | "\t")+ ("\n" | "\r\n")>
   | <TIME_NUMOFFSET: ("+" | "-") <DIGIT2> ":" <DIGIT2>>
-  | <TEMPORAL_Z: "Z" | "z">
   | <FULL_DATE: <DIGIT4> "-" <DIGIT2> "-" <DIGIT2>>
   | <PARTIAL_TIME: <DIGIT2> ":" <DIGIT2> ":" <DIGIT2> ("." (<DIGIT>)+)?>
   | <DATE_TIME: <FULL_DATE> ("T" | "t") <PARTIAL_TIME>>
@@ -590,7 +589,8 @@ Expr.Parsed TIME_LITERAL(): {
   Token token;
   Token timeZone = null;
 } {
-  (token=<PARTIAL_TIME> [(timeZone=<TIME_NUMOFFSET>) | (timeZone=<TEMPORAL_Z>)]) {
+  (token=<PARTIAL_TIME> [(timeZone=<TIME_NUMOFFSET>) | (timeZone=<SIMPLE_LABEL>)]) {
+    // Matching the "Z" in this way is a little convoluted but seems necessary to work around generated code size limits.
     return ParsingHelpers.makeTimeLiteral(token, timeZone);
   }
 }
@@ -599,7 +599,8 @@ Expr.Parsed DATE_TIME_LITERAL(): {
   Token token;
   Token timeZone = null;
 } {
-  (token=<DATE_TIME> [(timeZone=<TIME_NUMOFFSET>) | (timeZone=<TEMPORAL_Z>)]) {
+  (token=<DATE_TIME> [(timeZone=<TIME_NUMOFFSET>) | (timeZone=<SIMPLE_LABEL>)]) {
+    // Matching the "Z" in this way is a little convoluted but seems necessary to work around generated code size limits.
     return ParsingHelpers.makeDateTimeLiteral(token, timeZone);
   }
 }

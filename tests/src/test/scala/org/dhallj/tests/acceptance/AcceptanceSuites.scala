@@ -33,6 +33,8 @@ class TypeCheckingPreludeSuite extends TypeCheckingSuite("type-inference/success
 
 class ParsingUnitSuite extends ParsingSuite("parser/success/unit")
 class ParsingTextSuite extends ParsingSuite("parser/success/text")
+
+class ParsingTimeSuite extends ParsingSuite("parser/success/time")
 class ParsingOtherSuite extends ParsingSuite("parser/success")
 
 class ParsingFailureUnitSuite extends ParsingFailureSuite("parser/failure/unit") {

@@ -121,8 +121,8 @@ public abstract class Writer {
   public final void writeBigDecimal(BigDecimal value) {
     this.writeTypeAndLength(MajorType.SEMANTIC_TAG.value, 4);
     this.writeTypeAndLength(MajorType.ARRAY.value, 2);
-    this.writeBigInteger(value.unscaledValue());
     this.writeLong(-((long) value.scale()));
+    this.writeBigInteger(value.unscaledValue());
   }
 
   public final void writeString(String value) {
