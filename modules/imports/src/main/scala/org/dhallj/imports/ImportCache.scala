@@ -1,10 +1,10 @@
 package org.dhallj.imports
 
-import java.nio.file.{Files, Path, Paths}
-
 import cats.Applicative
 import cats.effect.Async
 import cats.implicits._
+import java.nio.file.{Files, Path, Paths}
+import org.dhallj.core.DhallException.ResolutionFailure
 
 trait ImportCache[F[_]] {
   def get(key: Array[Byte]): F[Option[Array[Byte]]]
@@ -73,17 +73,10 @@ object ImportCache {
           if (isWindows)
             makeCacheFromEnvVar("LOCALAPPDATA", "")
           else makeCacheFromEnvVar("HOME", ".cache")
-        cache <- cacheO.fold[F[ImportCache[F]]](F.as(warnCacheNotCreated, new NoopImportCache[F]))(F.pure)
+        cache <- F.fromOption(cacheO, new ResolutionFailure("Failed to create cache"))
       } yield cache
 
-    def isWindows = System.getProperty("os.name").toLowerCase.contains("Windows")
-
-    def warnCacheNotCreated: F[Unit] =
-      F.delay(
-        println(
-          "WARNING: failed to create cache at either $XDG_CACHE_HOME}/dhall or $HOME/.cache/dhall. Are these locations writable?"
-        )
-      )
+    def isWindows = System.getProperty("os.name").toLowerCase.contains("windows")
 
     for {
       xdgCache <- makeCacheFromEnvVar("XDG_CACHE_HOME", "")
