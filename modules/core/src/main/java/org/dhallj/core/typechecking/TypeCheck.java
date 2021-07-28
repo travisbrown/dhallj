@@ -103,7 +103,16 @@ public final class TypeCheck implements ExternalVisitor<Expr> {
     this.context = unshiftedContext;
 
     Universe inputTypeUniverse = Universe.fromExpr(inputType);
+
+    if (inputTypeUniverse == null) {
+      throw TypeCheckFailure.makePiInputError(inputType);
+    }
+
     Universe resultTypeUniverse = Universe.fromExpr(resultType);
+
+    if (resultTypeUniverse == null) {
+      throw TypeCheckFailure.makePiOutputError(resultType);
+    }
 
     return Universe.functionCheck(inputTypeUniverse, resultTypeUniverse).toExpr();
   }
