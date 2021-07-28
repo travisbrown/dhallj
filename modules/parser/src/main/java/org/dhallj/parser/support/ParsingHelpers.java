@@ -161,6 +161,11 @@ final class ParsingHelpers {
         boolean positive = timeZone.image.charAt(0) == '+';
         int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
         int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
+
+        if (tzHour > 23 || tzMinute > 59) {
+          throw new ParsingFailure("Invalid temporal literal");
+        }
+
         int seconds = tzHour * 60 + tzMinute;
         value = positive ? seconds : -seconds;
       } else {
@@ -212,6 +217,11 @@ final class ParsingHelpers {
         boolean positive = timeZone.image.charAt(0) == '+';
         int tzHour = Integer.parseInt(timeZone.image.substring(1, 3));
         int tzMinute = Integer.parseInt(timeZone.image.substring(4, 6));
+
+        if (tzHour > 23 || tzMinute > 59) {
+          throw new ParsingFailure("Invalid temporal literal");
+        }
+
         int seconds = tzHour * 60 + tzMinute;
         value = positive ? seconds : -seconds;
       } else {
