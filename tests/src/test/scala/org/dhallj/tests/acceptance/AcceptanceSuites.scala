@@ -37,7 +37,11 @@ class ParsingOtherSuite extends ParsingSuite("parser/success")
 
 class ParsingFailureUnitSuite extends ParsingFailureSuite("parser/failure/unit")
 class ParsingFailureSpacingSuite extends ParsingFailureSuite("parser/failure/spacing")
-class ParsingFailureOtherSuite extends ParsingFailureSuite("parser/failure")
+class ParsingFailureOtherSuite extends ParsingFailureSuite("parser/failure") {
+  // We ignore "nonUtf8" because by the time we see a string in Java any non-UTF-8 characters have
+  // been replaced. See `DhallParserSuite` for a non-ignored test that covers the same ground.
+  override def ignored = Set("nonUtf8")
+}
 
 class BinaryDecodingUnitSuite extends BinaryDecodingSuite("binary-decode/success/unit")
 class BinaryDecodingImportsUnitSuite extends BinaryDecodingSuite("binary-decode/success/unit/imports")
