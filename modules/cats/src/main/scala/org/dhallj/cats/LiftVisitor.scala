@@ -13,8 +13,7 @@ import org.dhallj.core.{Expr, Operator, Source, Visitor}
 /**
  * Represents a function lifting an `Expr` into an `F[Expr]`.
  *
- * This is a convenience class designed to help with implementations
- * that don't need effects for most cases.
+ * This is a convenience class designed to help with implementations that don't need effects for most cases.
  */
 class LiftVisitor[F[_] <: AnyRef](
   private[this] val F: Applicative[F],
