@@ -4,7 +4,6 @@ import java.net.URI
 import java.io.FileInputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
-
 import munit.{FunSuite, Ignore}
 import org.dhallj.core.DhallException.ParsingFailure
 import org.dhallj.core.Expr
@@ -98,5 +97,37 @@ foo ''' bar ''${ baz '''''' qux''"""
 
     assertEquals(DhallParser.parse(input): Expr, expected)
 
+  }
+
+  test("allow freezing import with using") {
+    val input =
+      "https://example.com using ./headers.dhall sha256:3196e8dcb8ccc5f197223bedfda84d8ea66b37435e5d2735f4e6ae66bdf07dea"
+
+    val expected = Expr.makeRemoteImport(
+      new URI("https://example.com"),
+      Expr.makeLocalImport(Paths.get("./headers.dhall"), Expr.ImportMode.CODE, null),
+      Expr.ImportMode.CODE,
+      Expr.Util.decodeHashBytes("3196e8dcb8ccc5f197223bedfda84d8ea66b37435e5d2735f4e6ae66bdf07dea")
+    )
+
+    assert(DhallParser.parse(input) == expected)
+  }
+
+  test("allow freezing import in using") {
+    val input =
+      "https://example.com using (./headers.dhall sha256:3196e8dcb8ccc5f197223bedfda84d8ea66b37435e5d2735f4e6ae66bdf07dea)"
+
+    val expected = Expr.makeRemoteImport(
+      new URI("https://example.com"),
+      Expr.makeLocalImport(
+        Paths.get("./headers.dhall"),
+        Expr.ImportMode.CODE,
+        Expr.Util.decodeHashBytes("3196e8dcb8ccc5f197223bedfda84d8ea66b37435e5d2735f4e6ae66bdf07dea")
+      ),
+      Expr.ImportMode.CODE,
+      null
+    )
+
+    assert(DhallParser.parse(input) == expected)
   }
 }
