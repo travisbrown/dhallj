@@ -62,7 +62,7 @@ class ImportResolutionSuite extends FunSuite {
     assert(resolve(expr) == expected)
   }
 
-  //TODO - dependent on https://github.com/travisbrown/dhallj/issues/34
+  // TODO - dependent on https://github.com/travisbrown/dhallj/issues/34
   test("Quoted remote import".fail) {
     val expr = parse(
       "let any = https://raw.githubusercontent.com/\"dhall-lang\"/\"dhall-lang\"/\"master\"/\"Prelude\"/\"List\"/\"any\" in any Natural Natural/even [2,3,5]"
@@ -186,7 +186,7 @@ class ImportResolutionSuite extends FunSuite {
     val hash =
       MessageDigest
         .getInstance("SHA-256")
-        .digest(expected.normalize.getEncodedBytes) //Hash doesn't match what is stored
+        .digest(expected.normalize.getEncodedBytes) // Hash doesn't match what is stored
 
     val expr =
       parse(

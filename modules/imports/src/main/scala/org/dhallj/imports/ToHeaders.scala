@@ -49,7 +49,7 @@ object ToHeaders {
       if (!isValidType(expr)) {
         None
       } else {
-        //TODO do we need to .accept(this) on expr?
+        // TODO do we need to .accept(this) on expr?
         val e = expr.normalize
         val l = asListLiteral(e)
         if (l eq null) {

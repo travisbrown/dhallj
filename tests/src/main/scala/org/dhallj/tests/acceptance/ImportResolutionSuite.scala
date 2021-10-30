@@ -20,7 +20,7 @@ class ImportResolutionSuite(val base: String)
     with CachedResolvingInput
     with ImportResolutionHelpers {
 
-  setEnv("DHALL_TEST_VAR", "6 * 7") //Yes, this is SUPER hacky but the JVM doesn't really support setting env vars
+  setEnv("DHALL_TEST_VAR", "6 * 7") // Yes, this is SUPER hacky but the JVM doesn't really support setting env vars
 
   override def parseInput(path: String, input: String): Expr = {
     val p = Paths.get(path)
@@ -55,7 +55,7 @@ class ImportResolutionFailureSuite(val base: String) extends AcceptanceSuite wit
       }
     }
 
-  setEnv("DHALL_TEST_VAR", "6 * 7") //Yes, this is SUPER hacky but the JVM doesn't really support setting env vars
+  setEnv("DHALL_TEST_VAR", "6 * 7") // Yes, this is SUPER hacky but the JVM doesn't really support setting env vars
 
   def parseInput(path: String, input: String): Expr = {
     val p = Paths.get(path)

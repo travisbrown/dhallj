@@ -40,7 +40,7 @@ class CanonicalizationSuite extends FunSuite {
     )
   }
 
-  //TODO determine whether spec is correct on this
+  // TODO determine whether spec is correct on this
   test("Paths - Root ..") {
     assertEquals(canonicalize[IO](Local(Paths.get("/.."))).unsafeRunSync(), Local(Paths.get("/..")))
   }
@@ -182,7 +182,7 @@ class CanonicalizationSuite extends FunSuite {
     )
   }
 
-  //This is actually prohibited by the sanity check but we don't worry about it here
+  // This is actually prohibited by the sanity check but we don't worry about it here
   test("Chaining - remote / local absolute") {
     assertEquals(
       canonicalize[IO](Remote(new URI("http://foo.org/bar.dhall"), headers1), Local(Paths.get("/baz.dhall")))

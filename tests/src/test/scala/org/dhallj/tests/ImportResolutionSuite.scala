@@ -17,7 +17,7 @@ class ImportResolutionSuite extends FunSuite {
     BlazeClientBuilder[IO](scala.concurrent.ExecutionContext.global).resource
 
   test("Resolve with different base directory") {
-    //Path inside dhall-lang submodule
+    // Path inside dhall-lang submodule
     val expr = parse("let x = ./success/prelude/Bool/and/0B.dhall in x")
     val expected = parse("Bool").normalize
 
