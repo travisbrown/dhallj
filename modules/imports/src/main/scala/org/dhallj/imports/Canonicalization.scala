@@ -25,10 +25,10 @@ object Canonicalization {
     parent match {
       case Remote(uri, headers) =>
         child match {
-          //A transitive relative import is parsed as local but is resolved as a remote import
+          // A transitive relative import is parsed as local but is resolved as a remote import
           // eg https://github.com/dhall-lang/dhall-lang/blob/master/Prelude/Integer/add has a local import but we still
-          //need to resolve this as a remote import
-          //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
+          // need to resolve this as a remote import
+          // Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
           case Local(path) =>
             if (path.isAbsolute) canonicalize[F](child)
             else canonicalize[F](Remote(uri.resolve(path.toString), headers))
@@ -43,10 +43,10 @@ object Canonicalization {
             } yield Local(parent.chain(c).canonicalize.toPath)
           case _ => canonicalize[F](child)
         }
-      //TODO - determine semantics of classpath imports
+      // TODO - determine semantics of classpath imports
       case Classpath(path) =>
         child match {
-          //Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
+          // Also note that if the path is absolute then this violates referential sanity but we handle that elsewhere
           case Local(path2) =>
             for {
               parent <- LocalFile[F](path)

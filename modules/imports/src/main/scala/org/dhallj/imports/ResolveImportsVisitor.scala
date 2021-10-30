@@ -75,7 +75,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
   }
 
   private def onImport(i: ImportContext, mode: Expr.ImportMode, hash: Array[Byte]): F[Expr] = {
-    //TODO check that equality is sensibly defined for URI and Path
+    // TODO check that equality is sensibly defined for URI and Path
     def rejectCyclicImports(imp: ImportContext, parents: NonEmptyList[ImportContext]): F[Unit] =
       if (parents.exists(_ == imp))
         F.raiseError[Unit](new ResolutionFailure(s"Cyclic import - $imp is already imported in chain $parents"))
@@ -191,7 +191,7 @@ final private class ResolveImportsVisitor[F[_] <: AnyRef](
             case None =>
               for {
                 _ <- F.delay(typeCheck(resolved))
-                //TODO substitutions here?
+                // TODO substitutions here?
                 normalized <- F.delay(resolved.normalize)
                 _ <- semiSemanticCache.put(semiHash, normalized.getEncodedBytes)
               } yield normalized
@@ -238,7 +238,7 @@ private object ResolveImportsVisitor {
                                            semiSemanticCache: ImportCache[F],
                                            relativeTo: Path
   ): ResolveImportsVisitor[F] =
-    //We add a placeholder filename "package.dhall" for the base directory as a Local import must have a filename
+    // We add a placeholder filename "package.dhall" for the base directory as a Local import must have a filename
     new ResolveImportsVisitor[F](semanticCache,
                                  semiSemanticCache,
                                  NonEmptyList.one(Local(relativeTo.resolve("package.dhall")))
