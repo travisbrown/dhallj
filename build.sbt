@@ -45,7 +45,7 @@ val jawnVersion = "1.2.0"
 val munitVersion = "0.7.29"
 val scalaCheckVersion = "1.15.4"
 val snakeYamlVersion = "1.29"
-val http4sVersion = "0.23.6"
+val http4sVersion = "0.23.11"
 
 val testDependencies = Seq(
   "co.nstant.in" % "cbor" % "0.9",
