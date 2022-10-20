@@ -44,7 +44,7 @@ val circeVersion = "0.14.1"
 val jawnVersion = "1.2.0"
 val munitVersion = "0.7.29"
 val scalaCheckVersion = "1.15.4"
-val snakeYamlVersion = "1.29"
+val snakeYamlVersion = "1.33"
 val http4sVersion = "0.23.6"
 
 val testDependencies = Seq(
