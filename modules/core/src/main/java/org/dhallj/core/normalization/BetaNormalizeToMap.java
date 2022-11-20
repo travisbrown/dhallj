@@ -1,7 +1,6 @@
 package org.dhallj.core.normalization;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
