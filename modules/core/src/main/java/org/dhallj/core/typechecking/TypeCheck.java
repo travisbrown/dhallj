@@ -18,10 +18,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import org.dhallj.core.Expr;
+import org.dhallj.core.Expr.Constants;
 import org.dhallj.core.ExternalVisitor;
 import org.dhallj.core.Operator;
 import org.dhallj.core.Source;
-import org.dhallj.core.Expr.Constants;
 import org.dhallj.core.normalization.BetaNormalize;
 
 public final class TypeCheck implements ExternalVisitor<Expr> {

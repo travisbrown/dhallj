@@ -1,8 +1,8 @@
 package org.dhallj.core.typechecking;
 
 import org.dhallj.core.Expr;
-import org.dhallj.core.Operator;
 import org.dhallj.core.ExternalVisitor;
+import org.dhallj.core.Operator;
 
 final class CheckEquivalence extends ExternalVisitor.Constant<Boolean> {
   public static final ExternalVisitor<Boolean> instance = new CheckEquivalence();

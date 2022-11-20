@@ -1,8 +1,6 @@
 package org.dhallj.cbor;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Represents a function from a CBOR expression to a value.

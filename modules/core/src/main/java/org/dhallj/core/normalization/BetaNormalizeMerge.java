@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.ExternalVisitor;
-import org.dhallj.core.Operator;
 
 final class BetaNormalizeMerge extends ExternalVisitor.Constant<Expr> {
   private final List<Entry<String, Expr>> handlers;

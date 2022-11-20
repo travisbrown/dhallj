@@ -1,10 +1,5 @@
 package org.dhallj.core.binary;
 
-import org.dhallj.cbor.Reader;
-import org.dhallj.cbor.Visitor;
-import org.dhallj.core.Expr;
-import org.dhallj.core.Operator;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -14,6 +9,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.dhallj.cbor.Reader;
+import org.dhallj.cbor.Visitor;
+import org.dhallj.core.Expr;
+import org.dhallj.core.Operator;
 
 /**
  * Decodes CBOR expressions corresponding to encoded Dhall expressions.

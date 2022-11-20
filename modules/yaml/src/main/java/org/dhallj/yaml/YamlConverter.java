@@ -2,8 +2,8 @@ package org.dhallj.yaml;
 
 import org.dhallj.core.Expr;
 import org.dhallj.core.converters.JsonConverter;
-import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 public class YamlConverter {
   private static final DumperOptions defaultOptions = new DumperOptions();

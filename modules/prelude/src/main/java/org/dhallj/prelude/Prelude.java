@@ -2,8 +2,6 @@ package org.dhallj.prelude;
 
 import java.math.BigInteger;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 import org.dhallj.core.Expr;
 import org.dhallj.core.Operator;

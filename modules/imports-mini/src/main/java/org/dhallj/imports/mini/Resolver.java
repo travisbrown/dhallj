@@ -1,8 +1,8 @@
 package org.dhallj.imports.mini;
 
+import java.nio.file.Path;
 import org.dhallj.core.DhallException.ResolutionFailure;
 import org.dhallj.core.Expr;
-import java.nio.file.Path;
 
 public final class Resolver {
   public static final Expr resolve(Expr expr, boolean integrityChecks, Path currentPath)
